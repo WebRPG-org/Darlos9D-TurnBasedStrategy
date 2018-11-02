@@ -1,0 +1,446 @@
+//=============================================================================
+// TurnBasedStrategySprites.js
+//=============================================================================
+
+/*:
+ *
+ * @plugindesc Sprite objects for a turn based strategy game
+ *
+ * @author Darlos9D
+ *
+ * @help
+ *
+ * This plugin does not provide any commands.
+ *
+ */
+ 
+//-----------------------------------------------------------------------------
+// Sprite_TbsRange
+//
+// The sprite for showing the tiles a character can move to, or their actions
+// can reach.
+
+function Sprite_TbsRange() {
+    this.initialize.apply(this, arguments);
+}
+
+Sprite_TbsRange.prototype = Object.create(Sprite.prototype);
+Sprite_TbsRange.prototype.constructor = Sprite_TbsRange;
+
+Sprite_TbsRange.prototype.initialize = function(x, y, color) {
+    Sprite.prototype.initialize.call(this);
+	this._color = color;
+	this._mapX = x;
+	this._mapY = y;
+    this.createBitmap();
+    this._frameCount = 0;
+	this.z = 2;
+	this.opacity = 127;
+    this.visible = true;
+};
+
+Sprite_TbsRange.prototype.update = function() {
+    Sprite.prototype.update.call(this);
+    this.updatePosition();
+    this.updateAnimation();
+};
+
+Sprite_TbsRange.prototype.createBitmap = function() {
+    var tileWidth = $gameMap.tileWidth();
+    var tileHeight = $gameMap.tileHeight();
+    this.bitmap = new Bitmap(tileWidth, tileHeight);
+    this.bitmap.fillAll(this._color);
+    this.anchor.x = 0.5;
+    this.anchor.y = 0.5;
+    this.blendMode = Graphics.BLEND_NORMAL;
+    this.updatePosition();
+};
+
+Sprite_TbsRange.prototype.updatePosition = function() {
+    var tileWidth = $gameMap.tileWidth();
+    var tileHeight = $gameMap.tileHeight();
+    var x = this._mapX;
+    var y = this._mapY;
+    this.x = ($gameMap.adjustX(x) + 0.5) * tileWidth;
+    this.y = ($gameMap.adjustY(y) + 0.5) * tileHeight;
+};
+
+Sprite_TbsRange.prototype.updateAnimation = function() {
+	var changeFrames = 20;
+    this._frameCount++;
+    this._frameCount %= (changeFrames * 2);
+	
+	var brightness = 0;
+	if(this._frameCount <= 20) {
+		brightness = (changeFrames - this._frameCount) / changeFrames;
+	} else {
+		brightness = (this._frameCount - changeFrames) / changeFrames;
+	}
+	var colorPart = Math.round(brightness * 255).toString(16);
+	if(colorPart.length === 1) { colorPart = "0" + colorPart; }
+	var color = "#" + colorPart + colorPart + colorPart;
+	if(this._color === 'red') {
+		var color = "#" + colorPart + "0000";
+	}
+    this.bitmap.fillAll(color);
+};
+
+//-----------------------------------------------------------------------------
+// Sprite_TbsBodyPartDamage
+//
+// The sprite for showing the damage of a battler's body part
+
+function Sprite_TbsBodyPartDamage() {
+    this.initialize.apply(this, arguments);
+}
+
+Sprite_TbsBodyPartDamage.prototype = Object.create(Sprite.prototype);
+Sprite_TbsBodyPartDamage.prototype.constructor = Sprite_TbsRange;
+
+Sprite_TbsBodyPartDamage.prototype.initialize = function(x, y, position, damage) {
+    Sprite.prototype.initialize.call(this);
+	this._position = position;
+	this._damage = damage;
+	this._mapX = x;
+	this._mapY = y;
+    this.createDamageBitmap();
+	this.z = 9;
+	this.opacity = 255;
+    this.visible = true;
+};
+
+Sprite_TbsBodyPartDamage.prototype.update = function() {
+    Sprite.prototype.update.call(this);
+	this.updatePosition();
+};
+
+Sprite_TbsBodyPartDamage.prototype.createDamageBitmap = function() {
+    var spriteWidth = $gameMap.tileWidth() * 0.375;
+    var spriteHeight = $gameMap.tileHeight() * 0.375;
+    this.bitmap = new Bitmap(spriteWidth, spriteHeight);
+	var color = 'green';
+	if(this._damage === 1) {
+		color = 'yellow';
+	} else if (this._damage >= 2) {
+		color = 'red';
+	}
+    this.bitmap.fillAll(color);
+	var borderThickness = 3;
+	this.bitmap.fillRect(0, 0, borderThickness, spriteHeight, 'black');
+	this.bitmap.fillRect(0, 0, spriteWidth, borderThickness, 'black');
+	this.bitmap.fillRect(spriteWidth - borderThickness, 0, borderThickness, spriteHeight, 'black');
+	this.bitmap.fillRect(0, spriteHeight - borderThickness, spriteWidth, borderThickness, 'black');
+	var innerBorderThickness = 1;
+	this.bitmap.fillRect(1, 1, innerBorderThickness, spriteHeight-2, 'white');
+	this.bitmap.fillRect(1, 1, spriteWidth-2, innerBorderThickness, 'white');
+	this.bitmap.fillRect(spriteWidth - innerBorderThickness-1, 1, innerBorderThickness, spriteHeight-2, 'white');
+	this.bitmap.fillRect(1, spriteHeight - innerBorderThickness-1, spriteWidth-2, innerBorderThickness, 'white');
+    this.anchor.x = 0.5;
+    this.anchor.y = 0.5;
+    this.blendMode = Graphics.BLEND_NORMAL;
+	this.updatePosition();
+};
+
+Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
+	var tileWidth = $gameMap.tileWidth();
+    var tileHeight = $gameMap.tileHeight();
+    var x = this._mapX;
+    var y = this._mapY;
+	if(this._position === 'upperLeft' || this._position === 'lowerLeft') {
+		this.x = ($gameMap.adjustX(x) + 0.8125) * tileWidth;
+	} else {
+		this.x = ($gameMap.adjustX(x) + 0.1875) * tileWidth;
+	}
+	if(this._position === 'upperLeft' || this._position === 'upperRight') {
+		this.y = ($gameMap.adjustY(y) + 0.8125) * tileHeight - 6;
+	} else {
+		this.y = ($gameMap.adjustY(y) + 0.1875) * tileHeight - 6;
+	}
+};
+
+(function() {
+	//sprite actor
+	Sprite_Actor.prototype.setBattler = function(battler) {
+		Sprite_Battler.prototype.setBattler.call(this, battler);
+		var changed = (battler !== this._actor);
+		if (changed) {
+			this._actor = battler;
+			var entryMotion = true;
+			if (battler) {
+				this.setHome(battler.screenX(), battler.screenY());
+				entryMotion = battler.shouldMoveIn();
+			}
+			if(entryMotion) {
+				this.startEntryMotion();
+			} else {
+				this.startMove(0, 0, 0);
+			}
+			this._stateSprite.setup(battler);
+		}
+	};
+	
+	//sprite enemy
+	Sprite_Enemy.prototype.setBattler = function(battler) {
+		Sprite_Battler.prototype.setBattler.call(this, battler);
+		this._enemy = battler;
+		this.setHome(battler.screenX(), battler.screenY());
+		this._stateIconSprite.setup(battler);
+	};
+	
+	Sprite_Enemy.prototype.updateFrame = function() {
+		Sprite_Battler.prototype.updateFrame.call(this);
+		var frameHeight = this.bitmap ? this.bitmap.height : 0;
+		if (this._effectType === 'bossCollapse') {
+			frameHeight = this._effectDuration;
+		}
+		this.setFrame(0, 0, this.bitmap ? this.bitmap.width : 0, frameHeight);
+	};
+	
+	Sprite_Enemy.prototype.updateStateSprite = function() {
+		this._stateIconSprite.y = -Math.round(((this.bitmap ? this.bitmap.height : 0) + 40) * 0.9);
+		if (this._stateIconSprite.y < 20 - this.y) {
+			this._stateIconSprite.y = 20 - this.y;
+		}
+	};
+	
+	//sprite state icon
+	Sprite_StateIcon.prototype.updateIcon = function() {
+		var icons = [];
+		if (this._battler && !this._battler.isDown()) {
+			icons = this._battler.allIcons();
+		}
+		if (icons.length > 0) {
+			this._animationIndex++;
+			if (this._animationIndex >= icons.length) {
+				this._animationIndex = 0;
+			}
+			this._iconIndex = icons[this._animationIndex];
+		} else {
+			this._animationIndex = 0;
+			this._iconIndex = 0;
+		}
+	};
+	
+	//spriteset map
+	Spriteset_Map.prototype.initialize = function() {
+		Spriteset_Base.prototype.initialize.call(this);
+		if(!this._tbsCharacterSprites) {
+			this._tbsCharacterSprites = [];
+		}
+		this._rangeTileSprites = [];
+		this._bodyPartDamageSprites = [];
+		this._tbsAoeSprites = [];
+	};
+	
+	Spriteset_Map.prototype.createCharacters = function() {
+		this._characterSprites = [];
+		this._tbsCharacterSprites = [];
+		$gameMap.events().forEach(function(event) {
+			this._characterSprites.push(new Sprite_Character(event));
+		}, this);
+		$gameMap.vehicles().forEach(function(vehicle) {
+			this._characterSprites.push(new Sprite_Character(vehicle));
+		}, this);
+		$gamePlayer.followers().reverseEach(function(follower) {
+			this._characterSprites.push(new Sprite_Character(follower));
+		}, this);
+		var that = this;
+		this._characterSprites.push(new Sprite_Character($gamePlayer));
+		$gameMap.tbsForces().forEach(function (force) {
+			force.actors.forEach(function (actor) {
+				if(actor.chara) {
+					var sprite = new Sprite_Character(actor.chara);
+					that._characterSprites.push(sprite);
+					that._tbsCharacterSprites.push(sprite);
+				}
+			});
+		});
+		for (var i = 0; i < this._characterSprites.length; i++) {
+			this._tilemap.addChild(this._characterSprites[i]);
+		}
+	};
+	
+	Spriteset_Map.prototype.updateTilemap = function() {
+		if($gameTemp.shouldClearTbsCharacters()) {
+			$gameTemp.setShouldClearTbsCharacters(false);
+			this.clearTbsCharacters();
+		}
+		var charasToAdd = $gameTemp.tbsCharactersToAdd();
+		var that = this;
+		charasToAdd.forEach(function (chara) {
+			var sprite = new Sprite_Character(chara);
+			that._characterSprites.push(sprite);
+			that._tbsCharacterSprites.push(sprite);
+			that._tilemap.addChild(sprite);
+		});
+		$gameTemp.clearTbsCharactersToAdd();
+		
+		if($gameTemp.shouldClearTbsAoeSprites()) {
+			$gameTemp.setShouldClearTbsAoeSprites(false);
+			this.clearTbsAoeSprites();
+		}
+		var aoeSpritesToAdd = $gameTemp.tbsAoeSpritesToAdd();
+		aoeSpritesToAdd.forEach(function (aoeSprite) {
+			var sprite = new Sprite_Character(aoeSprite);
+			that._characterSprites.push(sprite);
+			that._tbsAoeSprites.push(sprite);
+			that._tilemap.addChild(sprite);
+		});
+		$gameTemp.clearTbsAoeSpritesToAdd();
+		
+		if($gameTemp.shouldClearTbsRangeTiles()) {
+			$gameTemp.setShouldClearTbsRangeTiles(false);
+			this.clearTbsRangeTiles();
+			$gameTemp.setRangedSpritesExist(false);
+		}
+		var rangeTilesToAdd = $gameTemp.tbsRangeTilesToAdd();
+		rangeTilesToAdd.forEach(function (tile) {
+			var sprite = new Sprite_TbsRange(tile.x, tile.y, tile.color);
+			that._rangeTileSprites.push(sprite);
+			that._tilemap.addChild(sprite);
+		});
+		if(rangeTilesToAdd.length > 0) {
+			$gameTemp.setRangedSpritesExist(true);
+		}
+		$gameTemp.clearTbsRangeTilesToAdd();
+		
+		if($gameTemp.shouldClearTbsDamageSprites()) {
+			$gameTemp.setShouldClearTbsDamageSprites(false);
+			this.clearTbsDamageSprites();
+			$gameTemp.setDamageSpritesExist(false);
+		}
+		var damageSpritesToAdd = $gameTemp.tbsDamageSpritesToAdd();
+		damageSpritesToAdd.forEach(function (spriteToAdd) {
+			var sprite = new Sprite_TbsBodyPartDamage(spriteToAdd.x, spriteToAdd.y, spriteToAdd.position, spriteToAdd.damage);
+			that._bodyPartDamageSprites.push(sprite);
+			that._tilemap.addChild(sprite);
+		});
+		if(damageSpritesToAdd.length > 0) {
+			$gameTemp.setDamageSpritesExist(true);
+		}
+		$gameTemp.clearTbsDamageSpritesToAdd();
+		
+		this._tilemap.origin.x = $gameMap.displayX() * $gameMap.tileWidth();
+		this._tilemap.origin.y = $gameMap.displayY() * $gameMap.tileHeight();
+	};
+	
+	Spriteset_Map.prototype.clearTbsCharacters = function() {
+		var that = this;
+		this._tbsCharacterSprites.forEach(function (sprite) {
+			that._tilemap.removeChild(sprite);
+		});
+		this._tbsCharacterSprites = [];
+	};
+	
+	Spriteset_Map.prototype.clearTbsAoeSprites = function() {
+		var that = this;
+		this._tbsAoeSprites.forEach(function (sprite) {
+			that._tilemap.removeChild(sprite);
+		});
+		this._tbsAoeSprites = [];
+	};
+	
+	Spriteset_Map.prototype.clearTbsRangeTiles = function() {
+		var that = this;
+		this._rangeTileSprites.forEach(function (tile) {
+			that._tilemap.removeChild(tile);
+		});
+		this._rangeTileSprites = [];
+	};
+	
+	Spriteset_Map.prototype.clearTbsDamageSprites = function() {
+		var that = this;
+		this._bodyPartDamageSprites.forEach(function (sprite) {
+			that._tilemap.removeChild(sprite);
+		});
+		this._bodyPartDamageSprites = [];
+	};
+	
+	//spriteset battle
+	Spriteset_Battle.prototype.createLowerLayer = function() {
+		Spriteset_Base.prototype.createLowerLayer.call(this);
+		this.createBackground();
+		this.createBattleField();
+		this.createBattleback();
+		this.createEnemies();
+		this.createActors();
+	};
+	
+	Spriteset_Battle.prototype.createEnemies = function() {
+		var centerY = Graphics.boxHeight * 0.5;
+		var scaleFactor = 0.5;
+		var enemies = [];
+		var tbsActors = [];
+		tbsActors.push($gameMap.getTbsSelectedActor());
+		var tbsTargets = $gameMap.getTbsActionTargets();
+		tbsActors.forEach(function (tbsActor) {
+			if(!tbsActor.isParty) {
+				enemies.push(tbsActor.battler);
+			}
+		});
+		tbsTargets.forEach(function (tbsTarget) {
+			if(!tbsTarget.isParty && tbsActors.indexOf(tbsTarget) === -1) {
+				enemies.push(tbsTarget.battler);
+			}
+		});
+		var sprites = [];
+		for (var i = 0; i < enemies.length; i++) {
+			sprites[i] = new Sprite_Enemy(enemies[i]);
+			var scale = (((sprites[i].y / centerY) - 1) * scaleFactor) + 1;
+			sprites[i].scale.x = scale;
+			sprites[i].scale.y = scale;
+		}
+		sprites.sort(this.compareEnemySprite.bind(this));
+		for (var j = 0; j < sprites.length; j++) {
+			this._battleField.addChild(sprites[j]);
+		}
+		this._enemySprites = sprites;
+	};
+
+	Spriteset_Battle.prototype.compareEnemySprite = function(a, b) {
+		if (a.y !== b.y) {
+			return a.y - b.y;
+		} else {
+			return b.spriteId - a.spriteId;
+		}
+	};
+
+	Spriteset_Battle.prototype.createActors = function() {
+		var centerY = Graphics.boxHeight * 0.5;
+		var scaleFactor = 0.5;
+		var actors = [];
+		var tbsActors = [];
+		tbsActors.push($gameMap.getTbsSelectedActor());
+		var tbsTargets = $gameMap.getTbsActionTargets();
+		tbsActors.forEach(function (tbsActor) {
+			if(tbsActor.isParty) {
+				actors.push(tbsActor.battler);
+			}
+		});
+		tbsTargets.forEach(function (tbsTarget) {
+			if(tbsTarget.isParty && tbsActors.indexOf(tbsTarget) === -1) {
+				actors.push(tbsTarget.battler);
+			}
+		});
+		var sprites = [];
+		for (var i = 0; i < actors.length; i++) {
+			sprites[i] = new Sprite_Actor();
+			sprites[i].setBattler(actors[i]);
+			var scale = (((sprites[i].y / centerY) - 1) * scaleFactor) + 1;
+			sprites[i].scale.x = scale;
+			sprites[i].scale.y = scale;
+		}
+		sprites.sort(this.compareEnemySprite.bind(this));
+		for (var i = 0; i < sprites.length; i++) {
+			this._battleField.addChild(sprites[i]);
+		}
+		this._actorSprites = sprites;
+	};
+
+	Spriteset_Battle.prototype.updateActors = function() {
+		//var members = $gameParty.battleMembers();
+		//for (var i = 0; i < this._actorSprites.length; i++) {
+		//	this._actorSprites[i].setBattler(members[i]);
+		//}
+	};
+})();

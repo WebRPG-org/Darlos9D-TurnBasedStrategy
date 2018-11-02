@@ -1,0 +1,2820 @@
+//=============================================================================
+// TurnBasedStrategyObjects.js
+//=============================================================================
+
+/*:
+ *
+ * @plugindesc Object handling for a turn based strategy game
+ *
+ * @author Darlos9D
+ *
+ * @help
+ *
+ * This plugin does not provide any commands.
+ *
+ */
+ 
+(function() {
+	//temp
+	Game_Temp.prototype.initialize = function() {
+		this._isPlaytest = Utils.isOptionValid('test');
+		this._commonEventId = 0;
+		this._destinationX = null;
+		this._destinationY = null;
+		this._pendingTbsForces = [];
+		this._tbsCharactersToAdd = [];
+		this._tbsRangeTilesToAdd = [];
+		this._shouldClearTbsCharacters = false;
+		this._shouldClearTbsRangeTiles = false;
+		this._shouldClearTbsAoeSprites = false;
+		this._rangeSpritesExist = false;
+		this._tbsAoeSpritesToAdd = [];
+		this._tbsDamageSpritesToAdd = [];
+		this._shouldClearTbsDamageSprites = false;
+		this._damageSpritesExist = false;
+	};
+	
+	Game_Temp.prototype.addTbsPartyMember = function(forceId, partyId, startingX, startingY) {
+		this.makeSureForceExists(forceId, true);
+		
+		if(!this._pendingTbsForces[forceId].isParty) { return; }
+		
+		if(!this._pendingTbsForces[forceId].actors) {
+			this._pendingTbsForces[forceId].actors = [];
+		}
+		
+		var actor = {};
+		actor.id = partyId;
+		actor.startingX = startingX;
+		actor.startingY = startingY;
+		
+		this._pendingTbsForces[forceId].actors.push(actor);
+	};
+	
+	Game_Temp.prototype.addTbsEnemy = function(forceId, enemyId, startingX, startingY) {
+		this.makeSureForceExists(forceId, false);
+		
+		if(this._pendingTbsForces[forceId].isParty) { return; }
+		
+		if(!this._pendingTbsForces[forceId].actors) {
+			this._pendingTbsForces[forceId].actors = [];
+		}
+		
+		var actor = {};
+		actor.id = enemyId;
+		actor.startingX = startingX;
+		actor.startingY = startingY;
+		
+		this._pendingTbsForces[forceId].actors.push(actor);
+	};
+	
+	Game_Temp.prototype.setTbsForceEnemyForce = function(forceId, enemyForceId) {
+		if(!this._pendingTbsForces[forceId] || forceId === enemyForceId) { return; }
+		if(this._pendingTbsForces[forceId].enemyForceIds.indexOf(enemyForceId) === -1) {
+			this._pendingTbsForces[forceId].enemyForceIds.push(enemyForceId);
+		}
+	};
+	
+	Game_Temp.prototype.setTbsForceAllyForce = function(forceId, allyForceId) {
+		if(!this._pendingTbsForces[forceId] || forceId === allyForceId) { return; }
+		if(this._pendingTbsForces[forceId].allyForceIds.indexOf(allyForceId) === -1) {
+			this._pendingTbsForces[forceId].allyForceIds.push(allyForceId);
+		}
+	};
+	
+	Game_Temp.prototype.makeSureForceExists = function(forceId, isParty) {
+		if(!this._pendingTbsForces[forceId]) {
+			this._pendingTbsForces[forceId] = {};
+			this._pendingTbsForces[forceId].isParty = isParty;
+			this._pendingTbsForces[forceId].allyForceIds = [];
+			this._pendingTbsForces[forceId].enemyForceIds = [];
+		}
+	};
+	
+	Game_Temp.prototype.startTbsBattle = function() {
+		$gameMap.setTbsBattleMode(true);
+		this.clearTbsForces();
+	};
+	
+	Game_Temp.prototype.clearTbsForces = function() {
+		this._pendingTbsForces = [];
+	};
+	
+	Game_Temp.prototype.pendingTbsForces = function() {
+		return this._pendingTbsForces;
+	};
+	
+	Game_Temp.prototype.tbsCharactersToAdd = function() {
+		return this._tbsCharactersToAdd;
+	};
+	
+	Game_Temp.prototype.addTbsCharacter = function(character) {
+		this._tbsCharactersToAdd.push(character);
+	};
+	
+	Game_Temp.prototype.clearTbsCharactersToAdd = function() {
+		this._tbsCharactersToAdd = [];
+	};
+	
+	Game_Temp.prototype.setShouldClearTbsCharacters = function(should) {
+		this._shouldClearTbsCharacters = should;
+	};
+	
+	Game_Temp.prototype.shouldClearTbsCharacters = function() {
+		return this._shouldClearTbsCharacters;
+	};
+	
+	Game_Temp.prototype.tbsRangeTilesToAdd = function() {
+		return this._tbsRangeTilesToAdd;
+	};
+	
+	Game_Temp.prototype.addTbsRangeTile = function(x, y, color) {
+		var tile = {};
+		tile.x = x;
+		tile.y = y;
+		tile.color = color;
+		this._tbsRangeTilesToAdd.push(tile);
+	};
+	
+	Game_Temp.prototype.clearTbsRangeTilesToAdd = function() {
+		this._tbsRangeTilesToAdd = [];
+	};
+	
+	Game_Temp.prototype.shouldClearTbsRangeTiles = function() {
+		return this._shouldClearTbsRangeTiles;
+	};
+	
+	Game_Temp.prototype.setShouldClearTbsRangeTiles = function(should) {
+		this._shouldClearTbsRangeTiles = should;
+	};
+	
+	Game_Temp.prototype.setRangedSpritesExist = function(exist) {
+		this._rangeSpritesExist = exist;
+	};
+	
+	Game_Temp.prototype.isFreeToMakeRangeTiles = function() {
+		return !this._rangeSpritesExist;
+	};
+	
+	Game_Temp.prototype.tbsAoeSpritesToAdd = function() {
+		return this._tbsAoeSpritesToAdd;
+	};
+	
+	Game_Temp.prototype.addTbsAoeSprite = function(x, y) {
+		var chara = new Game_Character();
+		chara.setStepAnime(true);
+		chara.setPriorityType(2);
+		chara.setTbsBattleMode(true);
+		chara.setPosition(x, y);
+		chara.setImage("Cursor", 4);
+		this._tbsAoeSpritesToAdd.push(chara);
+		return chara;
+	};
+	
+	Game_Temp.prototype.clearTbsAoeSpritesToAdd = function() {
+		this._tbsAoeSpritesToAdd = [];
+	};
+	
+	Game_Temp.prototype.shouldClearTbsAoeSprites = function() {
+		return this._shouldClearTbsAoeSprites;
+	};
+	
+	Game_Temp.prototype.setShouldClearTbsAoeSprites = function(should) {
+		this._shouldClearTbsAoeSprites = should;
+	};
+	
+	Game_Temp.prototype.tbsDamageSpritesToAdd = function() {
+		return this._tbsDamageSpritesToAdd;
+	};
+	
+	Game_Temp.prototype.addTbsDamageSprite = function(x, y, position, damage) {
+		var sprite = {};
+		sprite.x = x;
+		sprite.y = y;
+		sprite.position = position;
+		sprite.damage = damage;
+		this._tbsDamageSpritesToAdd.push(sprite);
+	};
+	
+	Game_Temp.prototype.clearTbsDamageSpritesToAdd = function() {
+		this._tbsDamageSpritesToAdd = [];
+	};
+	
+	Game_Temp.prototype.shouldClearTbsDamageSprites = function() {
+		return this._shouldClearTbsDamageSprites;
+	};
+	
+	Game_Temp.prototype.setShouldClearTbsDamageSprites = function(should) {
+		this._shouldClearTbsDamageSprites = should;
+	};
+	
+	Game_Temp.prototype.setDamageSpritesExist = function(exist) {
+		this._damageSpritesExist = exist;
+	};
+	
+	Game_Temp.prototype.isFreeToMakeDamageSprites = function() {
+		return !this._damageSpritesExist;
+	};
+	
+	//system
+	Game_System.prototype.addTbsPartyMember = function(forceId, partyId, startingX, startingY) {
+		$gameTemp.addTbsPartyMember(forceId, partyId, startingX, startingY);
+	};
+	
+	Game_System.prototype.addTbsEnemy = function(forceId, enemyId, startingX, startingY) {
+		$gameTemp.addTbsEnemy(forceId, enemyId, startingX, startingY);
+	};
+	
+	Game_System.prototype.setTbsForceEnemyForce = function(forceId, enemyForceId) {
+		$gameTemp.setTbsForceEnemyForce(forceId, enemyForceId);
+	};
+	
+	Game_System.prototype.setTbsForceAllyForce = function(forceId, allyForceId) {
+		$gameTemp.setTbsForceAllyForce(forceId, allyForceId);
+	};
+	
+	Game_System.prototype.startTbsBattle = function() {
+		$gameTemp.startTbsBattle();
+	};
+	
+	Game_System.prototype.clearTbsForces = function() {
+		$gameTemp.clearTbsForces();
+	};
+	
+	//item
+	Game_Item.prototype.actions = function() {
+		if(!this.isWeapon() && !this.isArmor() && !this.isItem()) {
+			return [];
+		}
+		
+		var item = this.object();
+		
+		if(!item) { return []; }
+		
+		return item.tbsStats.actions;
+	};
+	
+	//party
+	Game_Party.prototype.getMemberActorIdByPosition = function(index) {
+		return this._actors[index];
+	};
+	
+	//map
+	Game_Map.prototype.initialize = function() {
+		this._interpreter = new Game_Interpreter();
+		this._mapId = 0;
+		this._tilesetId = 0;
+		this._events = [];
+		this._commonEvents = [];
+		this._vehicles = [];
+		this._displayX = 0;
+		this._displayY = 0;
+		this._nameDisplay = true;
+		this._scrollDirection = 2;
+		this._scrollRest = 0;
+		this._scrollSpeed = 4;
+		this._parallaxName = '';
+		this._parallaxZero = false;
+		this._parallaxLoopX = false;
+		this._parallaxLoopY = false;
+		this._parallaxSx = 0;
+		this._parallaxSy = 0;
+		this._parallaxX = 0;
+		this._parallaxY = 0;
+		this._battleback1Name = null;
+		this._battleback2Name = null;
+		this.createVehicles();
+		this._tbsLeadCharacter = null;
+		this._tbsBattleMode = false;
+		this._tbsBattleModeJustChanged = false;
+		this._tbsForces = [];
+		this._tbsCurrentTurnForce = -1;
+		this._tbsTurnMode = "";
+		this._tbsCancelMoveJustEnded = false;
+		this._tbsTurnJustStarted = false;
+		this._tbsCursorFocusX = -1;
+		this._tbsCursorFocusY = -1;
+		this._sqrtOfTwo = Math.sqrt(2);
+		this._tbsMoveTiles = [];
+		this._tbsActionsTiles = [];
+		this._tbsSelectedActor = undefined;
+		this._tbsManualMoveStartX = -1;
+		this._tbsManualMoveStartY = -1;
+		this._tbsManualMoveStarted = false;
+		this._tbsSelectedActionType = -1;
+		this._tbsSelectedAction = undefined;
+		this._tbsSelectedActionIndex = -1;
+		this._tbsActionTargetLocationX = -1;
+		this._tbsActionTargetLocationY = -1;
+		this._tbsActionMoveDestinationX = -1;
+		this._tbsActionMoveDestinationY = -1;
+		this._tbsActionTargetPart = undefined;
+		this._tbsPassageType = "move";
+		this._tbsBreadcrumbs = [];
+		this._tbsInActionBattleScene = false;
+	};
+	
+	Game_Map.prototype.getBreadcrumbs = function() {
+		return this._tbsBreadcrumbs;
+	};
+	
+	Game_Map.prototype.setBreadcrumbStage = function(stage) {
+		this._tbsBreadcrumbs = [];
+		switch(stage) {
+			case "allDone":
+				if(this._tbsActionTargetPart) {
+					var targetPartBreadcrumb = {};
+					targetPartBreadcrumb.text = "";
+					switch(this._tbsActionTargetPart) {
+						case "head":
+							targetPartBreadcrumb.text = "Head";
+							break;
+						case "torso":
+							targetPartBreadcrumb.text = "Torso";
+							break;
+						case "leftArm":
+							targetPartBreadcrumb.text = "Left Arm";
+							break;
+						case "rightArm":
+							targetPartBreadcrumb.text = "Right Arm";
+							break;
+						case "leftLeg":
+							targetPartBreadcrumb.text = "Left Leg";
+							break;
+						case "rightLeg":
+							targetPartBreadcrumb.text = "Right Leg";
+							break;
+						case "vital":
+							targetPartBreadcrumb.text = "Vital Parts";
+							break;
+						case "mobility":
+							targetPartBreadcrumb.text = "Mobility Parts";
+							break;
+					}
+					this._tbsBreadcrumbs.push(targetPartBreadcrumb);
+				}
+			case "target":
+				var targetBreadcrumb = {};
+				targetBreadcrumb.text = "";
+				if(this._tbsActionTargetLocationX !== -1) {
+					var targetActor = this.getTbsActorAtPosition(this._tbsActionTargetLocationX, this._tbsActionTargetLocationY);
+					if(targetActor) {
+						targetBreadcrumb.text = targetActor.battler.name();
+					} else {
+						targetBreadcrumb.text = this._tbsActionTargetLocationX + ", " + this._tbsActionTargetLocationY;
+					}
+				}
+				this._tbsBreadcrumbs.push(targetBreadcrumb);
+			case "action":
+				var actionBreadcrumb = {};
+				actionBreadcrumb.text = "";
+				if(this._tbsSelectedAction) {
+					actionBreadcrumb.text = this._tbsSelectedAction.name;
+					actionBreadcrumb.action = this._tbsSelectedAction;
+				}
+				this._tbsBreadcrumbs.push(actionBreadcrumb);
+			case "manualMove":
+			case "actor":
+				var actorBreadcrumb = {};
+				actorBreadcrumb.text = "";
+				if(this._tbsSelectedActor) {
+					actorBreadcrumb.text = this._tbsSelectedActor.battler.name();
+				}
+				this._tbsBreadcrumbs.push(actorBreadcrumb);
+			break;
+		}
+		this._tbsBreadcrumbs.reverse();
+		var instructionBreadcrumb = {};
+		instructionBreadcrumb.flashing = true;
+		switch(stage) {
+			case "selectingActor":
+				instructionBreadcrumb.text = "Member select...";
+				break;
+			case "surveying":
+				instructionBreadcrumb.text = "Surveying...";
+				break;
+			case "actor":
+				instructionBreadcrumb.text = "Action select...";
+				break;
+			case "manualMove":
+				instructionBreadcrumb.text = "Moving...";
+				break;
+			case "action":
+				instructionBreadcrumb.text = "Targeting...";
+				break;
+			case "target":
+				instructionBreadcrumb.text = "Targeting body parts...";
+				break;
+		}
+		if(instructionBreadcrumb.text) {
+			this._tbsBreadcrumbs.push(instructionBreadcrumb);
+		}
+	};
+	
+	Game_Map.prototype.setTbsBattleMode = function(modeOn) {
+		var pendingTbsForces = $gameTemp.pendingTbsForces();
+		if(this._tbsBattleMode !== modeOn && (!modeOn ||
+			(modeOn && pendingTbsForces && pendingTbsForces.length >= 2))) {
+			this._tbsBattleMode = modeOn;
+			if(modeOn) {
+				this._tbsForces = this.createTbsForces(pendingTbsForces);
+				this._tbsCurrentTurnForce = 0;
+				this.setTbsTurnMode("setup");
+				this.spawnTbsCharacters();
+			}
+			$gamePlayer.setTbsBattleMode(modeOn);
+			this._tbsBattleModeJustChanged = true;
+		}
+	};
+	
+	Game_Map.prototype.tbsBattleMode = function() {
+		return this._tbsBattleMode;
+	};
+	
+	Game_Map.prototype.tbsTurnMode = function() {
+		return this._tbsTurnMode;
+	};
+	
+	Game_Map.prototype.tbsForces = function() {
+		return this._tbsForces;
+	};
+	
+	Game_Map.prototype.currentForce = function() {
+		return this._tbsForces[this._tbsCurrentTurnForce];
+	};
+	
+	Game_Map.prototype.checkTbsCancelMoveJustEnded = function() {
+		var returnValue = this._tbsCancelMoveJustEnded;
+		this._tbsCancelMoveJustEnded = false;
+		return returnValue;
+	};
+	
+	Game_Map.prototype.checkTbsTurnJustStarted = function() {
+		var returnValue = this._tbsTurnJustStarted;
+		this._tbsTurnJustStarted = false;
+		return returnValue;
+	};
+	
+	Game_Map.prototype.setTbsCursorFocus = function(x, y) {
+		if($gamePlayer.x === x && $gamePlayer.y === y) {
+			return;
+		}
+		if(this.tbsTurnMode() === "selectActionTarget") {
+			this.clearTbsAoeSprites();
+		}
+		
+		this._tbsCursorFocusX = x;
+		this._tbsCursorFocusY = y;
+	};
+	
+	Game_Map.prototype.tbsCursorIsFocusing = function() {
+		return this._tbsCursorFocusX >= 0 && this._tbsCursorFocusY >= 0;
+	};
+	
+	Game_Map.prototype.clearTbsCursorFocus = function() {
+		if($gamePlayer.isMoving()) {
+			this._tbsCursorFocusX = $gamePlayer.x;
+			this._tbsCursorFocusY = $gamePlayer.y;
+		} else {
+			this._tbsCursorFocusX = -1;
+			this._tbsCursorFocusY = -1;
+		}
+	};
+	
+	Game_Map.prototype.focusTbsCursor = function() {
+		if(!$gamePlayer.isMoving() && $gamePlayer.x === this._tbsCursorFocusX && $gamePlayer.y === this._tbsCursorFocusY) {
+			if(this.tbsTurnMode() === "selectActionTarget" 
+				|| this.tbsTurnMode() === "executeAction"
+				|| this.tbsTurnMode() === "actionBattleScene") {
+				this.spawnTbsAoeSprites();
+			}
+			
+			this.clearTbsCursorFocus();
+		}
+		
+		if(!this.tbsCursorIsFocusing() || $gamePlayer.isMoving()) { return; }
+		direction = $gamePlayer.findDirectionTo(this._tbsCursorFocusX, this._tbsCursorFocusY);
+		$gamePlayer.moveStraight(direction);
+	};
+	
+	Game_Map.prototype.createTbsForces = function(pendingTbsForces) {
+		var that = this;
+		var forceId = -1;
+		return pendingTbsForces.map(function(pendingForce) {
+			forceId++;
+			return that.createTbsForce(pendingForce, forceId);
+		});
+	};
+	
+	Game_Map.prototype.createTbsForce = function(pendingTbsForce, forceId) {
+		var force = {};
+		force.isParty = pendingTbsForce.isParty;
+		force.allyForceIds = pendingTbsForce.allyForceIds;
+		force.enemyForceIds = pendingTbsForce.enemyForceIds;
+		force.actors = [];
+		
+		var index = 0;
+		var that = this;
+		pendingTbsForce.actors.forEach(function (pendingActor) {
+			var actor = {};
+			actor.startingX = pendingActor.startingX;
+			actor.startingY = pendingActor.startingY;
+			actor.forceId = forceId;
+			actor.isParty = force.isParty;
+			actor.orderNum = index;
+			if(force.isParty) {
+				actor.battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(pendingActor.id));
+				actor.memberPosition = pendingActor.id;
+				if(actor.memberPosition === 0) {
+					that._tbsLeadCharacter = actor;
+				}
+			} else {
+				actor.battler = new Game_Enemy(pendingActor.id);
+				actor.memberPosition = -1;
+			}
+			actor.canActThisRound = !actor.battler.isDown();
+			
+			force.actors.push(actor);
+			index++;
+		});
+		
+		return force;
+	};
+	
+	Game_Map.prototype.spawnTbsCharacters = function() {
+		this._tbsForces.forEach(function (force) {
+			force.actors.forEach(function (actor) {
+				var chara = new Game_Character();
+				chara.setStepAnime(true);
+				chara.setTbsBattleMode(true);
+				chara.setPriorityType(1);
+				if(force.isParty) {
+					var member = $gamePlayer;
+					if(actor.memberPosition > 0) {
+						member = $gamePlayer.followers().follower(actor.memberPosition - 1);
+					}
+					chara.setPosition(member.x, member.y);
+					chara.setImage(member.characterName(), member.characterIndex());
+				} else {
+					var enemy = actor.battler.enemy();
+					chara.setPosition(actor.startingX, actor.startingY);
+					chara.setImage(enemy.tbsStats.characterName, enemy.tbsStats.characterIndex);
+				}
+				actor.chara = chara;
+				$gameTemp.addTbsCharacter(chara);
+			});
+		});
+	};
+	
+	Game_Map.prototype.update = function(sceneActive) {
+		if(this._tbsBattleModeJustChanged) {
+			this._tbsBattleModeJustChanged = false;
+			if(this._tbsBattleMode) {
+				$gamePlayer.hideFollowers();
+				$gamePlayer.setThrough(true);
+			} else {
+				$gamePlayer.showFollowers();
+				$gamePlayer.setThrough(false);
+				$gameTemp.setShouldClearTbsCharacters(true);
+			}
+			$gamePlayer.refresh();
+		}
+		
+		this.refreshIfNeeded();
+		if (sceneActive) {
+			this.updateInterpreter();
+		}
+		this.updateScroll();
+		this.updateEvents();
+		this.updateCharacters();
+		this.updateVehicles();
+		this.updateParallax();
+		this.updateTbsBattle();
+	};
+	
+	Game_Map.prototype.setTbsSelectedActor = function(tbsActor) {
+		if(this._tbsSelectedActor != tbsActor) {
+			this._tbsSelectedActor = tbsActor;
+			this.generateTbsMoveField();
+			this.clearTbsRangeSprites();
+		}
+	};
+	
+	Game_Map.prototype.getTbsSelectedActor = function() {
+		return this._tbsSelectedActor;
+	};
+	
+	Game_Map.prototype.setTbsManualMoveStart = function(x, y) {
+		this._tbsManualMoveStartX = x;
+		this._tbsManualMoveStartY = y;
+	};
+	
+	Game_Map.prototype.clearTbsManualMoveStart = function() {
+		this._tbsManualMoveStartX = -1;
+		this._tbsManualMoveStartY = -1;
+	};
+	
+	Game_Map.prototype.setTbsActionTargetLocation = function(x, y) {
+		this._tbsActionTargetLocationX = x;
+		this._tbsActionTargetLocationY = y;
+	};
+	
+	Game_Map.prototype.clearTbsActionTargetLocation = function() {
+		this._tbsActionTargetLocationX = -1;
+		this._tbsActionTargetLocationY = -1;
+	};
+	
+	Game_Map.prototype.getTbsActionTargetLocationX = function() {
+		return this._tbsActionTargetLocationX;
+	};
+	
+	Game_Map.prototype.getTbsActionTargetLocationY = function() {
+		return this._tbsActionTargetLocationY;
+	};
+	
+	Game_Map.prototype.isAnyTbsActionTargets = function() {
+		var targetsByHit = this.getTbsActionTargetsByHit();
+		var i;
+		for(i = 0; i < targetsByHit.length; i++) {
+			if(targetsByHit[i].length > 1 || (targetsByHit[i].length === 1 && !targetsByHit[i][0].battler.blankDummy())) { return true; }
+		}
+		return false;
+	};
+	
+	Game_Map.prototype.getTbsActionTargets = function() {
+		var targetsByHit = this.getTbsActionTargetsByHit();
+		var returnTargets = [];
+		var i;
+		targetsByHit.forEach(function (targets) {
+			targets.forEach(function (target) {
+				if(returnTargets.indexOf(target) === -1) {
+					returnTargets.push(target);
+				}
+			});
+		});
+		return returnTargets;
+	};
+	
+	Game_Map.prototype.getTbsActionTargetsByHit = function() {
+		var targetsByHit = [];
+		if(!this._tbsSelectedAction) { return targetsByHit; }
+		var hits = this._tbsSelectedAction.hits;
+		if(!hits) { return targetsByHit; }
+		var centerTarget = this.getTbsActorAtPosition($gamePlayer.x, $gamePlayer.y);
+		if(!centerTarget) {
+			centerTarget = this._dummyTarget;
+			centerTarget.chara.setPosition($gamePlayer.x, $gamePlayer.y);
+		}
+		var that = this;
+		hits.forEach(function (hit) {
+			var targets = [];
+			if(hit.rangeType === "aoe") {
+				targets.push(centerTarget);
+				var centerPointX = hit.isFollowUpHit ? $gamePlayer.x : that._tbsSelectedActor.chara.x;
+				var centerPointY = hit.isFollowUpHit ? $gamePlayer.y : that._tbsSelectedActor.chara.y;
+				var aoeRange = hit.range ? hit.range / 2 : 0;
+				aoeRange += hit.ignoreUserRange ? 0 : that._tbsSelectedActor.battler.baseRange() / 2;
+				var x;
+				for(x = centerPointX - aoeRange ; x <= centerPointX + aoeRange; x++) {
+					var y;
+					for(y = centerPointY - aoeRange ; y <= centerPointY + aoeRange; y++) {
+						if(hit.ignoreCenter && x === centerPointX && y === centerPointY) { continue; }
+						var distance = that.actualDistance(x, y, centerPointX, centerPointY);
+						if(distance <= aoeRange) {
+							var target = that.getTbsActorAtPosition(x, y);
+							if(target && targets.indexOf(target) === -1) {
+								targets.push(target);
+							}
+						}
+					}
+				}
+			} else {
+				//var distance = that.actualDistance(that._tbsSelectedActor.chara.x, that._tbsSelectedActor.chara.y,
+				//	$gamePlayer.x, $gamePlayer.y);
+				//if(hit.range >= distance) {
+					targets.push(centerTarget);
+				//}
+			}
+			targetsByHit.push(targets);
+		});
+		return targetsByHit;
+	};
+	
+	Game_Map.prototype.spawnTbsAoeSprites = function() {
+		if(this._tbsAoeSprites.length > 0 || !this._tbsSelectedAction) { return; }
+		var hits = this._tbsSelectedAction.hits;
+		if(!hits) { return; }
+		var that = this;
+		hits.forEach(function (hit) {
+			if(hit.rangeType === "aoe") {
+				var centerPointX = hit.isFollowUpHit ? $gamePlayer.x : that._tbsSelectedActor.chara.x;
+				var centerPointY = hit.isFollowUpHit ? $gamePlayer.y : that._tbsSelectedActor.chara.y;
+				var aoeRange = hit.range ? hit.range / 2 : 0;
+				aoeRange += hit.ignoreUserRange ? 0 : that._tbsSelectedActor.battler.baseRange() / 2;
+				var x;
+				for(x = centerPointX - aoeRange ; x <= centerPointX + aoeRange; x++) {
+					var y;
+					for(y = centerPointY - aoeRange ; y <= centerPointY + aoeRange; y++) {
+						if((hit.ignoreCenter && x === centerPointX && y === centerPointY)
+							|| that.getExistingTbsTile(x, y, that._tbsAoeSprites)) { continue; }
+						var distance = that.actualDistance(x, y, centerPointX, centerPointY);
+						if(distance <= aoeRange) {
+							that._tbsAoeSprites.push($gameTemp.addTbsAoeSprite(x, y));
+						}
+					}
+				}
+			}
+		});
+	};
+	
+	Game_Map.prototype.clearTbsAoeSprites = function() {
+		$gameTemp.setShouldClearTbsAoeSprites(true);
+		this._tbsAoeSprites = [];
+	};
+	
+	Game_Map.prototype.isCursorInActionField = function() {
+		var actionTiles = this._tbsActionsTiles[this._tbsSelectedActionIndex];
+		if(!actionTiles) { return false; }
+		var i;
+		for(i = 0; i < actionTiles.length; i++) {
+			var actionTile = actionTiles[i];
+			if(!!this.getExistingTbsTile($gamePlayer.x, $gamePlayer.y, actionTile.tiles)) {
+				return true;
+			}
+		}
+		return false;
+	};
+	
+	Game_Map.prototype.setTbsSelectedActionType = function(type) {
+		if(this._tbsSelectedActionType !== type) {
+			this._tbsSelectedActionType = type;
+			this.generateTbsActionFields();
+		}
+	};
+	
+	Game_Map.prototype.setTbsSelectedAction = function(actionInfo, index) {
+		if(this._tbsSelectedActionInfo !== actionInfo) {
+			this._tbsSelectedAction = actionInfo ? actionInfo.action : undefined;
+			this._tbsSelectedActionInfo = actionInfo;
+			this._tbsSelectedActionIndex = index;
+			if(this.currentForce().isParty) {
+				this.clearTbsRangeSprites();
+				this.clearTbsAoeSprites();
+				if(this.tbsTurnMode() === "selectActionTarget" 
+					|| this.tbsTurnMode() === "executeAction"
+					|| this.tbsTurnMode() === "actionBattleScene") {
+					this.spawnTbsAoeSprites();
+				}
+			}
+		}
+	};
+	
+	Game_Map.prototype.getTbsSelectedActionInfo = function() {
+		return this._tbsSelectedActionInfo;
+	};
+	
+	Game_Map.prototype.setTbsActionMoveDestination = function(x, y) {
+		this._tbsActionMoveDestinationX = x;
+		this._tbsActionMoveDestinationY = y;
+	}
+	
+	Game_Map.prototype.clearTbsActionMoveDestination = function() {
+		this._tbsActionMoveDestinationX = -1;
+		this._tbsActionMoveDestinationY = -1;
+	}
+	
+	Game_Map.prototype.setTbsActionTargetPart = function(part) {
+		this._tbsActionTargetPart = part;
+	};
+	
+	Game_Map.prototype.clearTbsActionTargetPart = function() {
+		this._tbsActionTargetPart = undefined;
+	};
+	
+	Game_Map.prototype.getTbsActionTargetPart = function() {
+		return this._tbsActionTargetPart;
+	};
+	
+	Game_Map.prototype.setShouldPassTurn = function(should) {
+		this._tbsShouldPass = should;
+	};
+	
+	Game_Map.prototype.setTbsTurnMode = function(mode) {
+		if(this._tbsBattleMode && this._tbsTurnMode !== mode) {
+			var prevMode = this._tbsTurnMode
+			this._tbsTurnMode = mode;
+			$gamePlayer.setTbsCanMove(false);
+			$gamePlayer.setTbsFollowingCharacter(false);
+			$gamePlayer.clearCursorMoveField();
+			$gamePlayer.setTbsShowCursor(false);
+			$gamePlayer.clearMovingCharacter();
+			switch(this._tbsTurnMode) {
+			case "setup":
+				BattleManager.saveBgmAndBgs();
+				//$gameTemp.setShouldClearTbsDamageSprites(true);
+				break;
+			case "selectActorActionType":
+				$gamePlayer.setTbsShowCursor(true);
+				if(prevMode !== "manualMove" && prevMode !== "cancelMove" && prevMode !=="manualTarget") {
+					this.clearTbsRangeSprites();
+				}
+				if(prevMode === "setup") {
+					this._tbsCurrentTurnForce = 0;
+					this._tbsTurnJustStarted = true;
+					this._tbsMoveTiles = [];
+					this._tbsActionsTiles = [];
+					this.setTbsSelectedActor(undefined);
+					this.clearTbsManualMoveStart();
+					this.setTbsSelectedActionType(-1);
+					this.setTbsSelectedAction(undefined, -1);
+					this.clearTbsActionTargetLocation();
+					this.clearTbsActionMoveDestination();
+					this.clearTbsActionTargetPart();
+					this.setBreadcrumbStage("none");
+					this._tbsCurEnemyWaitFrames = -1;
+					this._tbsEnemyWaitFrames = 15;
+					this._tbsCurAfterBtlScnFrames = -1;
+					this._tbsAfterBtlScnFrames = 30;
+					this._tbsQueuedActions = [];
+					this._tbsShouldPass = false;
+					this._tbsAoeSprites = [];
+					this._dummyTarget = {};
+					this._dummyTarget.startingX = 0;
+					this._dummyTarget.startingY = 0;
+					this._dummyTarget.forceId = 0;
+					this._dummyTarget.isParty = false;
+					this._dummyTarget.orderNum = 0;
+					this._dummyTarget.battler = new Game_Enemy(7);
+					this._dummyTarget.memberPosition = -1;
+					this._dummyTarget.canActThisRound = false;
+					var chara = new Game_Character();
+					chara.setStepAnime(false);
+					chara.setTbsBattleMode(true);
+					chara.setPriorityType(1);
+					chara.setPosition(0, 0);
+					chara.setImage('', 0);
+					this._dummyTarget.chara = chara;
+					BattleManager.playBattleBgm();
+				}
+				if(prevMode === "selectActionTarget") {
+					this.setTbsSelectedAction(undefined, -1);
+					this.clearTbsActionTargetLocation();
+					this.clearTbsAoeSprites();
+				}
+				if(prevMode === "manualMove") {
+					if(this._tbsSelectedActor.movedThisRound) {
+						this.generateTbsActionFields();
+					}
+					var chara = this._tbsSelectedActor.chara;
+					this._tbsSelectedActor.movedThisRound = true;
+					if(this._tbsManualMoveStartX !== -1
+						&& chara.x === this._tbsManualMoveStartX && chara.y === this._tbsManualMoveStartY) {
+						this._tbsSelectedActor.movedThisRound = false;
+						this.clearTbsManualMoveStart();
+					}
+				}
+				if(prevMode === "cancelMove") {
+					this._tbsSelectedActor.movedThisRound = false;
+					this._tbsCancelMoveJustEnded = true;
+				}
+				if(prevMode === "actionBattleScene" || prevMode === "passTurn") {
+					this.tbsNextTurn();
+				}
+				break;
+			case "passTurn":
+				this._tbsShouldPass = true;
+				break;
+			case "survey":
+				this.clearTbsRangeSprites();
+				$gamePlayer.setTbsShowCursor(true);
+				break;
+			case "manualMove":
+				//$gameTemp.setShouldClearTbsDamageSprites(true);
+				if(this.currentForce().isParty) {
+					$gamePlayer.setCursorMoveField(this._tbsMoveTiles);
+				} else {
+					$gamePlayer.clearCursorMoveField();
+				}
+				if(this._tbsManualMoveStartX === -1) {
+					var chara = this._tbsSelectedActor.chara;
+					this.setTbsManualMoveStart(chara.x, chara.y);
+				}
+				this._tbsPassageType = "move";
+				$gamePlayer.setTbsShowCursor(true);
+				this._tbsManualMoveStarted = true;
+				break;
+			case "cancelMove":
+				//$gameTemp.setShouldClearTbsDamageSprites(true);
+				this._tbsPassageType = "move";
+				$gamePlayer.setTbsFollowingCharacter(true);
+				break;
+			case "selectActionTarget":
+				if(prevMode !== "manualTarget") {
+					this.clearTbsRangeSprites();
+				}
+				$gamePlayer.setTbsShowCursor(true);
+				if(this.currentForce().isParty) {
+					this.clearTbsActionTargetPart();
+				}
+				break;
+			case "manualTarget":
+				$gamePlayer.setTbsShowCursor(true);
+				this.clearTbsActionTargetPart();
+				break;
+			case "selectTargetPart":
+				$gamePlayer.setTbsShowCursor(true);
+				if(prevMode === "manualTarget") {
+					this.setTbsActionTargetLocation($gamePlayer.x, $gamePlayer.y);
+				}
+				break;
+			case "executeAction":
+				//$gameTemp.setShouldClearTbsDamageSprites(true);
+				this._tbsPassageType = "move";
+				$gamePlayer.setTbsShowCursor(true);
+				this._tbsSelectedActor.canActThisRound = false;
+				if(prevMode === "manualTarget") {
+					this.setTbsActionTargetLocation($gamePlayer.x, $gamePlayer.y);
+				}
+				if(this.currentForce().isParty) {
+					this.setBreadcrumbStage("allDone");
+				}
+				break;
+			case "actionBattleScene":
+				$gamePlayer.setTbsShowCursor(true);
+				if(!this._tbsSelectedAction.skipBattleScene && this.isAnyTbsActionTargets()) {
+					this._tbsInActionBattleScene = true;
+				}
+				var chara = this._tbsSelectedActor.chara;
+				if(chara.x === this._tbsActionTargetLocationX && chara.y === this._tbsActionTargetLocationY) {
+					chara.setDirection(2);
+				} else {
+					chara.turnTowardLocation(this._tbsActionTargetLocationX, this._tbsActionTargetLocationY);
+				}
+				break;
+			case "victory":
+				this._tbsMoveTiles = [];
+				this._tbsActionsTiles = [];
+				this.setTbsSelectedActor(undefined);
+				this.clearTbsManualMoveStart();
+				this.setTbsSelectedActionType(-1);
+				this.setTbsSelectedAction(undefined, -1);
+				this.clearTbsActionTargetLocation();
+				this.clearTbsActionMoveDestination();
+				this.clearTbsActionTargetPart();
+				this.setBreadcrumbStage("none");
+				this._tbsForces.forEach(function (tbsForce) {
+					if(tbsForce.isParty) {
+						tbsForce.actors.forEach(function (tbsActor) {
+							var battler = tbsActor.battler;
+							if(battler.getDamage("head") >= 2) { battler.setDamage("head", 1); }
+							if(battler.getDamage("mind") >= 2) { battler.setDamage("mind", 1); }
+							if(battler.getDamage("torso") >= 2) { battler.setDamage("torso", 1); }
+							battler.setStress(0);
+							battler.clearTbsBuffs();
+						});
+					}
+				});
+				this.setTbsCursorFocus(this._tbsLeadCharacter.chara.x, this._tbsLeadCharacter.chara.y);
+				this.focusTbsCursor();
+				break;
+			case "gameOver":
+				this._tbsMoveTiles = [];
+				this._tbsActionsTiles = [];
+				this.setTbsSelectedActor(undefined);
+				this.clearTbsManualMoveStart();
+				this.setTbsSelectedActionType(-1);
+				this.setTbsSelectedAction(undefined, -1);
+				this.clearTbsActionTargetLocation();
+				this.clearTbsActionMoveDestination();
+				this.clearTbsActionTargetPart();
+				this.setBreadcrumbStage("none");
+				SceneManager.goto(Scene_Gameover);
+				break;
+			default:
+				console.log("INVALID TURN MODE");
+			}
+			$gamePlayer.refresh();
+		}
+	};
+	
+	Game_Map.prototype.tbsNextTurn = function() {
+		var anyActive = false;
+		if(!this._tbsShouldPass) {
+			var curForce = this.currentForce();
+			for(i = 0; i < curForce.actors.length; i++) {
+				if(curForce.actors[i].canActThisRound) {
+					anyActive = true;
+					break;
+				}
+			}
+		}
+		this._tbsShouldPass = false;
+		
+		if(!anyActive) {
+			this._tbsCurrentTurnForce++;
+			if(this._tbsCurrentTurnForce >= this._tbsForces.length) {
+				this._tbsCurrentTurnForce = 0;
+			}
+			
+			for(i = 0; i < this._tbsForces.length; i++) {
+				var j;
+				for(j = 0; j < this._tbsForces[i].actors.length; j++) {
+					var battler = this._tbsForces[i].actors[j].battler;
+					this._tbsForces[i].actors[j].canActThisRound = !battler.isDown();
+					this._tbsForces[i].actors[j].movedThisRound = false;
+					
+					if(this._tbsCurrentTurnForce === i) {
+						var damageStress = (battler.getDamage("head") > 0 ? battler.getDamage("head") + 1 : 0)
+							+ (battler.getDamage("mind") > 0 ? battler.getDamage("mind") + 1 : 0)
+							+ battler.getDamage("torso");
+						if(battler.limbsType() === "winged" && battler.isFlying()) {
+							damageStress += battler.getDamage("leftLeg") / 2
+								+ battler.getDamage("rightLeg") / 2
+								+ (battler.getDamage("leftArm") > 0 ? battler.getDamage("leftArm") + 1 : 0)
+								+ (battler.getDamage("rightArm") > 0 ? battler.getDamage("rightArm") + 1 : 0);
+						} else if(battler.limbsType() === "quadrupedal") {
+							damageStress += battler.getDamage("leftLeg")
+								+ battler.getDamage("rightLeg")
+								+ battler.getDamage("leftArm")
+								+ battler.getDamage("rightArm");
+						} else {
+							damageStress += (battler.getDamage("leftLeg") > 0 ? battler.getDamage("leftLeg") + 1 : 0)
+								+ (battler.getDamage("rightLeg") > 0 ? battler.getDamage("rightLeg") + 1 : 0)
+								+ battler.getDamage("leftArm") / 2
+								+ battler.getDamage("rightArm") / 2;
+						}
+						battler.adjustStress(Math.floor(damageStress) - battler.stressRecovery());
+						battler.tickTbsBuffs();
+					}
+				}
+			}
+		}
+		
+		this._tbsMoveTiles = [];
+		this._tbsActionsTiles = [];
+		this.setTbsSelectedActor(undefined);
+		this.clearTbsManualMoveStart();
+		this.setTbsSelectedActionType(-1);
+		this.setTbsSelectedAction(undefined, -1);
+		this.clearTbsActionTargetLocation();
+		this.clearTbsActionMoveDestination();
+		this.clearTbsActionTargetPart();
+		this.setBreadcrumbStage("none");
+		this.clearTbsAoeSprites();
+		
+		this._tbsTurnJustStarted = true;
+	};
+	
+	Game_Map.prototype.isInActionBattleScene = function() {
+		return this._tbsInActionBattleScene;
+	};
+	
+	Game_Map.prototype.setInActionBattleScene = function(inActionBattleScene) {
+		this._tbsInActionBattleScene = inActionBattleScene;
+	};
+	
+	Game_Map.prototype.updateCharacters = function() {
+		if(this._tbsBattleMode) {
+			this._tbsForces.forEach(function (force) {
+				force.actors.forEach(function (tbsActor) {
+					var battler = tbsActor.battler;
+					var isProne = battler.isDown();
+					var characterName = "";
+					var characterIndex = -1;
+					if(isProne) {
+						var proneRow = 0;
+						if(tbsActor.isParty) {
+							var actor = battler.actor();
+							characterName = actor.tbsStats.proneName;
+							characterIndex = actor.tbsStats.proneIndex;
+							proneRow = actor.tbsStats.proneRow;
+						} else {
+							var enemy = battler.enemy();
+							characterName = enemy.tbsStats.proneName;
+							characterIndex = enemy.tbsStats.proneIndex;
+							proneRow = enemy.tbsStats.proneRow;
+						}
+						tbsActor.chara.setDirection((proneRow + 1) * 2);
+						tbsActor.chara.setPriorityType(0);
+					} else {
+						if(tbsActor.isParty) {
+							characterName = battler.characterName();
+							characterIndex = battler.characterIndex();
+						} else {
+							var enemy = battler.enemy();
+							characterName = enemy.tbsStats.characterName;
+							characterIndex = enemy.tbsStats.characterIndex;
+						}
+						tbsActor.chara.setPriorityType(1);
+					}
+					tbsActor.chara.setImage(characterName, characterIndex);
+					tbsActor.chara.update();
+				});
+			});
+			if(this._tbsAoeSprites) {
+				this._tbsAoeSprites.forEach(function (sprite) {
+					sprite.update();
+				});
+			}
+		}
+	};
+	
+	Game_Map.prototype.updateTbsBattle = function() {
+		if(this._tbsBattleMode) {
+			this.processQueuedActions();
+			switch(this._tbsTurnMode) {
+			case "setup":
+				this.updateTbsSetup();
+				break;
+			case "selectActorActionType":
+				this.updateTbsSelectActorActionType();
+				//this.updateBattlerStatus();
+				break;
+			case "passTurn":
+				this.updateTbsPassTurn();
+				break;
+			case "survey":
+				this.updateTbsSurvey();
+				//this.updateBattlerStatus();
+				break;
+			case "manualMove":
+				this.updateTbsManualMove();
+				break;
+			case "cancelMove":
+				this.updateTbsCancelMove();
+				break;
+			case "selectActionTarget":
+				this.updateTbsSelectActionTarget();
+				//this.updateBattlerStatus();
+				break;
+			case "manualTarget":
+				this.updateTbsManualTarget();
+				//this.updateBattlerStatus();
+				break;
+			case "selectTargetPart":
+				this.updateTbsSelectTargetPart();
+				//this.updateBattlerStatus();
+				break;
+			case "executeAction":
+				this.updateTbsExecuteAction();
+				break;
+			case "actionBattleScene":
+				this.updateTbsActionBattleScene();
+				break;
+			case "victory":
+				this.updateTbsVictory();
+				break;
+			case "gameOver":
+				this.updateTbsGameOver();
+				break;
+			}
+		}
+	};
+	
+	Game_Map.prototype.processQueuedActions = function() {
+		if(!this._tbsSelectedActor || !this._tbsQueuedActions || this._tbsQueuedActions.length === 0) { return; }
+		var actionInfo = this._tbsQueuedActions.pop();
+		var chara = this._tbsSelectedActor.chara;
+		var action = actionInfo.action;
+		var actionRange = this.getLargestActionRange(action);
+		var actionTiles = [];
+		this._tbsPassageType = actionRange.type;
+		this.checkActionTiles(chara.x, chara.y, actionRange, actionTiles);
+		this._tbsActionsTiles[this._tbsActionsTiles.length] = actionTiles;
+	};
+	
+	Game_Map.prototype.updateBattlerStatus = function() {
+		if(this.tbsCursorIsFocusing() || $gamePlayer.isMoving()) {
+			$gameTemp.setShouldClearTbsDamageSprites(true);
+			return;
+		}
+		if($gameTemp.isFreeToMakeDamageSprites()) {
+			var focusedActor = this.getTbsActorAtPosition($gamePlayer.x, $gamePlayer.y);
+			if(!focusedActor) { return; }
+			var battler = focusedActor.battler;
+			var chara = focusedActor.chara;
+			$gameTemp.addTbsDamageSprite(chara.x-1, chara.y-1, 'upperLeft', battler.getDamage('rightArm'));
+			$gameTemp.addTbsDamageSprite(chara.x+1, chara.y-1, 'upperRight', battler.getDamage('leftArm'));
+			$gameTemp.addTbsDamageSprite(chara.x-1, chara.y+1, 'lowerLeft', battler.getDamage('rightLeg'));
+			$gameTemp.addTbsDamageSprite(chara.x+1, chara.y+1, 'lowerRight', battler.getDamage('leftLeg'));
+		}
+	};
+	
+	Game_Map.prototype.updateTbsSetup = function() {
+		var nobodyMoved = true;
+		this._tbsForces.forEach(function (force) {
+			if(force.isParty) {
+				force.actors.forEach(function (actor) {
+					if(actor.chara.isMoving() || actor.chara.x !== actor.startingX || actor.chara.y !== actor.startingY) {
+						nobodyMoved = false;
+						if(!actor.chara.isMoving()) {
+							direction = actor.chara.findDirectionTo(actor.startingX, actor.startingY);
+							actor.chara.moveStraight(direction);
+						}
+					}
+				});
+			}
+		});
+		if(nobodyMoved) {
+			this._tbsForces.forEach(function (force) {
+				if(force.isParty) {
+					force.actors.forEach(function (actor) {
+						actor.chara.setDirection(2);
+					});
+				}
+			});
+			this.setTbsTurnMode("selectActorActionType");
+		}
+	};
+	
+	Game_Map.prototype.getRandomInt = function(max) {
+		return Math.floor(Math.random() * Math.floor(max));
+	}
+	
+	Game_Map.prototype.updateTbsSelectActorActionType = function() {
+		if(this._tbsSelectedActor) {
+			this.setTbsCursorFocus(this._tbsSelectedActor.chara.x, this._tbsSelectedActor.chara.y);
+		}
+		this.focusTbsCursor();
+			
+		if(!this.currentForce().isParty) {
+			if(!this._tbsSelectedActor) {
+				var actives = [];
+				this.currentForce().actors.forEach(function (actor) {
+					if(actor.canActThisRound) {
+						var chances = 1;
+						var stress = actor.battler.stress();
+						if(stress >= 5) {
+							chances = 4;
+						} else if (stress >= 3) {
+							chances = 3;
+						} else if (stress >= 1) {
+							chances = 2;
+						}
+						while(chances) {
+							actives.push(actor);
+							chances--;
+						}
+					}
+				});
+				this.setTbsSelectedActor(actives[this.getRandomInt(actives.length)]);
+				this.setTbsCursorFocus(this._tbsSelectedActor.chara.x, this._tbsSelectedActor.chara.y);
+				this.focusTbsCursor();
+				this.setBreadcrumbStage("manualMove");
+			}
+			if(!this._tbsSelectedAction) {
+				if(this._tbsActionsTiles.length === 0 && this._tbsQueuedActions.length === 0) {
+					this.generateTbsActionFields();
+				}
+				if(this._tbsQueuedActions.length > 0) { return; }
+				
+				var shouldRest = false;
+				var defensePriority = 0;
+				var stress = this._tbsSelectedActor.battler.stress();
+				if(stress > 1) {
+					var restChance = 1 - (stress - 1) / 5;
+					if(Math.random() > restChance) {
+						shouldRest = true;
+					}
+				}
+				if (stress >= 5) {
+					defensePriority = 3;
+				} else if(stress >= 3) {
+					defensePriority = 2;
+				} else if(stress >= 1) {
+					defensePriority = 1;
+				}
+				
+				var actionsByPriority = {};
+				
+				var actionInfos = this.getEnemyActionInfos();
+				var highestPriority = 0;
+				var i;
+				for(i = 0; i < actionInfos.length; i++) {
+					var actionInfo = actionInfos[i];
+					var action = actionInfo.action;
+					if((shouldRest && action.name === "Full Defense") || (!shouldRest && action.name === "Rest")) {
+						continue;
+					}
+					var priority = 0;
+					//TODO: actually handle priorities somehow
+					if(action.name === "Full Defense" || action.name === "Rest") {
+						priority = defensePriority;
+					} else if(action.name === "Unarmed Attack") {
+						priority = 1;
+					} else {
+						priority = 2;
+					}
+					if(priority > highestPriority) {
+						highestPriority = priority;
+					}
+					if(!actionsByPriority[priority]) {
+						actionsByPriority[priority] = [];
+					}
+					var actionByPriority = {};
+					actionByPriority.actionInfo = actionInfo;
+					actionByPriority.index = i;
+					actionsByPriority[priority].push(actionByPriority);
+				}
+				
+				for(i = highestPriority; i >= 0; i--) {
+					var thisPrioritysActions = actionsByPriority[i];
+					if(!thisPrioritysActions) { continue; }
+					this.selectEnemyActionAndTarget(thisPrioritysActions);
+					if(this._tbsSelectedAction) { break; }
+				}
+				
+				if(this._tbsSelectedAction) {
+					
+				} else {
+					console.log("NO ENEMY ACTION SELECTED");
+				}
+			}
+			if(!this.tbsCursorIsFocusing()) {
+				if(this._tbsCurEnemyWaitFrames === -1) {
+					this._tbsCurEnemyWaitFrames = this._tbsEnemyWaitFrames;
+				}
+				if(this._tbsCurEnemyWaitFrames > 0) {
+					this._tbsCurEnemyWaitFrames--;
+				} else {
+					this._tbsCurEnemyWaitFrames = -1;
+					this.setTbsTurnMode("manualMove");
+				}
+			}
+		}
+		this.updateTbsMovementRangeField();
+	};
+	
+	Game_Map.prototype.selectEnemyActionAndTarget = function(actionsWithIndicies) {
+		if(!actionsWithIndicies || actionsWithIndicies.length === 0) {
+			return ;
+		}
+		var actionsWithTargets = [];
+		var i;
+		for(i = 0; i < actionsWithIndicies.length; i++) {
+			var actionWithIndex = actionsWithIndicies[i];
+			var actionInfo = actionWithIndex.actionInfo;
+			var action = actionInfo.action;
+			var actionIndex = actionWithIndex.index;
+			var targets = [];
+			var alliesAndEnemies = this.getCurrentActorAlliesAndEnemiesInRange(actionIndex);
+			if(action.intendedTarget === "ally") {
+				targets = alliesAndEnemies.allies;
+			} else if(action.intendedTarget === "enemy") {
+				targets = alliesAndEnemies.enemies.filter(function (enemy) { return !enemy.battler.isDown(); });
+			}
+			if(targets.length > 0) {
+				var actionWithTargets = {};
+				actionWithTargets.actionInfo = actionInfo;
+				actionWithTargets.targets = targets;
+				actionWithTargets.index = actionIndex;
+				actionsWithTargets.push(actionWithTargets);
+			}
+		}
+		
+		if(actionsWithTargets.length > 0) {
+			var randomActionIndex = this.getRandomInt(actionsWithTargets.length);
+			var actionWithTarget = actionsWithTargets[randomActionIndex];
+			this.setTbsSelectedAction(actionWithTarget.actionInfo, actionWithTarget.index);
+			var randomTargetIndex = this.getRandomInt(actionWithTarget.targets.length);
+			var finalTarget = actionWithTarget.targets[randomTargetIndex];
+			this.setTbsActionTargetLocation(finalTarget.chara.x, finalTarget.chara.y);
+			
+			if(actionWithTarget.actionInfo.canTargetBodyPart) {
+				var stress = finalTarget.battler.stress();
+				if(stress >= 5) {
+					this.setTbsActionTargetPart("vital");
+				} else {
+					if(Math.random() >= 0.5 + stress / 10) {
+						this.setTbsActionTargetPart("mobility");
+					} else {
+						this.setTbsActionTargetPart("vital");
+					}
+				}
+			}
+			
+			if(finalTarget === this._tbsSelectedActor) {
+				var enemies = [];
+				var curForce = this.currentForce();
+				for(i = 0; i < this._tbsForces.length; i++) {
+					if(curForce.enemyForceIds.indexOf(i) >= 0) {
+						enemies = enemies.concat(this._tbsForces[i].actors);
+					}
+				}
+				var closestEnemy = undefined;
+				var shortesetDistance = -1;
+				var chara = this._tbsSelectedActor.chara;
+				var that = this;
+				enemies.forEach(function (enemy) {
+					if(!enemy.battler.isDown()) {
+						var distance = that.actualDistance(chara.x, chara.y, enemy.chara.x, enemy.chara.y);
+						if(shortesetDistance === -1 || shortesetDistance > distance) {
+							shortesetDistance = distance;
+							closestEnemy = enemy;
+						}
+					}
+				});
+				if(closestEnemy && shortesetDistance < 15) {
+					var closestTile = undefined;
+					shortesetDistance = -1;
+					this._tbsMoveTiles.forEach(function (tile) {
+						if(!that.getTbsActorAtPosition(tile.x, tile.y)) {
+							var distanceOne = that.actualDistance(chara.x, chara.y, tile.x, tile.y);
+							if(distanceOne <= 1.5) {
+								var distanceTwo = that.actualDistance(tile.x, tile.y, closestEnemy.chara.x, closestEnemy.chara.y);
+								if(shortesetDistance == -1 || shortesetDistance > distanceTwo) {
+									shortesetDistance = distanceTwo;
+									closestTile = tile;
+								}
+							}
+						}
+					});
+					if(closestTile) {
+						this.setTbsActionTargetLocation(closestTile.x, closestTile.y);
+					}
+				}
+			}
+		}
+	};
+	
+	Game_Map.prototype.updateTbsMovementRangeField = function() {
+		if($gameTemp.isFreeToMakeRangeTiles()) {
+			this._tbsMoveTiles.forEach(function (tile) {
+				$gameTemp.addTbsRangeTile(tile.x, tile.y, 'white');
+			});
+		}
+	};
+	
+	Game_Map.prototype.updateTbsPassTurn = function() {
+		this.setTbsTurnMode("selectActorActionType");
+	};
+	
+	Game_Map.prototype.updateTbsSurvey = function() {
+		if(this.tbsCursorIsFocusing()) {
+			this.focusTbsCursor();
+			return;
+		}
+		$gamePlayer.setTbsCanMove(true);
+		$gamePlayer.setTbsFollowingCharacter(false);
+		$gamePlayer.clearCursorMoveField();
+		$gamePlayer.setTbsShowCursor(true);
+		$gamePlayer.clearMovingCharacter();
+		$gamePlayer.refresh();
+	};
+	
+	Game_Map.prototype.updateTbsManualMove = function() {
+		if(this.tbsCursorIsFocusing()) {
+			this.focusTbsCursor();
+			return;
+		}
+		
+		if(this._tbsManualMoveStarted) {
+			this._tbsManualMoveStarted = false;
+			if(this.currentForce().isParty) {
+				$gamePlayer.setTbsCanMove(true);
+				$gamePlayer.setTbsFollowingCharacter(false);
+				$gamePlayer.setTbsShowCursor(false);
+				$gamePlayer.setMovingCharacter(this._tbsSelectedActor.chara);
+			} else {
+				$gamePlayer.setTbsCanMove(false);
+				$gamePlayer.setTbsFollowingCharacter(true);
+				$gamePlayer.setTbsShowCursor(false);
+				$gamePlayer.clearMovingCharacter();
+			}
+			$gamePlayer.refresh();
+		}
+		
+		if(!this.currentForce().isParty) {
+			if(this._tbsCurEnemyWaitFrames !== -1) {
+				if(this._tbsCurEnemyWaitFrames > 0) {
+					this._tbsCurEnemyWaitFrames--;
+				} else {
+					this._tbsCurEnemyWaitFrames = -1;
+					this.clearTbsManualMoveStart();
+					this.clearTbsRangeSprites();
+					this._tbsSelectedActor.movedThisRound = true;
+					this.setTbsTurnMode("selectActionTarget");
+					this.setBreadcrumbStage("allDone");
+					this.generateTbsActionFields();
+				}
+				return;
+			}
+			
+			var chara = this._tbsSelectedActor.chara;
+			if(chara.isMoving()) { return; }
+			if(this._tbsActionMoveDestinationX === -1 && !this.isTargetInRangeFromPosition(chara.x, chara.y)) {
+				this.calculateMoveDestinationForAction();
+			}
+			if(this._tbsActionMoveDestinationX !== -1 && (this._tbsActionMoveDestinationX !== chara.x || this._tbsActionMoveDestinationY !== chara.y)) {
+				var direction = chara.findDirectionTo(this._tbsActionMoveDestinationX, this._tbsActionMoveDestinationY);
+				chara.moveStraight(direction);
+				$gamePlayer.setNextFrameMoveDirection(direction);
+				return;
+			}
+			this.clearTbsActionMoveDestination();
+			this._tbsCurEnemyWaitFrames = this._tbsEnemyWaitFrames;
+		}
+	};
+	
+	Game_Map.prototype.updateTbsCancelMove = function() {
+		var chara = this._tbsSelectedActor.chara;
+		if(chara.isMoving()
+			|| chara.x !== this._tbsManualMoveStartX
+			|| chara.y !== this._tbsManualMoveStartY) {
+			if(!chara.isMoving()) {
+				var direction = chara.findDirectionTo(this._tbsManualMoveStartX, this._tbsManualMoveStartY);
+				chara.moveStraight(direction);
+				$gamePlayer.setNextFrameMoveDirection(direction);
+			}
+			return;
+		}
+		this.clearTbsManualMoveStart();
+		chara.setDirection(2);
+		this.setTbsTurnMode("selectActorActionType");
+	};
+	
+	Game_Map.prototype.updateTbsSelectActionTarget = function() {
+		if(this._tbsQueuedActions.length > 0) { return; }
+		this.updateTbsActionRangeField();
+		if(!this.currentForce().isParty) {
+			if(this._tbsCurEnemyWaitFrames === -1) {
+				this._tbsCurEnemyWaitFrames = this._tbsEnemyWaitFrames;
+			}
+			if(this._tbsCurEnemyWaitFrames > 0) {
+				this._tbsCurEnemyWaitFrames--;
+				return;
+			} else {
+				this._tbsSelectedActor.chara.turnTowardLocation(this._tbsActionTargetLocationX, this._tbsActionTargetLocationY);
+				this._tbsCurEnemyWaitFrames = -1;
+			}
+		}
+		
+		if(this._tbsActionTargetLocationX !== -1) {
+			this.setTbsCursorFocus(this._tbsActionTargetLocationX, this._tbsActionTargetLocationY);
+		} else {
+			this.setTbsCursorFocus(this._tbsSelectedActor.chara.x, this._tbsSelectedActor.chara.y);
+		}
+		this.focusTbsCursor();
+		if(!this.currentForce().isParty) {
+			this.setTbsTurnMode("executeAction");
+		}
+	};
+	
+	Game_Map.prototype.updateTbsActionRangeField = function() {
+		if($gameTemp.isFreeToMakeRangeTiles()) {
+			var actionTiles = this._tbsActionsTiles[this._tbsSelectedActionIndex];
+			if(!actionTiles) { return; }
+			var chara = this._tbsSelectedActor.chara;
+			var centerActionTile = this.getExistingTbsTile(chara.x, chara.y, actionTiles);
+			if(centerActionTile) {
+				centerActionTile.tiles.forEach(function (tile) {
+					$gameTemp.addTbsRangeTile(tile.x, tile.y,
+						actionTiles.length === 1 ? 'white' : 'red');
+				});
+			}
+			var that = this;
+			actionTiles.forEach(function (actionTile) {
+				if(actionTile.x === chara.x && actionTile.y === chara.y) { return; }
+				actionTile.tiles.forEach(function (tile) {
+					if(that.getExistingTbsTile(tile.x, tile.y, $gameTemp.tbsRangeTilesToAdd())) { return; }
+					$gameTemp.addTbsRangeTile(tile.x, tile.y, 'white');
+				});
+			});
+		}
+	};
+	
+	Game_Map.prototype.updateTbsManualTarget = function() {
+		if(this.tbsCursorIsFocusing()) {
+			this.focusTbsCursor();
+			return;
+		}
+		if(this._tbsActionsTiles[this._tbsSelectedActionIndex]) {
+			$gamePlayer.setTbsCanMove(true);
+			$gamePlayer.setTbsFollowingCharacter(false);
+			$gamePlayer.setTbsShowCursor(true);
+			$gamePlayer.clearMovingCharacter();
+			$gamePlayer.clearCursorMoveField();
+			$gamePlayer.refresh();
+		}
+	};
+	
+	Game_Map.prototype.updateTbsSelectTargetPart = function() {
+		if(this.tbsCursorIsFocusing()) {
+			this.focusTbsCursor();
+		}
+	};
+	
+	Game_Map.prototype.updateTbsExecuteAction = function() {
+		if(this.tbsCursorIsFocusing()) {
+			this.focusTbsCursor();
+			return;
+		}
+		
+		if(!this.currentForce().isParty) {
+			if(this._tbsCurEnemyWaitFrames === -1) {
+				this._tbsCurEnemyWaitFrames = this._tbsEnemyWaitFrames;
+			}
+			if(this._tbsCurEnemyWaitFrames > 0) {
+				this._tbsCurEnemyWaitFrames--;
+			} else {
+				this._tbsCurEnemyWaitFrames = -1;
+				this.setTbsTurnMode("actionBattleScene");
+			}
+			return;
+		}
+		
+		var enemies = [];
+		var chara = this._tbsSelectedActor.chara;
+		if(chara.isMoving()) { return; }
+		if(this._tbsActionMoveDestinationX === -1 && !this.isTargetInRangeFromPosition(chara.x, chara.y)) {
+			this.calculateMoveDestinationForAction();
+		}
+		if(this._tbsActionMoveDestinationX !== -1
+			&& (this._tbsActionMoveDestinationX !== chara.x || this._tbsActionMoveDestinationY !== chara.y)) {
+			var direction = chara.findDirectionTo(this._tbsActionMoveDestinationX, this._tbsActionMoveDestinationY);
+			chara.moveStraight(direction);
+			return;
+		}
+		this.clearTbsActionMoveDestination();
+		this.setTbsTurnMode("actionBattleScene");
+	};
+	
+	Game_Map.prototype.isTargetInRangeFromPosition = function(x, y) {
+		if(!this._tbsSelectedActor || !this._tbsSelectedAction || this._tbsActionTargetLocationX === -1) { return false; }
+		var actionTile = this.getExistingTbsTile(x, y, this._tbsActionsTiles[this._tbsSelectedActionIndex]);
+		if(!actionTile) { return false; }
+		return !!this.getExistingTbsTile(this._tbsActionTargetLocationX, this._tbsActionTargetLocationY, actionTile.tiles);
+	};
+	
+	Game_Map.prototype.calculateMoveDestinationForAction = function() {
+		if(!this._tbsSelectedActor || !this._tbsSelectedAction || this._tbsActionTargetLocationX === -1) { return; }
+		var closest = {};
+		closest.x = -1;
+		closest.y = -1;
+		var closestDistance = -1;
+		var chara = this._tbsSelectedActor.chara;
+		var that = this;
+		this._tbsActionsTiles[this._tbsSelectedActionIndex].forEach(function (actionTile) {
+			if(!that.isTargetInRangeFromPosition(actionTile.x, actionTile.y)) { return; }
+			var distance = that.actualDistance(chara.x, chara.y, actionTile.x, actionTile.y);
+			if(closestDistance === -1 || distance < closestDistance) {
+				closestDistance = distance;
+				closest.x = actionTile.x;
+				closest.y = actionTile.y;
+			}
+		});
+		this.setTbsActionMoveDestination(closest.x, closest.y);
+	};
+	
+	Game_Map.prototype.actualDistance = function(x1, y1, x2, y2) {
+		var dX = x1 - x2;
+		var dY = y1 - y2;
+		var dXsq = dX * dX;
+		var dYsq = dY * dY;
+		return Math.sqrt(dXsq + dYsq);
+	};
+	
+	Game_Map.prototype.updateTbsActionBattleScene = function() {
+		if(this._tbsInActionBattleScene) { return; }
+		if(!this._tbsSelectedAction.skipBattleScene && this.isAnyTbsActionTargets()) {
+			if(this._tbsCurAfterBtlScnFrames === -1) {
+				this._tbsCurAfterBtlScnFrames = this._tbsAfterBtlScnFrames;
+				return;
+			} else {
+				this._tbsCurAfterBtlScnFrames--;
+				if(this._tbsCurAfterBtlScnFrames > 0) {
+					return;
+				}
+			}
+		}
+		this._tbsCurAfterBtlScnFrames = -1;
+		if(this._tbsSelectedAction.skipBattleScene || !this.isAnyTbsActionTargets()) {
+			var tbsTargets = this.getTbsActionTargets();
+			var tbsTargetsByHit = this.getTbsActionTargetsByHit();
+			if(tbsTargets.length > 0) {
+				var that = this;
+				tbsTargets.forEach(function (tbsTarget) {
+					var results = BattleManager.combatMath(that._tbsSelectedActor.battler, that._tbsSelectedActionInfo, tbsTarget.battler, tbsTargetsByHit);
+					BattleManager.applyActionResults(results, tbsTarget.battler);
+				});
+			}
+		}
+		if(this.isAnyTbsActionTargets()) {
+			this.getTbsActionTargets().forEach(function (tbsTarget) {
+				if(tbsTarget.canActThisRound && tbsTarget.battler.isDown()) {
+					tbsTarget.canActThisRound = false;
+				}
+			});
+		}
+		if(this._tbsSelectedAction.stressCost) {
+			this._tbsSelectedActor.battler.adjustStress(this._tbsSelectedAction.stressCost);
+		}
+		
+		var enemyForceIds = [];
+		var partyAndAlliesIds = [];
+		var i;
+		for(i = 0; i < this._tbsForces.length; i++) {
+			var tbsForce = this._tbsForces[i];
+			if(tbsForce.isParty) {
+				partyAndAlliesIds.push(i);
+				tbsForce.enemyForceIds.forEach(function (enemyForceId) {
+					if(enemyForceIds.indexOf(enemyForceId) === -1) {
+						enemyForceIds.push(enemyForceId);
+					}
+				});
+			}
+		}
+		for(i = 0; i < this._tbsForces.length; i++) {
+			if(partyAndAlliesIds.indexOf(i) >= 0) { continue; }
+			var tbsForce = this._tbsForces[i];
+			var sameEnemies = true;
+			var j;
+			for(j = 0; j < enemyForceIds.length; j++) {
+				var enemyForceId = enemyForceIds[j];
+				if(tbsForce.enemyForceIds.indexOf(enemyForceId) === -1) {
+					sameEnemies = false;
+					break;
+				}
+			}
+			if(sameEnemies) {
+				partyAndAlliesIds.push(i);
+			}
+		}
+		var partyAndAlliesAllDown = true;
+		for(i = 0; i < partyAndAlliesIds.length; i++) {
+			var allyForceId = partyAndAlliesIds[i];
+			var allyForce = this._tbsForces[allyForceId];
+			var j;
+			for(j = 0; j < allyForce.actors.length; j++) {
+				var tbsActor = allyForce.actors[j];
+				if(!tbsActor.battler.isDown()) {
+					partyAndAlliesAllDown = false;
+					break;
+				}
+			}
+			if(!partyAndAlliesAllDown) {
+				break;
+			}
+		}
+		if(partyAndAlliesAllDown) {
+			this.setTbsTurnMode("gameOver");
+			return;
+		}
+		
+		var enemiesAllDown = true;
+		for(i = 0; i < enemyForceIds.length; i++) {
+			var enemyForceId = enemyForceIds[i];
+			var enemyForce = this._tbsForces[enemyForceId];
+			var j;
+			for(j = 0; j < enemyForce.actors.length; j++) {
+				var tbsActor = enemyForce.actors[j];
+				if(!tbsActor.battler.isDown()) {
+					enemiesAllDown = false;
+					break;
+				}
+			}
+			if(!enemiesAllDown) {
+				break;
+			}
+		}
+		if(enemiesAllDown) {
+			this.setTbsTurnMode("victory");
+			return;
+		}
+		
+		this.setTbsTurnMode("selectActorActionType");
+	};
+	
+	Game_Map.prototype.updateTbsVictory = function() {
+		if(this.tbsCursorIsFocusing()) {
+			this.focusTbsCursor();
+			return;
+		}
+		var leadChara = this._tbsLeadCharacter.chara;
+		var nobodyMoved = true;
+		this._tbsForces.forEach(function (force) {
+			if(force.isParty) {
+				force.actors.forEach(function (actor) {
+					if(actor.chara.isMoving() || actor.chara.x !== leadChara.x || actor.chara.y !== leadChara.y) {
+						nobodyMoved = false;
+						if(!actor.chara.isMoving()) {
+							direction = actor.chara.findDirectionTo(leadChara.x, leadChara.y);
+							actor.chara.moveStraight(direction);
+						}
+					}
+				});
+			}
+		});
+		if(nobodyMoved) {
+			this._tbsForces = [];
+			this._tbsLeadCharacter = undefined;
+			$gamePlayer.setDirection(2);
+			$gamePlayer.followers().forEach(function (follower) {
+				follower.locate($gamePlayer.x, $gamePlayer.y);
+				follower.setDirection(2);
+			});
+			BattleManager.replayBgmAndBgs();
+			this.setTbsBattleMode(false);
+		}
+	};
+	
+	Game_Map.prototype.updateTbsGameOver = function() {
+		
+	};
+	
+	Game_Map.prototype.generateTbsMoveField = function() {
+		this._tbsPassageType = "move";
+		var tbsActor = this._tbsSelectedActor;
+		this._tbsMoveTiles = [];
+		if(!tbsActor || !tbsActor.canActThisRound || tbsActor.movedThisRound) { return; }
+		var moveDamage = tbsActor.battler.getDamage("torso");
+		var moveDenom = 7;
+		if(tbsActor.battler.limbsType() === "winged" && tbsActor.battler.isFlying()) {
+			moveDamage += tbsActor.battler.getDamage("leftArm") + tbsActor.battler.getDamage("rightArm");
+		} else if(tbsActor.battler.limbsType() === "quadrupedal") {
+			moveDenom = 11;
+			moveDamage += tbsActor.battler.getDamage("leftLeg") + tbsActor.battler.getDamage("rightLeg")
+				+ tbsActor.battler.getDamage("leftArm") + tbsActor.battler.getDamage("rightArm");
+		} else {
+			moveDamage += tbsActor.battler.getDamage("leftLeg") + tbsActor.battler.getDamage("rightLeg");
+		}
+		var battlerMoveRange = Math.max(2, tbsActor.battler.moveRange() * ((moveDenom - moveDamage) / moveDenom));
+		var moveRange = battlerMoveRange / 2;
+		var boundingCircle = this.getBoundingCircleArray(tbsActor.chara.x, tbsActor.chara.y, moveRange);
+		this.checkMoveTile(tbsActor.chara.x, tbsActor.chara.y, moveRange, this._tbsMoveTiles, boundingCircle);
+	};
+	
+	Game_Map.prototype.checkMoveTile = function(x, y, remainingRange, moveTiles, boundingCircle) {
+		if(!this.getExistingTbsTile(x, y, moveTiles)) {
+			var newTile = {};
+			newTile.x = x;
+			newTile.y = y;
+			moveTiles.push(newTile);
+		}
+		if(remainingRange < 1) { return; }
+		var potentialTiles = [];
+		var that = this;
+		var subCircle = [];
+		boundingCircle.forEach(function (tile) {
+			var distance = that.actualDistance(x, y, tile.x, tile.y);
+			if(distance <= remainingRange) {
+				subCircle.push(tile);
+			}
+		});
+		subCircle.forEach(function (tile) {
+			if((x === tile.x && y === tile.y) || that.getExistingTbsTile(tile.x, tile.y, moveTiles)) { return; }
+			if(!that.isTrajectoryObstructed(x, y, tile.x, tile.y, subCircle)) {
+				potentialTiles.push(tile);
+			}
+		});
+		
+		var reachedTiles = [];
+		this.findReachableMoveTiles(x-1, y, potentialTiles, reachedTiles);
+		this.findReachableMoveTiles(x+1, y, potentialTiles, reachedTiles);
+		this.findReachableMoveTiles(x, y-1, potentialTiles, reachedTiles);
+		this.findReachableMoveTiles(x, y+1, potentialTiles, reachedTiles);
+		
+		reachedTiles.forEach(function (tile) {
+			var distance = that.actualDistance(x, y, tile.x, tile.y);
+			that.checkMoveTile(tile.x, tile.y, remainingRange - distance, moveTiles, boundingCircle);
+		});
+	};
+	
+	Game_Map.prototype.findReachableMoveTiles = function(x, y, potentialTiles, reachedTiles) {
+		if(this.getExistingTbsTile(x, y, reachedTiles)) { return; }
+		var potentialTile = this.getExistingTbsTile(x, y, potentialTiles);
+		if(potentialTile) {
+			reachedTiles.push(potentialTile);
+			this.findReachableMoveTiles(x-1, y, potentialTiles, reachedTiles);
+			this.findReachableMoveTiles(x+1, y, potentialTiles, reachedTiles);
+			this.findReachableMoveTiles(x, y-1, potentialTiles, reachedTiles);
+			this.findReachableMoveTiles(x, y+1, potentialTiles, reachedTiles);
+		}
+	};
+	
+	Game_Map.prototype.getExistingTbsTile = function(x, y, tiles) {
+		var existingTile = undefined;
+		var i;
+		for(i = 0; i < tiles.length; i++) {
+			var tile = tiles[i];
+			if(tile.x === x && tile.y === y) {
+				existingTile = tiles[i];
+				break;
+			}
+		}
+		return existingTile;
+	};
+	
+	Game_Map.prototype.getTbsActorAtPosition = function(x, y, forManualMove) {
+		var returnActor = undefined;
+		var i;
+		for(i = 0; i < this._tbsForces.length; i++) {
+			var force = this._tbsForces[i];
+			var j;
+			for(j = 0; j < force.actors.length; j++) {
+				var actor = force.actors[j];
+				if(forManualMove && actor === this._tbsSelectedActor) { continue; }
+				if(actor.chara.x === x && actor.chara.y === y) {
+					returnActor = actor;
+					break;
+				}
+			}
+			if(returnActor) { break; }
+		}
+		return returnActor;
+	};
+	
+	Game_Map.prototype.directionIsDiagonal = function(d) {
+		return d === 7 || d === 9 || d === 1 || d === 3;
+	};
+	
+	Game_Map.prototype.clearTbsRangeSprites = function() {
+		$gameTemp.setShouldClearTbsRangeTiles(true);
+	};
+	
+	Game_Map.prototype.generateTbsActionFields = function() {
+		this._tbsActionsTiles = [];
+		this._tbsQueuedActions = [];
+		if(!this._tbsSelectedActor) { return; }
+		if(this._tbsSelectedActor.isParty) {
+			this._tbsQueuedActions = this.getPartyActionInfos().reverse();
+		} else {
+			this._tbsQueuedActions = this.getEnemyActionInfos().reverse();
+		}
+	};
+	
+	Game_Map.prototype.getPartyActionInfos = function() {
+		var actionInfos = [];
+		if(this._tbsSelectedActionType === -1) { return actionInfos; }
+		var actionType = "";
+		switch(this._tbsSelectedActionType) {
+			case 1:
+				actionType = "attack";
+				break;
+			case 2:
+				actionType = "technique";
+				break;
+			case 3:
+				actionType = "defense";
+				break;
+			case 4:
+				actionType = "item";
+				break;
+			default:
+				return;
+		}
+		
+		var battler = this._tbsSelectedActor.battler;
+		
+		var equipActionInfos = battler.getAllEquipActionInfos();
+		var i;
+		for(i = 0; i < equipActionInfos.length; i++) {
+			if(equipActionInfos[i].action.type === actionType) {
+				actionInfos.push(equipActionInfos[i]);
+			}
+		}
+		var skills = battler.skills();
+		for(i = 0; i < skills.length; i++) {
+			if(skills[i].tbsStats.action && skills[i].tbsStats.action.type === actionType) {
+				var actionInfo = {};
+				actionInfo.action = skills[i].tbsStats.action;
+				actionInfo.canTargetBodyPart = false;
+				if(skills[i].tbsStats.action.hits) {
+					var j;
+					for(j = 0; j < skills[i].tbsStats.action.hits.length; j++) {
+						var hit = skills[i].tbsStats.action.hits[j];
+						if(hit.damage && hit.rangeType !== "aoe") {
+							var damage = hit.damage;
+							if(damage.blunt || damage.cut || damage.bullet
+								|| damage.fire || damage.ice || damage.corrosion) {
+								actionInfo.canTargetBodyPart = true;
+								break;
+							}
+						}
+					}
+				}
+				actionInfos.push(actionInfo);
+			}
+		}
+		return actionInfos;
+	};
+	
+	Game_Map.prototype.getEnemyActionInfos = function() {
+		var battler = this._tbsSelectedActor.battler;
+			
+		var actionInfos = battler.getAllEquipActionInfos();
+		battler.skills().forEach(function (skill) {
+			var actionInfo = {};
+			actionInfo.action = skill.tbsStats.action;
+			actionInfos.push(actionInfo);
+			actionInfo.canTargetBodyPart = false;
+			if(skill.tbsStats.action.hits) {
+				var i;
+				for(i = 0; i < skill.tbsStats.action.hits.length; i++) {
+					var hit = skill.tbsStats.action.hits[i];
+					if(hit.damage && hit.rangeType !== "aoe") {
+						var damage = hit.damage;
+						if(damage.blunt || damage.cut || damage.bullet
+							|| damage.fire || damage.ice || damage.corrosion) {
+							actionInfo.canTargetBodyPart = true;
+							break;
+						}
+					}
+				}
+			}
+		});
+		return actionInfos;
+	};
+	
+	Game_Map.prototype.getCurrentActorAlliesAndEnemiesInRange = function(actionIndex) {
+		var allies = [];
+		var enemies = [];
+		var alliesAndEnemies = {};
+		alliesAndEnemies.allies = allies;
+		alliesAndEnemies.enemies = enemies;
+		if(!this._tbsSelectedActor) { return alliesAndEnemies; }
+		var force = this._tbsForces[this._tbsSelectedActor.forceId];
+		var actionTiles = this._tbsActionsTiles[actionIndex];
+		if(!actionTiles) { return alliesAndEnemies; }
+		var checkedTiles = [];
+		var that = this;
+		actionTiles.forEach(function (actionTile) {
+			actionTile.tiles.forEach(function (tile) {
+				if(that.getExistingTbsTile(tile.x, tile.y, checkedTiles)) { return; }
+				var checkedTile = {};
+				checkedTile.x = tile.x;
+				checkedTile.y = tile.y;
+				checkedTiles.push(checkedTile);
+				var tbsActor = that.getTbsActorAtPosition(tile.x, tile.y);
+				if(!tbsActor) { return; }
+				if(force.enemyForceIds.indexOf(tbsActor.forceId) >= 0) {
+					that.insertOrderedByForce(tbsActor, enemies);
+				} else {
+					that.insertOrderedByForce(tbsActor, allies);
+				}
+			});
+		});
+		return alliesAndEnemies;
+	};
+	
+	Game_Map.prototype.insertOrderedByForce = function(tbsActor, tbsActors) {
+		if(tbsActors.length === 0) {
+			tbsActors.push(tbsActor);
+			return;
+		}
+		var inserted = false;
+		var i;
+		for(i = 0; i < tbsActors.length; i++) {
+			if(tbsActors[i].forceId > tbsActor.forceId
+				|| (tbsActors[i].forceId === tbsActor.forceId && tbsActors[i].orderNum > tbsActor.orderNum)) {
+				tbsActors.splice(i, 0, tbsActor);
+				inserted = true;
+				break;
+			}
+		}
+		if(!inserted) {
+			tbsActors.push(tbsActor);
+		}
+	};
+	
+	Game_Map.prototype.getLargestActionRange = function(action) {
+		var largestActionRange = {};
+		var rangeFound = false;
+		largestActionRange.range = 0;
+		largestActionRange.type = "air";
+		largestActionRange.ignoreUserRange = false;
+		var battlerBaseRange = this._tbsSelectedActor.battler.baseRange();
+		battlerBaseRange = battlerBaseRange < 2 ? 2 : battlerBaseRange;
+		largestActionRange.baseRange = battlerBaseRange / 2;
+		if(action && action.hits && action.hits.length > 0) {
+			action.hits.forEach(function (hit) {
+				var hitRange = hit.range ? hit.range : 0;
+				if(!rangeFound || hitRange > largestActionRange.range) {
+					rangeFound = true;
+					largestActionRange.range = hitRange;
+					largestActionRange.type = hit.rangeType;
+					largestActionRange.ignoreUserRange = hit.ignoreUserRange;
+				}
+			});
+		}
+		largestActionRange.range /= 2;
+		return largestActionRange;
+	};
+	
+	Game_Map.prototype.getForceMembersInActors = function(actors, forceId) {
+		var members = [];
+		actors.forEach(function (actor) {
+			if(actor.forceId === forceId) {
+				members.push(actor);
+			}
+		});
+		return members;
+	};
+	
+	Game_Map.prototype.checkActionTiles = function(x, y, actionRange, actionTiles) {
+		var centerPosition = {};
+		centerPosition.x = x;
+		centerPosition.y = y;
+		centerPosition.tiles = [];
+		var baseRange = actionRange.ignoreUserRange ? 0 : actionRange.baseRange;
+		var centerBoundingCircle = this.getBoundingCircleArray(x, y, actionRange.range + baseRange, actionTiles);
+		var that = this;
+		if(actionRange.ignoreUserRange) {
+			centerPosition.tiles = this.getReachedActionTiles(x, y, centerBoundingCircle, centerBoundingCircle);
+		} else {
+			centerBoundingCircle.forEach(function (boundingTile) {
+				var distance = that.actualDistance(x, y, boundingTile.x, boundingTile.y);
+				if(distance <= actionRange.baseRange) {
+					var tilesToCheck = [];
+					centerBoundingCircle.forEach(function (boundingTileTwo) {
+						if(!that.getExistingTbsTile(boundingTileTwo.x, boundingTileTwo.y, centerPosition.tiles)) {
+							var distanceTwo = that.actualDistance(boundingTile.x, boundingTile.y, boundingTileTwo.x, boundingTileTwo.y);
+							if(distanceTwo <= actionRange.range + Math.max(0, baseRange - distance)) {
+								tilesToCheck.push(boundingTileTwo);
+							}
+						}
+					});
+					if(tilesToCheck.length > 0) {
+						var ignoreStartPosition = boundingTile.x === x && boundingTile.y === y;
+						centerPosition.tiles = centerPosition.tiles.concat(that.getReachedActionTiles(boundingTile.x, boundingTile.y, tilesToCheck, centerBoundingCircle, ignoreStartPosition));
+					}
+				}
+			});
+		}
+		actionTiles.push(centerPosition);
+		if(!this._tbsSelectedActor.movedThisRound) {
+			this._tbsMoveTiles.forEach(function (moveTile) {
+				if(!that.getTbsActorAtPosition(moveTile.x, moveTile.y)) {
+					var position = {};
+					position.x = moveTile.x;
+					position.y = moveTile.y;
+					position.tiles = [];
+					var moveTileBoundingCircle = that.getBoundingCircleArray(moveTile.x, moveTile.y, actionRange.range + baseRange, actionTiles);
+					if(actionRange.ignoreUserRange) {
+						position.tiles = that.getReachedActionTiles(moveTile.x, moveTile.y, moveTileBoundingCircle, moveTileBoundingCircle);
+					} else {
+						moveTileBoundingCircle.forEach(function (boundingTile) {
+							var distance = that.actualDistance(moveTile.x, moveTile.y, boundingTile.x, boundingTile.y);
+							if(distance <= actionRange.baseRange) {
+								var tilesToCheck = [];
+								moveTileBoundingCircle.forEach(function (boundingTileTwo) {
+									if(!that.getExistingTbsTile(boundingTileTwo.x, boundingTileTwo.y, position.tiles)) {
+										var distanceTwo = that.actualDistance(boundingTile.x, boundingTile.y, boundingTileTwo.x, boundingTileTwo.y);
+										if(distanceTwo <= actionRange.range + Math.max(0, baseRange - distance)) {
+											tilesToCheck.push(boundingTileTwo);
+										}
+									}
+								});
+								if(tilesToCheck.length > 0) {
+									var ignoreStartPosition = boundingTile.x === moveTile.x && boundingTile.y === moveTile.y;
+									position.tiles = position.tiles.concat(that.getReachedActionTiles(boundingTile.x, boundingTile.y, tilesToCheck, moveTileBoundingCircle, ignoreStartPosition));
+								}
+							}
+						});
+					}
+					actionTiles.push(position);
+				}
+			});
+		}
+	};
+	
+	Game_Map.prototype.getReachedActionTiles = function(x, y, actionTilesToCheck, boundingTiles, ignoreStartPosition) {
+		var reachedTiles = [];
+		var that = this;
+		actionTilesToCheck.forEach(function (tile) {
+			if(ignoreStartPosition && x === tile.x && y === tile.y) {
+				reachedTiles.push(tile);
+				return;
+			}
+			if(!that.isTrajectoryObstructed(x, y, tile.x, tile.y, boundingTiles, ignoreStartPosition, true)) {
+				reachedTiles.push(tile);
+			}
+		});
+		return reachedTiles;
+	};
+	
+	Game_Map.prototype.isTrajectoryObstructed = function(startX, startY, endX, endY, existingTiles, ignoreStartPosition, ignoreEndpoints) {
+		if(ignoreStartPosition === undefined) { ignoreStartPosition = true; }
+		x0 = startX + 0.5;
+		y0 = startY + 0.5;
+		x1 = endX + 0.5;
+		y1 = endY + 0.5;
+		var xDiff = Math.abs(startX - endX);
+		var yDiff = Math.abs(startY - endY);
+		var xStart = endX < startX ? endX : startX;
+		var yStart = endY < startY ? endY : startY;
+		var d = 0;
+		if(endX > startX) {
+			if(endY > startY) {
+				d = 3;
+			} else if(endY < startY) {
+				d = 9;
+			} else {
+				d = 6;
+			}
+		} else if(endX < startX) {
+			if(endY > startY) {
+				d = 1;
+			} else if(endY < startY) {
+				d = 7;
+			} else {
+				d = 4;
+			}
+		} else {
+			if(endY > startY) {
+				d = 2;
+			} else if(endY < startY) {
+				d = 8;
+			}
+		}
+		var obstructed = false;
+		var boxX;
+		var boxY;
+		for(boxX = xStart; boxX <= xStart + xDiff; boxX++) {
+			for(boxY = yStart; boxY <= yStart + yDiff; boxY++) {
+				if((ignoreStartPosition && startX === boxX && startY === boxY) || (ignoreEndpoints && endX === boxX && endY === boxY)
+					|| this.getExistingTbsTile(boxX, boxY, existingTiles).passability[10-d]
+					|| !this.liangBarskyClipper(x0, y0, x1, y1, boxX, boxY, boxX + 1, boxY + 1)) { continue; }
+				return true;
+			}
+		}
+		return false;
+	};
+	
+	// Cohen–Sutherland clipping algorithm clips a line from
+	// P0 = (x0, y0) to P1 = (x1, y1) against a rectangle with 
+	// diagonal from (xmin, ymin) to (xmax, ymax).
+	Game_Map.prototype.cohenSutherlandLineClipAndDraw = function(x0, y0, x1, y1, xmin, ymin, xmax, ymax) {
+		var INSIDE = 0; // 0000
+		var LEFT = 1;   // 0001
+		var RIGHT = 2;  // 0010
+		var BOTTOM = 4; // 0100
+		var TOP = 8;    // 1000
+		
+		// compute outcodes for P0, P1, and whatever point lies outside the clip rectangle
+		var outcode0 = this.computeOutCode(x0, y0, xmin, ymin, xmax, ymax);
+		var outcode1 = this.computeOutCode(x1, y1, xmin, ymin, xmax, ymax);
+		var accept = false;
+
+		while (true) {
+			if (!(outcode0 | outcode1)) {
+				// bitwise OR is 0: both points inside window; trivially accept and exit loop
+				accept = true;
+				break;
+			} else if (outcode0 & outcode1) {
+				// bitwise AND is not 0: both points share an outside zone (LEFT, RIGHT, TOP,
+				// or BOTTOM), so both must be outside window; exit loop (accept is false)
+				break;
+			} else {
+				// failed both tests, so calculate the line segment to clip
+				// from an outside point to an intersection with clip edge
+				var x;
+				var y;
+
+				// At least one endpoint is outside the clip rectangle; pick it.
+				var outcodeOut = outcode0 ? outcode0 : outcode1;
+
+				// Now find the intersection point;
+				// use formulas:
+				//   slope = (y1 - y0) / (x1 - x0)
+				//   x = x0 + (1 / slope) * (ym - y0), where ym is ymin or ymax
+				//   y = y0 + slope * (xm - x0), where xm is xmin or xmax
+				// No need to worry about divide-by-zero because, in each case, the
+				// outcode bit being tested guarantees the denominator is non-zero
+				if (outcodeOut & TOP) {           // point is above the clip window
+					x = x0 + (x1 - x0) * (ymax - y0) / (y1 - y0);
+					y = ymax;
+				} else if (outcodeOut & BOTTOM) { // point is below the clip window
+					x = x0 + (x1 - x0) * (ymin - y0) / (y1 - y0);
+					y = ymin;
+				} else if (outcodeOut & RIGHT) {  // point is to the right of clip window
+					y = y0 + (y1 - y0) * (xmax - x0) / (x1 - x0);
+					x = xmax;
+				} else if (outcodeOut & LEFT) {   // point is to the left of clip window
+					y = y0 + (y1 - y0) * (xmin - x0) / (x1 - x0);
+					x = xmin;
+				}
+
+				// Now we move outside point to intersection point to clip
+				// and get ready for next pass.
+				if (outcodeOut == outcode0) {
+					x0 = x;
+					y0 = y;
+					outcode0 = this.computeOutCode(x0, y0, xmin, ymin, xmax, ymax);
+				} else {
+					x1 = x;
+					y1 = y;
+					outcode1 = this.computeOutCode(x1, y1, xmin, ymin, xmax, ymax);
+				}
+			}
+		}
+		return accept;
+	};
+	
+	// Compute the bit code for a point (x, y) using the clip rectangle
+	// bounded diagonally by (xmin, ymin), and (xmax, ymax)
+	Game_Map.prototype.computeOutCode = function(x, y, xmin, ymin, xmax, ymax) {
+		var INSIDE = 0; // 0000
+		var LEFT = 1;   // 0001
+		var RIGHT = 2;  // 0010
+		var BOTTOM = 4; // 0100
+		var TOP = 8;    // 1000
+		
+		var code;
+
+		code = INSIDE;          // initialised as being inside of [[clip window]]
+
+		if (x < xmin)           // to the left of clip window
+			code |= LEFT;
+		else if (x > xmax)      // to the right of clip window
+			code |= RIGHT;
+		if (y < ymin)           // below the clip window
+			code |= BOTTOM;
+		else if (y > ymax)      // above the clip window
+			code |= TOP;
+
+		return code;
+	};
+
+	Game_Map.prototype.liangBarskyClipper = function(x1, y1, x2, y2, xmin, ymin, xmax, ymax) {
+		// defining variables
+		var p1 = -(x2 - x1);
+		var p2 = -p1;
+		var p3 = -(y2 - y1);
+		var p4 = -p3;
+
+		var q1 = x1 - xmin;
+		var q2 = xmax - x1;
+		var q3 = y1 - ymin;
+		var q4 = ymax - y1;
+
+		var posarr = [];
+		var negarr = [];
+		var posind = 1;
+		var negind = 1;
+		posarr[0] = 1;
+		negarr[0] = 0;
+
+		if ((p1 == 0 && q1 < 0) || (p3 == 0 && q3 < 0)) {
+			return false; // Line is parallel to clipping window!
+		}
+		if (p1 != 0) {
+			var r1 = q1 / p1;
+			var r2 = q2 / p2;
+			if (p1 < 0) {
+				negarr[negind++] = r1; // for negative p1, add it to negative array
+				posarr[posind++] = r2; // and add p2 to positive array
+			} else {
+				negarr[negind++] = r2;
+				posarr[posind++] = r1;
+			}
+		}
+		if (p3 != 0) {
+			var r3 = q3 / p3;
+			var r4 = q4 / p4;
+			if (p3 < 0) {
+				negarr[negind++] = r3;
+				posarr[posind++] = r4;
+			} else {
+				negarr[negind++] = r4;
+				posarr[posind++] = r3;
+			}
+		}
+
+		var rn1, rn2;
+		rn1 = this.maxi(negarr, negind); // maximum of negative array
+		rn2 = this.mini(posarr, posind); // minimum of positive array
+
+		if (rn1 > rn2)  { // reject
+			return false; // Line is outside the clipping window!
+		}
+		
+		return true;
+	};
+	
+	// this function gives the maximum
+	Game_Map.prototype.maxi = function(arr, n) {
+		var m = 0;
+		var i;
+		for (i = 0; i < n; ++i) {
+			if (m < arr[i]) {
+				m = arr[i];
+			}
+		}
+		return m;
+	};
+
+	// this function gives the minimum
+	Game_Map.prototype.mini = function(arr, n) {
+		var m = 1;
+		var i;
+		for (i = 0; i < n; ++i) {
+			if (m > arr[i]) {
+				m = arr[i];
+			}
+		}
+		return m;
+	};
+	
+	Game_Map.prototype.getBoundingCircleArray = function(centerX, centerY, radius, actionTiles) {
+		var returnArray = [];
+		if(radius < 1) {
+			if(actionTiles) {
+				var existing = undefined;
+				var i;
+				for(i = 0; i < actionTiles.length; i++) {
+					existing = this.getExistingTbsTile(centerX, centerY, actionTiles[i].tiles);
+					if(existing) { break; }
+				}
+				if(existing) {
+					returnArray.push(existing);
+					return returnArray;;
+				}
+			}
+			var tile = {};
+			tile.x = centerX;
+			tile.y = centerY;
+			tile.passability = this.getTbsTilePassability(tile.x, tile.y);
+			returnArray.push(tile);
+			return returnArray;
+		}
+		var targetX = centerX - Math.ceil(radius);
+		for(; targetX <= centerX + Math.ceil(radius); targetX++) {
+			var targetY = centerY - Math.ceil(radius);
+			for(; targetY <= centerY + Math.ceil(radius); targetY++) {
+				var distance = this.actualDistance(centerX, centerY, targetX, targetY);
+				if(distance <= radius) {
+					if(actionTiles) {
+						var existing = undefined;
+						var i;
+						for(i = 0; i < actionTiles.length; i++) {
+							existing = this.getExistingTbsTile(targetX, targetY, actionTiles[i].tiles);
+							if(existing) { break; }
+						}
+						if(existing) {
+							returnArray.push(existing);
+							continue;
+						}
+					}
+					var tile = {};
+					tile.x = targetX;
+					tile.y = targetY;
+					tile.passability = this.getTbsTilePassability(tile.x, tile.y);
+					returnArray.push(tile);
+				}
+			}
+		}
+		return returnArray;
+	};
+	
+	Game_Map.prototype.getTbsTilePassability = function(x, y) {
+		var passability = [];
+		passability[8] = this.isPassable(x, y, 8, this);
+		passability[2] = this.isPassable(x, y, 2, this);
+		passability[4] = this.isPassable(x, y, 4, this);
+		passability[6] = this.isPassable(x, y, 6, this);
+		passability[7] = passability[4] && passability[8];
+		passability[9] = passability[6] && passability[8];
+		passability[1] = passability[4] && passability[2];
+		passability[3] = passability[6] && passability[2];
+		return passability;
+	};
+	
+	Game_Map.prototype.isPassable = function(x, y, d, caller) {
+		if(this._tbsBattleMode && ((this._tbsSelectedActor && this._tbsSelectedActor.chara === caller) || $gameMap === caller)) {
+			if(this._tbsPassageType === "aoe") { return true; } //can go anywhere
+			var events = $gameMap.eventsXyNt(x, y);
+			if(events.some(function(event) {
+				return event.isNormalPriority();
+			})) { return false; } //event in way
+			
+			if($gameMap.boat().posNt(x, y) || $gameMap.ship().posNt(x, y)) {
+				return false; // vehicle in the way
+			}
+			
+			var tbsActor = this.getTbsActorAtPosition(x, y);
+			if(tbsActor && !tbsActor.battler.isDown() && (this._tbsPassageType !== "move" || (this._tbsSelectedActor
+				&& this._tbsForces[this._tbsSelectedActor.forceId].enemyForceIds.indexOf(tbsActor.forceId) >= 0))) {
+				return false; //actor in way
+			}
+			var terrainTag = this.terrainTag(x, y);
+			if(this._tbsPassageType === "move" && this._tbsSelectedActor
+				&& this._tbsSelectedActor.battler.isFlying() && (terrainTag === 1 || terrainTag === 2)) {
+				return true;
+			}
+			if((this._tbsPassageType === "melee" || this._tbsPassageType === "thrown" || this._tbsPassageType === "fired")
+				&& terrainTag === 1) {
+				return true
+			}
+		}
+		
+		return this.checkPassage(x, y, (1 << (d / 2 - 1)) & 0x0f);
+	};
+	
+	//character base
+	Game_CharacterBase.prototype.initMembers = function() {
+		this._x = 0;
+		this._y = 0;
+		this._realX = 0;
+		this._realY = 0;
+		this._moveSpeed = 4;
+		this._moveFrequency = 6;
+		this._opacity = 255;
+		this._blendMode = 0;
+		this._direction = 2;
+		this._pattern = 1;
+		this._priorityType = 1;
+		this._tileId = 0;
+		this._characterName = '';
+		this._characterIndex = 0;
+		this._isObjectCharacter = false;
+		this._walkAnime = true;
+		this._stepAnime = false;
+		this._directionFix = false;
+		this._through = false;
+		this._transparent = false;
+		this._bushDepth = 0;
+		this._animationId = 0;
+		this._balloonId = 0;
+		this._animationPlaying = false;
+		this._balloonPlaying = false;
+		this._animationCount = 0;
+		this._stopCount = 0;
+		this._jumpCount = 0;
+		this._jumpPeak = 0;
+		this._movementSuccess = true;
+		this._tbsBattleMode = false;
+	};
+	
+	Game_CharacterBase.prototype.isDashing = function() {
+		return this._tbsBattleMode;
+	};
+	
+	Game_CharacterBase.prototype.setTbsBattleMode = function(modeOn) {
+		if(this._tbsBattleMode !== modeOn) {
+			this._tbsBattleMode = modeOn;
+		}
+	};
+	
+	Game_CharacterBase.prototype.isMapPassable = function(x, y, d) {
+		var x2 = $gameMap.roundXWithDirection(x, d);
+		var y2 = $gameMap.roundYWithDirection(y, d);
+		var d2 = this.reverseDir(d);
+		return $gameMap.isPassable(x, y, d, this) && $gameMap.isPassable(x2, y2, d2, this);
+	};
+	
+	//character
+	Game_Character.prototype.turnTowardLocation = function(x, y) {
+		var sx = this.deltaXFrom(x);
+		var sy = this.deltaYFrom(y);
+		if (Math.abs(sx) > Math.abs(sy)) {
+			this.setDirection(sx > 0 ? 4 : 6);
+		} else if (sy !== 0) {
+			this.setDirection(sy > 0 ? 8 : 2);
+		}
+	};
+	
+	//player
+	Game_Player.prototype.initMembers = function() {
+		Game_Character.prototype.initMembers.call(this);
+		this._vehicleType = 'walk';
+		this._vehicleGettingOn = false;
+		this._vehicleGettingOff = false;
+		this._dashing = false;
+		this._needsMapReload = false;
+		this._transferring = false;
+		this._newMapId = 0;
+		this._newX = 0;
+		this._newY = 0;
+		this._newDirection = 0;
+		this._fadeType = 0;
+		this._followers = new Game_Followers();
+		this._encounterCount = 0;
+		this._tbsShowCursor = false;
+		this._tbsCanMove = false;
+		this._tbsIsFollowingCharacter = false;
+		this._cursorMoveField = []; 
+		this._tbsMovingCharacter = undefined;
+		this._tbsNextFrameMoveDirection = 0;
+		this._tbsNextFrameMoveDirectionSetThisFrame = false;
+	};
+	
+	Game_Player.prototype.refresh = function() {
+		if(this._tbsBattleMode) {
+			if(this._tbsShowCursor) {
+				this.setImage("Cursor", 0);
+			} else {
+				this.setImage("Cursor", 1);
+			}
+		} else {
+			var actor = $gameParty.leader();
+			var characterName = actor ? actor.characterName() : '';
+			var characterIndex = actor ? actor.characterIndex() : 0;
+			this.setImage(characterName, characterIndex);
+		}
+		this._followers.refresh();
+	};
+	
+	Game_Player.prototype.isDashing = function() {
+		return this._tbsBattleMode ? true : this._dashing;
+	};
+	
+	Game_Player.prototype.realMoveSpeed = function() {
+		var speed = this._moveSpeed + (this.isDashing() ? 1 : 0);
+		return !this._tbsBattleMode || this._tbsCanMove || this._tbsFollowingCharacter ? speed : speed + 1;
+	};
+	
+	Game_Player.prototype.setTbsBattleMode = function(modeOn) {
+		if(this._tbsBattleMode !== modeOn) {
+			this._tbsBattleMode = modeOn;
+			if(modeOn) {
+				this.setStepAnime(true);
+				this.setPriorityType(2);
+			} else {
+				this.setStepAnime(false);
+				this.setPriorityType(1);
+			}
+		}
+	};
+	
+	Game_Player.prototype.setTbsShowCursor = function(showCursor) {
+		this._tbsShowCursor = showCursor;
+	};
+	
+	Game_Player.prototype.setCursorMoveField = function(moveField) {
+		this._cursorMoveField = moveField;
+	};
+	
+	Game_Player.prototype.clearCursorMoveField = function() {
+		this._cursorMoveField = [];
+	};
+	
+	Game_Player.prototype.setMovingCharacter = function(chara) {
+		this._tbsMovingCharacter = chara;
+	};
+	
+	Game_Player.prototype.clearMovingCharacter = function() {
+		this._tbsMovingCharacter = undefined;
+	};
+	
+	Game_Player.prototype.tbsShowCursor = function(showCursor) {
+		return this._tbsShowCursor;
+	};
+	
+	Game_Player.prototype.setTbsCanMove = function(canMove) {
+		this._tbsCanMove = canMove;
+	};
+	
+	Game_Player.prototype.setTbsFollowingCharacter = function(followingCharacter) {
+		this._tbsFollowingCharacter = followingCharacter;
+	};
+	
+	Game_Player.prototype.setNextFrameMoveDirection = function(direction) {
+		this._tbsNextFrameMoveDirection = direction;
+		this._tbsNextFrameMoveDirectionSetThisFrame = true;
+	};
+	
+	Game_Player.prototype.moveByInput = function() {
+		if(this._tbsBattleMode && this._tbsNextFrameMoveDirection !== 0) {
+			if(this._tbsNextFrameMoveDirectionSetThisFrame) {
+				this._tbsNextFrameMoveDirectionSetThisFrame = false;
+				return;
+			}
+			this.executeMove(this._tbsNextFrameMoveDirection);
+			this._tbsNextFrameMoveDirection = 0;
+			return;
+		}
+		
+		if ((!this._tbsBattleMode || this._tbsCanMove) && !this.isMoving() && this.canMove()) {
+			var direction = this.getInputDirection();
+			if (direction > 0) {
+				$gameTemp.clearDestination();
+				if(this._tbsBattleMode && this._cursorMoveField.length > 0) {
+					if(this._tbsMovingCharacter) {
+						this._tbsMovingCharacter.setDirection(direction);
+					}
+					var x = $gamePlayer.x;
+					var y = $gamePlayer.y;
+					if(direction === 8) {
+						y -= 1;
+					} else if(direction === 2) {
+						y += 1;
+					}
+					if(direction === 4) {
+						x -= 1;
+					} else if(direction === 6) {
+						x += 1;
+					}
+					if(!this.cursorPositionValid(x, y)) {
+						direction = 0;
+					}
+				}
+			}
+			if (direction === 0 && $gameTemp.isDestinationValid()){
+				var x = $gameTemp.destinationX();
+				var y = $gameTemp.destinationY();
+				if(!this._tbsBattleMode || this.cursorPositionValid(x, y)) {
+					direction = this.findDirectionTo(x, y);
+				} else {
+					$gameTemp.clearDestination();
+				}
+			}
+			if (direction > 0) {
+				if(this._tbsBattleMode && this._tbsMovingCharacter) {
+					this._tbsNextFrameMoveDirection = direction;
+					this._tbsMovingCharacter.moveStraight(direction);
+				} else {
+					this.executeMove(direction);
+				}
+			}
+		}
+	};
+	
+	Game_Player.prototype.isMoving = function() {
+		return this._tbsNextFrameMoveDirection !== 0 || this._realX !== this._x || this._realY !== this._y;
+	};
+	
+	Game_Player.prototype.cursorPositionValid = function(x, y) {
+		if(this._cursorMoveField.length === 0) { return true; }
+		var i;
+		for(i = 0; i < this._cursorMoveField.length; i++) {
+			if(this._cursorMoveField[i].x === x && this._cursorMoveField[i].y === y) {
+				return true;
+			}
+		}
+		return false;
+	};
+	
+	Game_Player.prototype.reserveTransfer = function(mapId, x, y, d, fadeType) {
+		if(this._tbsBattleMode) { return; }
+		this._transferring = true;
+		this._newMapId = mapId;
+		this._newX = x;
+		this._newY = y;
+		this._newDirection = d;
+		this._fadeType = fadeType;
+	};
+	
+	Game_Player.prototype.triggerAction = function() {
+		if(this._tbsBattleMode) { return false; }
+		
+		if (this.canMove()) {
+			if (this.triggerButtonAction()) {
+				return true;
+			}
+			if (this.triggerTouchAction()) {
+				return true;
+			}
+		}
+		return false;
+	};
+	
+	//follower
+	Game_Follower.prototype.chaseCharacter = function(character) {
+		if(this._tbsBattleMode) { return; }
+		
+		var sx = this.deltaXFrom(character.x);
+		var sy = this.deltaYFrom(character.y);
+		if (sx !== 0 && sy !== 0) {
+			this.moveDiagonally(sx > 0 ? 4 : 6, sy > 0 ? 8 : 2);
+		} else if (sx !== 0) {
+			this.moveStraight(sx > 0 ? 4 : 6);
+		} else if (sy !== 0) {
+			this.moveStraight(sy > 0 ? 8 : 2);
+		}
+		this.setMoveSpeed($gamePlayer.realMoveSpeed());
+	};
+	
+	//followers
+	Game_Followers.prototype.length = function() {
+		return this._data.length;
+	};
+	
+	//vehicle
+	Game_Vehicle.prototype.isLandOk = function(x, y, d) {
+		if (this.isAirship()) {
+			if (!$gameMap.isAirshipLandOk(x, y)) {
+				return false;
+			}
+			if ($gameMap.eventsXy(x, y).length > 0) {
+				return false;
+			}
+		} else {
+			var x2 = $gameMap.roundXWithDirection(x, d);
+			var y2 = $gameMap.roundYWithDirection(y, d);
+			if (!$gameMap.isValid(x2, y2)) {
+				return false;
+			}
+			if (!$gameMap.isPassable(x2, y2, this.reverseDir(d), this)) {
+				return false;
+			}
+			if (this.isCollidedWithCharacters(x2, y2)) {
+				return false;
+			}
+		}
+		return true;
+	};
+	
+	//event
+	
+}) ();
