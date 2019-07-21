@@ -1162,23 +1162,25 @@ BattleManager.getCompleteDamage = function(subject, actionInfo, hit) {
 	completeDamage.stress = damage.stress ? Math.floor(damage.stress * damageScale) : 0;
 	completeDamage.blunt = this.getCompleteDamageForType(damage.blunt, damageScale);
 	completeDamage.cut = this.getCompleteDamageForType(damage.cut, damageScale);
+	completeDamage.keen = this.getCompleteDamageForType(damage.keen, damageScale);
+	completeDamage.thrust = this.getCompleteDamageForType(damage.thrust, damageScale);
+	completeDamage.stiletto = this.getCompleteDamageForType(damage.stiletto, damageScale);
 	completeDamage.bullet = this.getCompleteDamageForType(damage.bullet, damageScale);
 	completeDamage.fire = this.getCompleteDamageForType(damage.fire, damageScale);
 	completeDamage.ice = this.getCompleteDamageForType(damage.ice, damageScale);
+	completeDamage.lightning = this.getCompleteDamageForType(damage.lightning, damageScale);
 	completeDamage.corrosion = this.getCompleteDamageForType(damage.corrosion, damageScale);
-	completeDamage.psychic = damage.psychic ? damage.psychic : { power: 0, piercing: 0 };
+	completeDamage.psychic = damage.psychic ? damage.psychic : { power: 0, aoe: 0 };
 	completeDamage.psychic.power = completeDamage.psychic.power ? completeDamage.psychic.power * damageScale : 0;
-	completeDamage.psychic.piercing = completeDamage.psychic.piercing ? completeDamage.psychic.piercing : 0;
+	completeDamage.psychic.aoe = completeDamage.psychic.aoe ? completeDamage.psychic.aoe : 0;
 	return completeDamage;
 };
 
 BattleManager.getCompleteDamageForType = function(damage, damageScale) {
-	var completeDamage = { solid: 0, fluid: 0, conducted: 0, piercing: 0 };
+	var completeDamage = { power: 0, aoe: 0 };
 	if(!damage) { return completeDamage; }
-	completeDamage.solid = damage.solid ? damage.solid * damageScale : 0;
-	completeDamage.fluid = damage.fluid ? damage.fluid * damageScale : 0;
-	completeDamage.conducted = damage.conducted ? damage.conducted * damageScale : 0;
-	completeDamage.piercing = damage.piercing ? damage.piercing : 0;
+	completeDamage.power = damage.power ? damage.power * damageScale : 0;
+	completeDamage.aoe = damage.aoe ? damage.aoe : 0;
 	return completeDamage;
 };
 

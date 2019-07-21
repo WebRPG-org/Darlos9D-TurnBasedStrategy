@@ -750,7 +750,8 @@
 		var action = actionInfo.action;
 		var hits = action.hits;
 		return !!hits && hits.length > 0 &&
-			hits.some(function(hit) { return hit.rangeType === "line" || hit.rangeType === "cone" || hit.rangeType === "aoe"; });
+			hits.some(function(hit) { return hit.heal &&
+				((hit.heal.fullBody && hit.heal.fullBody.aoe >= 2) || (hit.heal.stress && hit.heal.stress.aoe >= 2)); });
 	};
 	
 	Scene_ItemBase.prototype.canUseAction = function() {

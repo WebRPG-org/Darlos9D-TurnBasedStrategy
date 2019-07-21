@@ -578,7 +578,6 @@
 		defaultProtection.defense = {};
 		defaultProtection.defense.solid = 0;
 		defaultProtection.defense.fluid = 0;
-		defaultProtection.defense.conducted = 0;
 		defaultProtection.armor = {};
 		defaultProtection.armor.blunt = 0;
 		defaultProtection.armor.cut = 0;
@@ -586,6 +585,7 @@
 		defaultProtection.armor.fire = 0;
 		defaultProtection.armor.ice = 0;
 		defaultProtection.armor.corrosion = 0;
+		defaultProtection.armor.conducted = 0;
 		
 		if(protOne === undefined && protTwo === undefined) { return defaultProtection; }
 		if(protOne === undefined) { protOne = defaultProtection; }
@@ -593,7 +593,6 @@
 		if(protOne.defense === undefined) { protOne.defense = defaultProtection.defense; }
 		if(protOne.defense.solid === undefined) { protOne.defense.solid = 0; }
 		if(protOne.defense.fluid === undefined) { protOne.defense.fluid = 0; }
-		if(protOne.defense.conducted === undefined) { protOne.defense.conducted = 0; }
 		
 		if(protOne.armor === undefined) { protOne.armor = defaultProtection.armor; }
 		if(protOne.armor.blunt === undefined) { protOne.armor.blunt = 0; }
@@ -602,6 +601,7 @@
 		if(protOne.armor.fire === undefined) { protOne.armor.fire = 0; }
 		if(protOne.armor.ice === undefined) { protOne.armor.ice = 0; }
 		if(protOne.armor.corrosion === undefined) { protOne.armor.corrosion = 0; }
+		if(protOne.armor.conducted === undefined) { protOne.armor.conducted = 0; }
 		
 		if(protTwo === undefined) { return protOne; }
 		
@@ -609,7 +609,6 @@
 		{
 			protOne.defense.solid += protTwo.defense.solid === undefined ? 0 : protTwo.defense.solid;
 			protOne.defense.fluid += protTwo.defense.fluid === undefined ? 0 : protTwo.defense.fluid;
-			protOne.defense.conducted += protTwo.defense.conducted === undefined ? 0 : protTwo.defense.conducted;
 		}
 		
 		if(protTwo.armor !== undefined)
@@ -620,6 +619,7 @@
 			protOne.armor.fire += protTwo.armor.fire === undefined ? 0 : protTwo.armor.fire;
 			protOne.armor.ice += protTwo.armor.ice === undefined ? 0 : protTwo.armor.ice;
 			protOne.armor.corrosion += protTwo.armor.corrosion === undefined ? 0 : protTwo.armor.corrosion;
+			protOne.armor.conducted += protTwo.armor.ice === undefined ? 0 : protTwo.armor.conducted;
 		}
 		
 		return protOne;
@@ -647,10 +647,13 @@
 						if(actions[j].hits) {
 							for(k = 0; k < actions[j].hits.length; k++) {
 								var hit = actions[j].hits[k];
-								if(hit.damage && hit.rangeType !== "aoe") {
+								if(hit.damage) {
 									var damage = hit.damage;
-									if(damage.blunt || damage.cut || damage.bullet
-										|| damage.fire || damage.ice || damage.corrosion) {
+									if((damage.blunt && damage.blunt.aoe <= 0) || (damage.cut && damage.cut.aoe <= 0)
+										|| (damage.keen && damage.keen.aoe <= 0) || (damage.thrust && damage.thrust.aoe <= 0)
+										|| (damage.stiletto && damage.stiletto.aoe <= 0) || (damage.bullet && damage.bullet.aoe <= 0)
+										|| (damage.fire && damage.fire.aoe <= 0) || (damage.ice && damage.ice.aoe <= 0)
+										|| (damage.lightning && damage.lightning.aoe <= 0) || (damage.corrosion && damage.corrosion.aoe <= 0)) {
 										returnActionInfo.canTargetBodyPart = true;
 										break;
 									}
@@ -690,7 +693,6 @@
 		totalProtection.defense = {};
 		totalProtection.defense.solid = 0;
 		totalProtection.defense.fluid = 0;
-		totalProtection.defense.conducted = 0;
 		totalProtection.armor = {};
 		totalProtection.armor.blunt = 0;
 		totalProtection.armor.cut = 0;
@@ -698,6 +700,7 @@
 		totalProtection.armor.fire = 0;
 		totalProtection.armor.ice = 0;
 		totalProtection.armor.corrosion = 0;
+		totalProtection.armor.conducted = 0;
 		
 		totalProtection = this.sumPartProtection(totalProtection, this.baseProtection(), bodyPart);
 		

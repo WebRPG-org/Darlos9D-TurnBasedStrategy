@@ -171,7 +171,7 @@ Window_ItemStatusBase.prototype.drawActions = function() {
 		this.drawText("Rn", 288, 0);
 		this.drawText("Ac", 334, 0);
 		this.drawText("Pw", 404, 0);
-		this.drawText("Pr", 450, 0);
+		this.drawText("AE", 450, 0);
 		this.resetTextColor();
 		var lineOffset = 0;
 		var i;
@@ -263,15 +263,15 @@ Window_ItemStatusBase.prototype.drawProtection = function() {
 	var typesRightAlignX = 10;
 	var typesWidth = 46;
 	
-	this.drawIcon(this.getIconIdFor("solidDefense"), 		typesX, 					0);
-	this.drawIcon(this.getIconIdFor("fluidDefense"), 		typesX + typesWidth, 		0);
-	this.drawIcon(this.getIconIdFor("conductedDefense"), 	typesX + typesWidth * 2, 	0);
-	this.drawIcon(this.getIconIdFor("blunt"), 				typesX + typesWidth * 3, 	0);
-	this.drawIcon(this.getIconIdFor("cut"), 				typesX + typesWidth * 4, 	0);
-	this.drawIcon(this.getIconIdFor("bullet"), 				typesX + typesWidth * 5, 	0);
-	this.drawIcon(this.getIconIdFor("fire"), 				typesX + typesWidth * 6, 	0);
-	this.drawIcon(this.getIconIdFor("ice"), 				typesX + typesWidth * 7, 	0);
-	this.drawIcon(this.getIconIdFor("corrosion"), 			typesX + typesWidth * 8, 	0);
+	this.drawIcon(this.getIconIdFor("solidDefense"), 	typesX, 					0);
+	this.drawIcon(this.getIconIdFor("fluidDefense"), 	typesX + typesWidth, 		0);
+	this.drawIcon(this.getIconIdFor("blunt"),			typesX + typesWidth * 2, 	0);
+	this.drawIcon(this.getIconIdFor("cut"), 			typesX + typesWidth * 3, 	0);
+	this.drawIcon(this.getIconIdFor("bullet"), 			typesX + typesWidth * 4, 	0);
+	this.drawIcon(this.getIconIdFor("fire"), 			typesX + typesWidth * 5, 	0);
+	this.drawIcon(this.getIconIdFor("ice"), 			typesX + typesWidth * 6, 	0);
+	this.drawIcon(this.getIconIdFor("corrosion"), 		typesX + typesWidth * 7, 	0);
+	this.drawIcon(this.getIconIdFor("conducted"), 		typesX + typesWidth * 8, 	0);
 	
 	this.drawPhysProtection("Head", headProtTemp, headProt, typesRightAlignX, typesWidth, this.lineHeight());
 	this.drawPhysProtection("Torso", torsoProtTemp, torsoProt, typesRightAlignX, typesWidth, this.lineHeight() * 2);
@@ -316,7 +316,6 @@ Window_ItemStatusBase.prototype.getCompleteDefense = function(input) {
 	var returnObject = {};
 	returnObject.solid = inputObject.solid ? inputObject.solid : 0;
 	returnObject.fluid = inputObject.fluid ? inputObject.fluid : 0;
-	returnObject.conducted = inputObject.conducted ? inputObject.conducted : 0;
 	return returnObject;
 };
 
@@ -332,6 +331,7 @@ Window_ItemStatusBase.prototype.getCompleteArmor = function(input) {
 	returnObject.fire = inputObject.fire ? inputObject.fire : 0;
 	returnObject.ice = inputObject.ice ? inputObject.ice : 0;
 	returnObject.corrosion = inputObject.corrosion ? inputObject.corrosion : 0;
+	returnObject.conducted = inputObject.conducted ? inputObject.conducted : 0;
 	return returnObject;
 };
 
@@ -375,26 +375,26 @@ Window_ItemStatusBase.prototype.drawPhysProtection = function(partName, protecti
 	this.setTextColorForComparison(protection.defense.fluid, oldProtection.defense.fluid);
 	this.drawText(protection.defense.fluid > 0 ? protection.defense.fluid : "-", typeX + typeWidth, lineHeight, 100, 'right');
 	
-	this.setTextColorForComparison(protection.defense.conducted, oldProtection.defense.conducted);
-	this.drawText(protection.defense.conducted > 0 ? protection.defense.conducted : "-", typeX + typeWidth * 2, lineHeight, 100, 'right');
-	
 	this.setTextColorForComparison(protection.armor.blunt, oldProtection.armor.blunt);
-	this.drawText(protection.armor.blunt > 0 ? protection.armor.blunt : "-", typeX + typeWidth * 3, lineHeight, 100, 'right');
+	this.drawText(protection.armor.blunt > 0 ? protection.armor.blunt : "-", typeX + typeWidth * 2, lineHeight, 100, 'right');
 	
 	this.setTextColorForComparison(protection.armor.cut, oldProtection.armor.cut);
-	this.drawText(protection.armor.cut > 0 ? protection.armor.cut : "-", typeX + typeWidth * 4, lineHeight, 100, 'right');
+	this.drawText(protection.armor.cut > 0 ? protection.armor.cut : "-", typeX + typeWidth * 3, lineHeight, 100, 'right');
 	
 	this.setTextColorForComparison(protection.armor.bullet, oldProtection.armor.bullet);
-	this.drawText(protection.armor.bullet > 0 ? protection.armor.bullet : "-", typeX + typeWidth * 5, lineHeight, 100, 'right');
+	this.drawText(protection.armor.bullet > 0 ? protection.armor.bullet : "-", typeX + typeWidth * 4, lineHeight, 100, 'right');
 	
 	this.setTextColorForComparison(protection.armor.fire, oldProtection.armor.fire);
-	this.drawText(protection.armor.fire > 0 ? protection.armor.fire : "-", typeX + typeWidth * 6, lineHeight, 100, 'right');
+	this.drawText(protection.armor.fire > 0 ? protection.armor.fire : "-", typeX + typeWidth * 5, lineHeight, 100, 'right');
 	
 	this.setTextColorForComparison(protection.armor.ice, oldProtection.armor.ice);
-	this.drawText(protection.armor.ice > 0 ? protection.armor.ice : "-", typeX + typeWidth * 7, lineHeight, 100, 'right');
+	this.drawText(protection.armor.ice > 0 ? protection.armor.ice : "-", typeX + typeWidth * 6, lineHeight, 100, 'right');
 	
 	this.setTextColorForComparison(protection.armor.corrosion, oldProtection.armor.corrosion);
-	this.drawText(protection.armor.corrosion > 0 ? protection.armor.corrosion : "-", typeX + typeWidth * 8, lineHeight, 100, 'right');
+	this.drawText(protection.armor.corrosion > 0 ? protection.armor.corrosion : "-", typeX + typeWidth * 7, lineHeight, 100, 'right');
+	
+	this.setTextColorForComparison(protection.armor.conducted, oldProtection.armor.conducted);
+	this.drawText(protection.armor.conducted > 0 ? protection.armor.conducted : "-", typeX + typeWidth * 8, lineHeight, 100, 'right');
 	
 	this.resetTextColor();
 };
@@ -608,7 +608,7 @@ Window_SkillActionInfo.prototype.drawSkillActionInfo = function() {
 	this.drawText("Rn", 34, 0);
 	this.drawText("Ac", 80, 0);
 	this.drawText("Pw", 150, 0);
-	this.drawText("Pr", 196, 0);
+	this.drawText("AE", 196, 0);
 	this.resetTextColor();
 	
 	this.drawActionInfo(this._actionInfo, undefined, undefined, undefined, this._actor);
@@ -1213,7 +1213,7 @@ Window_TbsActionInfo.prototype.drawSkillActionInfo = function() {
 	this.drawText("Rn", 34, 0);
 	this.drawText("Ac", 80, 0);
 	this.drawText("Pw", 150, 0);
-	this.drawText("Pr", 196, 0);
+	this.drawText("AE", 196, 0);
 	this.resetTextColor();
 	
 	this.drawActionInfo(this._actionInfo, undefined, undefined, undefined, this._actor);
@@ -2403,9 +2403,13 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 					
 					damageLineOffset += this.drawDamageForType(hitDamage.blunt, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("blunt"));
 					damageLineOffset += this.drawDamageForType(hitDamage.cut, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("cut"));
+					damageLineOffset += this.drawDamageForType(hitDamage.keen, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("keen"));
+					damageLineOffset += this.drawDamageForType(hitDamage.thrust, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("thrust"));
+					damageLineOffset += this.drawDamageForType(hitDamage.stiletto, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("stiletto"));
 					damageLineOffset += this.drawDamageForType(hitDamage.bullet, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("bullet"));
 					damageLineOffset += this.drawDamageForType(hitDamage.fire, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("fire"));
 					damageLineOffset += this.drawDamageForType(hitDamage.ice, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("ice"));
+					damageLineOffset += this.drawDamageForType(hitDamage.lightning, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("conducted"));
 					damageLineOffset += this.drawDamageForType(hitDamage.corrosion, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("corrosion"));
 					damageLineOffset += this.drawDamage(hitDamage.psychic.power, hitDamage.psychic.piercing, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("psychic")) ? 1 : 0;
 				}
@@ -2423,7 +2427,6 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 							var defense = fullBody.defense;
 							damageLineOffset += this.drawHeal(defense.solid, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("solidDefense")) ? 1 : 0;
 							damageLineOffset += this.drawHeal(defense.fluid, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("fluidDefense")) ? 1 : 0;
-							damageLineOffset += this.drawHeal(defense.conducted, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("conductedDefense")) ? 1 : 0;
 						}
 						var mental = prot.mental;
 						if(mental) {
@@ -2451,29 +2454,17 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 		return 0;
 	};
 	
-	Window_Base.prototype.getCompleteDamageForType = function(damage) {
-		var completeDamage = { solid: 0, fluid: 0, conducted: 0, piercing: 0 };
-		if(!damage) { return completeDamage; }
-		completeDamage.solid = damage.solid ? damage.solid : 0;
-		completeDamage.fluid = damage.fluid ? damage.fluid : 0;
-		completeDamage.conducted = damage.conducted ? damage.conducted : 0;
-		completeDamage.piercing = damage.piercing ? damage.piercing : 0;
-		return completeDamage;
-	};
-	
 	Window_Base.prototype.drawDamageForType = function(damage, drawName, nameOffset, lineHeight, lineOffset, reqLacked, iconId) {
 		var lineCount = 0;
-		lineCount += this.drawDamage(damage.solid, damage.piercing, drawName, nameOffset, lineHeight, lineOffset + lineCount, reqLacked, iconId) ? 1 : 0;
-		lineCount += this.drawDamage(damage.fluid, 0, drawName, nameOffset, lineHeight, lineOffset + lineCount, reqLacked, iconId) ? 1 : 0;
-		lineCount += this.drawDamage(damage.conducted, 0, drawName, nameOffset, lineHeight, lineOffset + lineCount, reqLacked, iconId) ? 1 : 0;
+		lineCount += this.drawDamage(damage.power, damage.aoe, drawName, nameOffset, lineHeight, lineOffset + lineCount, reqLacked, iconId) ? 1 : 0;
 		return lineCount;
 	};
 	
-	Window_Base.prototype.drawDamage = function(power, piercing, drawName, nameOffset, lineHeight, lineOffset, reqLacked, iconId) {
+	Window_Base.prototype.drawDamage = function(power, aoe, drawName, nameOffset, lineHeight, lineOffset, reqLacked, iconId) {
 		if(power > 0) {
 			this.drawIcon(iconId, nameOffset + 116, lineHeight + this.lineHeight() * lineOffset);
 			this.drawText(power > 0 ? power : "-", nameOffset + 78, lineHeight + this.lineHeight() * lineOffset, 100, 'right');
-			this.drawText(piercing > 0 ? piercing : "-", nameOffset + 124, lineHeight + this.lineHeight() * lineOffset, 100, 'right');
+			this.drawText(aoe > 0 ? aoe : "-", nameOffset + 124, lineHeight + this.lineHeight() * lineOffset, 100, 'right');
 			if(drawName && lineOffset > 0) {
 				if(reqLacked) {
 					this.changeTextColor(this.deathColor());
@@ -2527,33 +2518,33 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 	
 	Window_Base.prototype.getIconIdFor = function(type) {
 		switch(type) {
-			case "solidDefense":   		return  81; break;
-			case "fluidDefense":   		return  69; break;
-			case "conductedDefense":	return  66; break;
-			case "mentalDefense":  		return 302; break;
+			case "solidDefense":   	return  81; break;
+			case "fluidDefense":   	return  69; break;
+			case "mentalDefense":	return 302; break;
 			
-			case "blunt":          		return  77; break;
-			case "cut":            		return  76; break;
-			case "bullet":         		return  78; break;
-			case "fire":           		return  64; break;
-			case "ice":            		return  65; break;
-			case "corrosion":      		return   2; break;
-			case "psychic":        		return  71; break;
+			case "blunt":          	return 110; break;
+			case "cut":            	return  99; break;
+			case "keen":            return 120; break;
+			case "thrust":        	return 107; break;
+			case "stiletto":        return  96; break;
+			case "bullet":         	return 104; break;
+			case "fire":           	return  64; break;
+			case "ice":            	return  65; break;
+			case "corrosion":      	return   2; break;
+			case "conducted":		return  66; break;
+			case "psychic":        	return  71; break;
 			
-			case "healStress":     		return  80; break;
-			case "healBody":       		return  84; break;
-			case "healMind":       		return  72; break;
+			case "healStress":     	return  80; break;
+			case "healBody":       	return  84; break;
+			case "healMind":       	return  72; break;
 			
-			case "self":           		return  75; break;
-			case "melee":          		return  97; break;
-			case "thrown":         		return  96; break;
-			case "fired":          		return 102; break;
-			case "line":           		return 107; break;
-			case "cone":           		return 118; break;
-			case "aoe":            		return 218; break;
+			case "self":           	return  75; break;
+			case "melee":          	return  97; break;
+			case "thrown":         	return 114; break;
+			case "fired":          	return 102; break;
 			
-			case "skill":      	   		return  88; break;
-			case "knowledge":      		return  79; break;
+			case "skill":      	   	return  88; break;
+			case "knowledge":      	return  79; break;
 		}
 		return 0;
 	};
