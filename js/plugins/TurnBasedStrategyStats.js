@@ -357,7 +357,7 @@
 	};
 	
 	Game_BattlerBase.prototype.skillPoints = function(skill) {
-		return !this._skillPoints[skill] ? 0 : this._skillPoints[skill];
+		return !this._skillPoints[skill] === undefined ? 0 : this._skillPoints[skill];
 	};
 	
 	Game_BattlerBase.prototype.isDead = function() {
@@ -619,7 +619,7 @@
 			protOne.armor.fire += protTwo.armor.fire === undefined ? 0 : protTwo.armor.fire;
 			protOne.armor.ice += protTwo.armor.ice === undefined ? 0 : protTwo.armor.ice;
 			protOne.armor.corrosion += protTwo.armor.corrosion === undefined ? 0 : protTwo.armor.corrosion;
-			protOne.armor.conducted += protTwo.armor.ice === undefined ? 0 : protTwo.armor.conducted;
+			protOne.armor.conducted += protTwo.armor.conducted === undefined ? 0 : protTwo.armor.conducted;
 		}
 		
 		return protOne;
@@ -643,22 +643,13 @@
 						returnActionInfo.sourceEquip = equips[i];
 						returnActionInfo.sourceEquipSlotId = i;
 						returnActionInfo.canTargetBodyPart = false;
-						var k;
-						if(actions[j].hits) {
-							for(k = 0; k < actions[j].hits.length; k++) {
-								var hit = actions[j].hits[k];
-								if(hit.damage) {
-									var damage = hit.damage;
-									if((damage.blunt && damage.blunt.aoe <= 0) || (damage.cut && damage.cut.aoe <= 0)
-										|| (damage.keen && damage.keen.aoe <= 0) || (damage.thrust && damage.thrust.aoe <= 0)
-										|| (damage.stiletto && damage.stiletto.aoe <= 0) || (damage.bullet && damage.bullet.aoe <= 0)
-										|| (damage.fire && damage.fire.aoe <= 0) || (damage.ice && damage.ice.aoe <= 0)
-										|| (damage.lightning && damage.lightning.aoe <= 0) || (damage.corrosion && damage.corrosion.aoe <= 0)) {
-										returnActionInfo.canTargetBodyPart = true;
-										break;
-									}
+						if(actions[j].hits && actions[j].hits.length > 0) {
+							returnActionInfo.canTargetBodyPart = actions[j].hits.some(function (hit) {
+								if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+									return true;
 								}
-							}
+								return false;
+							});
 						}
 						
 						var requirements = actions[j].skillRequirements;
@@ -762,10 +753,10 @@
 		
 		var baseProtection = this.baseProtection();
 		if(baseProtection && baseProtection.mental) {
-			if(baseProtection.mental.defense) {
+			if(baseProtection.mental.defense !== undefined) {
 				totalProtection.defense += baseProtection.mental.defense;
 			}
-			if(baseProtection.mental.armor) {
+			if(baseProtection.mental.armor !== undefined) {
 				totalProtection.armor += baseProtection.mental.armor;
 			}
 		}
@@ -773,10 +764,10 @@
 		var that = this;
 		this._buffs.forEach(function (buff) {
 			if(buff.protection && buff.protection.mental) {
-				if(buff.protection.mental.defense) {
+				if(buff.protection.mental.defense !== undefined) {
 					totalProtection.defense += buff.protection.mental.defense;
 				}
-				if(buff.protection.mental.armor) {
+				if(buff.protection.mental.armor !== undefined) {
 					totalProtection.armor += buff.protection.mental.armor;
 				}
 			}
@@ -880,7 +871,7 @@
 	};
 	
 	Game_BattlerBase.prototype.isHitValid = function(hit) {
-		if(!hit.heal || !hit.heal.fullBody) { return false; }
+		if(hit.aoe === undefined || hit.aoe < 1 || !hit.heal || hit.heal.damage === undefined || hit.heal.damage <= 0) { return false; }
 			
 		return this.getDamage("head") > 0 ||
 			this.getDamage("torso") > 0 ||
@@ -891,14 +882,14 @@
 	};
 	
 	Game_BattlerBase.prototype.applyHit = function(hit) {
-		if(!hit.heal || !hit.heal.fullBody) { return; }
+		if(hit.aoe === undefined || hit.aoe < 1 || !hit.heal || hit.heal.damage === undefined || hit.heal.damage <= 0) { return; }
 		
-		this.adjustDamage("head", -hit.heal.fullBody);
-		this.adjustDamage("torso", -hit.heal.fullBody);
-		this.adjustDamage("leftArm", -hit.heal.fullBody);
-		this.adjustDamage("rightArm", -hit.heal.fullBody);
-		this.adjustDamage("leftLeg", -hit.heal.fullBody);
-		this.adjustDamage("rightLeg", -hit.heal.fullBody);
+		this.adjustDamage("head", -hit.heal.damage);
+		this.adjustDamage("torso", -hit.heal.damage);
+		this.adjustDamage("leftArm", -hit.heal.damage);
+		this.adjustDamage("rightArm", -hit.heal.damage);
+		this.adjustDamage("leftLeg", -hit.heal.damage);
+		this.adjustDamage("rightLeg", -hit.heal.damage);
 	};
 	
 	//general changes to battler

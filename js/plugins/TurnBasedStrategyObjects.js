@@ -668,16 +668,16 @@
 		var that = this;
 		hits.forEach(function (hit) {
 			var targets = [];
-			if(hit.rangeType === "aoe") {
+			if(hit.aoe !== undefined && hit.aoe > 0) {
 				targets.push(centerTarget);
-				var centerPointX = hit.isFollowUpHit ? $gamePlayer.x : that._tbsSelectedActor.chara.x;
-				var centerPointY = hit.isFollowUpHit ? $gamePlayer.y : that._tbsSelectedActor.chara.y;
-				var aoeRange = hit.range ? hit.range / 2 : 0;
-				aoeRange += hit.ignoreUserRange ? 0 : that._tbsSelectedActor.battler.baseRange() / 2;
+				var centerPointX = $gamePlayer.x;
+				var centerPointY = $gamePlayer.y;
+				var aoeRange = hit.aoe / 2;
+				var checkBoxRange = Math.ceil(aoeRange);
 				var x;
-				for(x = centerPointX - aoeRange ; x <= centerPointX + aoeRange; x++) {
+				for(x = centerPointX - checkBoxRange ; x <= centerPointX + checkBoxRange; x++) {
 					var y;
-					for(y = centerPointY - aoeRange ; y <= centerPointY + aoeRange; y++) {
+					for(y = centerPointY - checkBoxRange ; y <= centerPointY + checkBoxRange; y++) {
 						if(hit.ignoreCenter && x === centerPointX && y === centerPointY) { continue; }
 						var distance = that.actualDistance(x, y, centerPointX, centerPointY);
 						if(distance <= aoeRange) {
@@ -706,15 +706,15 @@
 		if(!hits) { return; }
 		var that = this;
 		hits.forEach(function (hit) {
-			if(hit.rangeType === "aoe") {
-				var centerPointX = hit.isFollowUpHit ? $gamePlayer.x : that._tbsSelectedActor.chara.x;
-				var centerPointY = hit.isFollowUpHit ? $gamePlayer.y : that._tbsSelectedActor.chara.y;
-				var aoeRange = hit.range ? hit.range / 2 : 0;
-				aoeRange += hit.ignoreUserRange ? 0 : that._tbsSelectedActor.battler.baseRange() / 2;
+			if(hit.aoe !== undefined && hit.aoe > 0) {
+				var centerPointX = $gamePlayer.x;
+				var centerPointY = $gamePlayer.y;
+				var aoeRange = hit.aoe / 2;
+				var checkBoxRange = Math.ceil(aoeRange);
 				var x;
-				for(x = centerPointX - aoeRange ; x <= centerPointX + aoeRange; x++) {
+				for(x = centerPointX - checkBoxRange ; x <= centerPointX + checkBoxRange; x++) {
 					var y;
-					for(y = centerPointY - aoeRange ; y <= centerPointY + aoeRange; y++) {
+					for(y = centerPointY - checkBoxRange ; y <= centerPointY + checkBoxRange; y++) {
 						if((hit.ignoreCenter && x === centerPointX && y === centerPointY)
 							|| that.getExistingTbsTile(x, y, that._tbsAoeSprites)) { continue; }
 						var distance = that.actualDistance(x, y, centerPointX, centerPointY);
@@ -1380,18 +1380,8 @@
 			var finalTarget = actionWithTarget.targets[randomTargetIndex];
 			this.setTbsActionTargetLocation(finalTarget.chara.x, finalTarget.chara.y);
 			
-			if(actionWithTarget.actionInfo.canTargetBodyPart) {
-				var stress = finalTarget.battler.stress();
-				if(stress >= 5) {
-					this.setTbsActionTargetPart("vital");
-				} else {
-					if(Math.random() >= 0.5 + stress / 10) {
-						this.setTbsActionTargetPart("mobility");
-					} else {
-						this.setTbsActionTargetPart("vital");
-					}
-				}
-			}
+			//TODO: set this to mobility for attacks designed to target mobility
+			this.setTbsActionTargetPart("vital");
 			
 			if(finalTarget === this._tbsSelectedActor) {
 				var enemies = [];
@@ -1979,19 +1969,13 @@
 				var actionInfo = {};
 				actionInfo.action = skills[i].tbsStats.action;
 				actionInfo.canTargetBodyPart = false;
-				if(skills[i].tbsStats.action.hits) {
-					var j;
-					for(j = 0; j < skills[i].tbsStats.action.hits.length; j++) {
-						var hit = skills[i].tbsStats.action.hits[j];
-						if(hit.damage && hit.rangeType !== "aoe") {
-							var damage = hit.damage;
-							if(damage.blunt || damage.cut || damage.bullet
-								|| damage.fire || damage.ice || damage.corrosion) {
-								actionInfo.canTargetBodyPart = true;
-								break;
-							}
+				if(skills[i].tbsStats.action.hits && skills[i].tbsStats.action.hits.length > 0) {
+					actionInfo.canTargetBodyPart = skills[i].tbsStats.action.hits.some(function (hit) {
+						if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+							return true;
 						}
-					}
+						return false;
+					});
 				}
 				actionInfos.push(actionInfo);
 			}
@@ -2008,19 +1992,13 @@
 			actionInfo.action = skill.tbsStats.action;
 			actionInfos.push(actionInfo);
 			actionInfo.canTargetBodyPart = false;
-			if(skill.tbsStats.action.hits) {
-				var i;
-				for(i = 0; i < skill.tbsStats.action.hits.length; i++) {
-					var hit = skill.tbsStats.action.hits[i];
-					if(hit.damage && hit.rangeType !== "aoe") {
-						var damage = hit.damage;
-						if(damage.blunt || damage.cut || damage.bullet
-							|| damage.fire || damage.ice || damage.corrosion) {
-							actionInfo.canTargetBodyPart = true;
-							break;
-						}
+			if(skill.tbsStats.action.hits && skill.tbsStats.action.hits.length > 0) {
+				actionInfo.canTargetBodyPart = skill.tbsStats.action.hits.some(function (hit) {
+					if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+						return true;
 					}
-				}
+					return false;
+				});
 			}
 		});
 		return actionInfos;
@@ -2088,7 +2066,7 @@
 		largestActionRange.baseRange = battlerBaseRange / 2;
 		if(action && action.hits && action.hits.length > 0) {
 			action.hits.forEach(function (hit) {
-				var hitRange = hit.range ? hit.range : 0;
+				var hitRange = hit.range !== undefined ? hit.range : 0;
 				if(!rangeFound || hitRange > largestActionRange.range) {
 					rangeFound = true;
 					largestActionRange.range = hitRange;
@@ -2482,7 +2460,6 @@
 	
 	Game_Map.prototype.isPassable = function(x, y, d, caller) {
 		if(this._tbsBattleMode && ((this._tbsSelectedActor && this._tbsSelectedActor.chara === caller) || $gameMap === caller)) {
-			if(this._tbsPassageType === "aoe") { return true; } //can go anywhere
 			var events = $gameMap.eventsXyNt(x, y);
 			if(events.some(function(event) {
 				return event.isNormalPriority();

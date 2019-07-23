@@ -314,8 +314,8 @@ Window_ItemStatusBase.prototype.getCompleteDefense = function(input) {
 		inputObject = {};
 	}
 	var returnObject = {};
-	returnObject.solid = inputObject.solid ? inputObject.solid : 0;
-	returnObject.fluid = inputObject.fluid ? inputObject.fluid : 0;
+	returnObject.solid = inputObject.solid !== undefined ? inputObject.solid : 0;
+	returnObject.fluid = inputObject.fluid !== undefined ? inputObject.fluid : 0;
 	return returnObject;
 };
 
@@ -325,13 +325,13 @@ Window_ItemStatusBase.prototype.getCompleteArmor = function(input) {
 		inputObject = {};
 	}
 	var returnObject = {};
-	returnObject.blunt = inputObject.blunt ? inputObject.blunt : 0;
-	returnObject.cut = inputObject.cut ? inputObject.cut : 0;
-	returnObject.bullet = inputObject.bullet ? inputObject.bullet : 0;
-	returnObject.fire = inputObject.fire ? inputObject.fire : 0;
-	returnObject.ice = inputObject.ice ? inputObject.ice : 0;
-	returnObject.corrosion = inputObject.corrosion ? inputObject.corrosion : 0;
-	returnObject.conducted = inputObject.conducted ? inputObject.conducted : 0;
+	returnObject.blunt = inputObject.blunt !== undefined ? inputObject.blunt : 0;
+	returnObject.cut = inputObject.cut !== undefined ? inputObject.cut : 0;
+	returnObject.bullet = inputObject.bullet !== undefined ? inputObject.bullet : 0;
+	returnObject.fire = inputObject.fire !== undefined ? inputObject.fire : 0;
+	returnObject.ice = inputObject.ice !== undefined ? inputObject.ice : 0;
+	returnObject.corrosion = inputObject.corrosion !== undefined ? inputObject.corrosion : 0;
+	returnObject.conducted = inputObject.conducted !== undefined ? inputObject.conducted : 0;
 	return returnObject;
 };
 
@@ -341,8 +341,8 @@ Window_ItemStatusBase.prototype.getCompleteMentalProtection = function(input) {
 		inputObject = {};
 	}
 	var returnObject = {};
-	returnObject.defense = inputObject.defense ? inputObject.defense : 0;
-	returnObject.armor = inputObject.armor ? inputObject.armor : 0;
+	returnObject.defense = inputObject.defense !== undefined ? inputObject.defense : 0;
+	returnObject.armor = inputObject.armor !== undefined ? inputObject.armor : 0;
 	return returnObject;
 };
 
@@ -350,15 +350,15 @@ Window_ItemStatusBase.prototype.getCompleteTypeProtection = function(input) {
 	var returnObject = {};
 	returnObject.defense = 0;
 	returnObject.armor = 0;
-	if(!input || (!input.defense && !input.armor)) {
+	if(input === undefined || (input.defense === undefined && input.armor === undefined)) {
 		return returnObject;
 	}
 	
-	if(input.defense) {
+	if(input.defense !== undefined) {
 		returnObject.defense = input.defense;
 	}
 	
-	if(input.armor) {
+	if(input.armor !== undefined) {
 		returnObject.armor = input.armor;
 	}
 	
@@ -1685,10 +1685,6 @@ Window_TbsTarget.prototype.update = function() {
 		{
 			$gameMap.setTbsActionTargetLocation(-1, -1);
 			return;
-		} else {
-			if(this._targetPartWindow) {
-				this._targetPartWindow.setFreeTargeting(this.actor().battler.isDown());
-			}
 		}
 		$gameMap.setTbsActionTargetLocation(this.actor().chara.x, this.actor().chara.y);
 	}
@@ -1912,41 +1908,24 @@ Window_TbsTargetPart.prototype.constructor = Window_TbsTargetPart;
 Window_TbsTargetPart.prototype.initialize = function(x, y) {
     Window_Command.prototype.initialize.call(this, x, y);
 	this._skipDisabled = true;
-	this._freeTargeting = false;
 };
 
 Window_TbsTargetPart.prototype.windowWidth = function() {
-	var textWidth = this._freeTargeting ? 14 * 9 : 14 * 14;
+	var textWidth = 14 * 9;
     return textWidth + this.standardPadding()*2 + this.textPadding()*2;
 };
 
 Window_TbsTargetPart.prototype.numVisibleRows = function() {
-	if(this._freeTargeting) {
-		return 6;
-	} else {
-		return 2;
-	}
+	return 6;
 };
 
 Window_TbsTargetPart.prototype.makeCommandList = function() {
-	if(this._freeTargeting) {
-		this.addCommand("Head", 'targetPart', true, 1);
-		this.addCommand("Torso", 'targetPart', true, 2);
-		this.addCommand("Left Arm", 'targetPart', true, 3);
-		this.addCommand("Right Arm", 'targetPart', true, 4);
-		this.addCommand("Left Leg", 'targetPart', true, 5);
-		this.addCommand("Right Leg", 'targetPart', true, 6);
-	} else {
-		this.addCommand("Vital Parts", 'targetPart', true, 1);
-		this.addCommand("Mobility Parts", 'targetPart', true, 2);
-	}
-};
-
-Window_TbsTargetPart.prototype.setFreeTargeting = function(free) {
-	if(this._freeTargeting !== free) {
-		this._freeTargeting = free;
-		this.refreshWindowContents();
-	}
+	this.addCommand("Head", 'targetPart', true, 1);
+	this.addCommand("Torso", 'targetPart', true, 2);
+	this.addCommand("Left Arm", 'targetPart', true, 3);
+	this.addCommand("Right Arm", 'targetPart', true, 4);
+	this.addCommand("Left Leg", 'targetPart', true, 5);
+	this.addCommand("Right Leg", 'targetPart', true, 6);
 };
 
 Window_TbsTargetPart.prototype.refreshWindowContents = function() {
@@ -1973,29 +1952,25 @@ Window_TbsTargetPart.prototype.update = function() {
 	if (!$gameMap.currentForce() || !$gameMap.currentForce().isParty || !this.isOpenAndActive()) { return; }
 	var part = "none";
 	var ext = this.currentExt();
-	if(this._freeTargeting) {
-		switch(ext) {
-			case 1:
-				part = "head";
-				break;
-			case 2:
-				part = "torso";
-				break;
-			case 3:
-				part = "leftArm";
-				break;
-			case 4:
-				part = "rightArm";
-				break;
-			case 5:
-				part = "leftLeg";
-				break;
-			case 6:
-				part = "rightLeg";
-				break;
-		}
-	} else {
-		part = ext === 2 ? "mobility" : "vital";
+	switch(ext) {
+		case 1:
+			part = "head";
+			break;
+		case 2:
+			part = "torso";
+			break;
+		case 3:
+			part = "leftArm";
+			break;
+		case 4:
+			part = "rightArm";
+			break;
+		case 5:
+			part = "leftLeg";
+			break;
+		case 6:
+			part = "rightLeg";
+			break;
 	}
 	$gameMap.setTbsActionTargetPart(part);
 };
@@ -2243,8 +2218,8 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 	
 	Window_Base.prototype.drawActionSkillRequirements = function(action, actionIndex, lineOffset, drawName, actor) {
 		if(!action) { return 0; }
-		if(!actionIndex) { actionIndex = 0; }
-		if(!lineOffset) { lineOffset = 0; }
+		if(actionIndex === undefined) { actionIndex = 0; }
+		if(lineOffset === undefined) { lineOffset = 0; }
 		
 		var nameOffset = drawName ? 254 : 0;
 		var skillsPosition = nameOffset + 182;
@@ -2297,8 +2272,8 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 	
 	Window_Base.prototype.drawActionInfo = function(actionInfo, actionIndex, lineOffset, drawName, actor) {
 		if(!actionInfo || !actionInfo.action) { return 0; }
-		if(!actionIndex) { actionIndex = 0; }
-		if(!lineOffset) { lineOffset = 0; }
+		if(actionIndex === undefined) { actionIndex = 0; }
+		if(lineOffset === undefined) { lineOffset = 0; }
 		
 		var action = actionInfo.action;
 		var nameOffset = drawName ? 254 : 0;
@@ -2313,12 +2288,13 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 			var rangeTypeIconId = hits[i].rangeType ? this.getIconIdFor(hits[i].rangeType) : 0;
 			var rangeIsSelf = hits[i].rangeType && hits[i].rangeType === "self";
 			this.drawIcon(rangeTypeIconId, nameOffset, lineHeight);
-			var hitRange = hits[i].range ? hits[i].range : 0;
+			var hitRange = hits[i].range !== undefined ? hits[i].range : 0;
 			hitRange += hits[i].ignoreUserRange || !actor ? 0 : actor.baseRange();
 			var range = hitRange;
 			this.drawText(!rangeIsSelf && range > 0 ? range : "-", nameOffset - 38, lineHeight, 100, 'right');
-			var accuracyBonus = hits[i].accuracyBonus ? hits[i].accuracyBonus : 0;
+			var accuracyBonus = hits[i].accuracyBonus !== undefined ? hits[i].accuracyBonus : 0;
 			this.drawText((hits[i].damage || hits[i].debuffs) && accuracyBonus > 0 ? accuracyBonus : "-", nameOffset + 8, lineHeight, 100, 'right');
+			this.drawText(hits[i].aoe > 0 ? hits[i].aoe : "-", nameOffset + 124, lineHeight, 100, 'right');
 			
 			if(i === 0) {
 				if(actor) {
@@ -2409,13 +2385,13 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 					damageLineOffset += this.drawDamageForType(hitDamage.bullet, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("bullet"));
 					damageLineOffset += this.drawDamageForType(hitDamage.fire, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("fire"));
 					damageLineOffset += this.drawDamageForType(hitDamage.ice, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("ice"));
-					damageLineOffset += this.drawDamageForType(hitDamage.lightning, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("conducted"));
 					damageLineOffset += this.drawDamageForType(hitDamage.corrosion, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("corrosion"));
-					damageLineOffset += this.drawDamage(hitDamage.psychic.power, hitDamage.psychic.piercing, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("psychic")) ? 1 : 0;
+					damageLineOffset += this.drawDamageForType(hitDamage.lightning, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("conducted"));
+					damageLineOffset += this.drawDamage(hitDamage.psychic, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("psychic")) ? 1 : 0;
 				}
 				if(heal) {
 					damageLineOffset += this.drawHeal(heal.stress, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("healStress")) ? 1 : 0;
-					damageLineOffset += this.drawHeal(heal.fullBody, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("healBody")) ? 1 : 0;
+					damageLineOffset += this.drawHeal(heal.damage, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("healBody")) ? 1 : 0;
 				}
 				if(buffs) {
 					var j;
@@ -2456,15 +2432,14 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 	
 	Window_Base.prototype.drawDamageForType = function(damage, drawName, nameOffset, lineHeight, lineOffset, reqLacked, iconId) {
 		var lineCount = 0;
-		lineCount += this.drawDamage(damage.power, damage.aoe, drawName, nameOffset, lineHeight, lineOffset + lineCount, reqLacked, iconId) ? 1 : 0;
+		lineCount += this.drawDamage(damage, drawName, nameOffset, lineHeight, lineOffset + lineCount, reqLacked, iconId) ? 1 : 0;
 		return lineCount;
 	};
 	
-	Window_Base.prototype.drawDamage = function(power, aoe, drawName, nameOffset, lineHeight, lineOffset, reqLacked, iconId) {
+	Window_Base.prototype.drawDamage = function(power, drawName, nameOffset, lineHeight, lineOffset, reqLacked, iconId) {
 		if(power > 0) {
 			this.drawIcon(iconId, nameOffset + 116, lineHeight + this.lineHeight() * lineOffset);
 			this.drawText(power > 0 ? power : "-", nameOffset + 78, lineHeight + this.lineHeight() * lineOffset, 100, 'right');
-			this.drawText(aoe > 0 ? aoe : "-", nameOffset + 124, lineHeight + this.lineHeight() * lineOffset, 100, 'right');
 			if(drawName && lineOffset > 0) {
 				if(reqLacked) {
 					this.changeTextColor(this.deathColor());
@@ -2478,9 +2453,9 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 	};
 	
 	Window_Base.prototype.drawHeal = function(heal, drawName, nameOffset, lineHeight, lineOffset, reqLacked, iconId) {
-		if(heal) {
+		if(heal !== undefined) {
 			this.drawIcon(iconId, nameOffset + 116, lineHeight + this.lineHeight() * lineOffset);
-			var power = heal ? heal : 0;
+			var power = heal !== undefined ? heal : 0;
 			this.drawText(power > 0 ? power : "-", nameOffset + 78, lineHeight + this.lineHeight() * lineOffset, 100, 'right');
 			this.drawText("-", nameOffset + 124, lineHeight + this.lineHeight() * lineOffset, 100, 'right');
 			if(drawName && lineOffset > 0) {
@@ -2576,7 +2551,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 	};
 	
 	Window_Base.prototype.iconIndexForAction = function(action) {
-		if(action.menuIcon) { return action.menuIcon; }
+		if(action.menuIcon !== undefined) { return action.menuIcon; }
 		return 79;
 	};
 	
@@ -2755,7 +2730,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 	
 	Window_Selectable.prototype.isHealing = function(action) {
 		return action && action.hits && action.hits.length > 0 &&
-			action.hits.some(function(hit) { return hit.heal && hit.heal.fullBody && hit.heal.fullBody > 0 });
+			action.hits.some(function(hit) { return hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 });
 	};
 	
 	//item category

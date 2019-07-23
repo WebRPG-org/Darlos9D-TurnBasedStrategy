@@ -169,7 +169,8 @@
 						$gameMap.setBreadcrumbStage("actor");
 					} else if($gameMap.tbsTurnMode() === "manualTarget") {
 						this._tbsTargetNameWindow.close();
-						if($gameMap.getTbsSelectedActionInfo().canTargetBodyPart && $gameMap.getTbsActorAtPosition($gamePlayer.x, $gamePlayer.y)) {
+						var selectedActor = $gameMap.getTbsActorAtPosition($gamePlayer.x, $gamePlayer.y)
+						if(selectedActor && ($gameMap.getTbsSelectedActionInfo().canTargetBodyPart || selectedActor.battler.isDown())) {
 							this._tbsTargetPartWindow.refreshWindowContents();
 							this._tbsTargetPartWindow.show();
 							this._tbsTargetPartWindow.open();
@@ -221,9 +222,6 @@
 					this._tbsTargetNameWindow.setTargetActor(tbsActor);
 					this._tbsTargetNameWindow.show();
 					this._tbsTargetNameWindow.open();
-					if($gameMap.tbsTurnMode() === "manualTarget") {
-						this._tbsTargetPartWindow.setFreeTargeting(tbsActor.battler.isDown());
-					}
 				} else {
 					this._tbsActorStatusWindow.setTbsActor(undefined);
 					this._tbsActorStatusWindow.close();
@@ -546,7 +544,8 @@
 			this._tbsTargetWindow.shouldActivateManualTarget(true);
 		} else {
 			var actionInfo = $gameMap.getTbsSelectedActionInfo();
-			if(actionInfo.canTargetBodyPart && $gameMap.getTbsSelectedActor()) {
+			var selectedActor = $gameMap.getTbsSelectedActor();
+			if(selectedActor && (actionInfo.canTargetBodyPart || selectedActor.battler.isDown())) {
 				this._tbsTargetWindow.shouldOpenTargetPartWindow(true);
 				this._tbsTargetPartFromManualTarget = false;
 				$gameMap.setTbsTurnMode("selectTargetPart");
@@ -749,9 +748,10 @@
 		if(!actionInfo || !actionInfo.action) { return false; }
 		var action = actionInfo.action;
 		var hits = action.hits;
-		return !!hits && hits.length > 0 &&
-			hits.some(function(hit) { return hit.heal &&
-				((hit.heal.fullBody && hit.heal.fullBody.aoe >= 2) || (hit.heal.stress && hit.heal.stress.aoe >= 2)); });
+		return hits && hits.length > 0 &&
+			hits.some(function(hit) { return hit.aoe !== undefined && hit.aoe >= 2 && hit.heal
+				&& ((hit.heal.damage !== undefined && hit.heal.damage > 0)
+				|| (hit.heal.stress !== undefined && hit.heal.stress > 0)); });
 	};
 	
 	Scene_ItemBase.prototype.canUseAction = function() {
