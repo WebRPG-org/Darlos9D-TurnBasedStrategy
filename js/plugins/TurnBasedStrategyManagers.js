@@ -592,6 +592,8 @@ BattleManager.combatMath = function(subject, actionInfo, target, targetsByHit) {
 	results.downed = false;
 	results.revived = false;
 	results.shouldPassTurn = true;
+	results.animationIds = [];
+	var hitDodged = true;
 	if(target.blankDummy()) {
 		results.shouldPassTurn = false;
 		return results;
@@ -885,12 +887,14 @@ BattleManager.combatMath = function(subject, actionInfo, target, targetsByHit) {
 						results.shouldPassTurn = false;
 					}
 				}
+				hitDodged = false;
 				results.dodged = false;
 				results.stress.other += hitDamage.stress;
 			}
 		}
 		var heal = hit.heal;
 		if(heal) {
+			hitDodged = false;
 			results.dodged = false;
 			results.shouldPassTurn = false;
 			if(heal.stress !== undefined) {
@@ -926,6 +930,7 @@ BattleManager.combatMath = function(subject, actionInfo, target, targetsByHit) {
 		var buffs = hit.buffs;
 		if(buffs) {
 			buffs.forEach(function (buff) {
+				hitDodged = false;
 				results.dodged = false;
 				results.shouldPassTurn = false;
 				var newBuff = {};
@@ -979,6 +984,11 @@ BattleManager.combatMath = function(subject, actionInfo, target, targetsByHit) {
 				}
 				results.buffs.push(newBuff);
 			});
+		}
+		if(hitDodged && hit.missAnimationId !== undefined && hit.missAnimationId > 0) {
+			results.animationIds.push(hit.missAnimationId);
+		} else if(!hitDodged && hit.animationId !== undefined && hit.animationId > 0) {
+			results.animationIds.push(hit.animationId);
 		}
 	}
 	return results;

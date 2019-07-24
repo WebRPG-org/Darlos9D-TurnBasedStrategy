@@ -113,6 +113,15 @@
 			if(action.attackMotion) {
 				action.attackMotion.imageId = DataManager.getWeaponImageId(action.attackMotion.image);
 			}
+			if(action.initialAnimation) {
+				action.initialAnimationId = 0;
+				for(i = 1; i < $dataAnimations.length; i++) {
+					if($dataAnimations[i].name.toLowerCase() === action.initialAnimation.toLowerCase()) {
+						action.initialAnimationId = i;
+						break;
+					}
+				}
+			}
 			if(action.hits) {
 				action.hits.forEach(function (hit) {
 					if(hit.animation) {
@@ -121,6 +130,16 @@
 						for(i = 1; i < $dataAnimations.length; i++) {
 							if($dataAnimations[i].name.toLowerCase() === hit.animation.toLowerCase()) {
 								hit.animationId = i;
+								break;
+							}
+						}
+					}
+					if(hit.missAnimation) {
+						hit.missAnimationId = 0;
+						var i;
+						for(i = 1; i < $dataAnimations.length; i++) {
+							if($dataAnimations[i].name.toLowerCase() === hit.missAnimation.toLowerCase()) {
+								hit.missAnimationId = i;
 								break;
 							}
 						}

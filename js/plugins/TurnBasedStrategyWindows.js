@@ -3321,25 +3321,13 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 		//subject.performActionEnd();
 	};
 	
-	Window_BattleLog.prototype.showAnimations = function(subject, centerTarget, animationIds, followupAnimationIds) {
-		var delay = this.animationBaseDelay();
-		var followupDelay = 0;
-		var that = this;
-		animationIds.forEach(function (animationId) {
+	Window_BattleLog.prototype.showInitialAnimation = function(centerTarget, animationId) {
+		if(animationId !== undefined && animationId > 0) {
 			var animation = $dataAnimations[animationId];
 			if (animation) {
-				if(animation.frames.length > followupDelay) {
-					followupDelay = animation.frames.length;
-				}
-				centerTarget.battler.startAnimation(animationId, false, delay);
+				centerTarget.startAnimation(animationId, false, this.animationBaseDelay());
 			}
-		});
-		followupAnimationIds.forEach(function (animationId) {
-			var animation = $dataAnimations[animationId];
-			if (animation) {
-				centerTarget.battler.startAnimation(animationId, false, delay + followupDelay);
-			}
-		});
+		}
 	};
 	
 	Window_BattleLog.prototype.showAnimation = function(subject, targets, animationId) {
@@ -3384,16 +3372,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 		this.push('performActionStart', subject, action);
 		this.push('waitForMovement');
 		this.push('performAction', subject, action);
-		var animationIds = [];
-		var followupAnimationIds = [];
-		action.hits.forEach(function (hit) {
-			if(hit.isFollowUpHit) {
-				followupAnimationIds.push(hit.animationId);
-			} else {
-				animationIds.push(hit.animationId);
-			}
-		});
-		this.push('showAnimations', subject, targets.clone()[0], animationIds, followupAnimationIds);
+		this.push('showInitialAnimation', targets.clone()[0].battler, action.initialAnimationId);
 		this.displayAction(subject, action);
 	};
 
@@ -3449,6 +3428,16 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 	};
 	
 	Window_BattleLog.prototype.displayResultsValues = function(target, results) {
+		if(results.animationIds.length > 0) {
+			results.animationIds.forEach(function (animationId) {
+				if(animationId !== undefined && animationId > 0) {
+					var animation = $dataAnimations[animationId];
+					if (animation) {
+						target.startAnimation(animationId, false, 0);
+					}
+				}
+			});
+		}
 		if (results.dodged) {
 			this.displayDodge(target);
 		} else {
@@ -3472,11 +3461,10 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 			} else {
 				this.push('performDeflection', target);
 			}
-			var lines = 0;
-			lines += this.displayPartsDamage(target, results);
-			lines += this.displayStress(target, results);
-			this.push('wait');
+			this.displayPartsDamage(target, results);
+			this.displayStress(target, results);
 		}
+		this.push('wait');
 	};
 
 	Window_BattleLog.prototype.displayDodge = function(target) {
