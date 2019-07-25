@@ -53,6 +53,7 @@
 			{
 				var note = $dataArmors[i].note.length > 0 ? $dataArmors[i].note : "{}";
 				$dataArmors[i].tbsStats = JSON.parse(note);
+				this.sortActionsHits($dataArmors[i].tbsStats.actions);
 				DataManager.setUpAnimationIds($dataArmors[i]);
 			}
 		}
@@ -63,6 +64,7 @@
 			{
 				var note = $dataWeapons[i].note.length > 0 ? $dataWeapons[i].note : "{}";
 				$dataWeapons[i].tbsStats = JSON.parse(note);
+				this.sortActionsHits($dataWeapons[i].tbsStats.actions);
 				DataManager.setUpAnimationIds($dataWeapons[i]);
 			}
 		}
@@ -82,6 +84,7 @@
 			{
 				var note = $dataSkills[i].note.length > 0 ? $dataSkills[i].note : "{}";
 				$dataSkills[i].tbsStats = JSON.parse(note);
+				this.sortActionHits($dataSkills[i].tbsStats.action);
 				DataManager.setUpAnimationIds($dataSkills[i]);
 			}
 		}
@@ -92,6 +95,7 @@
 			{
 				var note = $dataItems[i].note.length > 0 ? $dataItems[i].note : "{}";
 				$dataItems[i].tbsStats = JSON.parse(note);
+				this.sortActionsHits($dataItems[i].tbsStats.actions);
 				DataManager.setUpAnimationIds($dataItems[i]);
 			}
 		}
@@ -99,6 +103,28 @@
 		turnBasedStrategyStatsLoaded = true;
 		
 		return true;
+	};
+	
+	DataManager.sortActionsHits = function(actions) {
+		if(!actions) { return; }
+		var that = this;
+		actions.forEach(function (action) {
+			that.sortActionHits(action);
+		});
+	};
+	
+	DataManager.sortActionHits = function(action) {
+		if(!action || !action.hits) { return; }
+		var initialHits = [];
+		var followUpHits = [];
+		action.hits.forEach(function(hit) {
+			if(hit.rangeType === "followUp") {
+				followUpHits.push(hit);
+			} else {
+				initialHits.push(hit);
+			}
+		});
+		action.hits = initialHits.concat(followUpHits);
 	};
 	
 	DataManager.setUpAnimationIds = function(dataArrayItem) {
@@ -113,17 +139,18 @@
 			if(action.attackMotion) {
 				action.attackMotion.imageId = DataManager.getWeaponImageId(action.attackMotion.image);
 			}
-			if(action.initialAnimation) {
-				action.initialAnimationId = 0;
-				for(i = 1; i < $dataAnimations.length; i++) {
-					if($dataAnimations[i].name.toLowerCase() === action.initialAnimation.toLowerCase()) {
-						action.initialAnimationId = i;
-						break;
-					}
-				}
-			}
 			if(action.hits) {
 				action.hits.forEach(function (hit) {
+					if(hit.initialAnimation) {
+						hit.initialAnimationId = 0;
+						var i;
+						for(i = 1; i < $dataAnimations.length; i++) {
+							if($dataAnimations[i].name.toLowerCase() === hit.initialAnimation.toLowerCase()) {
+								hit.initialAnimationId = i;
+								break;
+							}
+						}
+					}
 					if(hit.animation) {
 						hit.animationId = 0;
 						var i;

@@ -2457,7 +2457,6 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 			this.drawIcon(iconId, nameOffset + 116, lineHeight + this.lineHeight() * lineOffset);
 			var power = heal !== undefined ? heal : 0;
 			this.drawText(power > 0 ? power : "-", nameOffset + 78, lineHeight + this.lineHeight() * lineOffset, 100, 'right');
-			this.drawText("-", nameOffset + 124, lineHeight + this.lineHeight() * lineOffset, 100, 'right');
 			if(drawName && lineOffset > 0) {
 				if(reqLacked) {
 					this.changeTextColor(this.deathColor());
@@ -2517,6 +2516,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 			case "melee":          	return  97; break;
 			case "thrown":         	return 114; break;
 			case "fired":          	return 102; break;
+			case "followUp":        return  73; break;
 			
 			case "skill":      	   	return  88; break;
 			case "knowledge":      	return  79; break;
@@ -3321,13 +3321,17 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 		//subject.performActionEnd();
 	};
 	
-	Window_BattleLog.prototype.showInitialAnimation = function(centerTarget, animationId) {
-		if(animationId !== undefined && animationId > 0) {
-			var animation = $dataAnimations[animationId];
-			if (animation) {
-				centerTarget.startAnimation(animationId, false, this.animationBaseDelay());
+	Window_BattleLog.prototype.showInitialAnimations = function(centerTarget, hits) {
+		if(!hits) { return; }
+		var that = this;
+		hits.forEach(function(hit) {
+			if(hit.initialAnimationId !== undefined && hit.initialAnimationId > 0) {
+				var animation = $dataAnimations[hit.initialAnimationId];
+				if (animation) {
+					centerTarget.startAnimation(hit.initialAnimationId, false, that.animationBaseDelay());
+				}
 			}
-		}
+		});
 	};
 	
 	Window_BattleLog.prototype.showAnimation = function(subject, targets, animationId) {
@@ -3372,7 +3376,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 		this.push('performActionStart', subject, action);
 		this.push('waitForMovement');
 		this.push('performAction', subject, action);
-		this.push('showInitialAnimation', targets.clone()[0].battler, action.initialAnimationId);
+		this.push('showInitialAnimations', targets.clone()[0].battler, action.hits);
 		this.displayAction(subject, action);
 	};
 

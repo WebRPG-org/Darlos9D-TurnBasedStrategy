@@ -136,10 +136,12 @@ BattleManager.initMembers = function() {
 	this._tbsActionInfo = null;
 	this._tbsTargets = [];
 	this._tbsTargetsByHit = [];
+	this._nonFollowupsAllDodged = true;
 	this._targetsOnLeft = false;
     this._subject = null;
     this._action = null;
     this._targets = [];
+	this._resultsArray = [];
     this._logWindow = null;
     this._leftActorStatusWindow = null;
     this._rightActorStatusWindow = null;
@@ -152,6 +154,10 @@ BattleManager.initMembers = function() {
 	this._curWindowTarget = null;
 	this._switchTargetTime = 30;
 	this._curSwitchTargetTime = -1;
+};
+
+BattleManager.resetNonFollowupsAllDodged = function() {
+	this._nonFollowupsAllDodged = true;
 };
 
 BattleManager.setLeftActorStatusWindow = function(actorStatusWindow) {
@@ -462,10 +468,26 @@ BattleManager.makeActionOrders = function() {
 BattleManager.startAction = function() {
     var subject = this._subject;
     var action = this._tbsActionInfo.action;
-    var targets = this._tbsTargets;
+    var targets = [];
+	var that = this;
+	this._tbsTargets.forEach(function (target) {
+		var results = that.combatMath(subject.battler, that._tbsActionInfo, target.battler, that._tbsTargetsByHit);
+		if(!results.skipTarget) {
+			targets.push(target);
+			that._resultsArray.push(results);
+		}
+	});
+    this._targets = targets;
+	this._tbsTargets = targets;
+	if(this._targetsOnLeft) {
+		this.refreshLeftActorStatusWindow();
+		this.refreshLeftActorNameWindow();
+	} else {
+		this.refreshRightActorStatusWindow();
+		this.refreshRightActorNameWindow();
+	}
     this._phase = 'action';
     this._action = action;
-    this._targets = targets;
     //subject.useItem(action.item());
     //this._action.applyGlobal();
     this.refreshStatus();
@@ -502,7 +524,8 @@ BattleManager.updateAction = function() {
 		}
 		this._curSwitchTargetTime = -1;
 		var target = this._targets.shift();
-        this.invokeAction(this._subject.battler, target.battler);
+		var results = this._resultsArray.shift();
+        this.invokeAction(this._subject.battler, target.battler, results);
     } else {
         this.endAction();
     }
@@ -515,26 +538,25 @@ BattleManager.endAction = function() {
 	$gameMap.setShouldPassTurn(this._shouldPassTurn);
 };
 
-BattleManager.invokeAction = function(subject, target) {
+BattleManager.invokeAction = function(subject, target, results) {
     this._logWindow.push('pushBaseLine');
     //if (Math.random() < this._action.itemCnt(target)) {
     //    this.invokeCounterAttack(subject, target);
     //} else if (Math.random() < this._action.itemMrf(target)) {
     //    this.invokeMagicReflection(subject, target);
     //} else {
-        this.invokeNormalAction(subject, target);
+        this.invokeNormalAction(subject, target, results);
     //}
     //subject.setLastTarget(target);
     this._logWindow.push('popBaseLine');
     this.refreshStatus();
 };
 
-BattleManager.invokeNormalAction = function(subject, target) {
+BattleManager.invokeNormalAction = function(subject, target, results) {
     //var realTarget = this.applySubstitute(target);
-	var results = this.combatMath(subject, this._tbsActionInfo, target, this._tbsTargetsByHit);
     //this._action.apply(realTarget);
 	this.applyActionResults(results, target);
-    this._logWindow.displayActionResults(subject, target, results);
+	this._logWindow.displayActionResults(subject, target, results);
 };
 
 BattleManager.combatMath = function(subject, actionInfo, target, targetsByHit) {
@@ -593,6 +615,7 @@ BattleManager.combatMath = function(subject, actionInfo, target, targetsByHit) {
 	results.revived = false;
 	results.shouldPassTurn = true;
 	results.animationIds = [];
+	results.skipTarget = true;
 	var hitDodged = true;
 	if(target.blankDummy()) {
 		results.shouldPassTurn = false;
@@ -602,6 +625,12 @@ BattleManager.combatMath = function(subject, actionInfo, target, targetsByHit) {
 	for(i = 0; i < action.hits.length; i++) {
 		if(battlersByHit[i].indexOf(target) === -1) { continue; }
 		var hit = action.hits[i];
+		if((hit.rangeType === "followUp" && this._nonFollowupsAllDodged)
+			|| (hit.randomTarget && Math.random() < 0.5))
+		{
+			continue;
+		}
+		results.skipTarget = false;
 		var damage = hit.damage;
 		if(damage) {
 			var subjectStress = subject.stress();
@@ -616,6 +645,7 @@ BattleManager.combatMath = function(subject, actionInfo, target, targetsByHit) {
 						break;
 					case "thrown":
 					case "fired":
+					case "followUp":
 						accSkill = subject.totalSkill("rangedAcc");
 						break;
 					case "mental":
@@ -990,6 +1020,9 @@ BattleManager.combatMath = function(subject, actionInfo, target, targetsByHit) {
 		} else if(!hitDodged && hit.animationId !== undefined && hit.animationId > 0) {
 			results.animationIds.push(hit.animationId);
 		}
+		if(!hitDodged) {
+			this._nonFollowupsAllDodged = false;
+		}
 	}
 	return results;
 };
@@ -1354,8 +1387,10 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, partProt
 	var fluidBypass = false;
 	
 	if(partProt.defense.solid >= 3) {
+		solidThrustBypass = solidDamScale >= 2;
 		solidStilettoBypass = solidDamScale >= 1.5;
 	} else if(partProt.defense.solid >= 2) {
+		solidRegularBypass = solidDamScale >= 2;
 		solidThrustBypass = solidDamScale >= 1.5;
 		solidStilettoBypass = solidDamScale >= 1;
 	} else if(partProt.defense.solid >= 1) {
@@ -1363,8 +1398,8 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, partProt
 		solidThrustBypass = solidDamScale >= 1;
 		solidStilettoBypass = solidDamScale >= 0.5;
 	} else {
-		solidRegularBypass = true;
-		solidThrustBypass = true;
+		solidRegularBypass = solidDamScale >= 1;
+		solidThrustBypass = solidDamScale >= 0.5;
 		solidStilettoBypass = true;
 	}
 	
@@ -1447,7 +1482,7 @@ BattleManager.rollForRanks = function(ranks, stress) {
 	var adjustStress = Math.max(0, Math.min(5, stress));
 	var adjustedRanks = Math.max(1, ranks + 2 - adjustStress);
 	if(adjustStress >= 5) {
-		adjustedRanks = Math.floor(adjustedRanks / 2);
+		adjustedRanks = Math.max(1, Math.floor(adjustedRanks / 2));
 	}
 	var result = 0;
 	while(adjustedRanks > 0) {

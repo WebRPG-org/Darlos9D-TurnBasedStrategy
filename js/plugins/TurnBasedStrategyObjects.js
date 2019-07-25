@@ -160,13 +160,13 @@
 		return this._tbsAoeSpritesToAdd;
 	};
 	
-	Game_Temp.prototype.addTbsAoeSprite = function(x, y) {
+	Game_Temp.prototype.addTbsAoeSprite = function(x, y, isFollowUp) {
 		var chara = new Game_Character();
 		chara.setStepAnime(true);
 		chara.setPriorityType(2);
 		chara.setTbsBattleMode(true);
 		chara.setPosition(x, y);
-		chara.setImage("Cursor", 4);
+		chara.setImage("Cursor", isFollowUp ? 4 : 5);
 		this._tbsAoeSpritesToAdd.push(chara);
 		return chara;
 	};
@@ -632,11 +632,13 @@
 		return this._tbsActionTargetLocationY;
 	};
 	
-	Game_Map.prototype.isAnyTbsActionTargets = function() {
+	Game_Map.prototype.isAnyTbsActionTargets = function(ignoreFollowUpHits) {
 		var targetsByHit = this.getTbsActionTargetsByHit();
+		var hits = this._tbsSelectedAction.hits;
 		var i;
 		for(i = 0; i < targetsByHit.length; i++) {
-			if(targetsByHit[i].length > 1 || (targetsByHit[i].length === 1 && !targetsByHit[i][0].battler.blankDummy())) { return true; }
+			if((!ignoreFollowUpHits || hits[i].rangeType !== "followUp") && (targetsByHit[i].length > 1
+				|| (targetsByHit[i].length === 1 && !targetsByHit[i][0].battler.blankDummy()))) { return true; }
 		}
 		return false;
 	};
@@ -669,7 +671,6 @@
 		hits.forEach(function (hit) {
 			var targets = [];
 			if(hit.aoe !== undefined && hit.aoe > 0) {
-				targets.push(centerTarget);
 				var centerPointX = $gamePlayer.x;
 				var centerPointY = $gamePlayer.y;
 				var aoeRange = hit.aoe / 2;
@@ -719,7 +720,7 @@
 							|| that.getExistingTbsTile(x, y, that._tbsAoeSprites)) { continue; }
 						var distance = that.actualDistance(x, y, centerPointX, centerPointY);
 						if(distance <= aoeRange) {
-							that._tbsAoeSprites.push($gameTemp.addTbsAoeSprite(x, y));
+							that._tbsAoeSprites.push($gameTemp.addTbsAoeSprite(x, y, hit.rangeType === "followUp"));
 						}
 					}
 				}
@@ -941,7 +942,7 @@
 				break;
 			case "actionBattleScene":
 				$gamePlayer.setTbsShowCursor(true);
-				if(!this._tbsSelectedAction.skipBattleScene && this.isAnyTbsActionTargets()) {
+				if(!this._tbsSelectedAction.skipBattleScene && this.isAnyTbsActionTargets(true)) {
 					this._tbsInActionBattleScene = true;
 				}
 				var chara = this._tbsSelectedActor.chara;
@@ -1666,7 +1667,7 @@
 	
 	Game_Map.prototype.updateTbsActionBattleScene = function() {
 		if(this._tbsInActionBattleScene) { return; }
-		if(!this._tbsSelectedAction.skipBattleScene && this.isAnyTbsActionTargets()) {
+		if(!this._tbsSelectedAction.skipBattleScene && this.isAnyTbsActionTargets(true)) {
 			if(this._tbsCurAfterBtlScnFrames === -1) {
 				this._tbsCurAfterBtlScnFrames = this._tbsAfterBtlScnFrames;
 				return;
@@ -1678,18 +1679,21 @@
 			}
 		}
 		this._tbsCurAfterBtlScnFrames = -1;
-		if(this._tbsSelectedAction.skipBattleScene || !this.isAnyTbsActionTargets()) {
+		if(this._tbsSelectedAction.skipBattleScene || !this.isAnyTbsActionTargets(true)) {
 			var tbsTargets = this.getTbsActionTargets();
 			var tbsTargetsByHit = this.getTbsActionTargetsByHit();
 			if(tbsTargets.length > 0) {
 				var that = this;
 				tbsTargets.forEach(function (tbsTarget) {
+					BattleManager.resetNonFollowupsAllDodged();
 					var results = BattleManager.combatMath(that._tbsSelectedActor.battler, that._tbsSelectedActionInfo, tbsTarget.battler, tbsTargetsByHit);
-					BattleManager.applyActionResults(results, tbsTarget.battler);
+					if(!results.skipTarget) {
+						BattleManager.applyActionResults(results, tbsTarget.battler);
+					}
 				});
 			}
 		}
-		if(this.isAnyTbsActionTargets()) {
+		if(this.isAnyTbsActionTargets(false)) {
 			this.getTbsActionTargets().forEach(function (tbsTarget) {
 				if(tbsTarget.canActThisRound && tbsTarget.battler.isDown()) {
 					tbsTarget.canActThisRound = false;
