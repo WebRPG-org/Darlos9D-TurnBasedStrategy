@@ -926,10 +926,12 @@ Window_TbsActor.prototype.shouldActivateSurvey = function(should) {
 	this._shouldActivateSurvey = should;
 };
 
-Window_TbsActor.prototype.refreshWindowContents = function() {
+Window_TbsActor.prototype.refreshWindowContents = function(dontSelectFirst) {
 	this.move(this.x, this.y, this.windowWidth(), this.windowHeight());
 	this.createContents();
-	this.selectFirstEnabledItem();
+	if(!dontSelectFirst) {
+		this.selectFirstEnabledItem();
+	}
 	this.refresh();
 };
 
@@ -1134,7 +1136,7 @@ Window_TbsActionType.prototype.updateClose = function() {
         if (this.isClosed()) {
 			this._closing = false;
 			if(this._shouldOpenActorWindow) {
-				this._actorWindow.refreshWindowContents();
+				this._actorWindow.refreshWindowContents(true);
 				this._actorWindow.show();
 				this._actorWindow.open();
 				this._actorWindow.activate();
@@ -1494,15 +1496,17 @@ Window_TbsAction.prototype.updateClose = function() {
     }
 };
 
-Window_TbsAction.prototype.refreshWindowContents = function() {
+Window_TbsAction.prototype.refreshWindowContents = function(dontSelectFirst) {
 	this.move(this.x, this.y, this.windowWidth(), this.windowHeight());
-	this.refresh();
+	this.refresh(dontSelectFirst);
 };
 
-Window_TbsAction.prototype.refresh = function() {
+Window_TbsAction.prototype.refresh = function(dontSelectFirst) {
     this.makeItemList();
     this.createContents();
-	this.selectFirstEnabledItem();
+	if(!dontSelectFirst) {
+		this.selectFirstEnabledItem();
+	}
     this.drawAllItems();
 };
 
@@ -1633,10 +1637,12 @@ Window_TbsTarget.prototype.processShift = function() {
 	}
 };
 
-Window_TbsTarget.prototype.refreshWindowContents = function() {
+Window_TbsTarget.prototype.refreshWindowContents = function(dontSelectFirst) {
 	this.move(this.x, this.y, this.windowWidth(), this.windowHeight());
 	this.createContents();
-	this.selectFirstEnabledItem();
+	if(!dontSelectFirst) {
+		this.selectFirstEnabledItem();
+	}
 	this.refresh();
 };
 
@@ -1768,7 +1774,7 @@ Window_TbsTarget.prototype.updateClose = function() {
         if (this.isClosed()) {
 			this._closing = false;
 			if(this._shouldOpenActionWindow) {
-				this._actionWindow.refreshWindowContents();
+				this._actionWindow.refreshWindowContents(true);
 				this._actionWindow.show();
 				this._actionWindow.open();
 				this._actionWindow.activate();
@@ -1999,7 +2005,7 @@ Window_TbsTargetPart.prototype.updateClose = function() {
         if (this.isClosed()) {
 			this._closing = false;
 			if(this._shouldOpenTargetWindow) {
-				this._targetWindow.refreshWindowContents();
+				this._targetWindow.refreshWindowContents(true);
 				this._targetWindow.show();
 				this._targetWindow.open();
 				this._targetWindow.activate();
