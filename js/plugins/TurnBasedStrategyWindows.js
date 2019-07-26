@@ -3492,22 +3492,61 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 		hitCount += results.hit.leftArm ? 1 : 0;
 		hitCount += results.hit.rightLeg ? 1 : 0;
 		hitCount += results.hit.leftLeg ? 1 : 0;
-		var hideDeflections = hitCount > 1;
 		var lines = 0;
-		lines += this.displayPartDamage(target, results, "mind", hideDeflections);
-		lines += this.displayPartDamage(target, results, "head", hideDeflections);
-		lines += this.displayPartDamage(target, results, "torso", hideDeflections);
-		lines += this.displayPartDamage(target, results, "rightArm", hideDeflections);
-		lines += this.displayPartDamage(target, results, "leftArm", hideDeflections);
-		lines += this.displayPartDamage(target, results, "rightLeg", hideDeflections);
-		lines += this.displayPartDamage(target, results, "leftLeg", hideDeflections);
-		if(hideDeflections && !lines) {
-			this.push('addText', target.name() + " fully deflects the blow!", false);
+		if(hitCount > 1) {
+			var totalDamage = results.damage["mind"]
+				+ results.damage["head"]
+				+ results.damage["torso"]
+				+ results.damage["rightArm"]
+				+ results.damage["leftArm"]
+				+ results.damage["rightLeg"]
+				+ results.damage["leftLeg"];
+			var totalHeal = results.heal["mind"]
+				+ results.heal["head"]
+				+ results.heal["torso"]
+				+ results.heal["rightArm"]
+				+ results.heal["leftArm"]
+				+ results.heal["rightLeg"]
+				+ results.heal["leftLeg"];
+			if(totalDamage > 0 || totalHeal > 0) {
+				if(totalDamage > 0) {
+					this.push('addText', target.name() + " takes a total of " + diff + " damage!", false);
+					lines++;
+				}
+				if(totalHeal > 0) {
+					this.push('addText', target.name() + " is healed by a total of " + diff + "!", false);
+					lines++;
+				}
+			} else {
+				var totalStress = results.stress.other
+					+ results.stress.mind
+					+ results.stress.head
+					+ results.stress.torso
+					+ results.stress.leftArm
+					+ results.stress.rightArm
+					+ results.stress.leftLeg
+					+ results.stress.rightLeg;
+				if(totalStress > 0) {
+					this.push('addText', target.name() + " is struck in multiple places!", false);
+					lines++;
+				} else {
+					this.push('addText', target.name() + " fully deflects the blow!", false);
+					lines++;
+				}
+			}
+		} else {
+			lines += this.displayPartDamage(target, results, "mind");
+			lines += this.displayPartDamage(target, results, "head");
+			lines += this.displayPartDamage(target, results, "torso");
+			lines += this.displayPartDamage(target, results, "rightArm");
+			lines += this.displayPartDamage(target, results, "leftArm");
+			lines += this.displayPartDamage(target, results, "rightLeg");
+			lines += this.displayPartDamage(target, results, "leftLeg");
 		}
 		return lines;
 	};
 
-	Window_BattleLog.prototype.displayPartDamage = function(target, results, partName, hideDeflections) {
+	Window_BattleLog.prototype.displayPartDamage = function(target, results, partName) {
 		var partDisplayText = partName;
 		switch(partName) {
 			case "leftArm": partDisplayText = "left arm"; break;
@@ -3529,7 +3568,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 			if(results.stress[partName] > 0) {
 				this.push('addText', target.name() + "'s " + partDisplayText + " is struck!", false);
 				return 1;
-			} else if (!hideDeflections) {
+			} else {
 				this.push('addText', target.name() + "'s " + partDisplayText + " deflects the blow!", false);
 				return 1;
 			}
