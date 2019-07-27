@@ -1977,9 +1977,16 @@
 				var actionInfo = {};
 				actionInfo.action = skills[i].tbsStats.action;
 				actionInfo.canTargetBodyPart = false;
+				actionInfo.canTargetDownedBodyPart = false;
 				if(skills[i].tbsStats.action.hits && skills[i].tbsStats.action.hits.length > 0) {
 					actionInfo.canTargetBodyPart = skills[i].tbsStats.action.hits.some(function (hit) {
 						if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+							return true;
+						}
+						return false;
+					});
+					actionInfo.canTargetDownedBodyPart = skills[i].tbsStats.action.hits.some(function (hit) {
+						if(hit.aoe === undefined || hit.aoe <= 0) {
 							return true;
 						}
 						return false;
@@ -2000,9 +2007,16 @@
 			actionInfo.action = skill.tbsStats.action;
 			actionInfos.push(actionInfo);
 			actionInfo.canTargetBodyPart = false;
+			actionInfo.canTargetDownedBodyPart = false;
 			if(skill.tbsStats.action.hits && skill.tbsStats.action.hits.length > 0) {
 				actionInfo.canTargetBodyPart = skill.tbsStats.action.hits.some(function (hit) {
 					if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+						return true;
+					}
+					return false;
+				});
+				actionInfo.canTargetDownedBodyPart = skill.tbsStats.action.hits.some(function (hit) {
+					if(hit.aoe === undefined || hit.aoe <= 0) {
 						return true;
 					}
 					return false;

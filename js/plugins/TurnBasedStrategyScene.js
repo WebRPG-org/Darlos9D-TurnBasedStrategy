@@ -169,8 +169,9 @@
 						$gameMap.setBreadcrumbStage("actor");
 					} else if($gameMap.tbsTurnMode() === "manualTarget") {
 						this._tbsTargetNameWindow.close();
-						var selectedActor = $gameMap.getTbsActorAtPosition($gamePlayer.x, $gamePlayer.y)
-						if(selectedActor && ($gameMap.getTbsSelectedActionInfo().canTargetBodyPart || selectedActor.battler.isDown())) {
+						var selectedTarget = $gameMap.getTbsActorAtPosition($gameMap.getTbsActionTargetLocationX(), $gameMap.getTbsActionTargetLocationY());
+						var actionInfo = $gameMap.getTbsSelectedActionInfo();
+						if(selectedTarget && (actionInfo.canTargetBodyPart || (actionInfo.canTargetDownedBodyPart && selectedTarget.battler.isDown()))) {
 							this._tbsTargetPartWindow.refreshWindowContents();
 							this._tbsTargetPartWindow.show();
 							this._tbsTargetPartWindow.open();
@@ -544,8 +545,8 @@
 			this._tbsTargetWindow.shouldActivateManualTarget(true);
 		} else {
 			var actionInfo = $gameMap.getTbsSelectedActionInfo();
-			var selectedActor = $gameMap.getTbsSelectedActor();
-			if(selectedActor && (actionInfo.canTargetBodyPart || selectedActor.battler.isDown())) {
+			var selectedTarget = $gameMap.getTbsActorAtPosition($gameMap.getTbsActionTargetLocationX(), $gameMap.getTbsActionTargetLocationY());
+			if(selectedTarget && (actionInfo.canTargetBodyPart || (actionInfo.canTargetDownedBodyPart && selectedTarget.battler.isDown()))) {
 				this._tbsTargetWindow.shouldOpenTargetPartWindow(true);
 				this._tbsTargetPartFromManualTarget = false;
 				$gameMap.setTbsTurnMode("selectTargetPart");

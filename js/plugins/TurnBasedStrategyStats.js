@@ -689,9 +689,16 @@
 						returnActionInfo.sourceEquip = equips[i];
 						returnActionInfo.sourceEquipSlotId = i;
 						returnActionInfo.canTargetBodyPart = false;
+						returnActionInfo.canTargetDownedBodyPart = false;
 						if(actions[j].hits && actions[j].hits.length > 0) {
 							returnActionInfo.canTargetBodyPart = actions[j].hits.some(function (hit) {
 								if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+									return true;
+								}
+								return false;
+							});
+							returnActionInfo.canTargetDownedBodyPart = actions[j].hits.some(function (hit) {
+								if(hit.aoe === undefined || hit.aoe <= 0) {
 									return true;
 								}
 								return false;
