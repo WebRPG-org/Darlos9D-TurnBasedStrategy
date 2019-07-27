@@ -3451,6 +3451,16 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 				}
 			});
 		}
+		if(results.ongoingAnimationIds.length > 0) {
+			results.ongoingAnimationIds.forEach(function (animationId) {
+				if(animationId !== undefined && animationId > 0) {
+					var animation = $dataAnimations[animationId];
+					if (animation) {
+						target.startOngoingAnimation(animationId, false, 0);
+					}
+				}
+			});
+		}
 		if (results.dodged) {
 			this.displayDodge(target);
 		} else {

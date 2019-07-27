@@ -106,7 +106,8 @@ BattleManager.setup = function(tbsActors, tbsActionInfo, tbsTargetX, tbsTargetY,
 	this._tbsActionInfo = tbsActionInfo;
 	this._tbsTargetX = tbsTargetX;
 	this._tbsTargetY = tbsTargetY;
-	this._tbsTargets = tbsTargets;
+	this._tbsTargets = tbsTargets.clone();
+	this._tbsOriginalTargets = tbsTargets;
 	this._tbsTargetsByHit = tbsTargetsByHit;
 	this._tbsTargetPart = tbsTargetPart;
     this._canEscape = false;
@@ -140,7 +141,6 @@ BattleManager.initMembers = function() {
 	this._targetsOnLeft = false;
     this._subject = null;
     this._action = null;
-    this._targets = [];
 	this._resultsArray = [];
     this._logWindow = null;
     this._leftActorStatusWindow = null;
@@ -434,6 +434,7 @@ BattleManager.endTurn = function() {
     this._preemptive = false;
     this._surprise = false;
     this.allBattleMembers().forEach(function(tbsActor) {
+		tbsActor.battler.clearCurrentlyOngoingAnims();
         tbsActor.battler.onTurnEnd();
         this.refreshStatus();
         this._logWindow.displayAutoAffectedStatus(tbsActor.battler);
@@ -448,7 +449,7 @@ BattleManager.updateTurnEnd = function() {
 };
 
 BattleManager.allBattleMembers = function() {
-    return this._tbsActors.concat(this._tbsTargets);
+    return this._tbsActors.concat(this._tbsOriginalTargets);
 };
 
 BattleManager.getNextSubject = function() {
@@ -477,7 +478,6 @@ BattleManager.startAction = function() {
 			that._resultsArray.push(results);
 		}
 	});
-    this._targets = targets;
 	this._tbsTargets = targets;
 	if(this._targetsOnLeft) {
 		this.refreshLeftActorStatusWindow();
@@ -495,8 +495,8 @@ BattleManager.startAction = function() {
 };
 
 BattleManager.updateAction = function() {
-    if (this._targets.length > 0) {
-		if(this._curWindowTarget !== this._targets[0]) {
+    if (this._tbsTargets.length > 0) {
+		if(this._curWindowTarget !== this._tbsTargets[0]) {
 			if(this._targetsOnLeft) {
 				this._leftActorStatusWindow.close();
 				this._leftActorStatusWindow.setShouldReOpen(true);
@@ -523,7 +523,7 @@ BattleManager.updateAction = function() {
 			return;
 		}
 		this._curSwitchTargetTime = -1;
-		var target = this._targets.shift();
+		var target = this._tbsTargets.shift();
 		var results = this._resultsArray.shift();
         this.invokeAction(this._subject.battler, target.battler, results);
     } else {
@@ -615,6 +615,7 @@ BattleManager.combatMath = function(subject, actionInfo, target, targetsByHit) {
 	results.revived = false;
 	results.shouldPassTurn = true;
 	results.animationIds = [];
+	results.ongoingAnimationIds = [];
 	results.skipTarget = true;
 	var hitDodged = true;
 	if(target.blankDummy()) {
@@ -1025,8 +1026,10 @@ BattleManager.combatMath = function(subject, actionInfo, target, targetsByHit) {
 		}
 		if(hitDodged && hit.missAnimationId !== undefined && hit.missAnimationId > 0) {
 			results.animationIds.push(hit.missAnimationId);
+			results.ongoingAnimationIds.push(hit.ongoingMissAnimationId);
 		} else if(!hitDodged && hit.animationId !== undefined && hit.animationId > 0) {
 			results.animationIds.push(hit.animationId);
+			results.ongoingAnimationIds.push(hit.ongoingAnimationId);
 		}
 		if(!hitDodged) {
 			this._nonFollowupsAllDodged = false;

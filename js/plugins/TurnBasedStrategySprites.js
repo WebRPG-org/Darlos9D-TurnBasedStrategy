@@ -159,6 +159,108 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 };
 
 (function() {
+	//sprite base
+	Sprite_Base.prototype.initialize = function() {
+		Sprite.prototype.initialize.call(this);
+		this._animationSprites = [];
+		this._ongoingAnimationSprites = [];
+		this._effectTarget = this;
+		this._hiding = false;
+	};
+	
+	Sprite_Base.prototype.startOngoingAnimation = function(animation, mirror, delay) {
+		var sprite = new Sprite_Animation();
+		sprite.setup(this._effectTarget, animation, mirror, delay);
+		this.parent.addChild(sprite);
+		this._ongoingAnimationSprites.push(sprite);
+		return sprite;
+	};
+	
+	Sprite_Base.prototype.stopOngoingAnimations = function() {
+		var sprites = this._ongoingAnimationSprites.clone();
+		this._ongoingAnimationSprites = [];
+		sprites.forEach(function (sprite) {
+			sprite.stop();
+			sprite.remove();
+		});
+	};
+	
+	Sprite_Base.prototype.updateAnimationSprites = function() {
+		if (this._animationSprites.length > 0) {
+			var sprites = this._animationSprites.clone();
+			this._animationSprites = [];
+			for (var i = 0; i < sprites.length; i++) {
+				var sprite = sprites[i];
+				if (sprite.isPlaying()) {
+					this._animationSprites.push(sprite);
+				} else {
+					sprite.remove();
+				}
+			}
+		}
+		if (this._ongoingAnimationSprites.length > 0) {
+			var sprites = this._ongoingAnimationSprites.clone();
+			this._ongoingAnimationSprites = [];
+			for (var i = 0; i < sprites.length; i++) {
+				var sprite = sprites[i];
+				if (sprite.isPlaying()) {
+					this._ongoingAnimationSprites.push(sprite);
+				} else {
+					sprite.remove();
+				}
+			}
+		}
+	};
+	
+	//sprite battler
+	Sprite_Battler.prototype.setupAnimation = function() {
+		if(this._battler.isOngoingAnimationEndRequested()) {
+			this.stopOngoingAnimations();
+		}
+		this._battler.updateCurrentlyOngoingAnims();
+		while (this._battler.isAnimationRequested()) {
+			var data = this._battler.shiftAnimation();
+			var animation = $dataAnimations[data.animationId];
+			var mirror = data.mirror;
+			var delay = animation.position === 3 ? 0 : data.delay;
+			this.startAnimation(animation, mirror, delay);
+			for (var i = 0; i < this._animationSprites.length; i++) {
+				var sprite = this._animationSprites[i];
+				sprite.visible = this._battler.isSpriteVisible();
+			}
+		}
+		while (this._battler.isOngoingAnimationRequested()) {
+			var data = this._battler.shiftOngoingAnimation();
+			var animation = $dataAnimations[data.animationId];
+			var mirror = data.mirror;
+			var delay = animation.position === 3 ? 0 : data.delay;
+			var sprite = this.startOngoingAnimation(animation, mirror, delay);
+			for (var i = 0; i < this._ongoingAnimationSprites.length; i++) {
+				var sprite = this._ongoingAnimationSprites[i];
+				sprite.visible = this._battler.isSpriteVisible();
+			}
+			var currentlyOngoingAnim = {};
+			currentlyOngoingAnim.data = data;
+			currentlyOngoingAnim.time = animation.frames.length * sprite.getRate();
+			this._battler.addCurrentlyOngoingAnim(currentlyOngoingAnim);
+		}
+		var ongoingAnimations = this._battler.ongoingAnimationsToReplay();
+		var that = this;
+		ongoingAnimations.forEach(function (anim) {
+			var data = anim.data;
+			var animation = $dataAnimations[data.animationId];
+			var mirror = data.mirror;
+			var delay = animation.position === 3 ? 0 : data.delay;
+			var sprite = that.startOngoingAnimation(animation, mirror, delay);
+			for (var i = 0; i < that._ongoingAnimationSprites.length; i++) {
+				var sprite = that._ongoingAnimationSprites[i];
+				sprite.visible = that._battler.isSpriteVisible();
+			}
+			anim.time = animation.frames.length * sprite.getRate();
+			that._battler.addCurrentlyOngoingAnim(anim);
+		});
+	};
+	
 	//sprite actor
 	Sprite_Actor.prototype.setBattler = function(battler) {
 		Sprite_Battler.prototype.setBattler.call(this, battler);
@@ -201,6 +303,15 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 		if (this._stateIconSprite.y < 20 - this.y) {
 			this._stateIconSprite.y = 20 - this.y;
 		}
+	};
+	
+	//sprite animation
+	Sprite_Animation.prototype.getRate = function() {
+		return this._rate;
+	};
+	
+	Sprite_Animation.prototype.stop = function() {
+		this._duration = 0;
 	};
 	
 	//sprite state icon

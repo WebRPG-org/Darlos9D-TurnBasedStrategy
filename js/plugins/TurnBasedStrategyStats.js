@@ -171,6 +171,16 @@
 							}
 						}
 					}
+					if(hit.ongoingAnimation) {
+						hit.ongoingAnimationId = 0;
+						var i;
+						for(i = 1; i < $dataAnimations.length; i++) {
+							if($dataAnimations[i].name.toLowerCase() === hit.ongoingAnimation.toLowerCase()) {
+								hit.ongoingAnimationId = i;
+								break;
+							}
+						}
+					}
 				});
 			}
 		});
@@ -432,6 +442,8 @@
 		this._actionState = '';
 		this._lastTargetIndex = 0;
 		this._animations = [];
+		this._ongoingAnimations = [];
+		this._currentlyOngoingAnims = [];
 		this._damagePopup = false;
 		this._effectType = null;
 		this._motionType = null;
@@ -1009,6 +1021,61 @@
 
 	Game_Battler.prototype.performActionEnd = function() {
 		this.setActionState('done');
+	};
+	
+	Game_Battler.prototype.clearAnimations = function() {
+		this._animations = [];
+		this._ongoingAnimations = [];
+		this._currentlyOngoingAnims = [];
+	};
+	
+	Game_Battler.prototype.clearCurrentlyOngoingAnims = function() {
+		this._currentlyOngoingAnims = [];
+		this._endOngoingAnimations = true;
+	};
+	
+	Game_Battler.prototype.isOngoingAnimationRequested = function() {
+		return this._ongoingAnimations.length > 0;
+	};
+	
+	Game_Battler.prototype.isOngoingAnimationEndRequested = function() {
+		var returnVal = this._endOngoingAnimations;
+		this._endOngoingAnimations = false;
+		return returnVal;
+	};
+	
+	Game_Battler.prototype.shiftOngoingAnimation = function() {
+		return this._ongoingAnimations.shift();
+	};
+	
+	Game_Battler.prototype.startOngoingAnimation = function(animationId, mirror, delay) {
+		var data = { animationId: animationId, mirror: mirror, delay: delay };
+		this._ongoingAnimations.push(data);
+	};
+	
+	Game_Battler.prototype.addCurrentlyOngoingAnim = function(anim) {
+		this._currentlyOngoingAnims.push(anim);
+	};
+	
+	Game_Battler.prototype.updateCurrentlyOngoingAnims = function() {
+		this._currentlyOngoingAnims.forEach(function (anim) {
+			anim.time--;
+		});
+	};
+	
+	Game_Battler.prototype.ongoingAnimationsToReplay = function() {
+		var returnArray = [];
+		var remainingArray = [];
+		var i;
+		this._currentlyOngoingAnims.forEach(function (anim) {
+			if(anim.time <= 0) {
+				returnArray.push(anim);
+			} else {
+				remainingArray.push(anim);
+			}
+		});
+		this._currentlyOngoingAnims = remainingArray;
+		return returnArray;
 	};
 	
 	Game_Actor.prototype.performActionStart = function(action) {
