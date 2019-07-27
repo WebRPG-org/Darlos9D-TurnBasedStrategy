@@ -421,7 +421,7 @@ Window_ItemStatusBase.prototype.drawTabs = function() {
 	if(this._statusPage !== "actions") {
 		this.changePaintOpacity(false);
 	}
-	this.drawIcon(this.getIconIdFor("melee"), tabsX, this.lineHeight() * 9);
+	this.drawIcon(this.getIconIdFor("action"), tabsX, this.lineHeight() * 9);
 	this.changePaintOpacity(true);
 	
 	if(this._statusPage !== "skillRequirements") {
@@ -2526,6 +2526,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 			case "fired":          	return 102; break;
 			case "followUp":        return  73; break;
 			
+			case "action":			return  76; break;
 			case "skill":      	   	return  88; break;
 			case "knowledge":      	return  79; break;
 		}
