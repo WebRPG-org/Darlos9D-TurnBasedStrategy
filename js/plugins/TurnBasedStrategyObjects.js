@@ -322,7 +322,7 @@
 		this._tbsBreadcrumbs = [];
 		switch(stage) {
 			case "allDone":
-				if(this._tbsActionTargetPart) {
+				if(this._tbsActionTargetPart && this._tbsActionTargetPart !== "vital" && this._tbsActionTargetPart !== "mobility") {
 					var targetPartBreadcrumb = {};
 					targetPartBreadcrumb.text = "";
 					switch(this._tbsActionTargetPart) {
@@ -343,12 +343,6 @@
 							break;
 						case "rightLeg":
 							targetPartBreadcrumb.text = "Right Leg";
-							break;
-						case "vital":
-							targetPartBreadcrumb.text = "Vital Parts";
-							break;
-						case "mobility":
-							targetPartBreadcrumb.text = "Mobility Parts";
 							break;
 					}
 					this._tbsBreadcrumbs.push(targetPartBreadcrumb);
@@ -1301,7 +1295,7 @@
 					//TODO: actually handle priorities somehow
 					if(action.name === "Full Defense" || action.name === "Rest") {
 						priority = defensePriority;
-					} else if(action.name === "Unarmed Attack") {
+					} else if(action.name === "Unarmed Attack" || action.name === "Shove") {
 						priority = 1;
 					} else {
 						priority = 2;

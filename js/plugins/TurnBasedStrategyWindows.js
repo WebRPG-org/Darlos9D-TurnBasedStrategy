@@ -2383,6 +2383,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 				if(damage) {
 					var hitDamage = BattleManager.getCompleteDamage(actor, actionInfo, hits[i]);
 					
+					damageLineOffset += this.drawDamageForType(hitDamage.trip, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("trip"));
 					damageLineOffset += this.drawDamageForType(hitDamage.blunt, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("blunt"));
 					damageLineOffset += this.drawDamageForType(hitDamage.cut, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("cut"));
 					damageLineOffset += this.drawDamageForType(hitDamage.keen, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("keen"));
@@ -2502,6 +2503,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 			case "fluidDefense":   	return  69; break;
 			case "mentalDefense":	return 302; break;
 			
+			case "trip":          	return   6; break;
 			case "blunt":          	return 110; break;
 			case "cut":            	return  99; break;
 			case "keen":            return 120; break;
@@ -3288,7 +3290,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 		y2 += this.lineHeight();
 		this.drawSkillLevel("Physical", "physEvade", x, y2);
 		y2 += this.lineHeight();
-		this.drawSkillLevel("Trip", "tripEvade", x, y2);
+		this.drawSkillLevel("Balance", "tripEvade", x, y2);
 		y2 += this.lineHeight();
 		this.drawSkillLevel("Mental", "mentalEvade", x, y2);
 	};
@@ -3510,11 +3512,11 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 				+ results.heal["leftLeg"];
 			if(totalDamage > 0 || totalHeal > 0) {
 				if(totalDamage > 0) {
-					this.push('addText', target.name() + " takes a total of " + diff + " damage!", false);
+					this.push('addText', target.name() + " takes a total of " + totalDamage + " damage!", false);
 					lines++;
 				}
 				if(totalHeal > 0) {
-					this.push('addText', target.name() + " is healed by a total of " + diff + "!", false);
+					this.push('addText', target.name() + " is healed by a total of " + totalHeal + "!", false);
 					lines++;
 				}
 			} else {
