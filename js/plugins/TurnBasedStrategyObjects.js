@@ -1828,7 +1828,8 @@
 		}
 		var battlerMoveRange = Math.max(2, tbsActor.battler.moveRange() * ((moveDenom - moveDamage) / moveDenom));
 		var moveRange = battlerMoveRange / 2;
-		var boundingCircle = this.getBoundingCircleArray(tbsActor.chara.x, tbsActor.chara.y, moveRange);
+		var boundingRadius = Math.ceil(moveRange);
+		var boundingCircle = this.getBoundingCircleArray(tbsActor.chara.x, tbsActor.chara.y, boundingRadius);
 		this.checkMoveTile(tbsActor.chara.x, tbsActor.chara.y, moveRange, this._tbsMoveTiles, boundingCircle);
 	};
 	
@@ -2093,7 +2094,8 @@
 		centerPosition.y = y;
 		centerPosition.tiles = [];
 		var baseRange = actionRange.ignoreUserRange ? 0 : actionRange.baseRange;
-		var centerBoundingCircle = this.getBoundingCircleArray(x, y, actionRange.range + baseRange, actionTiles);
+		var boundingRadius = Math.ceil(actionRange.range + baseRange);
+		var centerBoundingCircle = this.getBoundingCircleArray(x, y, boundingRadius, actionTiles);
 		var that = this;
 		if(actionRange.ignoreUserRange) {
 			centerPosition.tiles = this.getReachedActionTiles(x, y, centerBoundingCircle, centerBoundingCircle);
@@ -2125,7 +2127,7 @@
 					position.x = moveTile.x;
 					position.y = moveTile.y;
 					position.tiles = [];
-					var moveTileBoundingCircle = that.getBoundingCircleArray(moveTile.x, moveTile.y, actionRange.range + baseRange, actionTiles);
+					var moveTileBoundingCircle = that.getBoundingCircleArray(moveTile.x, moveTile.y, boundingRadius, actionTiles);
 					if(actionRange.ignoreUserRange) {
 						position.tiles = that.getReachedActionTiles(moveTile.x, moveTile.y, moveTileBoundingCircle, moveTileBoundingCircle);
 					} else {
