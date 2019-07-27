@@ -1835,11 +1835,19 @@
 	};
 	
 	Game_Map.prototype.checkMoveTile = function(x, y, remainingRange, moveTiles, boundingCircle) {
-		if(!this.getExistingTbsTile(x, y, moveTiles)) {
+		var existingMoveTile = this.getExistingTbsTile(x, y, moveTiles);
+		if(!existingMoveTile) {
 			var newTile = {};
 			newTile.x = x;
 			newTile.y = y;
+			newTile.remainingRange = remainingRange;
 			moveTiles.push(newTile);
+		} else {
+			if(existingMoveTile.remainingRange < remainingRange) {
+				existingMoveTile.remainingRange = remainingRange;
+			} else {
+				return;
+			}
 		}
 		if(remainingRange < 1) { return; }
 		var potentialTiles = [];
@@ -1852,7 +1860,7 @@
 			}
 		});
 		subCircle.forEach(function (tile) {
-			if((x === tile.x && y === tile.y) || that.getExistingTbsTile(tile.x, tile.y, moveTiles)) { return; }
+			if(x === tile.x && y === tile.y) { return; }
 			if(!that.isTrajectoryObstructed(x, y, tile.x, tile.y, subCircle)) {
 				potentialTiles.push(tile);
 			}
