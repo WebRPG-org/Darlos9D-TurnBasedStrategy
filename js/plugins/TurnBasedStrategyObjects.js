@@ -1640,7 +1640,8 @@
 		var chara = this._tbsSelectedActor.chara;
 		var that = this;
 		this._tbsActionsTiles[this._tbsSelectedActionIndex].forEach(function (actionTile) {
-			if(!that.isTargetInRangeFromPosition(actionTile.x, actionTile.y)) { return; }
+			if(!that.isTargetInRangeFromPosition(actionTile.x, actionTile.y)
+				|| that.getTbsActorAtPosition(actionTile.x, actionTile.y)) { return; }
 			var distance = that.actualDistance(chara.x, chara.y, actionTile.x, actionTile.y);
 			if(closestDistance === -1 || distance < closestDistance) {
 				closestDistance = distance;
