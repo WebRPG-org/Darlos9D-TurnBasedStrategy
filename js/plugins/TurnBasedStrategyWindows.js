@@ -2486,6 +2486,9 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 			case "throwingWeapons":
 				return "Thrown Wpns";
 				break;
+			case "rangedWeapons":
+				return "Ranged Wpns";
+				break;
 			case "whiteMagic":
 				return "White Magic";
 				break;
