@@ -805,7 +805,8 @@ BattleManager.combatMath = function(subject, actionInfo, target, targetsByHit) {
 							target.toughness(), 
 							targetStress,
 							target.getDamage("head"),
-							target.isDown());
+							target.isDown(),
+							true);
 						results.stress.head += damageResult.stress > 0 ? damageResult.stress + 1 : 0;
 						results.damage.head += damageResult.damage;
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
@@ -824,7 +825,8 @@ BattleManager.combatMath = function(subject, actionInfo, target, targetsByHit) {
 							target.toughness(), 
 							targetStress,
 							target.getDamage("torso"),
-							target.isDown());
+							target.isDown(),
+							false);
 						results.stress.torso += damageResult.stress;
 						results.damage.torso += damageResult.damage;
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
@@ -843,7 +845,8 @@ BattleManager.combatMath = function(subject, actionInfo, target, targetsByHit) {
 							target.toughness(), 
 							targetStress,
 							target.getDamage("leftArm"),
-							target.isDown());
+							target.isDown(),
+							target.limbsType() === "winged" && target.isFlying());
 						results.stress.leftArm += damageResult.stress;
 						results.damage.leftArm += damageResult.damage;
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
@@ -862,7 +865,8 @@ BattleManager.combatMath = function(subject, actionInfo, target, targetsByHit) {
 							target.toughness(), 
 							targetStress,
 							target.getDamage("rightArm"),
-							target.isDown());
+							target.isDown(),
+							target.limbsType() === "winged" && target.isFlying());
 						results.stress.rightArm += damageResult.stress;
 						results.damage.rightArm += damageResult.damage;
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
@@ -881,7 +885,8 @@ BattleManager.combatMath = function(subject, actionInfo, target, targetsByHit) {
 							target.toughness(), 
 							targetStress,
 							target.getDamage("leftLeg"),
-							target.isDown());
+							target.isDown(),
+							target.limbsType() !== "quadrupedal" && (target.limbsType() !== "winged" || !target.isFlying()));
 						results.stress.leftLeg += damageResult.stress > 0 ? damageResult.stress + 1 : 0;
 						results.damage.leftLeg += damageResult.damage;
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
@@ -900,7 +905,8 @@ BattleManager.combatMath = function(subject, actionInfo, target, targetsByHit) {
 							target.toughness(), 
 							targetStress,
 							target.getDamage("rightLeg"),
-							target.isDown());
+							target.isDown(),
+							target.limbsType() !== "quadrupedal" && (target.limbsType() !== "winged" || !target.isFlying()));
 						results.stress.rightLeg += damageResult.stress > 0 ? damageResult.stress + 1 : 0;
 						results.damage.rightLeg += damageResult.damage;
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
@@ -1386,12 +1392,12 @@ BattleManager.calculateMentalHit = function(stress, accRoll, dodgeEva, mentalDef
 	return results;
 };
 
-BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva, partProt, tough, stress, partDam, isDown) {
+BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva, partProt, tough, stress, partDam, isDown, extraStress) {
 	var solidEva = eva + partProt.defense.solid;
 	var fluidEva = eva + partProt.defense.fluid;
-	var solidEvaRoll = this.rollForRanks(solidEva, isDown ? 5 : stress + partDam);
-	var tripEvaRoll = this.rollForRanks(tripEva, isDown ? 5 : stress + partDam);
-	var fluidEvaRoll = this.rollForRanks(fluidEva, isDown ? 5 : stress + partDam);
+	var solidEvaRoll = this.rollForRanks(solidEva, isDown ? 5 : stress);
+	var tripEvaRoll = this.rollForRanks(tripEva, isDown ? 5 : stress);
+	var fluidEvaRoll = this.rollForRanks(fluidEva, isDown ? 5 : stress);
 	var solidDamScale = solidEvaRoll <= 0 ? (accRoll <= 0 ? 1 : 2) : Math.min(2, accRoll / solidEvaRoll);
 	var tripDamScale = tripEvaRoll <= 0 ? (accRoll <= 0 ? 1 : 2) : Math.min(2, accRoll / tripEvaRoll);
 	var fluidDamScale = fluidEvaRoll <= 0 ? (accRoll <= 0 ? 1 : 2) : Math.min(2, accRoll / fluidEvaRoll);
@@ -1401,14 +1407,14 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva,
 	var solidStilettoBypass = false;
 	var fluidBypass = false;
 	
-	if(partProt.defense.solid >= 3) {
+	if(partProt.coverage.solid >= 3) {
 		solidThrustBypass = solidDamScale >= 2;
 		solidStilettoBypass = solidDamScale >= 1.5;
-	} else if(partProt.defense.solid >= 2) {
+	} else if(partProt.coverage.solid >= 2) {
 		solidRegularBypass = solidDamScale >= 2;
 		solidThrustBypass = solidDamScale >= 1.5;
 		solidStilettoBypass = solidDamScale >= 1;
-	} else if(partProt.defense.solid >= 1) {
+	} else if(partProt.coverage.solid >= 1) {
 		solidRegularBypass = solidDamScale >= 1.5;
 		solidThrustBypass = solidDamScale >= 1;
 		solidStilettoBypass = solidDamScale >= 0.5;
@@ -1418,11 +1424,11 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva,
 		solidStilettoBypass = true;
 	}
 	
-	if(partProt.defense.fluid >= 3) {
+	if(partProt.coverage.fluid >= 3) {
 		
-	} else if(partProt.defense.fluid >= 2) {
+	} else if(partProt.coverage.fluid >= 2) {
 		fluidBypass = fluidDamScale >= 1.5;
-	} else if(partProt.defense.fluid >= 1) {
+	} else if(partProt.coverage.fluid >= 1) {
 		fluidBypass = fluidDamScale >= 1;
 	} else {
 		fluidBypass = fluidDamScale >= 0.5;
@@ -1460,14 +1466,14 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva,
 	stressInflicted += Math.max(0, Math.ceil((tripDamScale * hitDamage.trip) / tough - 1));
 	
 	var returnObj = {};
-	returnObj.stress = stressInflicted;
+	returnObj.stress = extraStress ? stressInflicted + 1 : stressInflicted;
 	returnObj.damage = finalDamage;
 	return returnObj;
 };
 
 BattleManager.resolveMentalDamage = function(hitDamage, accRoll, eva, partProt, tough, stress, partDam, isDown) {
 	var totalEva = eva + partProt.defense;
-	var evaRoll = this.rollForRanks(totalEva, isDown ? 5 : stress + partDam);
+	var evaRoll = this.rollForRanks(totalEva, isDown ? 5 : stress);
 	var damScale = evaRoll <= 0 ? (accRoll <= 0 ? 1 : 2) : Math.min(2, accRoll / evaRoll);
 	
 	var bypass = false;
@@ -1490,7 +1496,7 @@ BattleManager.resolveMentalDamage = function(hitDamage, accRoll, eva, partProt, 
 	stress += finalDamage;
 	
 	var returnObj = {};
-	returnObj.stress = stress;
+	returnObj.stress = stress + 1;
 	returnObj.damage = finalDamage;
 	return returnObj;
 };
