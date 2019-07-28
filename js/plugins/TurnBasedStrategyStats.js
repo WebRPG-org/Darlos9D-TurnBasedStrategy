@@ -867,8 +867,6 @@
 		if($dataArmors[equipment.accessoryTwo]) { returnEquips.push($dataArmors[equipment.accessoryTwo]); }
 		if($dataArmors[equipment.accessoryThree]) { returnEquips.push($dataArmors[equipment.accessoryThree]); }
 		if($dataArmors[equipment.accessoryFour]) { returnEquips.push($dataArmors[equipment.accessoryFour]); }
-		if($dataArmors[equipment.accessoryFive]) { returnEquips.push($dataArmors[equipment.accessoryFive]); }
-		if($dataArmors[equipment.accessorySix]) { returnEquips.push($dataArmors[equipment.accessorySix]); }
 		if($dataItems[equipment.itemOne]) { returnEquips.push($dataItems[equipment.itemOne]); }
 		if($dataItems[equipment.itemTwo]) { returnEquips.push($dataItems[equipment.itemTwo]); }
 		if($dataItems[equipment.itemThree]) { returnEquips.push($dataItems[equipment.itemThree]); }
@@ -962,7 +960,7 @@
 	};
 	
 	Game_Battler.prototype.useActionEquip = function(actionInfo) {
-		if(!actionInfo || !actionInfo.action.consumesItem || !actionInfo.sourceEquip || !actionInfo.sourceEquipSlotId) { return false; }
+		if(!actionInfo || !actionInfo.action.consumesItem || !actionInfo.sourceEquip || actionInfo.sourceEquipSlotId === undefined) { return false; }
 		this.changeEquip(actionInfo.sourceEquipSlotId, null);
 		this.consumeItem(actionInfo.sourceEquip);
 		return true;

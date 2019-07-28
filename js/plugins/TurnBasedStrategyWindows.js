@@ -3056,7 +3056,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 				return 2;
 				break;
 			case "items":
-				return 8;
+				return 6;
 				break;
 			default:
 				return 0;
@@ -3116,7 +3116,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 				return 2;
 				break;
 			case "accessories":
-				return 6;
+				return 4;
 				break;
 			case "items":
 				return 4;
@@ -3229,8 +3229,28 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 	Window_EquipItem.prototype.isEnabled = function(item) {
 		if (!item) { return true; }
 		if (this._actor) {
-			return this._slotType !== "mainHand" || (item.tbsStats.hands
-				&& item.tbsStats.hands === 1) || !this._actor.equips()[1];
+			if(this._slotType === "mainHand") {
+				if(!this._actor.equips()[1] || (item.tbsStats.hands && item.tbsStats.hands === 1)) {
+					return true;
+				}
+			} else if(this._slotType === "accessories" && item.tbsStats.limitedPart) {
+				var limitedParts = [];
+				var i;
+				for(i = 2; i < 6; i++) {
+					var equips = this._actor.equips();
+					if(equips[i] && equips[i].tbsStats.limitedPart) {
+						limitedParts.push(equips[i].tbsStats.limitedPart);
+					}
+				}
+				for(i = 0; i < limitedParts.length; i++) {
+					if(item.tbsStats.limitedPart === limitedParts[i]) {
+						return false;
+					}
+				}
+				return true;
+			} else {
+				return true;
+			}
 		}
 		return false;
 	};

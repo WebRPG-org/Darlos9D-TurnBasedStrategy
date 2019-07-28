@@ -417,7 +417,7 @@ BattleManager.updateTurn = function() {
 
 BattleManager.processTurn = function() {
     var subject = this._subject;
-    if (this._tbsActionInfo) {
+    if (!this._actionFinished) {
         this.startAction();
     } else {
         subject.battler.onAllActionsEnd();
@@ -433,6 +433,7 @@ BattleManager.endTurn = function() {
     this._phase = 'turnEnd';
     this._preemptive = false;
     this._surprise = false;
+	this._tbsActors[0].battler.useActionEquip(this._tbsActionInfo);
     this.allBattleMembers().forEach(function(tbsActor) {
 		tbsActor.battler.clearCurrentlyOngoingAnims();
         tbsActor.battler.onTurnEnd();
@@ -534,7 +535,7 @@ BattleManager.updateAction = function() {
 BattleManager.endAction = function() {
     this._logWindow.endAction(this._subject.battler);
     this._phase = 'turn';
-	this._tbsActionInfo = null;
+	this._actionFinished = true;
 	$gameMap.setShouldPassTurn(this._shouldPassTurn);
 };
 
