@@ -2304,56 +2304,17 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 			
 			if(i === 0) {
 				if(actor) {
-					var uniqueSkills = actor.uniqueSkills();
-					var j;
-					for(j = 0; j < uniqueSkills.length; j++) {
-						var req = this.actionSkillRequirement(action, uniqueSkills[j]);
-						var actorSkill = actor.totalSkill(uniqueSkills[j]);
-						
-						if(actorSkill < req) {
-							this.changeTextColor(this.deathColor());
-							reqLacked = true;
+					var reqs = action.skillRequirements;
+					if(reqs && reqs.length > 0) {
+						var j;
+						for(j = 0; j < reqs.length; j++) {
+							if(reqs[j].level > actor.totalSkill(reqs[j].skill)) {
+								reqLacked = true;
+								break;
+							}
 						}
 					}
 				}
-				
-				/* if(drawSkillReqs) {
-					var skillsPosition = nameOffset + 242;
-					var characterWidth = 14;
-					this.changeTextColor(this.systemColor());
-					this.drawText("/", skillsPosition + characterWidth, lineHeight);
-					this.drawText("/", skillsPosition + characterWidth * 3, lineHeight);
-					this.resetTextColor();
-					if(actor) {
-						var uniqueSkills = actor.uniqueSkills();
-						var j;
-						for(j = 0; j < uniqueSkills.length; j++) {
-							var req = this.actionSkillRequirement(action, uniqueSkills[j]);
-							var actorSkill = actor.totalSkill(uniqueSkills[j]);
-							
-							if(actorSkill < req) {
-								this.changeTextColor(this.deathColor());
-								reqLacked = true;
-							}
-							
-							this.drawText(req > 0 ? req : "-", skillsPosition + characterWidth * j * 2, lineHeight);
-							this.resetTextColor();
-						}
-					} else {
-						var j = 0;
-						if (action.skillRequirements && action.skillRequirements.length > 0) {
-							for(; j < action.skillRequirements.length; j++) {
-								var req = action.skillRequirements[j].level;
-								this.drawText(req > 0 ? req : "-", skillsPosition + characterWidth * j * 2, lineHeight);
-							}
-						}
-						if(j < 2) {
-							for(; j < 3; j++) {
-								this.drawText("-", skillsPosition + characterWidth * j * 2, lineHeight);
-							}
-						}
-					}
-				} */
 				
 				if(drawName) {
 					if(reqLacked) {
@@ -2422,19 +2383,6 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 		}
 		
 		return curLineOffset - lineOffset;
-	};
-	
-	Window_Base.prototype.actionSkillRequirement = function(action, skill) {
-		if(!action || !skill) { return 0; }
-		var reqs = action.skillRequirements;
-		if(!reqs) { return 0; }
-		var i;
-		for(i = 0; i < reqs.length; i++) {
-			if(reqs[i].skill === skill) {
-				return reqs[i].level;
-			}
-		}
-		return 0;
 	};
 	
 	Window_Base.prototype.drawDamageForType = function(damage, drawName, nameOffset, lineHeight, lineOffset, reqLacked, iconId) {
