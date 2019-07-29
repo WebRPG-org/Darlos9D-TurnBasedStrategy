@@ -630,6 +630,10 @@
 		return !!this.enemy().tbsStats.blankDummy;
 	};
 	
+	Game_Enemy.prototype.toughness = function() {
+		return this.enemy().tbsStats.toughness === undefined ? 3 : this.enemy().tbsStats.toughness;
+	};
+	
 	//fetching equipment stats
 	Game_BattlerBase.prototype.sumProtection = function(protOne, protTwo, sumCoverage) {
 		var defaultProtection = {};

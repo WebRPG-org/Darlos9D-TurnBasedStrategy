@@ -91,8 +91,8 @@
 		}
 	};
 	
-	Game_Temp.prototype.startTbsBattle = function() {
-		$gameMap.setTbsBattleMode(true);
+	Game_Temp.prototype.startTbsBattle = function(resetCameraAfterBattle) {
+		$gameMap.setTbsBattleMode(true, resetCameraAfterBattle);
 		this.clearTbsForces();
 	};
 	
@@ -233,12 +233,20 @@
 		$gameTemp.setTbsForceAllyForce(forceId, allyForceId);
 	};
 	
-	Game_System.prototype.startTbsBattle = function() {
-		$gameTemp.startTbsBattle();
+	Game_System.prototype.startTbsBattle = function(resetCameraAfterBattle) {
+		$gameTemp.startTbsBattle(resetCameraAfterBattle);
 	};
 	
 	Game_System.prototype.clearTbsForces = function() {
 		$gameTemp.clearTbsForces();
+	};
+	
+	Game_System.prototype.setCameraFocus = function(x, y, speed) {
+		$gameMap.setCameraFocus(x, y, speed);
+	};
+	
+	Game_System.prototype.clearCameraFocus = function() {
+		$gameMap.clearCameraFocus();
 	};
 	
 	//item
@@ -312,6 +320,29 @@
 		this._tbsPassageType = "move";
 		this._tbsBreadcrumbs = [];
 		this._tbsInActionBattleScene = false;
+		this._cameraFocusX = undefined;
+		this._cameraFocusY = undefined;
+		this._cameraFocusDirection = undefined;
+		this._resetCameraAfterBattle = undefined;
+	};
+	
+	Game_Map.prototype.setCameraFocus = function(x, y, speed) {
+		if(x === undefined || y === undefined) { return; }
+		this._cameraFocusX = x;
+		this._cameraFocusY = y;
+		this._scrollSpeed = speed;
+	};
+	
+	Game_Map.prototype.clearCameraFocus = function() {
+		this._cameraFocusX = undefined;
+		this._cameraFocusY = undefined;
+	};
+	
+	Game_Map.prototype.getCameraFocus = function() {
+		var cFocus = {};
+		cFocus.x = this._cameraFocusX;
+		cFocus.y = this._cameraFocusY;
+		return cFocus;
 	};
 	
 	Game_Map.prototype.getBreadcrumbs = function() {
@@ -405,7 +436,7 @@
 		}
 	};
 	
-	Game_Map.prototype.setTbsBattleMode = function(modeOn) {
+	Game_Map.prototype.setTbsBattleMode = function(modeOn, resetCameraAfterBattle) {
 		var pendingTbsForces = $gameTemp.pendingTbsForces();
 		if(this._tbsBattleMode !== modeOn && (!modeOn ||
 			(modeOn && pendingTbsForces && pendingTbsForces.length >= 2))) {
@@ -418,6 +449,7 @@
 			}
 			$gamePlayer.setTbsBattleMode(modeOn);
 			this._tbsBattleModeJustChanged = true;
+			this._resetCameraAfterBattle = resetCameraAfterBattle;
 		}
 	};
 	
@@ -560,6 +592,12 @@
 		});
 	};
 	
+	Game_Map.prototype.isEventRunning = function() {
+		return this._interpreter.isRunning() || this.isAnyEventStarting() ||
+			(this._cameraFocusX !== undefined && this._cameraFocusY !== undefined &&
+			this._displayX !== this._cameraFocusX && this._displayY !== this._cameraFocusY);
+	};
+	
 	Game_Map.prototype.update = function(sceneActive) {
 		if(this._tbsBattleModeJustChanged) {
 			this._tbsBattleModeJustChanged = false;
@@ -584,6 +622,244 @@
 		this.updateVehicles();
 		this.updateParallax();
 		this.updateTbsBattle();
+	};
+	
+	Game_Map.prototype.updateScroll = function() {
+		if (this.isScrolling()) {
+			var lastX = this._displayX;
+			var lastY = this._displayY;
+			this.doScroll(this._scrollDirection, this.scrollDistance());
+			if (this._displayX === lastX && this._displayY === lastY) {
+				this._scrollRest = 0;
+			} else {
+				this._scrollRest -= this.scrollDistance();
+			}
+		} else if(this._cameraFocusX !== undefined && this._cameraFocusY !== undefined) {
+			if(Number.isInteger(this._displayX) && Number.isInteger(this._displayY)) {
+				this._cameraFocusDirection = undefined;
+			}
+			if((this._displayX !== this._cameraFocusX || this._displayY !== this._cameraFocusY)
+				&& this._cameraFocusDirection === undefined) {
+				this._cameraFocusDirection = this.findDirection(this._displayX, this._displayY, this._cameraFocusX, this._cameraFocusY);
+			}
+			if(this._cameraFocusDirection !== undefined) {
+				this.doScroll(this._cameraFocusDirection, this.scrollDistance());
+			}
+		}
+	};
+	
+	Game_Map.prototype.setDisplayPos = function(x, y) {
+		if(this._cameraFocusX !== undefined && this._cameraFocusY !== undefined) { return; }
+		if (this.isLoopHorizontal()) {
+			this._displayX = x.mod(this.width());
+			this._parallaxX = x;
+		} else {
+			var endX = this.width() - this.screenTileX();
+			this._displayX = endX < 0 ? endX / 2 : x.clamp(0, endX);
+			this._parallaxX = this._displayX;
+		}
+		if (this.isLoopVertical()) {
+			this._displayY = y.mod(this.height());
+			this._parallaxY = y;
+		} else {
+			var endY = this.height() - this.screenTileY();
+			this._displayY = endY < 0 ? endY / 2 : y.clamp(0, endY);
+			this._parallaxY = this._displayY;
+		}
+	};
+	
+	Game_Map.prototype.doScroll = function(direction, distance) {
+		switch (direction) {
+		case 2:
+			this.scrollDown(distance, true);
+			break;
+		case 4:
+			this.scrollLeft(distance, true);
+			break;
+		case 6:
+			this.scrollRight(distance, true);
+			break;
+		case 8:
+			this.scrollUp(distance, true);
+			break;
+		}
+	};
+	
+	Game_Map.prototype.scrollDown = function(distance, isEventScroll) {
+		if(!isEventScroll && this._cameraFocusX !== undefined && this._cameraFocusY !== undefined) { return; }
+		if (this.isLoopVertical()) {
+			this._displayY += distance;
+			this._displayY %= $dataMap.height;
+			if (this._parallaxLoopY) {
+				this._parallaxY += distance;
+			}
+		} else if (this.height() >= this.screenTileY()) {
+			var lastY = this._displayY;
+			this._displayY = Math.min(this._displayY + distance,
+				this.height() - this.screenTileY());
+			this._parallaxY += this._displayY - lastY;
+		}
+	};
+
+	Game_Map.prototype.scrollLeft = function(distance, isEventScroll) {
+		if(!isEventScroll && this._cameraFocusX !== undefined && this._cameraFocusY !== undefined) { return; }
+		if (this.isLoopHorizontal()) {
+			this._displayX += $dataMap.width - distance;
+			this._displayX %= $dataMap.width;
+			if (this._parallaxLoopX) {
+				this._parallaxX -= distance;
+			}
+		} else if (this.width() >= this.screenTileX()) {
+			var lastX = this._displayX;
+			this._displayX = Math.max(this._displayX - distance, 0);
+			this._parallaxX += this._displayX - lastX;
+		}
+	};
+
+	Game_Map.prototype.scrollRight = function(distance, isEventScroll) {
+		if(!isEventScroll && this._cameraFocusX !== undefined && this._cameraFocusY !== undefined) { return; }
+		if (this.isLoopHorizontal()) {
+			this._displayX += distance;
+			this._displayX %= $dataMap.width;
+			if (this._parallaxLoopX) {
+				this._parallaxX += distance;
+			}
+		} else if (this.width() >= this.screenTileX()) {
+			var lastX = this._displayX;
+			this._displayX = Math.min(this._displayX + distance,
+				this.width() - this.screenTileX());
+			this._parallaxX += this._displayX - lastX;
+		}
+	};
+
+	Game_Map.prototype.scrollUp = function(distance, isEventScroll) {
+		if(!isEventScroll && this._cameraFocusX !== undefined && this._cameraFocusY !== undefined) { return; }
+		if (this.isLoopVertical()) {
+			this._displayY += $dataMap.height - distance;
+			this._displayY %= $dataMap.height;
+			if (this._parallaxLoopY) {
+				this._parallaxY -= distance;
+			}
+		} else if (this.height() >= this.screenTileY()) {
+			var lastY = this._displayY;
+			this._displayY = Math.max(this._displayY - distance, 0);
+			this._parallaxY += this._displayY - lastY;
+		}
+	};
+	
+	Game_Map.prototype.findDirection = function(startX, startY, goalX, goalY) {
+		var searchLimit = this.searchLimit();
+		var mapWidth = $gameMap.width();
+		var nodeList = [];
+		var openList = [];
+		var closedList = [];
+		var start = {};
+		var best = start;
+
+		if (startX === goalX && startY === goalY) {
+			return 0;
+		}
+
+		start.parent = null;
+		start.x = startX;
+		start.y = startY;
+		start.g = 0;
+		start.f = $gameMap.distance(start.x, start.y, goalX, goalY);
+		nodeList.push(start);
+		openList.push(start.y * mapWidth + start.x);
+
+		while (nodeList.length > 0) {
+			var bestIndex = 0;
+			for (var i = 0; i < nodeList.length; i++) {
+				if (nodeList[i].f < nodeList[bestIndex].f) {
+					bestIndex = i;
+				}
+			}
+
+			var current = nodeList[bestIndex];
+			var x1 = current.x;
+			var y1 = current.y;
+			var pos1 = y1 * mapWidth + x1;
+			var g1 = current.g;
+
+			nodeList.splice(bestIndex, 1);
+			openList.splice(openList.indexOf(pos1), 1);
+			closedList.push(pos1);
+
+			if (current.x === goalX && current.y === goalY) {
+				best = current;
+				goaled = true;
+				break;
+			}
+
+			if (g1 >= searchLimit) {
+				continue;
+			}
+
+			for (var j = 0; j < 4; j++) {
+				var direction = 2 + j * 2;
+				var x2 = $gameMap.roundXWithDirection(x1, direction);
+				var y2 = $gameMap.roundYWithDirection(y1, direction);
+				var pos2 = y2 * mapWidth + x2;
+
+				if (closedList.contains(pos2)) {
+					continue;
+				}
+
+				var g2 = g1 + 1;
+				var index2 = openList.indexOf(pos2);
+
+				if (index2 < 0 || g2 < nodeList[index2].g) {
+					var neighbor;
+					if (index2 >= 0) {
+						neighbor = nodeList[index2];
+					} else {
+						neighbor = {};
+						nodeList.push(neighbor);
+						openList.push(pos2);
+					}
+					neighbor.parent = current;
+					neighbor.x = x2;
+					neighbor.y = y2;
+					neighbor.g = g2;
+					neighbor.f = g2 + $gameMap.distance(x2, y2, goalX, goalY);
+					if (!best || neighbor.f - neighbor.g < best.f - best.g) {
+						best = neighbor;
+					}
+				}
+			}
+		}
+
+		var node = best;
+		while (node.parent && node.parent !== start) {
+			node = node.parent;
+		}
+
+		var deltaX1 = $gameMap.deltaX(node.x, start.x);
+		var deltaY1 = $gameMap.deltaY(node.y, start.y);
+		if (deltaY1 > 0) {
+			return 2;
+		} else if (deltaX1 < 0) {
+			return 4;
+		} else if (deltaX1 > 0) {
+			return 6;
+		} else if (deltaY1 < 0) {
+			return 8;
+		}
+
+		var deltaX2 = this.deltaX(start.x, goalX);
+		var deltaY2 = this.deltaY(start.y, goalY);
+		if (Math.abs(deltaX2) > Math.abs(deltaY2)) {
+			return deltaX2 > 0 ? 4 : 6;
+		} else if (deltaY2 !== 0) {
+			return deltaY2 > 0 ? 8 : 2;
+		}
+
+		return 0;
+	};
+	
+	Game_Map.prototype.searchLimit = function() {
+		return 12;
 	};
 	
 	Game_Map.prototype.setTbsSelectedActor = function(tbsActor) {
@@ -969,8 +1245,12 @@
 						});
 					}
 				});
+				if(this._resetCameraAfterBattle) {
+					this.clearCameraFocus();
+				}
 				this.setTbsCursorFocus(this._tbsLeadCharacter.chara.x, this._tbsLeadCharacter.chara.y);
 				this.focusTbsCursor();
+				BattleManager.replayBgmAndBgs();
 				break;
 			case "gameOver":
 				this._tbsMoveTiles = [];
@@ -2689,7 +2969,8 @@
 			var direction = this.getInputDirection();
 			if (direction > 0) {
 				$gameTemp.clearDestination();
-				if(this._tbsBattleMode && this._cursorMoveField.length > 0) {
+				var cFocus = $gameMap.getCameraFocus();
+				if(this._tbsBattleMode && (this._cursorMoveField.length > 0 || (cFocus.x !== undefined && cFocus.y !== undefined))) {
 					if(this._tbsMovingCharacter) {
 						this._tbsMovingCharacter.setDirection(direction);
 					}
@@ -2735,10 +3016,18 @@
 	};
 	
 	Game_Player.prototype.cursorPositionValid = function(x, y) {
-		if(this._cursorMoveField.length === 0) { return true; }
-		var i;
-		for(i = 0; i < this._cursorMoveField.length; i++) {
-			if(this._cursorMoveField[i].x === x && this._cursorMoveField[i].y === y) {
+		var cFocus = $gameMap.getCameraFocus();
+		if(this._cursorMoveField.length === 0 && (cFocus.x === undefined || cFocus.y === undefined)) { return true; }
+		if(this._cursorMoveField.length > 0) {
+			var i;
+			for(i = 0; i < this._cursorMoveField.length; i++) {
+				if(this._cursorMoveField[i].x === x && this._cursorMoveField[i].y === y) {
+					return true;
+				}
+			}
+		}
+		if(cFocus.x !== undefined && cFocus.y !== undefined) {
+			if(x >= cFocus.x && y >= cFocus.y && x < cFocus.x + 17 && y < cFocus.y + 13) {
 				return true;
 			}
 		}

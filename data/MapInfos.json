@@ -1,9 +1,9 @@
 [
 null,
-{"id":1,"expanded":true,"name":"MAP001","order":1,"parentId":0,"scrollX":819,"scrollY":461},
+{"id":1,"expanded":true,"name":"MAP001","order":1,"parentId":0,"scrollX":982.8,"scrollY":553.1999999999999},
 {"id":2,"expanded":true,"name":"TestBattlefield","order":2,"parentId":0,"scrollX":1426.8,"scrollY":1856.3999999999999},
 {"id":3,"expanded":true,"name":"MAP003","order":3,"parentId":0,"scrollX":973.1999999999999,"scrollY":4256.4},
-{"id":4,"expanded":true,"name":"TestMansionOutside","order":4,"parentId":0,"scrollX":1731.6,"scrollY":3536.3999999999996},
-{"id":5,"expanded":false,"name":"TestMansion","order":5,"parentId":0,"scrollX":1035.6,"scrollY":2697.6},
-{"id":6,"expanded":false,"name":"MansionCave","order":6,"parentId":0,"scrollX":2390.4,"scrollY":2312.4}
+{"id":4,"expanded":true,"name":"TestMansionOutside","order":4,"parentId":0,"scrollX":1731.6,"scrollY":3584.3999999999996},
+{"id":5,"expanded":false,"name":"TestMansion","order":5,"parentId":0,"scrollX":1304.3999999999999,"scrollY":3873.6},
+{"id":6,"expanded":false,"name":"MansionCave","order":6,"parentId":0,"scrollX":2390.4,"scrollY":2288.4}
 ]

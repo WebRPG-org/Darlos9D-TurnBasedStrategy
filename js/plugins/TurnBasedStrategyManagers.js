@@ -113,6 +113,7 @@ BattleManager.setup = function(tbsActors, tbsActionInfo, tbsTargetX, tbsTargetY,
     this._canEscape = false;
     this._canLose = false;
 	this._shouldPassTurn = true;
+	this._actionFinished = false;
 	this.figureOutBattlerPositions();
 	this.refreshLeftActorStatusWindow();
 	this.refreshRightActorStatusWindow();
@@ -154,6 +155,7 @@ BattleManager.initMembers = function() {
 	this._curWindowTarget = null;
 	this._switchTargetTime = 30;
 	this._curSwitchTargetTime = -1;
+	this._actionFinished = false;
 };
 
 BattleManager.resetNonFollowupsAllDodged = function() {
