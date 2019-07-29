@@ -324,6 +324,19 @@
 		this._cameraFocusY = undefined;
 		this._cameraFocusDirection = undefined;
 		this._resetCameraAfterBattle = undefined;
+		this._mapBgm = undefined;
+	};
+
+	Game_Map.prototype.saveBgmAndBgs = function() {
+		this._mapBgm = AudioManager.saveBgm();
+	};
+	
+	Game_Map.prototype.replayBgmAndBgs = function() {
+		if (this._mapBgm) {
+			AudioManager.replayBgm(this._mapBgm);
+		} else {
+			AudioManager.stopBgm();
+		}
 	};
 	
 	Game_Map.prototype.setCameraFocus = function(x, y, speed) {
@@ -1081,7 +1094,7 @@
 			$gamePlayer.clearMovingCharacter();
 			switch(this._tbsTurnMode) {
 			case "setup":
-				BattleManager.saveBgmAndBgs();
+				this.saveBgmAndBgs();
 				//$gameTemp.setShouldClearTbsDamageSprites(true);
 				break;
 			case "selectActorActionType":
@@ -1250,7 +1263,6 @@
 				}
 				this.setTbsCursorFocus(this._tbsLeadCharacter.chara.x, this._tbsLeadCharacter.chara.y);
 				this.focusTbsCursor();
-				BattleManager.replayBgmAndBgs();
 				break;
 			case "gameOver":
 				this._tbsMoveTiles = [];
@@ -2082,7 +2094,7 @@
 				follower.locate($gamePlayer.x, $gamePlayer.y);
 				follower.setDirection(2);
 			});
-			BattleManager.replayBgmAndBgs();
+			this.replayBgmAndBgs();
 			this.setTbsBattleMode(false);
 		}
 	};
