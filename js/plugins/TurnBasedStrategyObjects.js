@@ -1286,6 +1286,7 @@
 	
 	Game_Map.prototype.tbsNextTurn = function() {
 		var anyActive = false;
+		var i;
 		if(!this._tbsShouldPass) {
 			var curForce = this.currentForce();
 			for(i = 0; i < curForce.actors.length; i++) {
@@ -1298,11 +1299,6 @@
 		this._tbsShouldPass = false;
 		
 		if(!anyActive) {
-			this._tbsCurrentTurnForce++;
-			if(this._tbsCurrentTurnForce >= this._tbsForces.length) {
-				this._tbsCurrentTurnForce = 0;
-			}
-			
 			for(i = 0; i < this._tbsForces.length; i++) {
 				var j;
 				for(j = 0; j < this._tbsForces[i].actors.length; j++) {
@@ -1330,7 +1326,22 @@
 								+ battler.getDamage("leftArm") / 2
 								+ battler.getDamage("rightArm") / 2;
 						}
-						battler.adjustStress(Math.floor(damageStress) - battler.stressRecovery());
+						battler.adjustStress(Math.floor(damageStress));
+					}
+				}
+			}
+			
+			this._tbsCurrentTurnForce++;
+			if(this._tbsCurrentTurnForce >= this._tbsForces.length) {
+				this._tbsCurrentTurnForce = 0;
+			}
+			
+			for(i = 0; i < this._tbsForces.length; i++) {
+				var j;
+				for(j = 0; j < this._tbsForces[i].actors.length; j++) {
+					var battler = this._tbsForces[i].actors[j].battler;
+					if(this._tbsCurrentTurnForce === i) {
+						battler.adjustStress(-battler.stressRecovery());
 						battler.tickTbsBuffs();
 					}
 				}

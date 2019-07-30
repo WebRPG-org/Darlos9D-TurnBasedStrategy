@@ -809,7 +809,7 @@ BattleManager.combatMath = function(subject, actionInfo, target, targetsByHit) {
 							target.getDamage("head"),
 							target.isDown(),
 							true);
-						results.stress.head += damageResult.stress > 0 ? damageResult.stress + 1 : 0;
+						results.stress.head += damageResult.stress;
 						results.damage.head += damageResult.damage;
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
 							results.shouldPassTurn = false;
@@ -889,7 +889,7 @@ BattleManager.combatMath = function(subject, actionInfo, target, targetsByHit) {
 							target.getDamage("leftLeg"),
 							target.isDown(),
 							target.limbsType() !== "quadrupedal" && (target.limbsType() !== "winged" || !target.isFlying()));
-						results.stress.leftLeg += damageResult.stress > 0 ? damageResult.stress + 1 : 0;
+						results.stress.leftLeg += damageResult.stress;
 						results.damage.leftLeg += damageResult.damage;
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
 							results.shouldPassTurn = false;
@@ -909,7 +909,7 @@ BattleManager.combatMath = function(subject, actionInfo, target, targetsByHit) {
 							target.getDamage("rightLeg"),
 							target.isDown(),
 							target.limbsType() !== "quadrupedal" && (target.limbsType() !== "winged" || !target.isFlying()));
-						results.stress.rightLeg += damageResult.stress > 0 ? damageResult.stress + 1 : 0;
+						results.stress.rightLeg += damageResult.stress;
 						results.damage.rightLeg += damageResult.damage;
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
 							results.shouldPassTurn = false;
@@ -1223,29 +1223,11 @@ BattleManager.calculateBodyPartHit = function(stress, accRoll, dodgeEva, critica
 	results.evaResultBeat = 0;
 	results.evaResultUnder = 0;
 	results.beatBy = 0;
-	var totalEva = dodgeEva;
-	totalEva += criticalDef + dodgeEva;
-	totalEva += vitalDef + dodgeEva;
-	totalEva += firstLimbDef + dodgeEva;
-	totalEva += secondLimbDef + dodgeEva;
-	var dodgeEvaPercent = 0;
-	var criticalEvaPercent = 0;
-	var vitalEvaPercent = 0;
-	var firstLimbEvaPercent = 0;
-	var secondLimbEvaPercent = 0;
-	if(totalEva > 0) {
-		dodgeEvaPercent = dodgeEva / totalEva;
-		criticalEvaPercent = (criticalDef + dodgeEva) / totalEva;
-		vitalEvaPercent = (vitalDef + dodgeEva) / totalEva;
-		firstLimbEvaPercent = (firstLimbDef + dodgeEva) / totalEva;
-		secondLimbEvaPercent = (secondLimbDef + dodgeEva) / totalEva;
-	}
-	var evaRoll = this.rollForRanks(totalEva, isDown ? 5 : stress);
-	var dodgeEvaRoll = evaRoll * dodgeEvaPercent;
-	var criticalEvaRoll = evaRoll * criticalEvaPercent;
-	var vitalEvaRoll = evaRoll * vitalEvaPercent;
-	var firstLimbEvaRoll = evaRoll * firstLimbEvaPercent;
-	var secondLimbEvaRoll = evaRoll * secondLimbEvaPercent;
+	var dodgeEvaRoll = this.rollForRanks(dodgeEva, isDown ? 5 : stress);
+	var criticalEvaRoll = this.rollForRanks(criticalDef + dodgeEva, isDown ? 5 : stress);
+	var vitalEvaRoll = this.rollForRanks(vitalDef + dodgeEva, isDown ? 5 : stress);
+	var firstLimbEvaRoll = this.rollForRanks(firstLimbDef + dodgeEva, isDown ? 5 : stress);
+	var secondLimbEvaRoll = this.rollForRanks(secondLimbDef + dodgeEva, isDown ? 5 : stress);
 	if(accRoll >= dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll + criticalEvaRoll) {
 		if(targetingMobility) {
 			if(leftMobilityFirst) {
