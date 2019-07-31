@@ -114,17 +114,20 @@
 	};
 	
 	DataManager.sortActionHits = function(action) {
-		if(!action || !action.hits) { return; }
-		var initialHits = [];
-		var followUpHits = [];
-		action.hits.forEach(function(hit) {
-			if(hit.rangeType === "followUp") {
-				followUpHits.push(hit);
-			} else {
-				initialHits.push(hit);
-			}
+		if(!action || !action.hitGroups) { return; }
+		action.hitGroups.forEach(function(hitGroup) {
+			if(!hitGroup.hits) { return; }
+			var initialHits = [];
+			var followUpHits = [];
+			hitGroup.hits.forEach(function(hit) {
+				if(hit.rangeType === "followUp") {
+					followUpHits.push(hit);
+				} else {
+					initialHits.push(hit);
+				}
+			});
+			hitGroup.hits = initialHits.concat(followUpHits);
 		});
-		action.hits = initialHits.concat(followUpHits);
 	};
 	
 	DataManager.setUpAnimationIds = function(dataArrayItem) {

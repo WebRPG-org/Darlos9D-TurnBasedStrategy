@@ -2284,102 +2284,107 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 		var action = actionInfo.action;
 		var nameOffset = drawName ? 254 : 0;
 		var curLineOffset = lineOffset;
-		var hits = action.hits;
-		if(!hits) { return 0; }
-		var reqLacked = false;
-		var i;
-		for(i = 0; i < hits.length; i++) {
-			var lineHeight = this.lineHeight() * (actionIndex + i + 1 + curLineOffset);
-			
-			var rangeTypeIconId = hits[i].rangeType ? this.getIconIdFor(hits[i].rangeType) : 0;
-			var rangeIsSelf = hits[i].rangeType && hits[i].rangeType === "self";
-			this.drawIcon(rangeTypeIconId, nameOffset, lineHeight);
-			var hitRange = hits[i].range !== undefined ? hits[i].range : 0;
-			hitRange += hits[i].ignoreUserRange || !actor ? 0 : actor.baseRange();
-			var range = hitRange;
-			this.drawText(!rangeIsSelf && range > 0 ? range : "-", nameOffset - 38, lineHeight, 100, 'right');
-			var accuracyBonus = hits[i].accuracyBonus !== undefined ? hits[i].accuracyBonus : 0;
-			this.drawText((hits[i].damage || hits[i].debuffs) && accuracyBonus > 0 ? accuracyBonus : "-", nameOffset + 8, lineHeight, 100, 'right');
-			this.drawText(hits[i].aoe > 0 ? hits[i].aoe : "-", nameOffset + 124, lineHeight, 100, 'right');
-			
-			if(i === 0) {
-				if(actor) {
-					var reqs = action.skillRequirements;
-					if(reqs && reqs.length > 0) {
-						var j;
-						for(j = 0; j < reqs.length; j++) {
-							if(reqs[j].level > actor.totalSkill(reqs[j].skill)) {
-								reqLacked = true;
-								break;
+		var hitGroups = action.hitGroups;
+		if(!hitGroups) { return 0; }
+		var n;
+		for(n = 0; n < hitGroups.length; n++) {
+			var hits = hitGroups[n].hits;
+			if(!hits) { continue; }
+			var reqLacked = false;
+			var i;
+			for(i = 0; i < hits.length; i++) {
+				var lineHeight = this.lineHeight() * (actionIndex + i + 1 + curLineOffset);
+				
+				var rangeTypeIconId = hits[i].rangeType ? this.getIconIdFor(hits[i].rangeType) : 0;
+				var rangeIsSelf = hits[i].rangeType && hits[i].rangeType === "self";
+				this.drawIcon(rangeTypeIconId, nameOffset, lineHeight);
+				var hitRange = hits[i].range !== undefined ? hits[i].range : 0;
+				hitRange += hits[i].ignoreUserRange || !actor ? 0 : actor.baseRange();
+				var range = hitRange;
+				this.drawText(!rangeIsSelf && range > 0 ? range : "-", nameOffset - 38, lineHeight, 100, 'right');
+				var accuracyBonus = hits[i].accuracyBonus !== undefined ? hits[i].accuracyBonus : 0;
+				this.drawText((hits[i].damage || hits[i].debuffs) && accuracyBonus > 0 ? accuracyBonus : "-", nameOffset + 8, lineHeight, 100, 'right');
+				this.drawText(hits[i].aoe > 0 ? hits[i].aoe : "-", nameOffset + 124, lineHeight, 100, 'right');
+				
+				if(i === 0) {
+					if(actor) {
+						var reqs = action.skillRequirements;
+						if(reqs && reqs.length > 0) {
+							var j;
+							for(j = 0; j < reqs.length; j++) {
+								if(reqs[j].level > actor.totalSkill(reqs[j].skill)) {
+									reqLacked = true;
+									break;
+								}
 							}
 						}
 					}
+					
+					if(drawName) {
+						if(reqLacked) {
+							this.changeTextColor(this.deathColor());
+						}
+						this.drawText(action.name, 0, lineHeight, 160);
+						this.resetTextColor();
+					}
+				} else {
+					if (drawName) {
+						if(reqLacked) {
+							this.changeTextColor(this.deathColor());
+						}
+						this.drawText(": Effect " + (i+1), 0, lineHeight);
+						this.resetTextColor();
+					}
 				}
 				
-				if(drawName) {
-					if(reqLacked) {
-						this.changeTextColor(this.deathColor());
+				var damageLineOffset = 0;
+				var damage = hits[i].damage;
+				var heal = hits[i].heal;
+				var buffs = hits[i].buffs;
+				if(!damage && !heal && !buffs) {
+					this.drawText("-", nameOffset + 78, lineHeight, 100, 'right');
+					this.drawText("-", nameOffset + 124, lineHeight, 100, 'right');
+				} else {
+					if(damage) {
+						var hitDamage = BattleManager.getCompleteDamage(actor, actionInfo, hits[i]);
+						
+						damageLineOffset += this.drawDamageForType(hitDamage.trip, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("trip"));
+						damageLineOffset += this.drawDamageForType(hitDamage.blunt, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("blunt"));
+						damageLineOffset += this.drawDamageForType(hitDamage.cut, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("cut"));
+						damageLineOffset += this.drawDamageForType(hitDamage.keen, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("keen"));
+						damageLineOffset += this.drawDamageForType(hitDamage.thrust, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("thrust"));
+						damageLineOffset += this.drawDamageForType(hitDamage.stiletto, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("stiletto"));
+						damageLineOffset += this.drawDamageForType(hitDamage.bullet, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("bullet"));
+						damageLineOffset += this.drawDamageForType(hitDamage.fire, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("fire"));
+						damageLineOffset += this.drawDamageForType(hitDamage.ice, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("ice"));
+						damageLineOffset += this.drawDamageForType(hitDamage.corrosion, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("corrosion"));
+						damageLineOffset += this.drawDamageForType(hitDamage.lightning, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("conducted"));
+						damageLineOffset += this.drawDamage(hitDamage.psychic, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("psychic")) ? 1 : 0;
 					}
-					this.drawText(action.name, 0, lineHeight, 160);
-					this.resetTextColor();
-				}
-			} else {
-				if (drawName) {
-					if(reqLacked) {
-						this.changeTextColor(this.deathColor());
+					if(heal) {
+						damageLineOffset += this.drawHeal(heal.stress, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("healStress")) ? 1 : 0;
+						damageLineOffset += this.drawHeal(heal.damage, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("healBody")) ? 1 : 0;
 					}
-					this.drawText(": Effect " + (i+1), 0, lineHeight);
-					this.resetTextColor();
-				}
-			}
-			
-			var damageLineOffset = 0;
-			var damage = hits[i].damage;
-			var heal = hits[i].heal;
-			var buffs = hits[i].buffs;
-			if(!damage && !heal && !buffs) {
-				this.drawText("-", nameOffset + 78, lineHeight, 100, 'right');
-				this.drawText("-", nameOffset + 124, lineHeight, 100, 'right');
-			} else {
-				if(damage) {
-					var hitDamage = BattleManager.getCompleteDamage(actor, actionInfo, hits[i]);
-					
-					damageLineOffset += this.drawDamageForType(hitDamage.trip, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("trip"));
-					damageLineOffset += this.drawDamageForType(hitDamage.blunt, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("blunt"));
-					damageLineOffset += this.drawDamageForType(hitDamage.cut, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("cut"));
-					damageLineOffset += this.drawDamageForType(hitDamage.keen, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("keen"));
-					damageLineOffset += this.drawDamageForType(hitDamage.thrust, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("thrust"));
-					damageLineOffset += this.drawDamageForType(hitDamage.stiletto, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("stiletto"));
-					damageLineOffset += this.drawDamageForType(hitDamage.bullet, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("bullet"));
-					damageLineOffset += this.drawDamageForType(hitDamage.fire, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("fire"));
-					damageLineOffset += this.drawDamageForType(hitDamage.ice, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("ice"));
-					damageLineOffset += this.drawDamageForType(hitDamage.corrosion, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("corrosion"));
-					damageLineOffset += this.drawDamageForType(hitDamage.lightning, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("conducted"));
-					damageLineOffset += this.drawDamage(hitDamage.psychic, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("psychic")) ? 1 : 0;
-				}
-				if(heal) {
-					damageLineOffset += this.drawHeal(heal.stress, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("healStress")) ? 1 : 0;
-					damageLineOffset += this.drawHeal(heal.damage, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("healBody")) ? 1 : 0;
-				}
-				if(buffs) {
-					var j;
-					for(j = 0; j < buffs.length; j++) {
-						var prot = buffs[j].protection;
-						if(!prot) { continue; }
-						var fullBody = prot.fullBody;
-						if(fullBody && fullBody.defense) {
-							var defense = fullBody.defense;
-							damageLineOffset += this.drawHeal(defense.solid, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("solidDefense")) ? 1 : 0;
-							damageLineOffset += this.drawHeal(defense.fluid, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("fluidDefense")) ? 1 : 0;
+					if(buffs) {
+						var j;
+						for(j = 0; j < buffs.length; j++) {
+							var prot = buffs[j].protection;
+							if(!prot) { continue; }
+							var fullBody = prot.fullBody;
+							if(fullBody && fullBody.defense) {
+								var defense = fullBody.defense;
+								damageLineOffset += this.drawHeal(defense.solid, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("solidDefense")) ? 1 : 0;
+								damageLineOffset += this.drawHeal(defense.fluid, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("fluidDefense")) ? 1 : 0;
+							}
+							var mental = prot.mental;
+							if(mental) {
+								damageLineOffset += this.drawHeal(mental.defense, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("mentalDefense")) ? 1 : 0;
+							} 
 						}
-						var mental = prot.mental;
-						if(mental) {
-							damageLineOffset += this.drawHeal(mental.defense, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("mentalDefense")) ? 1 : 0;
-						} 
 					}
 				}
+				curLineOffset += Math.max(0, damageLineOffset-1);
 			}
-			curLineOffset += Math.max(0, damageLineOffset-1);
 		}
 		
 		return curLineOffset - lineOffset;
