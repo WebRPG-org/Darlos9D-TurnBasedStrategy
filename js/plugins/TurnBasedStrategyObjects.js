@@ -917,11 +917,15 @@
 	
 	Game_Map.prototype.isAnyTbsActionTargets = function(ignoreFollowUpHits) {
 		var targetsByHit = this.getTbsActionTargetsByHit();
-		var hits = this._tbsSelectedAction.hits;
+		var hitGroups = this._tbsSelectedAction.hitGroups;
 		var i;
 		for(i = 0; i < targetsByHit.length; i++) {
-			if((!ignoreFollowUpHits || hits[i].rangeType !== "followUp") && (targetsByHit[i].length > 1
-				|| (targetsByHit[i].length === 1 && !targetsByHit[i][0].battler.blankDummy()))) { return true; }
+			var j;
+			for(j = 0; j < targetsByHit[i].length; j++) {
+				var hits = targetsByHit[i];
+				if((!ignoreFollowUpHits || hits[j].rangeType !== "followUp") && (targetsByHit[i][j].length > 1
+					|| (targetsByHit[i][j].length === 1 && !targetsByHit[i][j][0].battler.blankDummy()))) { return true; }
+			}
 		}
 		return false;
 	};
@@ -929,12 +933,13 @@
 	Game_Map.prototype.getTbsActionTargets = function() {
 		var targetsByHit = this.getTbsActionTargetsByHit();
 		var returnTargets = [];
-		var i;
-		targetsByHit.forEach(function (targets) {
-			targets.forEach(function (target) {
-				if(returnTargets.indexOf(target) === -1) {
-					returnTargets.push(target);
-				}
+		targetsByHit.forEach(function (group) {
+			group.forEach(function (targets) {
+				targets.forEach(function (target) {
+					if(returnTargets.indexOf(target) === -1) {
+						returnTargets.push(target);
+					}
+				});
 			});
 		});
 		return returnTargets;
@@ -943,71 +948,79 @@
 	Game_Map.prototype.getTbsActionTargetsByHit = function() {
 		var targetsByHit = [];
 		if(!this._tbsSelectedAction) { return targetsByHit; }
-		var hits = this._tbsSelectedAction.hits;
-		if(!hits) { return targetsByHit; }
+		var hitGroups = this._tbsSelectedAction.hitGroups;
+		if(!hitGroups || hitGroups.length == 0) { return targetsByHit; }
 		var centerTarget = this.getTbsActorAtPosition($gamePlayer.x, $gamePlayer.y);
 		if(!centerTarget) {
 			centerTarget = this._dummyTarget;
 			centerTarget.chara.setPosition($gamePlayer.x, $gamePlayer.y);
 		}
 		var that = this;
-		hits.forEach(function (hit) {
-			var targets = [];
-			if(hit.aoe !== undefined && hit.aoe > 0) {
-				var centerPointX = $gamePlayer.x;
-				var centerPointY = $gamePlayer.y;
-				var aoeRange = hit.aoe / 2;
-				var checkBoxRange = Math.ceil(aoeRange);
-				var x;
-				for(x = centerPointX - checkBoxRange ; x <= centerPointX + checkBoxRange; x++) {
-					var y;
-					for(y = centerPointY - checkBoxRange ; y <= centerPointY + checkBoxRange; y++) {
-						if(hit.ignoreCenter && x === centerPointX && y === centerPointY) { continue; }
-						var distance = that.actualDistance(x, y, centerPointX, centerPointY);
-						if(distance <= aoeRange) {
-							var target = that.getTbsActorAtPosition(x, y);
-							if(target && targets.indexOf(target) === -1) {
-								targets.push(target);
+		hitGroups.forEach(function (hitGroup) {
+			var outGroup = [];
+			targetsByHit.push(outGroup);
+			if(!hitGroup.hits || hitGroup.hits.length == 0) { return; }
+			hitGroup.hits.forEach(function (hit) {
+				var targets = [];
+				if(hit.aoe !== undefined && hit.aoe > 0) {
+					var centerPointX = $gamePlayer.x;
+					var centerPointY = $gamePlayer.y;
+					var aoeRange = hit.aoe / 2;
+					var checkBoxRange = Math.ceil(aoeRange);
+					var x;
+					for(x = centerPointX - checkBoxRange ; x <= centerPointX + checkBoxRange; x++) {
+						var y;
+						for(y = centerPointY - checkBoxRange ; y <= centerPointY + checkBoxRange; y++) {
+							if(hit.ignoreCenter && x === centerPointX && y === centerPointY) { continue; }
+							var distance = that.actualDistance(x, y, centerPointX, centerPointY);
+							if(distance <= aoeRange) {
+								var target = that.getTbsActorAtPosition(x, y);
+								if(target && targets.indexOf(target) === -1) {
+									targets.push(target);
+								}
 							}
 						}
 					}
+				} else {
+					//var distance = that.actualDistance(that._tbsSelectedActor.chara.x, that._tbsSelectedActor.chara.y,
+					//	$gamePlayer.x, $gamePlayer.y);
+					//if(hit.range >= distance) {
+						targets.push(centerTarget);
+					//}
 				}
-			} else {
-				//var distance = that.actualDistance(that._tbsSelectedActor.chara.x, that._tbsSelectedActor.chara.y,
-				//	$gamePlayer.x, $gamePlayer.y);
-				//if(hit.range >= distance) {
-					targets.push(centerTarget);
-				//}
-			}
-			targetsByHit.push(targets);
+				outGroup.push(targets);
+			});
 		});
 		return targetsByHit;
 	};
 	
 	Game_Map.prototype.spawnTbsAoeSprites = function() {
 		if(this._tbsAoeSprites.length > 0 || !this._tbsSelectedAction) { return; }
-		var hits = this._tbsSelectedAction.hits;
-		if(!hits) { return; }
+		var hitGroups = this._tbsSelectedAction.hitGroups;
+		if(!hitGroups) { return; }
 		var that = this;
-		hits.forEach(function (hit) {
-			if(hit.aoe !== undefined && hit.aoe > 0) {
-				var centerPointX = $gamePlayer.x;
-				var centerPointY = $gamePlayer.y;
-				var aoeRange = hit.aoe / 2;
-				var checkBoxRange = Math.ceil(aoeRange);
-				var x;
-				for(x = centerPointX - checkBoxRange ; x <= centerPointX + checkBoxRange; x++) {
-					var y;
-					for(y = centerPointY - checkBoxRange ; y <= centerPointY + checkBoxRange; y++) {
-						if((hit.ignoreCenter && x === centerPointX && y === centerPointY)
-							|| that.getExistingTbsTile(x, y, that._tbsAoeSprites)) { continue; }
-						var distance = that.actualDistance(x, y, centerPointX, centerPointY);
-						if(distance <= aoeRange) {
-							that._tbsAoeSprites.push($gameTemp.addTbsAoeSprite(x, y, hit.rangeType === "followUp"));
+		hitGroups.forEach(function (hitGroup) {
+			if(!hitGroup.hits || hitGroup.hits.length == 0) { return; }
+			hitGroup.hits.forEach(function (hit) {
+				if(hit.aoe !== undefined && hit.aoe > 0) {
+					var centerPointX = $gamePlayer.x;
+					var centerPointY = $gamePlayer.y;
+					var aoeRange = hit.aoe / 2;
+					var checkBoxRange = Math.ceil(aoeRange);
+					var x;
+					for(x = centerPointX - checkBoxRange ; x <= centerPointX + checkBoxRange; x++) {
+						var y;
+						for(y = centerPointY - checkBoxRange ; y <= centerPointY + checkBoxRange; y++) {
+							if((hit.ignoreCenter && x === centerPointX && y === centerPointY)
+								|| that.getExistingTbsTile(x, y, that._tbsAoeSprites)) { continue; }
+							var distance = that.actualDistance(x, y, centerPointX, centerPointY);
+							if(distance <= aoeRange) {
+								that._tbsAoeSprites.push($gameTemp.addTbsAoeSprite(x, y, hit.rangeType === "followUp"));
+							}
 						}
 					}
 				}
-			}
+			});
 		});
 	};
 	
@@ -1983,11 +1996,12 @@
 			if(tbsTargets.length > 0) {
 				var that = this;
 				tbsTargets.forEach(function (tbsTarget) {
-					BattleManager.resetNonFollowupsAllDodged();
-					var results = BattleManager.combatMath(that._tbsSelectedActor.battler, that._tbsSelectedActionInfo, tbsTarget.battler, tbsTargetsByHit);
-					if(!results.skipTarget) {
-						BattleManager.applyActionResults(results, tbsTarget.battler);
-					}
+					that._tbsSelectedActionInfo.action.hitGroups.forEach(function (hitGroup) {
+						var results = BattleManager.combatMath(that._tbsSelectedActor.battler, that._tbsSelectedActionInfo, hitGroup, tbsTarget.battler, tbsTargetsByHit);
+						if(!results.skipTarget) {
+							BattleManager.applyActionResults(results, tbsTarget.battler);
+						}
+					});
 				});
 			}
 		}
@@ -2281,18 +2295,21 @@
 				actionInfo.action = skills[i].tbsStats.action;
 				actionInfo.canTargetBodyPart = false;
 				actionInfo.canTargetDownedBodyPart = false;
-				if(skills[i].tbsStats.action.hits && skills[i].tbsStats.action.hits.length > 0) {
-					actionInfo.canTargetBodyPart = skills[i].tbsStats.action.hits.some(function (hit) {
-						if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
-							return true;
-						}
-						return false;
-					});
-					actionInfo.canTargetDownedBodyPart = skills[i].tbsStats.action.hits.some(function (hit) {
-						if(hit.aoe === undefined || hit.aoe <= 0) {
-							return true;
-						}
-						return false;
+				if(skills[i].tbsStats.action.hitGroups && skills[i].tbsStats.action.hitGroups.length > 0) {
+					skills[i].tbsStats.action.hitGroups.forEach(function (hitGroup) {
+						if(!hitGroup.hits || hitGroup.hits.length == 0) { return; }
+						actionInfo.canTargetBodyPart = hitGroup.hits.some(function (hit) {
+							if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+								return true;
+							}
+							return false;
+						});
+						actionInfo.canTargetDownedBodyPart = hitGroup.hits.some(function (hit) {
+							if(hit.aoe === undefined || hit.aoe <= 0) {
+								return true;
+							}
+							return false;
+						});
 					});
 				}
 				actionInfos.push(actionInfo);
@@ -2311,18 +2328,21 @@
 			actionInfos.push(actionInfo);
 			actionInfo.canTargetBodyPart = false;
 			actionInfo.canTargetDownedBodyPart = false;
-			if(skill.tbsStats.action.hits && skill.tbsStats.action.hits.length > 0) {
-				actionInfo.canTargetBodyPart = skill.tbsStats.action.hits.some(function (hit) {
-					if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
-						return true;
-					}
-					return false;
-				});
-				actionInfo.canTargetDownedBodyPart = skill.tbsStats.action.hits.some(function (hit) {
-					if(hit.aoe === undefined || hit.aoe <= 0) {
-						return true;
-					}
-					return false;
+			if(skill.tbsStats.action.hitGroups && skill.tbsStats.action.hitGroups.length > 0) {
+				skill.tbsStats.action.hitGroups.forEach(function (hitGroup) {
+					if(!hitGroup.hits || hitGroup.hits.length == 0) { return; }
+					actionInfo.canTargetBodyPart = hitGroup.hits.some(function (hit) {
+						if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+							return true;
+						}
+						return false;
+					});
+					actionInfo.canTargetDownedBodyPart = hitGroup.hits.some(function (hit) {
+						if(hit.aoe === undefined || hit.aoe <= 0) {
+							return true;
+						}
+						return false;
+					});
 				});
 			}
 		});
@@ -2389,14 +2409,18 @@
 		var battlerBaseRange = this._tbsSelectedActor.battler.baseRange();
 		battlerBaseRange = battlerBaseRange < 2 ? 2 : battlerBaseRange;
 		largestActionRange.baseRange = battlerBaseRange / 2;
-		if(action && action.hits && action.hits.length > 0) {
-			action.hits.forEach(function (hit) {
-				var hitRange = hit.range !== undefined ? hit.range : 0;
-				if(!rangeFound || hitRange > largestActionRange.range) {
-					rangeFound = true;
-					largestActionRange.range = hitRange;
-					largestActionRange.type = hit.rangeType;
-					largestActionRange.ignoreUserRange = hit.ignoreUserRange;
+		if(action && action.hitGroups && action.hitGroups.length > 0) {
+			action.hitGroups.forEach(function (hitGroup) {
+				if(hitGroup.hits && hitGroup.hits.length > 0) {
+					hitGroup.hits.forEach(function (hit) {
+						var hitRange = hit.range !== undefined ? hit.range : 0;
+						if(!rangeFound || hitRange > largestActionRange.range) {
+							rangeFound = true;
+							largestActionRange.range = hitRange;
+							largestActionRange.type = hit.rangeType;
+							largestActionRange.ignoreUserRange = hit.ignoreUserRange;
+						}
+					});
 				}
 			});
 		}

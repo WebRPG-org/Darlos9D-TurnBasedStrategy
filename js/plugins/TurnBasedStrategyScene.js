@@ -748,11 +748,12 @@
 		var actionInfo = this.actionInfo();
 		if(!actionInfo || !actionInfo.action) { return false; }
 		var action = actionInfo.action;
-		var hits = action.hits;
-		return hits && hits.length > 0 &&
-			hits.some(function(hit) { return hit.aoe !== undefined && hit.aoe >= 2 && hit.heal
+		var hitGroups = action.hitGroups;
+		return hitGroups && hitGroups.length > 0 &&
+			hitGroups.some(function(hitGroup) { if(!hitGroup.hits || hitGroup.hits.length == 0) { return false; }
+				return hitGroup.hits.some(function (hit) { return hit.aoe !== undefined && hit.aoe >= 2 && hit.heal
 				&& ((hit.heal.damage !== undefined && hit.heal.damage > 0)
-				|| (hit.heal.stress !== undefined && hit.heal.stress > 0)); });
+				|| (hit.heal.stress !== undefined && hit.heal.stress > 0)); }); });
 	};
 	
 	Scene_ItemBase.prototype.canUseAction = function() {
@@ -763,26 +764,33 @@
 	
 	Scene_ItemBase.prototype.isActionEffectsValid = function() {
 		var actionInfo = this.actionInfo();
-		if(!actionInfo || !actionInfo.action || !actionInfo.action.hits || actionInfo.action.hits.length == 0) { return false; }
-		var hits = actionInfo.action.hits;
+		if(!actionInfo || !actionInfo.action || !actionInfo.action.hitGroups || actionInfo.action.hitGroups.length == 0) { return false; }
+		var hitGroups = actionInfo.action.hitGroups;
 		
 		return this.actionTargetActors().some(function(target) {
-			return hits.some(function(hit) {
-				return target.isHitValid(hit);
+			return hitGroups.some(function(hitGroup) {
+				if(!hitGroup.hits || hitGroup.hits.length == 0) { return false; }
+				return hitGroup.hits.some(function(hit) {
+					return target.isHitValid(hit);
+				});
 			});
 		});
 	};
 	
 	Scene_ItemBase.prototype.applyAction = function() {
 		var actionInfo = this.actionInfo();
-		if(!actionInfo || !actionInfo.action || !actionInfo.action.hits || actionInfo.action.hits.length == 0) { return false; }
-		var hits = actionInfo.action.hits;
+		if(!actionInfo || !actionInfo.action || !actionInfo.action.hitGroups || actionInfo.action.hitGroups.length == 0) { return false; }
+		
+		var hitGroups = actionInfo.action.hitGroups;
 		
 		this.actionTargetActors().forEach(function(target) {
-			hits.forEach(function (hit) {
-				if(target.isHitValid(hit)) {
-					target.applyHit(hit);
-				}
+			hitGroups.forEach(function (hitGroup) {
+				if(!hitGroup.hits || hitGroup.hits.length == 0) { return; }
+				hitGroup.hits.forEach(function (hit) {
+					if(target.isHitValid(hit)) {
+						target.applyHit(hit);
+					}
+				});
 			});
 		});
 		//TODO: replace this

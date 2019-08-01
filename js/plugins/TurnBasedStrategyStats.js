@@ -139,53 +139,55 @@
 		}
 		
 		actions.forEach(function (action) {
-			if(action.attackMotion) {
-				action.attackMotion.imageId = DataManager.getWeaponImageId(action.attackMotion.image);
-			}
-			if(action.hits) {
-				action.hits.forEach(function (hit) {
-					if(hit.initialAnimation) {
-						hit.initialAnimationId = 0;
-						var i;
-						for(i = 1; i < $dataAnimations.length; i++) {
-							if($dataAnimations[i].name.toLowerCase() === hit.initialAnimation.toLowerCase()) {
-								hit.initialAnimationId = i;
-								break;
+			action.hitGroups.forEach(function (hitGroup) {
+				if(hitGroup.attackMotion) {
+					hitGroup.attackMotion.imageId = DataManager.getWeaponImageId(hitGroup.attackMotion.image);
+				}
+				if(hitGroup.hits) {
+					hitGroup.hits.forEach(function (hit) {
+						if(hit.initialAnimation) {
+							hit.initialAnimationId = 0;
+							var i;
+							for(i = 1; i < $dataAnimations.length; i++) {
+								if($dataAnimations[i].name.toLowerCase() === hit.initialAnimation.toLowerCase()) {
+									hit.initialAnimationId = i;
+									break;
+								}
 							}
 						}
-					}
-					if(hit.animation) {
-						hit.animationId = 0;
-						var i;
-						for(i = 1; i < $dataAnimations.length; i++) {
-							if($dataAnimations[i].name.toLowerCase() === hit.animation.toLowerCase()) {
-								hit.animationId = i;
-								break;
+						if(hit.animation) {
+							hit.animationId = 0;
+							var i;
+							for(i = 1; i < $dataAnimations.length; i++) {
+								if($dataAnimations[i].name.toLowerCase() === hit.animation.toLowerCase()) {
+									hit.animationId = i;
+									break;
+								}
 							}
 						}
-					}
-					if(hit.missAnimation) {
-						hit.missAnimationId = 0;
-						var i;
-						for(i = 1; i < $dataAnimations.length; i++) {
-							if($dataAnimations[i].name.toLowerCase() === hit.missAnimation.toLowerCase()) {
-								hit.missAnimationId = i;
-								break;
+						if(hit.missAnimation) {
+							hit.missAnimationId = 0;
+							var i;
+							for(i = 1; i < $dataAnimations.length; i++) {
+								if($dataAnimations[i].name.toLowerCase() === hit.missAnimation.toLowerCase()) {
+									hit.missAnimationId = i;
+									break;
+								}
 							}
 						}
-					}
-					if(hit.ongoingAnimation) {
-						hit.ongoingAnimationId = 0;
-						var i;
-						for(i = 1; i < $dataAnimations.length; i++) {
-							if($dataAnimations[i].name.toLowerCase() === hit.ongoingAnimation.toLowerCase()) {
-								hit.ongoingAnimationId = i;
-								break;
+						if(hit.ongoingAnimation) {
+							hit.ongoingAnimationId = 0;
+							var i;
+							for(i = 1; i < $dataAnimations.length; i++) {
+								if($dataAnimations[i].name.toLowerCase() === hit.ongoingAnimation.toLowerCase()) {
+									hit.ongoingAnimationId = i;
+									break;
+								}
 							}
 						}
-					}
-				});
-			}
+					});
+				}
+			});
 		});
 	};
 	
@@ -722,19 +724,26 @@
 						returnActionInfo.sourceEquipSlotId = i;
 						returnActionInfo.canTargetBodyPart = false;
 						returnActionInfo.canTargetDownedBodyPart = false;
-						if(actions[j].hits && actions[j].hits.length > 0) {
-							returnActionInfo.canTargetBodyPart = actions[j].hits.some(function (hit) {
-								if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
-									return true;
+						if(actions[j].hitGroups && actions[j].hitGroups.length > 0) {
+							var groups = actions[j].hitGroups;
+							var k;
+							for(k = 0; k < groups.length; k++) {
+								if(groups[k].hits && groups[k].hits.length > 0) {
+									var hits = groups[k].hits;
+									returnActionInfo.canTargetBodyPart = hits.some(function (hit) {
+										if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+											return true;
+										}
+										return false;
+									});
+									returnActionInfo.canTargetDownedBodyPart = hits.some(function (hit) {
+										if(hit.aoe === undefined || hit.aoe <= 0) {
+											return true;
+										}
+										return false;
+									});
 								}
-								return false;
-							});
-							returnActionInfo.canTargetDownedBodyPart = actions[j].hits.some(function (hit) {
-								if(hit.aoe === undefined || hit.aoe <= 0) {
-									return true;
-								}
-								return false;
-							});
+							}
 						}
 						
 						var requirements = actions[j].skillRequirements;
