@@ -718,14 +718,16 @@ Window_TbsActorStatus.prototype.windowHeight = function() {
 	return this.standardPadding() * 2 + this.lineHeight() * 4;
 };
 
-Window_TbsActorStatus.prototype.setTbsActor = function(tbsActor) {
+Window_TbsActorStatus.prototype.setTbsActor = function(tbsActor, forceRefresh) {
     if (this._tbsActor !== tbsActor) {
 		if(tbsActor && ($gameMap.tbsTurnMode() === "manualTarget" || $gameMap.tbsTurnMode() === "survey")) {
 			SoundManager.playCursor();
 		}
         this._tbsActor = tbsActor;
         this.refresh();
-    }
+    } else if(forceRefresh) {
+		this.refresh();
+	}
 };
 
 Window_TbsActorStatus.prototype.refresh = function() {
@@ -1266,7 +1268,7 @@ Window_TbsAction.prototype.windowHeight = function() {
 };
 
 Window_TbsAction.prototype.numVisibleRows = function() {
-	return Math.min(4, this.maxItems());
+	return this.maxItems();
 };
 
 Window_TbsAction.prototype.setActionTypeWindow = function(actionTypeWindow) {
@@ -2293,7 +2295,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 			var reqLacked = false;
 			var i;
 			for(i = 0; i < hits.length; i++) {
-				var lineHeight = this.lineHeight() * (actionIndex + i + 1 + curLineOffset);
+				var lineHeight = this.lineHeight() * (actionIndex + n + i + 1 + curLineOffset);
 				
 				var rangeTypeIconId = hits[i].rangeType ? this.getIconIdFor(hits[i].rangeType) : 0;
 				var rangeIsSelf = hits[i].rangeType && hits[i].rangeType === "self";
@@ -3298,25 +3300,30 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 		//subject.performActionStart(action);
 	};
 
-	Window_BattleLog.prototype.performAction = function(subject, action) {
-		subject.performAction(action);
+	Window_BattleLog.prototype.performAction = function(subject, hitGroup) {
+		subject.performAction(hitGroup);
 	};
 
 	Window_BattleLog.prototype.performActionEnd = function(subject) {
 		//subject.performActionEnd();
 	};
 	
-	Window_BattleLog.prototype.showInitialAnimations = function(centerTarget, hits) {
-		if(!hits) { return; }
+	Window_BattleLog.prototype.showInitialAnimations = function(subject, hitGroup, target) {
+		this.performAction(subject, hitGroup)
+		var highestDelay = 0;
 		var that = this;
-		hits.forEach(function(hit) {
+		hitGroup.hits.forEach(function(hit) {
 			if(hit.initialAnimationId !== undefined && hit.initialAnimationId > 0) {
 				var animation = $dataAnimations[hit.initialAnimationId];
 				if (animation) {
-					centerTarget.startAnimation(hit.initialAnimationId, false, that.animationBaseDelay());
+					target.startAnimation(hit.initialAnimationId, false, that.animationBaseDelay());
+					if(animation.frames.length > highestDelay) {
+						highestDelay = animation.frames.length;
+					}
 				}
 			}
 		});
+		return this.animationBaseDelay() + highestDelay;
 	};
 	
 	Window_BattleLog.prototype.showAnimation = function(subject, targets, animationId) {
@@ -3356,12 +3363,59 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 		}
 	};
 	
+	Window_BattleLog.prototype.showHitMissAnimations = function(target, results) {
+		if(results.animationIds.length > 0) {
+			results.animationIds.forEach(function (animationId) {
+				if(animationId !== undefined && animationId > 0) {
+					var animation = $dataAnimations[animationId];
+					if (animation) {
+						target.startAnimation(animationId, false, 0);
+					}
+				}
+			});
+		}
+		if(results.ongoingAnimationIds.length > 0) {
+			results.ongoingAnimationIds.forEach(function (animationId) {
+				if(animationId !== undefined && animationId > 0) {
+					var animation = $dataAnimations[animationId];
+					if (animation) {
+						target.startOngoingAnimation(animationId, false, 0);
+					}
+				}
+			});
+		}
+		if (results.dodged) {
+			target.performEvasion();
+		} else {
+			if(results.damage.head > results.heal.head || results.damage.mind > results.heal.mind ||
+				results.damage.torso > results.heal.torso || results.damage.leftArm > results.heal.leftArm ||
+				results.damage.rightArm > results.heal.rightArm || results.damage.leftLeg > results.heal.leftLeg ||
+				results.damage.rightLeg > results.heal.rightLeg) {
+				target.performDamage();
+			} else if(results.damage.head < results.heal.head || results.damage.mind < results.heal.mind ||
+				results.damage.torso < results.heal.torso || results.damage.leftArm < results.heal.leftArm ||
+				results.damage.rightArm < results.heal.rightArm || results.damage.leftLeg < results.heal.leftLeg ||
+				results.damage.rightLeg < results.heal.rightLeg ||
+				(results.stress.other + results.stress.mind + results.stress.head + results.stress.torso +
+				results.stress.leftArm + results.stress.rightArm + results.stress.leftLeg +
+				results.stress.rightLeg) < results.heal.stress) {
+				target.performRecovery();
+			} else if((results.stress.other + results.stress.mind + results.stress.head + results.stress.torso +
+				results.stress.leftArm + results.stress.rightArm + results.stress.leftLeg +
+				results.stress.rightLeg) > results.heal.stress) {
+				target.performStress();
+			} else {
+				target.performDeflection();
+			}
+		}
+	};
+	
 	Window_BattleLog.prototype.startAction = function(subject, action, targets) {
 		//var item = action.item();
 		this.push('performActionStart', subject, action);
 		this.push('waitForMovement');
-		this.push('performAction', subject, action);
-		this.push('showInitialAnimations', targets.clone()[0].battler, action.hits);
+		//this.push('performAction', subject, action);
+		//this.push('showInitialAnimations', targets.clone()[0].battler, action.hits);
 		this.displayAction(subject, action);
 	};
 
@@ -3417,49 +3471,9 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 	};
 	
 	Window_BattleLog.prototype.displayResultsValues = function(target, results) {
-		if(results.animationIds.length > 0) {
-			results.animationIds.forEach(function (animationId) {
-				if(animationId !== undefined && animationId > 0) {
-					var animation = $dataAnimations[animationId];
-					if (animation) {
-						target.startAnimation(animationId, false, 0);
-					}
-				}
-			});
-		}
-		if(results.ongoingAnimationIds.length > 0) {
-			results.ongoingAnimationIds.forEach(function (animationId) {
-				if(animationId !== undefined && animationId > 0) {
-					var animation = $dataAnimations[animationId];
-					if (animation) {
-						target.startOngoingAnimation(animationId, false, 0);
-					}
-				}
-			});
-		}
 		if (results.dodged) {
 			this.displayDodge(target);
 		} else {
-			if(results.damage.head > results.heal.head || results.damage.mind > results.heal.mind ||
-				results.damage.torso > results.heal.torso || results.damage.leftArm > results.heal.leftArm ||
-				results.damage.rightArm > results.heal.rightArm || results.damage.leftLeg > results.heal.leftLeg ||
-				results.damage.rightLeg > results.heal.rightLeg) {
-				this.push('performDamage', target);
-			} else if(results.damage.head < results.heal.head || results.damage.mind < results.heal.mind ||
-				results.damage.torso < results.heal.torso || results.damage.leftArm < results.heal.leftArm ||
-				results.damage.rightArm < results.heal.rightArm || results.damage.leftLeg < results.heal.leftLeg ||
-				results.damage.rightLeg < results.heal.rightLeg ||
-				(results.stress.other + results.stress.mind + results.stress.head + results.stress.torso +
-				results.stress.leftArm + results.stress.rightArm + results.stress.leftLeg +
-				results.stress.rightLeg) < results.heal.stress) {
-				this.push('performRecovery', target);
-			} else if((results.stress.other + results.stress.mind + results.stress.head + results.stress.torso +
-				results.stress.leftArm + results.stress.rightArm + results.stress.leftLeg +
-				results.stress.rightLeg) > results.heal.stress) {
-				this.push('performStress', target);
-			} else {
-				this.push('performDeflection', target);
-			}
 			this.displayPartsDamage(target, results);
 			this.displayStress(target, results);
 		}
@@ -3469,7 +3483,6 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 	Window_BattleLog.prototype.displayDodge = function(target) {
 		var fmt;
 		fmt = TextManager.evasion;
-		this.push('performEvasion', target);
 		this.push('addText', fmt.format(target.name()));
 	};
 

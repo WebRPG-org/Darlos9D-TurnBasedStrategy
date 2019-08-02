@@ -1046,7 +1046,7 @@
 		//}
 	};
 
-	Game_Battler.prototype.performAction = function(action) {
+	Game_Battler.prototype.performAction = function(hitGroup) {
 	};
 
 	Game_Battler.prototype.performActionEnd = function() {
@@ -1112,8 +1112,8 @@
 		Game_Battler.prototype.performActionStart.call(this, action);
 	};
 
-	Game_Actor.prototype.performAction = function(action) {
-		Game_Battler.prototype.performAction.call(this, action);
+	Game_Actor.prototype.performAction = function(hitGroup) {
+		Game_Battler.prototype.performAction.call(this, hitGroup);
 		//if (action.isAttack()) {
 		//	this.performAttack();
 		//} else if (action.isGuard()) {
@@ -1125,8 +1125,8 @@
 		//} else if (action.isItem()) {
 		//	this.requestMotion('item');
 		//}
-		this.requestMotion(action.attackMotion.motion.toLowerCase());
-		this.startWeaponAnimation(action.attackMotion.imageId);
+		this.requestMotion(hitGroup.attackMotion.motion.toLowerCase());
+		this.startWeaponAnimation(hitGroup.attackMotion.imageId);
 	};
 
 	Game_Actor.prototype.performActionEnd = function() {
@@ -1186,8 +1186,8 @@
 		this.requestEffect('whiten');
 	};
 
-	Game_Enemy.prototype.performAction = function(action) {
-		Game_Battler.prototype.performAction.call(this, action);
+	Game_Enemy.prototype.performAction = function(hitGroup) {
+		Game_Battler.prototype.performAction.call(this, hitGroup);
 	};
 
 	Game_Enemy.prototype.performActionEnd = function() {

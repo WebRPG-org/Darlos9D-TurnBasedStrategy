@@ -155,9 +155,11 @@ BattleManager.initMembers = function() {
 	this._curSwitchTargetTime = -1;
 	this._actionFinished = false;
 	this._curTarget = null;
-	this._curHitGroups = [];
-	this._totalResults = [];
-	this._hitGroupDelay = 0;
+	this._curHitGroupIndex = -1;
+	this._resultsPerGroup = [];
+	this._nonFollowupsAllDodged = [];
+	this._actionTimer = 0;
+	this._hitMissDelay = [];
 };
 
 BattleManager.setLeftActorStatusWindow = function(actorStatusWindow) {
@@ -180,23 +182,23 @@ BattleManager.setRightActorNameWindow = function(actorNameWindow) {
 	this.refreshRightActorNameWindow(true);
 };
 
-BattleManager.refreshLeftActorStatusWindow = function() {
+BattleManager.refreshLeftActorStatusWindow = function(forceRefresh) {
 	if(this._leftActorStatusWindow) {
 		if(this._targetsOnLeft) {
-			this._leftActorStatusWindow.setTbsActor(this._tbsTargets[0]);
+			this._leftActorStatusWindow.setTbsActor(this._tbsTargets[0], forceRefresh);
 			this._curWindowTarget = this._tbsTargets[0];
 		} else {
-			this._leftActorStatusWindow.setTbsActor(this._tbsActors[0]);
+			this._leftActorStatusWindow.setTbsActor(this._tbsActors[0], forceRefresh);
 		}
 	}
 };
 
-BattleManager.refreshRightActorStatusWindow = function() {
+BattleManager.refreshRightActorStatusWindow = function(forceRefresh) {
 	if(this._rightActorStatusWindow) {
 		if(this._targetsOnLeft) {
-			this._rightActorStatusWindow.setTbsActor(this._tbsActors[0]);
+			this._rightActorStatusWindow.setTbsActor(this._tbsActors[0], forceRefresh);
 		} else {
-			this._rightActorStatusWindow.setTbsActor(this._tbsTargets[0]);
+			this._rightActorStatusWindow.setTbsActor(this._tbsTargets[0], forceRefresh);
 			this._curWindowTarget = this._tbsTargets[0];
 		}
 	}
@@ -479,6 +481,10 @@ BattleManager.startAction = function() {
 		this.refreshRightActorStatusWindow();
 		this.refreshRightActorNameWindow();
 	}
+	var i;
+	for(i = 0; i < this._tbsActionInfo.action.hitGroups.length; i++) {
+		this._nonFollowupsAllDodged[i] = true;
+	}
     this._phase = 'action';
     this._action = action;
     //subject.useItem(action.item());
@@ -516,25 +522,43 @@ BattleManager.updateAction = function() {
 			return;
 		}
 		this._curSwitchTargetTime = -1;
-		if(this._curHitGroups.length == 0) {
-			this._curTarget = this._tbsTargets[0];
-			this._curHitGroups = this._tbsActionInfo.action.hitGroups.clone();
-			this._hitGroupDelay = 0;
+		
+		var noHitGroupsLeft = true;
+		var noHitMissDelaysLeft = true;
+		var i;
+		for(i = 0; i < this._tbsActionInfo.action.hitGroups.length; i++) {
+			var hitGroup = this._tbsActionInfo.action.hitGroups[i];
+			var delay = hitGroup.delay === undefined || hitGroup.delay < 0 ? 0 : hitGroup.delay;
+			if(delay == this._actionTimer) {
+				this._resultsPerGroup[i] = this.combatMath(this._subject.battler, this._tbsActionInfo, hitGroup, this._tbsTargets[0].battler, this._tbsTargetsByHit, i);
+				this._hitMissDelay[i] = this._logWindow.showInitialAnimations(this._subject.battler, hitGroup, this._tbsTargets[0].battler);
+			}
+			if(this._actionTimer < delay) {
+				noHitGroupsLeft = false;
+			}
 		}
-		if(this._hitGroupDelay > 0) {
-			this._hitGroupDelay--;
-			return;
+		for(i = 0; i < this._tbsActionInfo.action.hitGroups.length; i++) {
+			if(this._hitMissDelay[i] !== undefined) {
+				if(this._hitMissDelay[i] <= 0) {
+					this._hitMissDelay[i] = undefined;
+					this._logWindow.showHitMissAnimations(this._tbsTargets[0].battler, this._resultsPerGroup[i]);
+					this.applyActionResults(this._resultsPerGroup[i], this._tbsTargets[0].battler);
+					this.refreshLeftActorStatusWindow(true);
+					this.refreshRightActorStatusWindow(true);
+				} else {
+					this._hitMissDelay[i]--;
+				}
+				noHitMissDelaysLeft = false;
+			}
 		}
-		var hitGroup = this._curHitGroups.shift();
-		var results = this.combatMath(subject.battler, this._tbsActionInfo, hitGroup, this._curTarget.battler, this._tbsTargetsByHit);
-		this._totalResults.push(results);
-		this.applyActionResults(results, this._curTarget.battler);
-		if(this._curHitGroups.length == 0) {
-			this.invokeAction(this._subject.battler, this._curTarget.battler, this._totalResults);
-			this._totalResults = [];
+		
+		this._actionTimer++;
+		if(noHitGroupsLeft && noHitMissDelaysLeft) {
+			this.invokeAction(this._subject.battler, this._tbsTargets[0].battler, this._resultsPerGroup);
+			this._resultsPerGroup = [];
+			this._hitMissDelay = [];
 			this._tbsTargets.shift();
-		} else {
-			this._hitGroupDelay = this._curHitGroups[0].delay === undefined ? 0 : this._curHitGroups[0].delay;
+			this._actionTimer = 0;
 		}
     } else {
         this.endAction();
@@ -548,103 +572,105 @@ BattleManager.endAction = function() {
 	$gameMap.setShouldPassTurn(this._shouldPassTurn);
 };
 
-BattleManager.invokeAction = function(subject, target, totalResults) {
+BattleManager.invokeAction = function(subject, target, resultsPerGroup) {
     this._logWindow.push('pushBaseLine');
     //if (Math.random() < this._action.itemCnt(target)) {
     //    this.invokeCounterAttack(subject, target);
     //} else if (Math.random() < this._action.itemMrf(target)) {
     //    this.invokeMagicReflection(subject, target);
     //} else {
-        this.invokeNormalAction(subject, target, totalResults);
+        this.invokeNormalAction(subject, target, resultsPerGroup);
     //}
     //subject.setLastTarget(target);
     this._logWindow.push('popBaseLine');
     this.refreshStatus();
 };
 
-BattleManager.invokeNormalAction = function(subject, target, totalResults) {
+BattleManager.invokeNormalAction = function(subject, target, resultsPerGroup) {
     //var realTarget = this.applySubstitute(target);
     //this._action.apply(realTarget);
-	var results = {};
-	results.stress = {};
-	results.stress.head = 0;
-	results.stress.torso = 0;
-	results.stress.leftArm = 0;
-	results.stress.rightArm = 0;
-	results.stress.leftLeg = 0;
-	results.stress.rightLeg = 0;
-	results.stress.mind = 0;
-	results.stress.other = 0;
-	results.damage = {};
-	results.damage.head = 0;
-	results.damage.torso = 0;
-	results.damage.leftArm = 0;
-	results.damage.rightArm = 0;
-	results.damage.leftLeg = 0;
-	results.damage.rightLeg = 0;
-	results.damage.mind = 0;
-	results.heal = {};
-	results.heal.stress = 0;
-	results.heal.head = 0;
-	results.heal.torso = 0;
-	results.heal.leftArm = 0;
-	results.heal.rightArm = 0;
-	results.heal.leftLeg = 0;
-	results.heal.rightLeg = 0;
-	results.heal.mind = 0;
-	results.dodged = true;
-	results.hit = {};
-	results.hit.mind = false;
-	results.hit.head = false;
-	results.hit.torso = false;
-	results.hit.leftArm = false;
-	results.hit.rightArm = false;
-	results.hit.leftLeg = false;
-	results.hit.rightLeg = false;
-	results.buffs = [];
-	results.downed = false;
-	results.revived = false;
-	totalResults.forEach(function (singleResults) {
-		results.stress.head += singleResults.stress.head;
-		results.stress.torso += singleResults.stress.torso;
-		results.stress.leftArm += singleResults.stress.leftArm;
-		results.stress.rightArm += singleResults.stress.rightArm;
-		results.stress.leftLeg += singleResults.stress.leftLeg;
-		results.stress.rightLeg += singleResults.stress.rightLeg;
-		results.stress.mind += singleResults.stress.mind;
-		results.stress.other += singleResults.stress.other;
-		results.damage.head += singleResults.damage.head;
-		results.damage.torso += singleResults.damage.torso;
-		results.damage.leftArm += singleResults.damage.leftArm;
-		results.damage.rightArm += singleResults.damage.rightArm;
-		results.damage.leftLeg += singleResults.damage.leftLeg;
-		results.damage.rightLeg += singleResults.damage.rightLeg;
-		results.damage.mind += singleResults.damage.mind;
-		results.heal.stress += singleResults.heal.stress;
-		results.heal.head += singleResults.heal.head;
-		results.heal.torso += singleResults.heal.torso;
-		results.heal.leftArm += singleResults.heal.leftArm;
-		results.heal.rightArm += singleResults.heal.rightArm;
-		results.heal.leftLeg += singleResults.heal.leftLeg;
-		results.heal.rightLeg += singleResults.heal.rightLeg;
-		results.heal.mind += singleResults.heal.mind;
-		results.hit.mind = singleResults.hit.mind ? true : results.hit.mind;
-		results.hit.head = singleResults.hit.head ? true : results.hit.head;
-		results.hit.torso = singleResults.hit.torso ? true : results.hit.torso;
-		results.hit.leftArm = singleResults.hit.leftArm ? true : results.hit.leftArm;
-		results.hit.rightArm = singleResults.hit.rightArm ? true : results.hit.rightArm;
-		results.hit.leftLeg = singleResults.hit.leftLeg ? true : results.hit.leftLeg;
-		results.hit.rightLeg = singleResults.hit.rightLeg ? true : results.hit.rightLeg;
-		results.buffs = results.buffs.concat(singleResults.buffs);
-		results.downed = singleResults.downed ? true : results.downed;
-		results.revived = singleResults.revived ? true : results.revived;
+	var totalResults = {};
+	totalResults.stress = {};
+	totalResults.stress.head = 0;
+	totalResults.stress.torso = 0;
+	totalResults.stress.leftArm = 0;
+	totalResults.stress.rightArm = 0;
+	totalResults.stress.leftLeg = 0;
+	totalResults.stress.rightLeg = 0;
+	totalResults.stress.mind = 0;
+	totalResults.stress.other = 0;
+	totalResults.damage = {};
+	totalResults.damage.head = 0;
+	totalResults.damage.torso = 0;
+	totalResults.damage.leftArm = 0;
+	totalResults.damage.rightArm = 0;
+	totalResults.damage.leftLeg = 0;
+	totalResults.damage.rightLeg = 0;
+	totalResults.damage.mind = 0;
+	totalResults.heal = {};
+	totalResults.heal.stress = 0;
+	totalResults.heal.head = 0;
+	totalResults.heal.torso = 0;
+	totalResults.heal.leftArm = 0;
+	totalResults.heal.rightArm = 0;
+	totalResults.heal.leftLeg = 0;
+	totalResults.heal.rightLeg = 0;
+	totalResults.heal.mind = 0;
+	totalResults.dodged = true;
+	totalResults.hit = {};
+	totalResults.hit.mind = false;
+	totalResults.hit.head = false;
+	totalResults.hit.torso = false;
+	totalResults.hit.leftArm = false;
+	totalResults.hit.rightArm = false;
+	totalResults.hit.leftLeg = false;
+	totalResults.hit.rightLeg = false;
+	totalResults.buffs = [];
+	totalResults.downed = false;
+	totalResults.revived = false;
+	totalResults.dodged = true;
+	resultsPerGroup.forEach(function (results) {
+		totalResults.stress.head += results.stress.head;
+		totalResults.stress.torso += results.stress.torso;
+		totalResults.stress.leftArm += results.stress.leftArm;
+		totalResults.stress.rightArm += results.stress.rightArm;
+		totalResults.stress.leftLeg += results.stress.leftLeg;
+		totalResults.stress.rightLeg += results.stress.rightLeg;
+		totalResults.stress.mind += results.stress.mind;
+		totalResults.stress.other += results.stress.other;
+		totalResults.damage.head += results.damage.head;
+		totalResults.damage.torso += results.damage.torso;
+		totalResults.damage.leftArm += results.damage.leftArm;
+		totalResults.damage.rightArm += results.damage.rightArm;
+		totalResults.damage.leftLeg += results.damage.leftLeg;
+		totalResults.damage.rightLeg += results.damage.rightLeg;
+		totalResults.damage.mind += results.damage.mind;
+		totalResults.heal.stress += results.heal.stress;
+		totalResults.heal.head += results.heal.head;
+		totalResults.heal.torso += results.heal.torso;
+		totalResults.heal.leftArm += results.heal.leftArm;
+		totalResults.heal.rightArm += results.heal.rightArm;
+		totalResults.heal.leftLeg += results.heal.leftLeg;
+		totalResults.heal.rightLeg += results.heal.rightLeg;
+		totalResults.heal.mind += results.heal.mind;
+		totalResults.hit.mind = results.hit.mind ? true : results.hit.mind;
+		totalResults.hit.head = results.hit.head ? true : results.hit.head;
+		totalResults.hit.torso = results.hit.torso ? true : results.hit.torso;
+		totalResults.hit.leftArm = results.hit.leftArm ? true : results.hit.leftArm;
+		totalResults.hit.rightArm = results.hit.rightArm ? true : results.hit.rightArm;
+		totalResults.hit.leftLeg = results.hit.leftLeg ? true : results.hit.leftLeg;
+		totalResults.hit.rightLeg = results.hit.rightLeg ? true : results.hit.rightLeg;
+		totalResults.buffs = results.buffs.concat(results.buffs);
+		totalResults.downed = results.downed ? true : results.downed;
+		totalResults.revived = results.revived ? true : results.revived;
+		totalResults.dodged = results.dodged ? totalResults.dodged : false;
 	});
-	this._logWindow.displayActionResults(subject, target, results);
+	this._logWindow.displayActionResults(subject, target, totalResults);
 };
 
-BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targetsByHit) {
+BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targetsByHit, hitGroupIndex) {
 	var battlersByHit = [];
-	targetsByHit[n].forEach(function (targets) {
+	targetsByHit[hitGroupIndex].forEach(function (targets) {
 		var battlers = targets.map(function (hitTarget) { return hitTarget.battler; });
 		battlersByHit.push(battlers);
 	});
@@ -700,7 +726,6 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 	results.animationIds = [];
 	results.ongoingAnimationIds = [];
 	results.skipTarget = true;
-	results.nonFollowupsAllDodged = true;
 	var hitDodged = true;
 	if(target.blankDummy()) {
 		results.shouldPassTurn = false;
@@ -709,7 +734,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 	for(i = 0; i < hitGroup.hits.length; i++) {
 		if(battlersByHit[i].indexOf(target) === -1) { continue; }
 		var hit = hitGroup.hits[i];
-		if((hit.rangeType === "followUp" && results.nonFollowupsAllDodged)
+		if((hit.rangeType === "followUp" && this._nonFollowupsAllDodged[this._curHitGroupIndex])
 			|| (hit.randomTarget && Math.random() < 0.5))
 		{
 			continue;
@@ -1121,7 +1146,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 			results.ongoingAnimationIds.push(hit.ongoingAnimationId);
 		}
 		if(!hitDodged) {
-			results.nonFollowupsAllDodged = false;
+			this._nonFollowupsAllDodged[this._curHitGroupIndex] = false;
 		}
 	}
 	return results;
