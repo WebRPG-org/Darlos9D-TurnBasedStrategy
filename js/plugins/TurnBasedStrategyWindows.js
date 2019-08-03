@@ -3014,7 +3014,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 				return 2;
 				break;
 			case "items":
-				return 6;
+				return 7;
 				break;
 			default:
 				return 0;
@@ -3074,10 +3074,10 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 				return 2;
 				break;
 			case "accessories":
-				return 4;
+				return 5;
 				break;
 			case "items":
-				return 4;
+				return 6;
 				break;
 			default:
 				return 0;

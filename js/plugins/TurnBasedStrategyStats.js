@@ -929,10 +929,13 @@
 		if($dataArmors[equipment.accessoryTwo]) { returnEquips.push($dataArmors[equipment.accessoryTwo]); }
 		if($dataArmors[equipment.accessoryThree]) { returnEquips.push($dataArmors[equipment.accessoryThree]); }
 		if($dataArmors[equipment.accessoryFour]) { returnEquips.push($dataArmors[equipment.accessoryFour]); }
+		if($dataArmors[equipment.accessoryFive]) { returnEquips.push($dataArmors[equipment.accessoryFive]); }
 		if($dataItems[equipment.itemOne]) { returnEquips.push($dataItems[equipment.itemOne]); }
 		if($dataItems[equipment.itemTwo]) { returnEquips.push($dataItems[equipment.itemTwo]); }
 		if($dataItems[equipment.itemThree]) { returnEquips.push($dataItems[equipment.itemThree]); }
 		if($dataItems[equipment.itemFour]) { returnEquips.push($dataItems[equipment.itemFour]); }
+		if($dataItems[equipment.itemFive]) { returnEquips.push($dataItems[equipment.itemFive]); }
+		if($dataItems[equipment.itemSix]) { returnEquips.push($dataItems[equipment.itemSix]); }
 		
 		return returnEquips;
 	};
