@@ -3310,6 +3310,18 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 	
 	Window_BattleLog.prototype.showInitialAnimations = function(subject, hitGroup, animationIds, target) {
 		this.performAction(subject, hitGroup)
+		if(hitGroup.attackMotion && hitGroup.attackMotion.castAnimationId !== undefined && hitGroup.attackMotion.castAnimationId > 0) {
+			var animation = $dataAnimations[hitGroup.attackMotion.castAnimationId];
+			if (animation) {
+				subject.startAnimation(hitGroup.attackMotion.castAnimationId, false, 0);
+			}
+		}
+		if(hitGroup.attackMotion && hitGroup.attackMotion.delayedCastAnimationId !== undefined && hitGroup.attackMotion.delayedCastAnimationId > 0) {
+			var animation = $dataAnimations[hitGroup.attackMotion.delayedCastAnimationId];
+			if (animation) {
+				subject.startAnimation(hitGroup.attackMotion.delayedCastAnimationId, false, this.animationBaseDelay());
+			}
+		}
 		var highestDelay = 0;
 		var that = this;
 		animationIds.forEach(function(animationId) {

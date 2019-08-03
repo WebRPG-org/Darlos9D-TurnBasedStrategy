@@ -1160,6 +1160,7 @@
 				}
 				if(prevMode === "manualMove") {
 					if(this._tbsSelectedActor.movedThisRound) {
+						this.setTbsSelectedAction(undefined, -1);
 						this.generateTbsActionFields();
 					}
 					var chara = this._tbsSelectedActor.chara;
@@ -1199,7 +1200,6 @@
 				this._tbsPassageType = "move";
 				$gamePlayer.setTbsShowCursor(true);
 				this._tbsManualMoveStarted = true;
-				this.setTbsSelectedAction(undefined, -1);
 				break;
 			case "cancelMove":
 				//$gameTemp.setShouldClearTbsDamageSprites(true);

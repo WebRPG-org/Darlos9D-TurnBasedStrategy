@@ -142,6 +142,26 @@
 			action.hitGroups.forEach(function (hitGroup) {
 				if(hitGroup.attackMotion) {
 					hitGroup.attackMotion.imageId = DataManager.getWeaponImageId(hitGroup.attackMotion.image);
+					if(hitGroup.attackMotion.castAnimation) {
+						hitGroup.attackMotion.castAnimationId = 0;
+						var i;
+						for(i = 1; i < $dataAnimations.length; i++) {
+							if($dataAnimations[i].name.toLowerCase() === hitGroup.attackMotion.castAnimation.toLowerCase()) {
+								hitGroup.attackMotion.castAnimationId = i;
+								break;
+							}
+						}
+					}
+					if(hitGroup.attackMotion.delayedCastAnimation) {
+						hitGroup.attackMotion.delayedCastAnimationId = 0;
+						var i;
+						for(i = 1; i < $dataAnimations.length; i++) {
+							if($dataAnimations[i].name.toLowerCase() === hitGroup.attackMotion.delayedCastAnimation.toLowerCase()) {
+								hitGroup.attackMotion.delayedCastAnimationId = i;
+								break;
+							}
+						}
+					}
 				}
 				if(hitGroup.hits) {
 					hitGroup.hits.forEach(function (hit) {
