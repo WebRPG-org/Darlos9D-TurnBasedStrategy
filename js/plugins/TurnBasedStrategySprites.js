@@ -554,4 +554,8 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 		//	this._actorSprites[i].setBattler(members[i]);
 		//}
 	};
+	
+	Spriteset_Battle.prototype.isBusy = function() {
+		return false; //this.isAnimationPlaying() || this.isAnyoneMoving();
+	};
 })();

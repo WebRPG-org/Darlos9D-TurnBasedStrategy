@@ -968,9 +968,9 @@
 					var aoeRange = hit.aoe / 2;
 					var checkBoxRange = Math.ceil(aoeRange);
 					var x;
-					for(x = centerPointX - checkBoxRange ; x <= centerPointX + checkBoxRange; x++) {
+					for(x = centerPointX - checkBoxRange; x <= centerPointX + checkBoxRange; x++) {
 						var y;
-						for(y = centerPointY - checkBoxRange ; y <= centerPointY + checkBoxRange; y++) {
+						for(y = centerPointY - checkBoxRange; y <= centerPointY + checkBoxRange; y++) {
 							if(hit.ignoreCenter && x === centerPointX && y === centerPointY) { continue; }
 							var distance = that.actualDistance(x, y, centerPointX, centerPointY);
 							if(distance <= aoeRange) {
@@ -1199,6 +1199,7 @@
 				this._tbsPassageType = "move";
 				$gamePlayer.setTbsShowCursor(true);
 				this._tbsManualMoveStarted = true;
+				this.setTbsSelectedAction(undefined, -1);
 				break;
 			case "cancelMove":
 				//$gameTemp.setShouldClearTbsDamageSprites(true);
@@ -1994,13 +1995,16 @@
 			var tbsTargets = this.getTbsActionTargets();
 			var tbsTargetsByHit = this.getTbsActionTargetsByHit();
 			if(tbsTargets.length > 0) {
+				BattleManager.initMembers();
 				var that = this;
 				tbsTargets.forEach(function (tbsTarget) {
+					var index = 0;
 					that._tbsSelectedActionInfo.action.hitGroups.forEach(function (hitGroup) {
-						var results = BattleManager.combatMath(that._tbsSelectedActor.battler, that._tbsSelectedActionInfo, hitGroup, tbsTarget.battler, tbsTargetsByHit);
+						var results = BattleManager.combatMath(that._tbsSelectedActor.battler, that._tbsSelectedActionInfo, hitGroup, tbsTarget.battler, tbsTargetsByHit, index);
 						if(!results.skipTarget) {
 							BattleManager.applyActionResults(results, tbsTarget.battler);
 						}
+						index++;
 					});
 				});
 			}

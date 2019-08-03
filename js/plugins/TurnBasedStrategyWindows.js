@@ -3308,22 +3308,22 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 		//subject.performActionEnd();
 	};
 	
-	Window_BattleLog.prototype.showInitialAnimations = function(subject, hitGroup, target) {
+	Window_BattleLog.prototype.showInitialAnimations = function(subject, hitGroup, animationIds, target) {
 		this.performAction(subject, hitGroup)
 		var highestDelay = 0;
 		var that = this;
-		hitGroup.hits.forEach(function(hit) {
-			if(hit.initialAnimationId !== undefined && hit.initialAnimationId > 0) {
-				var animation = $dataAnimations[hit.initialAnimationId];
+		animationIds.forEach(function(animationId) {
+			if(animationId !== undefined && animationId > 0) {
+				var animation = $dataAnimations[animationId];
 				if (animation) {
-					target.startAnimation(hit.initialAnimationId, false, that.animationBaseDelay());
+					target.startAnimation(animationId, false, that.animationBaseDelay());
 					if(animation.frames.length > highestDelay) {
 						highestDelay = animation.frames.length;
 					}
 				}
 			}
 		});
-		return this.animationBaseDelay() + highestDelay;
+		return this.animationBaseDelay() + (highestDelay * 4);
 	};
 	
 	Window_BattleLog.prototype.showAnimation = function(subject, targets, animationId) {

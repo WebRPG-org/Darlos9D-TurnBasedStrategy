@@ -185,6 +185,16 @@
 								}
 							}
 						}
+						if(hit.ongoingMissAnimation) {
+							hit.ongoingMissAnimationId = 0;
+							var i;
+							for(i = 1; i < $dataAnimations.length; i++) {
+								if($dataAnimations[i].name.toLowerCase() === hit.ongoingMissAnimation.toLowerCase()) {
+									hit.ongoingMissAnimationId = i;
+									break;
+								}
+							}
+						}
 					});
 				}
 			});
@@ -530,8 +540,8 @@
 	};
 	
 	Game_Enemy.prototype.performStress = function() {
-		Game_Battler.prototype.performStress.call(this);
-		this.requestEffect('blink');
+		//Game_Battler.prototype.performStress.call(this);
+		//this.requestEffect('blink');
 	};
 	
 	Game_Enemy.prototype.isSpriteVisible = function() {
@@ -1156,7 +1166,7 @@
 		} else {
 			$gameScreen.startShake(5, 5, 10);
 		}
-		SoundManager.playActorDamage();
+		//SoundManager.playActorDamage();
 	};
 
 	Game_Actor.prototype.performEvasion = function() {
@@ -1196,7 +1206,7 @@
 
 	Game_Enemy.prototype.performDamage = function() {
 		Game_Battler.prototype.performDamage.call(this);
-		SoundManager.playEnemyDamage();
+		//SoundManager.playEnemyDamage();
 		this.requestEffect('blink');
 	};
 

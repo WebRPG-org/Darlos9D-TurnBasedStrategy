@@ -155,7 +155,6 @@ BattleManager.initMembers = function() {
 	this._curSwitchTargetTime = -1;
 	this._actionFinished = false;
 	this._curTarget = null;
-	this._curHitGroupIndex = -1;
 	this._resultsPerGroup = [];
 	this._nonFollowupsAllDodged = [];
 	this._actionTimer = 0;
@@ -531,7 +530,7 @@ BattleManager.updateAction = function() {
 			var delay = hitGroup.delay === undefined || hitGroup.delay < 0 ? 0 : hitGroup.delay;
 			if(delay == this._actionTimer) {
 				this._resultsPerGroup[i] = this.combatMath(this._subject.battler, this._tbsActionInfo, hitGroup, this._tbsTargets[0].battler, this._tbsTargetsByHit, i);
-				this._hitMissDelay[i] = this._logWindow.showInitialAnimations(this._subject.battler, hitGroup, this._tbsTargets[0].battler);
+				this._hitMissDelay[i] = this._logWindow.showInitialAnimations(this._subject.battler, hitGroup, this._resultsPerGroup[i].initialAnimationIds, this._tbsTargets[0].battler);
 			}
 			if(this._actionTimer < delay) {
 				noHitGroupsLeft = false;
@@ -553,11 +552,14 @@ BattleManager.updateAction = function() {
 		}
 		
 		this._actionTimer++;
-		if(noHitGroupsLeft && noHitMissDelaysLeft) {
+		if(noHitGroupsLeft && noHitMissDelaysLeft && !this._spriteset.isAnimationPlaying()) {
 			this.invokeAction(this._subject.battler, this._tbsTargets[0].battler, this._resultsPerGroup);
+			this._tbsTargets.shift();
+			while(this._tbsTargets.length > 0 && this.shouldSkipTarget(this._tbsActionInfo.action.hitGroups, this._tbsTargets[0].battler, this._tbsTargetsByHit)) {
+				this._tbsTargets.shift();
+			}
 			this._resultsPerGroup = [];
 			this._hitMissDelay = [];
-			this._tbsTargets.shift();
 			this._actionTimer = 0;
 		}
     } else {
@@ -668,6 +670,32 @@ BattleManager.invokeNormalAction = function(subject, target, resultsPerGroup) {
 	this._logWindow.displayActionResults(subject, target, totalResults);
 };
 
+BattleManager.shouldSkipTarget = function(hitGroups, target, targetsByHit) {
+	var shouldSkip = true;
+	var hitGroupIndex = 0;
+	var that = this;
+	hitGroups.forEach(function (hitGroup) {
+		var battlersByHit = [];
+		targetsByHit[hitGroupIndex].forEach(function (targets) {
+			var battlers = targets.map(function (hitTarget) { return hitTarget.battler; });
+			battlersByHit.push(battlers);
+		});
+		for(i = 0; i < hitGroup.hits.length; i++) {
+			if(battlersByHit[i].indexOf(target) === -1) { continue; }
+			var hit = hitGroup.hits[i];
+			if((hit.rangeType === "followUp" && that._nonFollowupsAllDodged[hitGroupIndex])
+				|| (hit.randomTarget && Math.random() < 0.5))
+			{
+				continue;
+			}
+			shouldSkip = false;
+			break;
+		}
+		hitGroupIndex++;
+	});
+	return shouldSkip;
+};
+
 BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targetsByHit, hitGroupIndex) {
 	var battlersByHit = [];
 	targetsByHit[hitGroupIndex].forEach(function (targets) {
@@ -723,6 +751,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 	results.downed = false;
 	results.revived = false;
 	results.shouldPassTurn = true;
+	results.initialAnimationIds = [];
 	results.animationIds = [];
 	results.ongoingAnimationIds = [];
 	results.skipTarget = true;
@@ -734,7 +763,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 	for(i = 0; i < hitGroup.hits.length; i++) {
 		if(battlersByHit[i].indexOf(target) === -1) { continue; }
 		var hit = hitGroup.hits[i];
-		if((hit.rangeType === "followUp" && this._nonFollowupsAllDodged[this._curHitGroupIndex])
+		if((hit.rangeType === "followUp" && this._nonFollowupsAllDodged[hitGroupIndex])
 			|| (hit.randomTarget && Math.random() < 0.5))
 		{
 			continue;
@@ -1138,15 +1167,26 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 				results.buffs.push(newBuff);
 			});
 		}
-		if(hitDodged && hit.missAnimationId !== undefined && hit.missAnimationId > 0) {
-			results.animationIds.push(hit.missAnimationId);
-			results.ongoingAnimationIds.push(hit.ongoingMissAnimationId);
-		} else if(!hitDodged && hit.animationId !== undefined && hit.animationId > 0) {
-			results.animationIds.push(hit.animationId);
-			results.ongoingAnimationIds.push(hit.ongoingAnimationId);
+		if(hit.initialAnimationId !== undefined && hit.initialAnimationId > 0) {
+			results.initialAnimationIds.push(hit.initialAnimationId);
+		}
+		if(hitDodged) {
+			if(hit.missAnimationId !== undefined && hit.missAnimationId > 0) {
+				results.animationIds.push(hit.missAnimationId);
+			}
+			if(hit.ongoingMissAnimationId !== undefined && hit.ongoingMissAnimationId > 0) {
+				results.ongoingAnimationIds.push(hit.ongoingMissAnimationId);
+			}
+		} else {
+			if(hit.animationId !== undefined && hit.animationId > 0) {
+				results.animationIds.push(hit.animationId);
+			}
+			if(hit.ongoingAnimationId !== undefined && hit.ongoingAnimationId > 0) {
+				results.ongoingAnimationIds.push(hit.ongoingAnimationId);
+			}
 		}
 		if(!hitDodged) {
-			this._nonFollowupsAllDodged[this._curHitGroupIndex] = false;
+			this._nonFollowupsAllDodged[hitGroupIndex] = false;
 		}
 	}
 	return results;
