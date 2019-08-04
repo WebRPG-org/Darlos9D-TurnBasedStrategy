@@ -696,7 +696,7 @@ BattleManager.shouldSkipTarget = function(hitGroups, target, targetsByHit) {
 	return shouldSkip;
 };
 
-BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targetsByHit, hitGroupIndex) {
+BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targetsByHit, hitGroupIndex, vitalOnly) {
 	var battlersByHit = [];
 	targetsByHit[hitGroupIndex].forEach(function (targets) {
 		var battlers = targets.map(function (hitTarget) { return hitTarget.battler; });
@@ -839,7 +839,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 				}
 			} else {
 				if(isSolid || isFluid) {
-					if(this._tbsTargetPart != undefined && this._tbsTargetPart != "mobility" && this._tbsTargetPart != "vital") {
+					if(!vitalOnly && this._tbsTargetPart != undefined && this._tbsTargetPart != "mobility" && this._tbsTargetPart != "vital") {
 						hitResult.dodged = false;
 						hitResult.hit[this._tbsTargetPart] = true;
 					} else {
@@ -899,7 +899,8 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 								targetingMobility,
 								leftMobilityFirst,
 								defendingWithLegs,
-								target.isDown());
+								target.isDown(),
+								vitalOnly);
 						} else if (isFluid) {
 							hitResult = this.calculateBodyPartHit(targetStress, bodyPartAccRoll, eva,
 								criticalPartProt.defense.fluid,
@@ -910,7 +911,8 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 								targetingMobility,
 								leftMobilityFirst,
 								defendingWithLegs,
-								target.isDown());
+								target.isDown(),
+								vitalOnly);
 						}
 					}
 					if(isMental && !hitResult.dodged) {
@@ -988,6 +990,15 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
 							results.shouldPassTurn = false;
 						}
+						if(target.limbsType() !== "winged" || !target.isFlying() && results.shouldCleave) {
+							var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult);
+							results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
+							results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
+							results.stress.torso += cleaveResults.stress.torso;
+							results.stress.head += cleaveResults.stress.head;
+							results.damage.torso += cleaveResults.damage.torso;
+							results.damage.head += cleaveResults.damage.head;
+						}
 					}
 					if(hitResult.hit.rightArm) {
 						var damageAccRoll = this.rollForRanks(acc, subjectStress);
@@ -1007,6 +1018,15 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						results.damage.rightArm += damageResult.damage;
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
 							results.shouldPassTurn = false;
+						}
+						if(target.limbsType() !== "winged" || !target.isFlying() && results.shouldCleave) {
+							var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult);
+							results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
+							results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
+							results.stress.torso += cleaveResults.stress.torso;
+							results.stress.head += cleaveResults.stress.head;
+							results.damage.torso += cleaveResults.damage.torso;
+							results.damage.head += cleaveResults.damage.head;
 						}
 					}
 					if(hitResult.hit.leftLeg) {
@@ -1028,6 +1048,15 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
 							results.shouldPassTurn = false;
 						}
+						if(target.limbsType() === "winged" && target.isFlying() && results.shouldCleave) {
+							var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult);
+							results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
+							results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
+							results.stress.torso += cleaveResults.stress.torso;
+							results.stress.head += cleaveResults.stress.head;
+							results.damage.torso += cleaveResults.damage.torso;
+							results.damage.head += cleaveResults.damage.head;
+						}
 					}
 					if(hitResult.hit.rightLeg) {
 						var damageAccRoll = this.rollForRanks(acc, subjectStress);
@@ -1047,6 +1076,15 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						results.damage.rightLeg += damageResult.damage;
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
 							results.shouldPassTurn = false;
+						}
+						if(target.limbsType() === "winged" && target.isFlying() && results.shouldCleave) {
+							var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult);
+							results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
+							results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
+							results.stress.torso += cleaveResults.stress.torso;
+							results.stress.head += cleaveResults.stress.head;
+							results.damage.torso += cleaveResults.damage.torso;
+							results.damage.head += cleaveResults.damage.head;
 						}
 					}
 				}
@@ -1192,6 +1230,27 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 	return results;
 };
 
+BattleManager.cleaveMath = function(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult) {
+	var hitGroup = {};
+	hitGroup.hits = [];
+	var newHit = {};
+	newHit.rangeType = hit.rangeType;
+	newHit.accuracyBonus = hit.accuracyBonus;
+	newHit.usesParts = hit.usesParts;
+	newHit.damage = {};
+	if(damageResult.remainingPower.blunt > 0) { newHit.damage.blunt = damageResult.remainingPower.blunt; }
+	if(damageResult.remainingPower.cut > 0) { newHit.damage.cut = damageResult.remainingPower.cut; }
+	if(damageResult.remainingPower.keen > 0) { newHit.damage.keen = damageResult.remainingPower.keen; }
+	if(damageResult.remainingPower.thrust > 0) { newHit.damage.thrust = damageResult.remainingPower.thrust; }
+	if(damageResult.remainingPower.stiletto > 0) { newHit.damage.stiletto = damageResult.remainingPower.stiletto; }
+	if(damageResult.remainingPower.bullet > 0) { newHit.damage.bullet = damageResult.remainingPower.bullet; }
+	if(damageResult.remainingPower.fire > 0) { newHit.damage.fire = damageResult.remainingPower.fire; }
+	if(damageResult.remainingPower.ice > 0) { newHit.damage.ice = damageResult.remainingPower.ice; }
+	if(damageResult.remainingPower.corrosion > 0) { newHit.damage.corrosion = damageResult.remainingPower.corrosion; }
+	hitGroup.hits.push(newHit);
+	return this.combatMath(subject, actionInfo, hitGroup, target, targetsByHit, hitGroupIndex, true);
+};
+
 BattleManager.getPartDamagePotential = function(damage, partProt) {
 	var damagePotential = Math.max(0, damage.blunt - (partProt.defense.solid > 1 ? partProt.armor.blunt : 0));
 	damagePotential += Math.max(0, damage.cut - (partProt.defense.solid > 1 ? partProt.armor.cut : 0));
@@ -1209,6 +1268,7 @@ BattleManager.getPartDamagePotential = function(damage, partProt) {
 BattleManager.getCompleteDamage = function(subject, actionInfo, hit) {
 	var damage = hit.damage;
 	var completeDamage = {};
+	completeDamage.overkillType = hit.overkillType;
 	if(!damage) {
 		damage = {};
 	}
@@ -1354,7 +1414,7 @@ BattleManager.getCompleteDamage = function(subject, actionInfo, hit) {
 	return completeDamage;
 };
 
-BattleManager.calculateBodyPartHit = function(stress, accRoll, dodgeEva, criticalDef, vitalDef, firstLimbDef, secondLimbDef, leftLimbFirst, targetingMobility, leftMobilityFirst, defendingWithLegs, isDown) {
+BattleManager.calculateBodyPartHit = function(stress, accRoll, dodgeEva, criticalDef, vitalDef, firstLimbDef, secondLimbDef, leftLimbFirst, targetingMobility, leftMobilityFirst, defendingWithLegs, isDown, vitalOnly) {
 	var results = {};
 	results.dodged = false;
 	results.hit = {};
@@ -1373,7 +1433,8 @@ BattleManager.calculateBodyPartHit = function(stress, accRoll, dodgeEva, critica
 	var vitalEvaRoll = this.rollForRanks(vitalDef + dodgeEva, isDown ? 5 : stress);
 	var firstLimbEvaRoll = this.rollForRanks(firstLimbDef + dodgeEva, isDown ? 5 : stress);
 	var secondLimbEvaRoll = this.rollForRanks(secondLimbDef + dodgeEva, isDown ? 5 : stress);
-	if(accRoll >= dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll + criticalEvaRoll) {
+	if((vitalOnly && accRoll >= dodgeEvaRoll + vitalEvaRoll + criticalEvaRoll)
+		|| accRoll >= dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll + criticalEvaRoll) {
 		if(targetingMobility) {
 			if(leftMobilityFirst) {
 				if(defendingWithLegs) {
@@ -1393,7 +1454,8 @@ BattleManager.calculateBodyPartHit = function(stress, accRoll, dodgeEva, critica
 		}
 		results.evaResultBeat = dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll + criticalEvaRoll;
 		results.beatBy = accRoll - (dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll + criticalEvaRoll);
-	} else if(accRoll >= dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll) {
+	} else if((vitalOnly && accRoll >= dodgeEvaRoll + vitalEvaRoll)
+		|| accRoll >= dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll) {
 		if(targetingMobility) {
 			if(leftMobilityFirst) {
 				if(defendingWithLegs) {
@@ -1414,7 +1476,8 @@ BattleManager.calculateBodyPartHit = function(stress, accRoll, dodgeEva, critica
 		results.evaResultBeat = dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll;
 		results.evaResultUnder = dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll + criticalEvaRoll;
 		results.beatBy = accRoll - (dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll);
-	} else if(accRoll >= dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll) {
+	} else if((vitalOnly && accRoll >= dodgeEvaRoll)
+		|| accRoll >= dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll) {
 		if(targetingMobility) {
 			if(leftMobilityFirst) {
 				if(defendingWithLegs) {
@@ -1435,7 +1498,7 @@ BattleManager.calculateBodyPartHit = function(stress, accRoll, dodgeEva, critica
 		results.evaResultBeat = dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll;
 		results.evaResultUnder = dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll;
 		results.beatBy = accRoll - (dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll);
-	} else if(accRoll >= dodgeEvaRoll + firstLimbEvaRoll) {
+	} else if(!vitalOnly && accRoll >= dodgeEvaRoll + firstLimbEvaRoll) {
 		if(leftLimbFirst) {
 			if(defendingWithLegs) {
 				results.hit.rightLeg = true;
@@ -1452,7 +1515,7 @@ BattleManager.calculateBodyPartHit = function(stress, accRoll, dodgeEva, critica
 		results.evaResultBeat = dodgeEvaRoll + firstLimbEvaRoll;
 		results.evaResultUnder = dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll;
 		results.beatBy = accRoll - (dodgeEvaRoll + firstLimbEvaRoll);
-	} else if(accRoll >= dodgeEvaRoll) {
+	} else if(!vitalOnly && accRoll >= dodgeEvaRoll) {
 		if(leftLimbFirst) {
 			if(defendingWithLegs) {
 				results.hit.leftLeg = true;
@@ -1563,40 +1626,82 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva,
 		fluidBypass = fluidDamScale >= 0.5;
 	}
 	
+	var returnObj = {};
+	returnObj.remainingPower = {};
+	
 	var bluntPow = hitDamage.blunt;
-	var finalCutPow = Math.max(0, solidDamScale * hitDamage.cut - (solidRegularBypass ? 0 : partProt.armor.cut));
+	var finalCutPow = Math.max(0, solidDamScale * hitDamage.cut - (solidRegularBypass ? tough : partProt.armor.cut + tough));
 	bluntPow += Math.max(0, solidDamScale * hitDamage.cut - finalCutPow) / 2;
-	var finalKeenPow = Math.max(0, solidDamScale * hitDamage.keen - (solidRegularBypass ? 0 : partProt.armor.cut));
+	var finalCutDamage = Math.max(0, Math.ceil(finalCutPow / tough - 1));
+	
+	var finalKeenPow = Math.max(0, solidDamScale * hitDamage.keen - (solidRegularBypass ? tough : partProt.armor.cut + tough));
 	bluntPow += Math.max(0, solidDamScale * hitDamage.keen - finalKeenPow) / 4;
-	var finalThrustPow = Math.max(0, solidDamScale * hitDamage.thrust - (solidThrustBypass ? 0 : partProt.armor.cut));
+	finalCutDamage += Math.max(0, Math.ceil(finalKeenPow / tough - 1));
+	
+	var finalThrustPow = Math.max(0, solidDamScale * hitDamage.thrust - (solidThrustBypass ? tough : partProt.armor.cut + tough));
 	bluntPow += Math.max(0, solidDamScale * hitDamage.thrust - finalThrustPow) / 4;
-	var finalStilettoPow = Math.max(0, solidDamScale * hitDamage.stiletto - (solidStilettoBypass ? 0 : partProt.armor.cut));
+	finalCutDamage += Math.max(0, Math.ceil(finalThrustPow / tough - 1));
+	
+	var finalStilettoPow = Math.max(0, solidDamScale * hitDamage.stiletto - (solidStilettoBypass ? tough : partProt.armor.cut + tough));
 	bluntPow += Math.max(0, solidDamScale * hitDamage.stiletto - finalStilettoPow) / 8;
-	//TODO: make bullet damage do less if its too powerful (overpenetration)
-	var finalBulletPow = Math.max(0, solidDamScale * hitDamage.bullet - (solidThrustBypass ? 0 : partProt.armor.bullet));
+	finalCutDamage += Math.max(0, Math.ceil(finalStilettoPow / tough - 1));
+	
+	var finalBulletPow = Math.max(0, solidDamScale * hitDamage.bullet - (solidThrustBypass ? tough : partProt.armor.bullet + tough));
 	bluntPow += Math.max(0, solidDamScale * hitDamage.bullet - finalBulletPow);
-	var finalBluntPow = Math.max(0, solidDamScale * bluntPow - (solidRegularBypass ? 0 : partProt.armor.blunt));
+	var finalBulletDamage = Math.max(0, Math.ceil(finalBulletPow / tough - 1));
+	returnObj.remainingPower.bullet = finalBulletPow > tough * 2 ? finalBulletPow - tough * 2 : 0;
+	var bulletBluntPow = finalBulletPow > 0 ? finalBulletPow * Math.max(0, 1 - returnObj.remainingPower.bullet / finalBulletPow) : 0;
 	
-	var finalFirePow = Math.max(0, fluidDamScale * hitDamage.fire - (fluidBypass ? 0 : partProt.armor.fire));
-	var finalIcePow = Math.max(0, fluidDamScale * hitDamage.ice - (fluidBypass ? 0 : partProt.armor.ice));
-	var finalCorrosionPow = Math.max(0, fluidDamScale * hitDamage.corrosion - (fluidBypass ? 0 : partProt.armor.corrosion));
+	var finalBluntPow = Math.max(0, solidDamScale * bluntPow - (solidRegularBypass ? tough : partProt.armor.blunt + tough));
+	var finalBluntDamage = Math.max(0, Math.ceil(finalBluntPow / tough - 1));
+	finalBluntDamage += Math.max(0, Math.ceil(bulletBluntPow / tough - 1));
 	
-	finalFirePow += Math.max(0, solidDamScale * hitDamage.lightning - (solidThrustBypass ? 0 : partProt.armor.conducted));
+	var finalFirePow = Math.max(0, fluidDamScale * hitDamage.fire - (fluidBypass ? tough : partProt.armor.fire + tough));
+	var finalFireDamage = Math.max(0, Math.ceil(finalFirePow / tough - 1));
 	
-	var finalPow = Math.max(0, (finalBluntPow + finalCutPow + finalKeenPow + finalThrustPow + finalStilettoPow
-		+ finalBulletPow + finalFirePow + finalIcePow + finalCorrosionPow) - tough);
+	var finalIcePow = Math.max(0, fluidDamScale * hitDamage.ice - (fluidBypass ? tough : partProt.armor.ice + tough));
+	var finalIceDamage = Math.max(0, Math.ceil(finalIcePow / tough - 1));
 	
-	var stressInflicted = finalPow > 0 ? 1 : 0;
+	var finalCorrosionPow = Math.max(0, fluidDamScale * hitDamage.corrosion - (fluidBypass ? tough : partProt.armor.corrosion + tough));
+	var finalCorrosionDamage = Math.max(0, Math.ceil(finalCorrosionPow / tough - 1));
 	
-	var finalDamage = Math.max(0, Math.ceil(finalPow / tough - 1));
+	var lightningFirePow = Math.max(0, solidDamScale * hitDamage.lightning - (solidThrustBypass ? tough : partProt.armor.conducted + tough));
+	finalFireDamage += Math.max(0, Math.ceil(lightningFirePow / tough - 1));
 	
-	stressInflicted += finalDamage;
 	
+	var stressInflicted = finalBluntPow > 0
+		|| finalCutPow > 0
+		|| finalKeenPow > 0
+		|| finalThrustPow > 0
+		|| finalStilettoPow > 0
+		|| finalBulletPow > 0
+		|| finalFirePow > 0
+		|| finalIcePow > 0
+		|| finalCorrosionPow > 0 ? 1 : 0;
+	
+	returnObj.remainingPower.blunt = finalBluntPow > tough * 2 ? finalBluntPow - tough * 2 : 0;
+	returnObj.remainingPower.cut = finalCutPow > tough * 2 ? finalCutPow - tough * 2 : 0;
+	returnObj.remainingPower.keen = finalKeenPow > tough * 2 ? finalKeenPow - tough * 2 : 0;
+	returnObj.remainingPower.thrust = finalThrustPow > tough * 2 ? finalThrustPow - tough * 2 : 0;
+	returnObj.remainingPower.stiletto = finalStilettoPow > tough * 2 ? finalStilettoPow - tough * 2 : 0;
+	returnObj.remainingPower.fire = finalFirePow > tough * 2 ? finalFirePow - tough * 2 : 0;
+	returnObj.remainingPower.ice = finalIcePow > tough * 2 ? finalIcePow - tough * 2 : 0;
+	returnObj.remainingPower.corrosion = finalCorrosionPow > tough * 2 ? finalCorrosionPow - tough * 2 : 0;
+	returnObj.remainingPower.lightning = lightningFirePow > tough * 2 ? lightningFirePow - tough * 2 : 0;
+	returnObj.shouldCleave = hitDamage.overkillType !== undefined && hitDamage.overkillType === "cleave"
+		&& (returnObj.remainingPower.blunt > 0 || returnObj.remainingPower.cut > 0 || returnObj.remainingPower.keen
+		|| returnObj.remainingPower.thrust || returnObj.remainingPower.stiletto || returnObj.remainingPower.corrosion
+		|| returnObj.remainingPower.bullet);
+	returnObj.shouldConduct = returnObj.remainingPower.lightning > 0;
+	
+	returnObj.damage = Math.min(2, finalBluntDamage + finalCutDamage
+		+ finalBulletDamage + finalFireDamage + finalIceDamage + finalCorrosionDamage);
+	
+	stressInflicted += returnObj.damage;
 	stressInflicted += Math.max(0, Math.ceil((tripDamScale * hitDamage.trip) / tough - 1));
 	
-	var returnObj = {};
-	returnObj.stress = extraStress ? stressInflicted + 1 : stressInflicted;
-	returnObj.damage = finalDamage;
+	returnObj.stress = extraStress && stressInflicted > 1 ? stressInflicted + 1 : stressInflicted;
+	
 	return returnObj;
 };
 
