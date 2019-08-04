@@ -553,11 +553,17 @@ BattleManager.updateAction = function() {
 		
 		this._actionTimer++;
 		if(noHitGroupsLeft && noHitMissDelaysLeft && !this._spriteset.isAnimationPlaying()) {
-			this.invokeAction(this._subject.battler, this._tbsTargets[0].battler, this._resultsPerGroup);
+			var target = this._tbsTargets[0];
 			this._tbsTargets.shift();
 			while(this._tbsTargets.length > 0 && this.shouldSkipTarget(this._tbsActionInfo.action.hitGroups, this._tbsTargets[0].battler, this._tbsTargetsByHit)) {
 				this._tbsTargets.shift();
 			}
+			if(this._tbsTargets.length <= 0) {
+				if(this._tbsActionInfo.action.stressCost !== undefined) {
+					this._subject.battler.adjustStress(this._tbsActionInfo.action.stressCost);
+				}
+			}
+			this.invokeAction(this._subject.battler, target.battler, this._resultsPerGroup);
 			this._resultsPerGroup = [];
 			this._hitMissDelay = [];
 			this._actionTimer = 0;
@@ -1590,9 +1596,9 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva,
 	var solidEvaRoll = this.rollForRanks(solidEva, isDown ? 5 : stress);
 	var tripEvaRoll = this.rollForRanks(tripEva, isDown ? 5 : stress);
 	var fluidEvaRoll = this.rollForRanks(fluidEva, isDown ? 5 : stress);
-	var solidDamScale = solidEvaRoll <= 0 ? (accRoll <= 0 ? 1 : 2) : Math.min(2, accRoll / solidEvaRoll);
-	var tripDamScale = tripEvaRoll <= 0 ? (accRoll <= 0 ? 1 : 2) : Math.min(2, accRoll / tripEvaRoll);
-	var fluidDamScale = fluidEvaRoll <= 0 ? (accRoll <= 0 ? 1 : 2) : Math.min(2, accRoll / fluidEvaRoll);
+	var solidDamScale = solidEvaRoll <= 0 ? (accRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accRoll / solidEvaRoll));
+	var tripDamScale = tripEvaRoll <= 0 ? (accRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accRoll / tripEvaRoll));
+	var fluidDamScale = fluidEvaRoll <= 0 ? (accRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accRoll / fluidEvaRoll));
 	
 	var solidRegularBypass = false;
 	var solidThrustBypass = false;
@@ -1600,30 +1606,30 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva,
 	var fluidBypass = false;
 	
 	if(partProt.coverage.solid >= 3) {
-		solidThrustBypass = solidDamScale >= 2;
-		solidStilettoBypass = solidDamScale >= 1.5;
-	} else if(partProt.coverage.solid >= 2) {
-		solidRegularBypass = solidDamScale >= 2;
 		solidThrustBypass = solidDamScale >= 1.5;
+		solidStilettoBypass = solidDamScale >= 1.25;
+	} else if(partProt.coverage.solid >= 2) {
+		solidRegularBypass = solidDamScale >= 1.5;
+		solidThrustBypass = solidDamScale >= 1.25;
 		solidStilettoBypass = solidDamScale >= 1;
 	} else if(partProt.coverage.solid >= 1) {
-		solidRegularBypass = solidDamScale >= 1.5;
+		solidRegularBypass = solidDamScale >= 1.25;
 		solidThrustBypass = solidDamScale >= 1;
-		solidStilettoBypass = solidDamScale >= 0.5;
+		solidStilettoBypass = solidDamScale >= 0.75;
 	} else {
 		solidRegularBypass = solidDamScale >= 1;
-		solidThrustBypass = solidDamScale >= 0.5;
+		solidThrustBypass = solidDamScale >= 0.75;
 		solidStilettoBypass = true;
 	}
 	
 	if(partProt.coverage.fluid >= 3) {
 		
 	} else if(partProt.coverage.fluid >= 2) {
-		fluidBypass = fluidDamScale >= 1.5;
+		fluidBypass = fluidDamScale >= 1.25;
 	} else if(partProt.coverage.fluid >= 1) {
 		fluidBypass = fluidDamScale >= 1;
 	} else {
-		fluidBypass = fluidDamScale >= 0.5;
+		fluidBypass = fluidDamScale >= 0.75;
 	}
 	
 	var returnObj = {};
@@ -1708,17 +1714,17 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva,
 BattleManager.resolveMentalDamage = function(hitDamage, accRoll, eva, partProt, tough, stress, partDam, isDown) {
 	var totalEva = eva + partProt.defense;
 	var evaRoll = this.rollForRanks(totalEva, isDown ? 5 : stress);
-	var damScale = evaRoll <= 0 ? (accRoll <= 0 ? 1 : 2) : Math.min(2, accRoll / evaRoll);
+	var damScale = evaRoll <= 0 ? (accRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accRoll / evaRoll));
 	
 	var bypass = false;
 	if(partProt.defense >= 3) {
 		
 	} else if(partProt.defense >= 2) {
-		bypass = damScale >= 1.5;
+		bypass = damScale >= 1.25;
 	} else if(partProt.defense >= 1) {
 		bypass = damScale >= 1;
 	} else {
-		bypass = damScale >= 0.5;
+		bypass = damScale >= 0.75;
 	}
 	
 	var finalPow = Math.max(0, damScale * hitDamage.mental - (bypass ? 0 : partProt.armor));
@@ -1785,6 +1791,8 @@ BattleManager.applyActionResults = function(results, target) {
 		this._shouldPassTurn = results.shouldPassTurn;
 	}
 };
+
+BattleManager.
 
 BattleManager.invokeCounterAttack = function(subject, target) {
     var action = new Game_Action(target);

@@ -2016,9 +2016,6 @@
 				}
 			});
 		}
-		if(this._tbsSelectedAction.stressCost) {
-			this._tbsSelectedActor.battler.adjustStress(this._tbsSelectedAction.stressCost);
-		}
 		
 		var enemyForceIds = [];
 		var partyAndAlliesIds = [];
