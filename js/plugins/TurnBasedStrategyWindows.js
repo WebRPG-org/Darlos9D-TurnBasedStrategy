@@ -1577,16 +1577,20 @@ Window_TbsTarget.prototype.numVisibleRows = function() {
 Window_TbsTarget.prototype.setActionIndex = function(index) {
 	if(this._actionIndex !== index) {
 		this._actionIndex = index;
-		if(index >= 0) {
-			var alliesAndEnemies = $gameMap.getCurrentActorAlliesAndEnemiesInRange(index);
-			this._allies = alliesAndEnemies.allies;
-			this._enemies = alliesAndEnemies.enemies;
-		} else {
-			this._allies = [];
-			this._enemies = [];
-		}
-		this.refreshWindowContents();
+		this.updateAlliesAndEnemies();
 	}
+};
+
+Window_TbsTarget.prototype.updateAlliesAndEnemies = function() {
+	if(this._actionIndex >= 0) {
+		var alliesAndEnemies = $gameMap.getCurrentActorAlliesAndEnemiesInRange(this._actionIndex);
+		this._allies = alliesAndEnemies.allies;
+		this._enemies = alliesAndEnemies.enemies;
+	} else {
+		this._allies = [];
+		this._enemies = [];
+	}
+	this.refreshWindowContents();
 };
 
 Window_TbsTarget.prototype.allies = function() {
@@ -2431,7 +2435,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 		if(heal !== undefined) {
 			this.drawIcon(iconId, nameOffset + 116, lineHeight + this.lineHeight() * lineOffset);
 			var power = heal !== undefined ? heal : 0;
-			this.drawText(power > 0 ? power : "-", nameOffset + 78, lineHeight + this.lineHeight() * lineOffset, 100, 'right');
+			this.drawText(power > 0 ? (power >= 100 ? "**" : power) : "-", nameOffset + 78, lineHeight + this.lineHeight() * lineOffset, 100, 'right');
 			if(drawName && lineOffset > 0) {
 				if(reqLacked) {
 					this.changeTextColor(this.deathColor());

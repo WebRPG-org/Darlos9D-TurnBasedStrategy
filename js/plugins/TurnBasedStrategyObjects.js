@@ -1160,7 +1160,6 @@
 				}
 				if(prevMode === "manualMove") {
 					if(this._tbsSelectedActor.movedThisRound) {
-						this.setTbsSelectedAction(undefined, -1);
 						this.generateTbsActionFields();
 					}
 					var chara = this._tbsSelectedActor.chara;

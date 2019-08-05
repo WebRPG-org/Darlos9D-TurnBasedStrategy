@@ -165,6 +165,7 @@
 						this._tbsActionTypeWindow.show();
 						this._tbsActionTypeWindow.open();
 						this._tbsActionTypeWindow.activate();
+						this._tbsTargetWindow.setActionIndex(-1);
 						$gameMap.setTbsTurnMode("selectActorActionType");
 						$gameMap.setBreadcrumbStage("actor");
 					} else if($gameMap.tbsTurnMode() === "manualTarget") {
@@ -204,7 +205,7 @@
 						this._tbsTargetWindow.open();
 						this._tbsTargetWindow.activate();
 					} else {
-						this._tbsActionWindow.refreshWindowContents();
+						this._tbsActionWindow.refreshWindowContents(true);
 						this._tbsActionWindow.show();
 						this._tbsActionWindow.open();
 						this._tbsActionWindow.activate();

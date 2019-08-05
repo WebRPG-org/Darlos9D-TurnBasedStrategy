@@ -663,16 +663,16 @@ BattleManager.invokeNormalAction = function(subject, target, resultsPerGroup) {
 		totalResults.heal.leftLeg += results.heal.leftLeg;
 		totalResults.heal.rightLeg += results.heal.rightLeg;
 		totalResults.heal.mind += results.heal.mind;
-		totalResults.hit.mind = results.hit.mind ? true : results.hit.mind;
-		totalResults.hit.head = results.hit.head ? true : results.hit.head;
-		totalResults.hit.torso = results.hit.torso ? true : results.hit.torso;
-		totalResults.hit.leftArm = results.hit.leftArm ? true : results.hit.leftArm;
-		totalResults.hit.rightArm = results.hit.rightArm ? true : results.hit.rightArm;
-		totalResults.hit.leftLeg = results.hit.leftLeg ? true : results.hit.leftLeg;
-		totalResults.hit.rightLeg = results.hit.rightLeg ? true : results.hit.rightLeg;
+		totalResults.hit.mind = results.hit.mind ? true : totalResults.hit.mind;
+		totalResults.hit.head = results.hit.head ? true : totalResults.hit.head;
+		totalResults.hit.torso = results.hit.torso ? true : totalResults.hit.torso;
+		totalResults.hit.leftArm = results.hit.leftArm ? true : totalResults.hit.leftArm;
+		totalResults.hit.rightArm = results.hit.rightArm ? true : totalResults.hit.rightArm;
+		totalResults.hit.leftLeg = results.hit.leftLeg ? true : totalResults.hit.leftLeg;
+		totalResults.hit.rightLeg = results.hit.rightLeg ? true : totalResults.hit.rightLeg;
 		totalResults.buffs = results.buffs.concat(results.buffs);
-		totalResults.downed = results.downed ? true : results.downed;
-		totalResults.revived = results.revived ? true : results.revived;
+		totalResults.downed = results.downed ? true : totalResults.downed;
+		totalResults.revived = results.revived ? true : totalResults.revived;
 		totalResults.dodged = results.dodged ? totalResults.dodged : false;
 	});
 	this._logWindow.displayActionResults(subject, target, totalResults);
@@ -718,6 +718,49 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 	var targetLeftLegProt = target.protection("leftLeg");
 	var targetRightLegProt = target.protection("rightLeg");
 	var targetMentalProt = target.mentalProtection();
+	targetHeadProt.armor.blunt *= 10;
+	targetHeadProt.armor.cut *= 10;
+	targetHeadProt.armor.bullet *= 10;
+	targetHeadProt.armor.fire *= 10;
+	targetHeadProt.armor.ice *= 10;
+	targetHeadProt.armor.corrosion *= 10;
+	targetHeadProt.armor.conducted *= 10;
+	targetTorsoProt.armor.blunt *= 10;
+	targetTorsoProt.armor.cut *= 10;
+	targetTorsoProt.armor.bullet *= 10;
+	targetTorsoProt.armor.fire *= 10;
+	targetTorsoProt.armor.ice *= 10;
+	targetTorsoProt.armor.corrosion *= 10;
+	targetTorsoProt.armor.conducted *= 10;
+	targetLeftArmProt.armor.blunt *= 10;
+	targetLeftArmProt.armor.cut *= 10;
+	targetLeftArmProt.armor.bullet *= 10;
+	targetLeftArmProt.armor.fire *= 10;
+	targetLeftArmProt.armor.ice *= 10;
+	targetLeftArmProt.armor.corrosion *= 10;
+	targetLeftArmProt.armor.conducted *= 10;
+	targetRightArmProt.armor.blunt *= 10;
+	targetRightArmProt.armor.cut *= 10;
+	targetRightArmProt.armor.bullet *= 10;
+	targetRightArmProt.armor.fire *= 10;
+	targetRightArmProt.armor.ice *= 10;
+	targetRightArmProt.armor.corrosion *= 10;
+	targetRightArmProt.armor.conducted *= 10;
+	targetLeftLegProt.armor.blunt *= 10;
+	targetLeftLegProt.armor.cut *= 10;
+	targetLeftLegProt.armor.bullet *= 10;
+	targetLeftLegProt.armor.fire *= 10;
+	targetLeftLegProt.armor.ice *= 10;
+	targetLeftLegProt.armor.corrosion *= 10;
+	targetLeftLegProt.armor.conducted *= 10;
+	targetRightLegProt.armor.blunt *= 10;
+	targetRightLegProt.armor.cut *= 10;
+	targetRightLegProt.armor.bullet *= 10;
+	targetRightLegProt.armor.fire *= 10;
+	targetRightLegProt.armor.ice *= 10;
+	targetRightLegProt.armor.corrosion *= 10;
+	targetRightLegProt.armor.conducted *= 10;
+	targetMentalProt.armor *= 10;
 	var i;
 	var results = {};
 	results.stress = {};
@@ -802,6 +845,18 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 			var acc = accBonus + accSkill;
 			
 			var hitDamage = this.getCompleteDamage(subject, actionInfo, hit);
+			hitDamage.blunt *= 10;
+			hitDamage.cut *= 10;
+			hitDamage.keen *= 10;
+			hitDamage.thrust *= 10;
+			hitDamage.stiletto *= 10;
+			hitDamage.bullet *= 10;
+			hitDamage.lightning *= 10;
+			hitDamage.trip *= 10;
+			hitDamage.fire *= 10;
+			hitDamage.ice *= 10;
+			hitDamage.corrosion *= 10;
+			hitDamage.psychic *= 10;
 			
 			var isSolid = hitDamage.blunt > 0
 				|| hitDamage.cut > 0
@@ -1126,12 +1181,12 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 			results.dodged = false;
 			results.shouldPassTurn = false;
 			if(heal.stress !== undefined) {
-				results.heal.stress += heal.stress;
+				results.heal.stress += heal.stress ;
 			}
 			if(heal.damage !== undefined) {
 				if(this._tbsTargetPart != undefined && this._tbsTargetPart != "mobility" && this._tbsTargetPart != "vital") {
 					results.heal[this._tbsTargetPart] = heal.damage;
-					results.stress.other = Math.floor(Math.min(target.getDamage(this._tbsTargetPart), heal.damage) / 2);
+					results.stress.other = Math.floor(Math.min(target.getDamage(this._tbsTargetPart), heal.damage) / 2.5);
 				} else {
 					results.heal.head += heal.damage;
 					results.heal.torso += heal.damage;
@@ -1145,12 +1200,12 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 					results.hit.rightArm = true;
 					results.hit.leftLeg = true;
 					results.hit.rightLeg = true;
-					var stressFromHealing = Math.min(target.getDamage("head"), heal.damage) / 2;
-					stressFromHealing += Math.min(target.getDamage("torso"), heal.damage) / 2;
-					stressFromHealing += Math.min(target.getDamage("leftArm"), heal.damage) / 2;
-					stressFromHealing += Math.min(target.getDamage("rightArm"), heal.damage) / 2;
-					stressFromHealing += Math.min(target.getDamage("leftLeg"), heal.damage) / 2;
-					stressFromHealing += Math.min(target.getDamage("rightLeg"), heal.damage) / 2;
+					var stressFromHealing = Math.min(target.getDamage("head"), heal.damage) / 2.5;
+					stressFromHealing += Math.min(target.getDamage("torso"), heal.damage) / 2.5;
+					stressFromHealing += Math.min(target.getDamage("leftArm"), heal.damage) / 2.5;
+					stressFromHealing += Math.min(target.getDamage("rightArm"), heal.damage) / 2.5;
+					stressFromHealing += Math.min(target.getDamage("leftLeg"), heal.damage) / 2.5;
+					stressFromHealing += Math.min(target.getDamage("rightLeg"), heal.damage) / 2.5;
 					results.stress.other += Math.floor(stressFromHealing);
 				}
 			}

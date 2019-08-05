@@ -1197,7 +1197,7 @@
 		} else {
 			$gameScreen.startShake(5, 5, 10);
 		}
-		//SoundManager.playActorDamage();
+		SoundManager.playActorDamage();
 	};
 
 	Game_Actor.prototype.performEvasion = function() {
@@ -1237,7 +1237,7 @@
 
 	Game_Enemy.prototype.performDamage = function() {
 		Game_Battler.prototype.performDamage.call(this);
-		//SoundManager.playEnemyDamage();
+		SoundManager.playEnemyDamage();
 		this.requestEffect('blink');
 	};
 
