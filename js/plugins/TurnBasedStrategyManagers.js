@@ -159,6 +159,7 @@ BattleManager.initMembers = function() {
 	this._nonFollowupsAllDodged = [];
 	this._actionTimer = 0;
 	this._hitMissDelay = [];
+	this._showCastAnimation = true;
 };
 
 BattleManager.setLeftActorStatusWindow = function(actorStatusWindow) {
@@ -530,7 +531,8 @@ BattleManager.updateAction = function() {
 			var delay = hitGroup.delay === undefined || hitGroup.delay < 0 ? 0 : hitGroup.delay;
 			if(delay == this._actionTimer) {
 				this._resultsPerGroup[i] = this.combatMath(this._subject.battler, this._tbsActionInfo, hitGroup, this._tbsTargets[0].battler, this._tbsTargetsByHit, i);
-				this._hitMissDelay[i] = this._logWindow.showInitialAnimations(this._subject.battler, hitGroup, this._resultsPerGroup[i].initialAnimationIds, this._tbsTargets[0].battler);
+				this._hitMissDelay[i] = this._logWindow.showInitialAnimations(this._subject.battler, hitGroup, this._resultsPerGroup[i].initialAnimationIds, this._tbsTargets[0].battler, this._showCastAnimation);
+				this._showCastAnimation = false;
 			}
 			if(this._actionTimer < delay) {
 				noHitGroupsLeft = false;
@@ -777,8 +779,8 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 		results.skipTarget = false;
 		var damage = hit.damage;
 		if(damage) {
-			var subjectStress = subject.stress();
-			var targetStress = target.stress();
+			var subjectStress = subject.stressModifier();
+			var targetStress = target.stressModifier();
 			
 			var accBonus = hit.accuracyBonus === undefined ? 0 : hit.accuracyBonus;
 			var accSkill = 0;
@@ -1107,7 +1109,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						targetStress,
 						target.getDamage("mind"),
 						target.isDown());
-					results.stress.mind += damageResult.stress > 0 ? damageResult.stress + 1 : 0;
+					results.stress.mind += damageResult.stress;
 					results.damage.mind += damageResult.damage;
 					if(damageResult.stress > 0 || damageResult.damage > 0) {
 						results.shouldPassTurn = false;
@@ -1378,13 +1380,13 @@ BattleManager.getCompleteDamage = function(subject, actionInfo, hit) {
 	}
 	var damageScale = 1;
 	if(subject && actualUsedParts.length > 0) {
-		var denom = actualUsedParts.length * 2 + 1;
+		var denom = actualUsedParts.length * 200;
 		var numer = denom;
-		if(actualUsedParts.indexOf("mind") >= 0 && subject.getDamage("mind") >= 1) {
-			numer -= 2;
+		if(actualUsedParts.indexOf("mind") >= 0) {
+			numer -= subject.getDamage("mind");
 		}
-		if(actualUsedParts.indexOf("head") >= 0 && subject.getDamage("head") >= 1) {
-			numer -= 2;
+		if(actualUsedParts.indexOf("head") >= 0) {
+			numer -= subject.getDamage("head");
 		}
 		if(actualUsedParts.indexOf("torso") >= 0) {
 			numer -= subject.getDamage("torso");
@@ -1683,7 +1685,7 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva,
 		|| finalBulletPow > 0
 		|| finalFirePow > 0
 		|| finalIcePow > 0
-		|| finalCorrosionPow > 0 ? 1 : 0;
+		|| finalCorrosionPow > 0 ? 20 : 0;
 	
 	returnObj.remainingPower.blunt = finalBluntPow > tough * 2 ? finalBluntPow - tough * 2 : 0;
 	returnObj.remainingPower.cut = finalCutPow > tough * 2 ? finalCutPow - tough * 2 : 0;
@@ -1700,13 +1702,13 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva,
 		|| returnObj.remainingPower.bullet);
 	returnObj.shouldConduct = returnObj.remainingPower.lightning > 0;
 	
-	returnObj.damage = Math.min(2, finalBluntDamage + finalCutDamage
+	returnObj.damage = Math.min(100, finalBluntDamage + finalCutDamage
 		+ finalBulletDamage + finalFireDamage + finalIceDamage + finalCorrosionDamage);
 	
-	stressInflicted += returnObj.damage;
+	stressInflicted += returnObj.damage / 2.5;
 	stressInflicted += Math.max(0, Math.ceil((tripDamScale * hitDamage.trip) / tough - 1));
 	
-	returnObj.stress = extraStress && stressInflicted > 1 ? stressInflicted + 1 : stressInflicted;
+	returnObj.stress = Math.floor(extraStress && stressInflicted > 0 ? stressInflicted + 20 : stressInflicted);
 	
 	return returnObj;
 };
@@ -1727,43 +1729,36 @@ BattleManager.resolveMentalDamage = function(hitDamage, accRoll, eva, partProt, 
 		bypass = damScale >= 0.75;
 	}
 	
-	var finalPow = Math.max(0, damScale * hitDamage.mental - (bypass ? 0 : partProt.armor));
+	var finalPow = Math.max(0, damScale * hitDamage.mental - (bypass ? tough : partProt.armor + tough));
 	
-	var stress = finalPow > 0 ? 1 : 0;
+	var stress = finalPow > 0 ? 20 : 0;
 	
-	var finalDamage = Math.max(0, Math.ceil(finalPow / tough - 1));
+	var finalDamage = Math.min(100, Math.max(0, Math.ceil(finalPow / tough - 1)));
 	
-	stress += finalDamage;
+	stress += finalDamage / 2.5;
 	
 	var returnObj = {};
-	returnObj.stress = stress + 1;
+	returnObj.stress = Math.floor(stress > 0 ? stress + 20 : stress);
 	returnObj.damage = finalDamage;
 	return returnObj;
 };
 
-BattleManager.rollForRanks = function(ranks, stress) {
-	var adjustStress = Math.max(0, Math.min(5, stress));
-	var adjustedRanks = Math.max(1, ranks + 2 - adjustStress);
+BattleManager.rollForRanks = function(ranks, stressModifier) {
+	var adjustStress = Math.max(0, Math.min(5, stressModifier));
+	var adjustedRanks = Math.max(0, ranks + 3 - adjustStress);
 	if(adjustStress >= 5) {
-		adjustedRanks = Math.max(1, Math.floor(adjustedRanks / 2));
+		adjustedRanks = Math.max(0, Math.floor(adjustedRanks / 2));
 	}
-	var result = 0;
-	while(adjustedRanks > 0) {
-		result += this.rollDie();
-		adjustedRanks--;
-	}
-	return result;
+	var adjustedRanks = Math.max(1, adjustedRanks);
+	return this.rollDoubleDice(adjustedRanks);
 };
 
-BattleManager.rollDie = function() {
-	var dSixResult = Math.floor(Math.random() * Math.floor(6)) + 1;
-	if(dSixResult == 1 || dSixResult == 6) {
-		return 0;
-	}
-	if(dSixResult == 2 || dSixResult == 5) {
-		return 1;
-	}
-	return 2;
+BattleManager.rollDoubleDice = function(sides) {
+	return this.rollDie(sides) + this.rollDie(sides);
+};
+
+BattleManager.rollDie = function(sides) {
+	return Math.floor(Math.random() * Math.floor(sides + 1));
 };
 
 BattleManager.applyActionResults = function(results, target) {
@@ -1791,8 +1786,6 @@ BattleManager.applyActionResults = function(results, target) {
 		this._shouldPassTurn = results.shouldPassTurn;
 	}
 };
-
-BattleManager.
 
 BattleManager.invokeCounterAttack = function(subject, target) {
     var action = new Game_Action(target);

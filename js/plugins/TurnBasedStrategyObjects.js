@@ -1264,9 +1264,9 @@
 					if(tbsForce.isParty) {
 						tbsForce.actors.forEach(function (tbsActor) {
 							var battler = tbsActor.battler;
-							if(battler.getDamage("head") >= 2) { battler.setDamage("head", 1); }
-							if(battler.getDamage("mind") >= 2) { battler.setDamage("mind", 1); }
-							if(battler.getDamage("torso") >= 2) { battler.setDamage("torso", 1); }
+							if(battler.getDamage("head") >= 100) { battler.setDamage("head", 99); }
+							if(battler.getDamage("mind") >= 100) { battler.setDamage("mind", 99); }
+							if(battler.getDamage("torso") >= 100) { battler.setDamage("torso", 99); }
 							battler.setStress(0);
 							battler.clearTbsBuffs();
 						});
@@ -1321,24 +1321,24 @@
 					this._tbsForces[i].actors[j].movedThisRound = false;
 					
 					if(this._tbsCurrentTurnForce === i) {
-						var damageStress = (battler.getDamage("head") > 0 ? battler.getDamage("head") + 1 : 0)
-							+ (battler.getDamage("mind") > 0 ? battler.getDamage("mind") + 1 : 0)
-							+ battler.getDamage("torso");
+						var damageStress = battler.getDamage("head") / 5
+							+ battler.getDamage("mind") / 5
+							+ battler.getDamage("torso") / 10;
 						if(battler.limbsType() === "winged" && battler.isFlying()) {
-							damageStress += battler.getDamage("leftLeg") / 2
-								+ battler.getDamage("rightLeg") / 2
-								+ (battler.getDamage("leftArm") > 0 ? battler.getDamage("leftArm") + 1 : 0)
-								+ (battler.getDamage("rightArm") > 0 ? battler.getDamage("rightArm") + 1 : 0);
+							damageStress += battler.getDamage("leftLeg") / 20
+								+ battler.getDamage("rightLeg") / 20
+								+ battler.getDamage("leftArm") / 5
+								+ battler.getDamage("rightArm") / 5;
 						} else if(battler.limbsType() === "quadrupedal") {
-							damageStress += battler.getDamage("leftLeg")
-								+ battler.getDamage("rightLeg")
-								+ battler.getDamage("leftArm")
-								+ battler.getDamage("rightArm");
+							damageStress += battler.getDamage("leftLeg") / 10
+								+ battler.getDamage("rightLeg") / 10
+								+ battler.getDamage("leftArm") / 10
+								+ battler.getDamage("rightArm") / 10;
 						} else {
-							damageStress += (battler.getDamage("leftLeg") > 0 ? battler.getDamage("leftLeg") + 1 : 0)
-								+ (battler.getDamage("rightLeg") > 0 ? battler.getDamage("rightLeg") + 1 : 0)
-								+ battler.getDamage("leftArm") / 2
-								+ battler.getDamage("rightArm") / 2;
+							damageStress += battler.getDamage("leftLeg") / 5
+								+ battler.getDamage("rightLeg") / 5
+								+ battler.getDamage("leftArm") / 20
+								+ battler.getDamage("rightArm") / 20;
 						}
 						battler.adjustStress(Math.floor(damageStress));
 					}
@@ -1555,7 +1555,7 @@
 				this.currentForce().actors.forEach(function (actor) {
 					if(actor.canActThisRound) {
 						var chances = 1;
-						var stress = actor.battler.stress();
+						var stress = actor.battler.stressModifier();
 						if(stress >= 5) {
 							chances = 4;
 						} else if (stress >= 3) {
@@ -1582,7 +1582,7 @@
 				
 				var shouldRest = false;
 				var defensePriority = 0;
-				var stress = this._tbsSelectedActor.battler.stress();
+				var stress = this._tbsSelectedActor.battler.stressModifier();
 				if(stress > 1) {
 					var restChance = 1 - (stress - 1) / 5;
 					if(Math.random() > restChance) {
@@ -2135,11 +2135,11 @@
 		this._tbsMoveTiles = [];
 		if(!tbsActor || !tbsActor.canActThisRound || tbsActor.movedThisRound) { return; }
 		var moveDamage = tbsActor.battler.getDamage("torso");
-		var moveDenom = 7;
+		var moveDenom = 400;
 		if(tbsActor.battler.limbsType() === "winged" && tbsActor.battler.isFlying()) {
 			moveDamage += tbsActor.battler.getDamage("leftArm") + tbsActor.battler.getDamage("rightArm");
 		} else if(tbsActor.battler.limbsType() === "quadrupedal") {
-			moveDenom = 11;
+			moveDenom = 600;
 			moveDamage += tbsActor.battler.getDamage("leftLeg") + tbsActor.battler.getDamage("rightLeg")
 				+ tbsActor.battler.getDamage("leftArm") + tbsActor.battler.getDamage("rightArm");
 		} else {

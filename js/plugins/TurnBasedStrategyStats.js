@@ -343,14 +343,14 @@
 		this._hp = this._hp.clamp(0, this.mhp);
 		this._mp = this._mp.clamp(0, this.mmp);
 		this._tp = this._tp.clamp(0, this.maxTp());
-		this._stress = this._stress.clamp(0, 5);
-		this._damage.head = this._damage.head.clamp(0, 2);
-		this._damage.torso = this._damage.torso.clamp(0, 2);
-		this._damage.leftArm = this._damage.leftArm.clamp(0, 2);
-		this._damage.rightArm = this._damage.rightArm.clamp(0, 2);
-		this._damage.leftLeg = this._damage.leftLeg.clamp(0, 2);
-		this._damage.rightLeg = this._damage.rightLeg.clamp(0, 2);
-		this._damage.mind = this._damage.mind.clamp(0, 2);
+		this._stress = this._stress.clamp(0, 100);
+		this._damage.head = this._damage.head.clamp(0, 100);
+		this._damage.torso = this._damage.torso.clamp(0, 100);
+		this._damage.leftArm = this._damage.leftArm.clamp(0, 100);
+		this._damage.rightArm = this._damage.rightArm.clamp(0, 100);
+		this._damage.leftLeg = this._damage.leftLeg.clamp(0, 100);
+		this._damage.rightLeg = this._damage.rightLeg.clamp(0, 100);
+		this._damage.mind = this._damage.mind.clamp(0, 100);
 	};
 
 	Game_BattlerBase.prototype.recoverAll = function() {
@@ -368,7 +368,7 @@
 	};
 	
 	Game_BattlerBase.prototype.setStress = function(newStress) {
-		this._stress = Math.min(5, Math.max(0, newStress));
+		this._stress = Math.min(100, Math.max(0, newStress));
 	};
 	
 	Game_BattlerBase.prototype.adjustStress = function(change) {
@@ -379,17 +379,25 @@
 		this.setStress(0);
 	};
 	
+	Game_BattlerBase.prototype.stressModifier = function() {
+		return Math.floor(this.stress() / 20);
+	};
+	
 	Game_BattlerBase.prototype.stress = function() {
 		return this._stress;
 	};
 	
 	Game_BattlerBase.prototype.setDamage = function(part, damage) {
 		if(this._damage[part] === undefined) { return; }
-		this._damage[part] = Math.min(2, Math.max(0, damage));
+		this._damage[part] = Math.min(100, Math.max(0, damage));
 	};
 	
 	Game_BattlerBase.prototype.adjustDamage = function(part, change) {
 		this.setDamage(part, (this._damage[part] === undefined ? 0 : this._damage[part]) + change);
+	};
+	
+	Game_BattlerBase.prototype.getDamageModifier = function(part) {
+		return Math.floor(this.getDamage(part) / 20);
 	};
 	
 	Game_BattlerBase.prototype.getDamage = function(part) {
@@ -397,7 +405,7 @@
 	};
 	
 	Game_BattlerBase.prototype.isDown = function() {
-		return this._damage.torso >= 2 || this._damage.head >= 2 || this._damage.mind >= 2;
+		return this._damage.torso >= 100 || this._damage.head >= 100 || this._damage.mind >= 100;
 	};
 	
 	Game_BattlerBase.prototype.addTbsBuffs = function(buffs) {
@@ -606,7 +614,7 @@
 	};
 	
 	Game_BattlerBase.prototype.stressRecovery = function() {
-		return 1;
+		return 20;
 	};
 	
 	Game_BattlerBase.prototype.baseProtection = function() {

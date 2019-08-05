@@ -711,11 +711,11 @@ Window_TbsActorStatus.prototype.initialize = function(x, y) {
 };
 
 Window_TbsActorStatus.prototype.windowWidth = function() {
-	return this.standardPadding() * 2 + 14 * 14 + 4 + Window_Base._iconWidth;
+	return this.standardPadding() * 2 + 14 * 24 + 4 + Window_Base._iconWidth * 4;
 };
 
 Window_TbsActorStatus.prototype.windowHeight = function() {
-	return this.standardPadding() * 2 + this.lineHeight() * 4;
+	return this.standardPadding() * 2 + this.lineHeight() * 2;
 };
 
 Window_TbsActorStatus.prototype.setTbsActor = function(tbsActor, forceRefresh) {
@@ -733,33 +733,42 @@ Window_TbsActorStatus.prototype.setTbsActor = function(tbsActor, forceRefresh) {
 Window_TbsActorStatus.prototype.refresh = function() {
     this.contents.clear();
     if (this._tbsActor) {
-		this.drawActorStress(this._tbsActor.battler, (this.contentsWidth() - 4 - Window_Base._iconWidth) / 2, 0);
-        this.drawActorDamage(this._tbsActor.battler, 14*3, this.lineHeight());
-        this.drawActorBuffs(this._tbsActor.battler, this.contentsWidth() - Window_Base._iconWidth, this.contentsHeight() / 2);
+		this.drawActorStress(this._tbsActor.battler, 0, 0);
+        this.drawActorDamage(this._tbsActor.battler, 0, 0);
+        this.drawActorBuffs(this._tbsActor.battler, 14*24+4, 0);
     }
 	//this.drawLine(this.lineHeight(), 0, this.contentsWidth() - this.lineHeight());
 	//this.drawLine(this.lineHeight(), this.lineHeight()*4, this.contentsWidth() - this.lineHeight());
 };
 
-Window_TbsActorStatus.prototype.drawActorStress = function(battler, xCenter, y) {
-	var iconWidth = Window_Base._iconWidth;
-	var iconSeparation = 4;
-	var stress = battler.stress();
-	var x = xCenter - (iconWidth * stress + iconSeparation * Math.max(0, stress - 1)) / 2;
-	var i;
-	for(i = 0; i < stress; i++) {
-		this.drawIcon(6, x + i*(iconWidth + iconSeparation), y);
-	}
+Window_TbsActorStatus.prototype.drawActorStress = function(battler, x, y) {
+	this.changeTextColor(this.systemColor());
+	this.drawText("St", x, y, 14*2);
+	if(battler.stress() >= 20) {
+		if(battler.stress() >= 100) {
+			this.changeTextColor(this.deathColor());
+		} else { this.changeTextColor(this.crisisColor()); }
+	} else { this.resetTextColor(); }
+	this.drawText(battler.stress(), x + 14*2, y, 14*3, 'right');
+	this.resetTextColor();
 };
 
-Window_TbsActorStatus.prototype.drawActorBuffs = function(battler, x, yCenter) {
+Window_TbsActorStatus.prototype.drawActorBuffs = function(battler, x, y) {
 	var iconHeight = Window_Base._iconHeight;
 	var iconSeparation = 4;
 	var buffs = battler.tbsBuffs();
-	var y = yCenter - (iconHeight * buffs.length + iconSeparation * Math.max(0, buffs.length -1)) / 2;
+	var iconRowWidth = 4;
+	var curX = x;
+	var curY = y;
 	var i;
 	for(i = 0; i < buffs.length; i++) {
-		this.drawIcon(buffs[i].iconId, x, y + i*(iconHeight + iconSeparation));
+		this.drawIcon(buffs[i].iconId, curX, curY);
+		if(i > 0 && i % iconRowWidth == 1) {
+			curX = x;
+			curY = curY + this.lineHeight();
+		} else {
+			curX += iconHeight+iconSeparation;
+		}
 	}
 };
 
@@ -2198,29 +2207,33 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 		var x2 = x + 180;
 		var width2 = Math.min(200, width - 180 - this.textPadding());
 		this.drawActorName(actor, x, y);
-		this.drawActorIcons(actor, x, y + lineHeight * 2);
-		this.drawActorDamage(actor, x2, y);
+		//this.drawActorIcons(actor, x, y + lineHeight * 2);
+		//this.drawActorStress(actor, x, y + lineHeight);
+		this.drawActorDamage(actor, x, y + lineHeight);
+        //this.drawActorBuffs(actor, x+14*24+4, y + lineHeight);
 	};
 	
 	Window_Base.prototype.drawActorDamage = function(actor, x, y) {
-		var xIncrement = 42;
+		var xIncrement = 84;
 		
-		this.drawActorPartDamge(actor, "head"    , x + xIncrement/2  , y                        , "He");
-		this.drawActorPartDamge(actor, "mind"    , x + xIncrement*1.5, y                        , "Mi");
-		this.drawActorPartDamge(actor, "rightArm", x                 , y + this.lineHeight()    , "RA");
-		this.drawActorPartDamge(actor, "torso"   , x + xIncrement    , y + this.lineHeight()    , "To");
-		this.drawActorPartDamge(actor, "leftArm" , x + xIncrement * 2, y + this.lineHeight()    , "LA");
-		this.drawActorPartDamge(actor, "rightLeg", x                 , y + this.lineHeight() * 2, "RL");
-		this.drawActorPartDamge(actor, "leftLeg" , x + xIncrement * 2, y + this.lineHeight() * 2, "LL");
+		this.drawActorPartDamge(actor, "mind"    , x				, y + this.lineHeight() , "Mi");
+		this.drawActorPartDamge(actor, "head"    , x+xIncrement		, y						, "He");
+		this.drawActorPartDamge(actor, "torso"   , x+xIncrement		, y + this.lineHeight()	, "To");
+		this.drawActorPartDamge(actor, "leftArm" , x+xIncrement*2	, y						, "LA");
+		this.drawActorPartDamge(actor, "leftLeg" , x+xIncrement*2	, y + this.lineHeight()	, "LL");
+		this.drawActorPartDamge(actor, "rightArm", x+xIncrement*3	, y						, "RA");
+		this.drawActorPartDamge(actor, "rightLeg", x+xIncrement*3	, y + this.lineHeight()	, "RL");
 	};
 	
 	Window_Base.prototype.drawActorPartDamge = function(actor, part, x, y, label) {
-		if(actor.getDamage(part)) {
-			if(actor.getDamage(part) >= 2) {
+		this.changeTextColor(this.systemColor());
+		this.drawText(label, x, y, 14*2);
+		if(actor.getDamage(part) >= 50) {
+			if(actor.getDamage(part) >= 100) {
 				this.changeTextColor(this.deathColor());
 			} else { this.changeTextColor(this.crisisColor()); }
 		} else { this.resetTextColor(); }
-		this.drawText(label, x, y, 100);
+		this.drawText(actor.getDamage(part), x + 14*2, y, 14*3, 'right');
 		this.resetTextColor();
 	};
 	
@@ -3308,9 +3321,9 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 		//subject.performActionEnd();
 	};
 	
-	Window_BattleLog.prototype.showInitialAnimations = function(subject, hitGroup, animationIds, target) {
+	Window_BattleLog.prototype.showInitialAnimations = function(subject, hitGroup, animationIds, target, showCastAnimation) {
 		this.performAction(subject, hitGroup)
-		if(hitGroup.attackMotion && hitGroup.attackMotion.castAnimationId !== undefined && hitGroup.attackMotion.castAnimationId > 0) {
+		if(showCastAnimation && hitGroup.attackMotion && hitGroup.attackMotion.castAnimationId !== undefined && hitGroup.attackMotion.castAnimationId > 0) {
 			var animation = $dataAnimations[hitGroup.attackMotion.castAnimationId];
 			if (animation) {
 				subject.startAnimation(hitGroup.attackMotion.castAnimationId, false, 0);

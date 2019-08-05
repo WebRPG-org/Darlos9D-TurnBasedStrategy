@@ -692,21 +692,21 @@
 
 	Scene_Battle.prototype.createTbsRightActorStatusWindow = function() {
 		var wx = Graphics.boxWidth - Window_TbsActorStatus.prototype.windowWidth();
-		var wy = Graphics.boxHeight - Window_TbsActorStatus.prototype.windowHeight();
+		var wy = 0;
 		this._tbsRightActorStatusWindow = new Window_TbsActorStatus(wx, wy);
 		this.addWindow(this._tbsRightActorStatusWindow);
 	};
 
 	Scene_Battle.prototype.createTbsLeftActorNameWindow = function() {
 		var wx = this._tbsLeftActorStatusWindow.width;
-		var wy = this._tbsLeftActorStatusWindow.y;
+		var wy = Graphics.boxHeight - Window_TbsTargetName.prototype.windowHeight();
 		this._tbsLeftActorNameWindow = new Window_TbsTargetName(wx, wy);
 		this.addWindow(this._tbsLeftActorNameWindow);
 	};
 
 	Scene_Battle.prototype.createTbsRightActorNameWindow = function() {
 		var wx = Graphics.boxWidth - this._tbsRightActorStatusWindow.width - Window_TbsTargetName.prototype.windowWidth();
-		var wy = Graphics.boxHeight - Window_TbsTargetName.prototype.windowHeight();
+		var wy = this._tbsRightActorStatusWindow.y;
 		this._tbsRightActorNameWindow = new Window_TbsTargetName(wx, wy);
 		this.addWindow(this._tbsRightActorNameWindow);
 	};
