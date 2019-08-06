@@ -2759,6 +2759,12 @@
 					return returnArray;;
 				}
 			}
+			var cFocus = $gameMap.getCameraFocus();
+			if(cFocus.x !== undefined && cFocus.y !== undefined && (centerX < cFocus.x && centerY < cFocus.y
+				&& centerX >= cFocus.x + Math.floor(this.screenTileX()) && centerY >= cFocus.y + Math.floor(this.screenTileY())))
+			{
+				return returnArray;	
+			}
 			var tile = {};
 			tile.x = centerX;
 			tile.y = centerY;
@@ -2766,6 +2772,7 @@
 			returnArray.push(tile);
 			return returnArray;
 		}
+		var cFocus = $gameMap.getCameraFocus();
 		var targetX = centerX - Math.ceil(radius);
 		for(; targetX <= centerX + Math.ceil(radius); targetX++) {
 			var targetY = centerY - Math.ceil(radius);
@@ -2783,6 +2790,11 @@
 							returnArray.push(existing);
 							continue;
 						}
+					}
+					if(cFocus.x !== undefined && cFocus.y !== undefined && (targetX < cFocus.x && targetY < cFocus.y
+						&& targetX >= cFocus.x + Math.floor(this.screenTileX()) && targetY >= cFocus.y + Math.floor(this.screenTileY())))
+					{
+						continue;	
 					}
 					var tile = {};
 					tile.x = targetX;
@@ -3063,8 +3075,6 @@
 	};
 	
 	Game_Player.prototype.cursorPositionValid = function(x, y) {
-		var cFocus = $gameMap.getCameraFocus();
-		if(this._cursorMoveField.length === 0 && (cFocus.x === undefined || cFocus.y === undefined)) { return true; }
 		if(this._cursorMoveField.length > 0) {
 			var i;
 			for(i = 0; i < this._cursorMoveField.length; i++) {
@@ -3072,9 +3082,17 @@
 					return true;
 				}
 			}
-		}
-		if(cFocus.x !== undefined && cFocus.y !== undefined) {
-			if(x >= cFocus.x && y >= cFocus.y && x < cFocus.x + 17 && y < cFocus.y + 13) {
+		} else {
+			var cFocus = $gameMap.getCameraFocus();
+			if(cFocus.x !== undefined && cFocus.y !== undefined) {
+				if(x >= cFocus.x && y >= cFocus.y && x < cFocus.x + Math.floor($gameMap.screenTileX())
+					&& y < cFocus.y + Math.floor($gameMap.screenTileY()))
+				{
+					return true;
+				} else {
+					return false;
+				}
+			} else {
 				return true;
 			}
 		}
