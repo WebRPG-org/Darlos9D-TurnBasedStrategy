@@ -819,7 +819,7 @@ Window_TbsActor.prototype.windowWidth = function() {
 	var longestLength = 5;
 	if(this._actors.length > 0) {
 		this._actors.forEach(function (actor) {
-			var name = actor.battler.name();
+			var name = actor.battler.displayName();
 			if(longestLength < name.length) {
 				longestLength = name.length;
 			}
@@ -907,7 +907,7 @@ Window_TbsActor.prototype.drawItem = function(index) {
 		} else {
 			this.changePaintOpacity(this.isEnabled(index));
 		}
-        this.drawText(battler.name(), rect.x, rect.y, rect.width);
+        this.drawText(battler.displayName(), rect.x, rect.y, rect.width);
     }
     this.resetTextColor();
     this.changePaintOpacity(true);
@@ -1555,7 +1555,7 @@ Window_TbsTarget.prototype.windowWidth = function() {
 	if(this._actors.length > 0) {
 		var longestLength = 7;
 		this._actors.forEach(function (actor) {
-			var name = actor.battler.name();
+			var name = actor.battler.displayName();
 			if(longestLength < name.length) {
 				longestLength = name.length;
 			}
@@ -1731,7 +1731,7 @@ Window_TbsTarget.prototype.drawItem = function(index) {
 			if(tbsActor.battler.isDown()) {
 				this.changeTextColor(this.deathColor());
 			}
-			this.drawText(tbsActor.battler.name(), this.textPadding(), this.lineHeight()*index);
+			this.drawText(tbsActor.battler.displayName(), this.textPadding(), this.lineHeight()*index);
 			this.resetTextColor();
 			this.changePaintOpacity(true);
 		}
@@ -1830,7 +1830,7 @@ Window_TbsTargetName.prototype.initialize = function(x, y) {
 
 Window_TbsTargetName.prototype.windowWidth = function() {
 	if(this._tbsActor) {
-		return this.standardPadding() * 2 + this._tbsActor.battler.name().length * 14 + this.textPadding() * 2;
+		return this.standardPadding() * 2 + this._tbsActor.battler.displayName().length * 14 + this.textPadding() * 2;
 	} else {
 		return 300;
 	}
@@ -1874,7 +1874,7 @@ Window_TbsTargetName.prototype.drawTargetNameText = function() {
 		if(battler.isDown()) {
 			this.changeTextColor(this.deathColor());
 		}
-		this.drawText(battler.name(), this.textPadding(), 0);
+		this.drawText(battler.displayName(), this.textPadding(), 0);
 		this.resetTextColor();
 		this.changePaintOpacity(true);
 	}
@@ -3460,20 +3460,20 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 		var numMethods = this._methods.length;
 		//if (DataManager.isSkill(item)) {
 		//	if (item.message1) {
-		//		this.push('addText', subject.name() + item.message1.format(item.name));
+		//		this.push('addText', subject.displayName() + item.message1.format(item.name));
 		//	}
 		//	if (item.message2) {
 		//		this.push('addText', item.message2.format(item.name));
 		//	}
 		//} else {
-		//	this.push('addText', TextManager.useItem.format(subject.name(), item.name));
+		//	this.push('addText', TextManager.useItem.format(subject.displayName(), item.name));
 		//}
 		if(action.type === "attack") {
-			this.push('addText', subject.name() + ' attacks with ' + action.name + '!');
+			this.push('addText', subject.displayName() + ' attacks with ' + action.name + '!');
 		} else if (action.type === "technique") {
-			this.push('addText', subject.name() + ' executes ' + action.name + '!');
+			this.push('addText', subject.displayName() + ' executes ' + action.name + '!');
 		} else if (action.type === "item") {
-			this.push('addText', subject.name() + ' uses ' + action.name + '!');
+			this.push('addText', subject.displayName() + ' uses ' + action.name + '!');
 		}
 		if (this._methods.length === numMethods) {
 			this.push('wait');
@@ -3514,7 +3514,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 	Window_BattleLog.prototype.displayDodge = function(target) {
 		var fmt;
 		fmt = TextManager.evasion;
-		this.push('addText', fmt.format(target.name()));
+		this.push('addText', fmt.format(target.displayName()));
 	};
 
 	Window_BattleLog.prototype.displayPartsDamage = function(target, results) {
@@ -3543,11 +3543,11 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 				+ results.heal["leftLeg"];
 			if(totalDamage > 0 || totalHeal > 0) {
 				if(totalDamage > 0) {
-					this.push('addText', target.name() + " takes a total of " + totalDamage + " damage!", false);
+					this.push('addText', target.displayName() + " takes a total of " + totalDamage + " damage!", false);
 					lines++;
 				}
 				if(totalHeal > 0) {
-					this.push('addText', target.name() + " is healed by a total of " + totalHeal + "!", false);
+					this.push('addText', target.displayName() + " is healed by a total of " + totalHeal + "!", false);
 					lines++;
 				}
 			} else {
@@ -3560,10 +3560,10 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 					+ results.stress.leftLeg
 					+ results.stress.rightLeg;
 				if(totalStress > 0) {
-					this.push('addText', target.name() + " is struck in multiple places!", false);
+					this.push('addText', target.displayName() + " is struck in multiple places!", false);
 					lines++;
 				} else {
-					this.push('addText', target.name() + " fully deflects the blow!", false);
+					this.push('addText', target.displayName() + " fully deflects the blow!", false);
 					lines++;
 				}
 			}
@@ -3591,18 +3591,18 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 			var text = "";
 			var diff = Math.abs(results.damage[partName] - results.heal[partName]);
 			if (results.damage[partName] > results.heal[partName]) {
-				text = target.name() + "'s " + partDisplayText + " takes " + diff + " damage!";
+				text = target.displayName() + "'s " + partDisplayText + " takes " + diff + " damage!";
 			} else if (results.damage[partName] < results.heal[partName]) {
-				text = target.name() + "'s " + partDisplayText + " is healed by " + diff + "!";
+				text = target.displayName() + "'s " + partDisplayText + " is healed by " + diff + "!";
 			}
 			this.push('addText', text, false);
 			return 1;
 		} else if(results.hit[partName]) {
 			if(results.stress[partName] > 0) {
-				this.push('addText', target.name() + "'s " + partDisplayText + " is struck!", false);
+				this.push('addText', target.displayName() + "'s " + partDisplayText + " is struck!", false);
 				return 1;
 			} else {
-				this.push('addText', target.name() + "'s " + partDisplayText + " deflects the blow!", false);
+				this.push('addText', target.displayName() + "'s " + partDisplayText + " deflects the blow!", false);
 				return 1;
 			}
 		}
@@ -3616,9 +3616,9 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 			var text = "";
 			var diff = Math.abs(totalStress - results.heal.stress);
 			if (totalStress > results.heal.stress) {
-				text = target.name() + " is inflicted with " + diff + " stress!";
+				text = target.displayName() + " is inflicted with " + diff + " stress!";
 			} else if (totalStress < results.heal.stress) {
-				text = target.name() + " has " + diff + " stress removed!";
+				text = target.displayName() + " has " + diff + " stress removed!";
 			}
 			this.push('addText', text, false);
 			return 1;
@@ -3657,7 +3657,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 			// if (stateMsg) {
 				// this.push('popBaseLine');
 				// this.push('pushBaseLine');
-				// this.push('addText', target.name() + stateMsg);
+				// this.push('addText', target.displayName() + stateMsg);
 				// this.push('waitForEffect');
 			// }
 		// }, this);
@@ -3665,7 +3665,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 			this.push('performCollapse', target);
 			this.push('popBaseLine');
 			this.push('pushBaseLine');
-			this.push('addText', target.name() + " is taken down!");
+			this.push('addText', target.displayName() + " is taken down!");
 			this.push('waitForEffect');
 		}
 	};
@@ -3675,13 +3675,13 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 			// if (state.message4) {
 				// this.push('popBaseLine');
 				// this.push('pushBaseLine');
-				// this.push('addText', target.name() + state.message4);
+				// this.push('addText', target.displayName() + state.message4);
 			// }
 		// }, this);
 		if(results.revived) {
 			this.push('popBaseLine');
 			this.push('pushBaseLine');
-			this.push('addText', target.name() + " can function again!");
+			this.push('addText', target.displayName() + " can function again!");
 		}
 	};
 
@@ -3696,7 +3696,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 		buffs.forEach(function(paramId) {
 			this.push('popBaseLine');
 			this.push('pushBaseLine');
-			this.push('addText', fmt.format(target.name(), TextManager.param(paramId)));
+			this.push('addText', fmt.format(target.displayName(), TextManager.param(paramId)));
 		}, this);
 	};
 	

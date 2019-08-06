@@ -334,6 +334,16 @@
 		this._skillPoints.throwingWeapons = 0;
 		this._skillPoints.whiteMagic = 0;
 		this._skillPoints.blackMagic = 0;
+		
+		this._displayName = undefined;
+	};
+	
+	Game_BattlerBase.prototype.setDisplayName = function(displayName) {
+		this._displayName = displayName;
+	};
+	
+	Game_BattlerBase.prototype.displayName = function() {
+		return this._displayName == undefined ? this.name() : this._displayName;
 	};
 	
 	Game_BattlerBase.prototype.refresh = function() {

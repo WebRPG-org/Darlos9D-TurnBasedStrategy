@@ -34,7 +34,7 @@
 		this._damageSpritesExist = false;
 	};
 	
-	Game_Temp.prototype.addTbsPartyMember = function(forceId, partyId, startingX, startingY) {
+	Game_Temp.prototype.addTbsPartyMember = function(forceId, partyId, startingX, startingY, label, labelType) {
 		this.makeSureForceExists(forceId, true);
 		
 		if(!this._pendingTbsForces[forceId].isParty) { return; }
@@ -47,11 +47,13 @@
 		actor.id = partyId;
 		actor.startingX = startingX;
 		actor.startingY = startingY;
+		actor.label = label;
+		actor.labelType = labelType;
 		
 		this._pendingTbsForces[forceId].actors.push(actor);
 	};
 	
-	Game_Temp.prototype.addTbsEnemy = function(forceId, enemyId, startingX, startingY) {
+	Game_Temp.prototype.addTbsEnemy = function(forceId, enemyId, startingX, startingY, label, labelType) {
 		this.makeSureForceExists(forceId, false);
 		
 		if(this._pendingTbsForces[forceId].isParty) { return; }
@@ -64,6 +66,8 @@
 		actor.id = enemyId;
 		actor.startingX = startingX;
 		actor.startingY = startingY;
+		actor.label = label;
+		actor.labelType = labelType;
 		
 		this._pendingTbsForces[forceId].actors.push(actor);
 	};
@@ -221,8 +225,8 @@
 		$gameTemp.addTbsPartyMember(forceId, partyId, startingX, startingY);
 	};
 	
-	Game_System.prototype.addTbsEnemy = function(forceId, enemyId, startingX, startingY) {
-		$gameTemp.addTbsEnemy(forceId, enemyId, startingX, startingY);
+	Game_System.prototype.addTbsEnemy = function(forceId, enemyId, startingX, startingY, label, labelType) {
+		$gameTemp.addTbsEnemy(forceId, enemyId, startingX, startingY, label, labelType);
 	};
 	
 	Game_System.prototype.setTbsForceEnemyForce = function(forceId, enemyForceId) {
@@ -402,7 +406,7 @@
 				if(this._tbsActionTargetLocationX !== -1) {
 					var targetActor = this.getTbsActorAtPosition(this._tbsActionTargetLocationX, this._tbsActionTargetLocationY);
 					if(targetActor) {
-						targetBreadcrumb.text = targetActor.battler.name();
+						targetBreadcrumb.text = targetActor.battler.displayName();
 					} else {
 						targetBreadcrumb.text = this._tbsActionTargetLocationX + ", " + this._tbsActionTargetLocationY;
 					}
@@ -421,7 +425,7 @@
 				var actorBreadcrumb = {};
 				actorBreadcrumb.text = "";
 				if(this._tbsSelectedActor) {
-					actorBreadcrumb.text = this._tbsSelectedActor.battler.name();
+					actorBreadcrumb.text = this._tbsSelectedActor.battler.displayName();
 				}
 				this._tbsBreadcrumbs.push(actorBreadcrumb);
 			break;
@@ -575,6 +579,13 @@
 			} else {
 				actor.battler = new Game_Enemy(pendingActor.id);
 				actor.memberPosition = -1;
+			}
+			if(pendingActor.label !== undefined) {
+				if(pendingActor.labelType === "replace") {
+					actor.battler.setDisplayName(pendingActor.label);
+				} else {
+					actor.battler.setDisplayName(actor.battler.name() + " " + pendingActor.label);
+				}
 			}
 			actor.canActThisRound = !actor.battler.isDown();
 			
@@ -1273,6 +1284,7 @@
 							if(battler.getDamage("torso") >= 100) { battler.setDamage("torso", 99); }
 							battler.setStress(0);
 							battler.clearTbsBuffs();
+							battler.setDisplayName(undefined);
 						});
 					}
 				});
