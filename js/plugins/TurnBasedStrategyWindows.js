@@ -2713,8 +2713,10 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 	};
 	
 	Window_Selectable.prototype.isHealing = function(action) {
-		return action && action.hits && action.hits.length > 0 &&
-			action.hits.some(function(hit) { return hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 });
+		return action && action.hitGroups && action.hitGroups.length > 0 &&
+			action.hitGroups.some(function(hitGroup) { return hitGroup.hits && hitGroup.hits.length > 0
+			&& hitGroup.hits.some(function(hit) { return hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 });
+		});
 	};
 	
 	//item category

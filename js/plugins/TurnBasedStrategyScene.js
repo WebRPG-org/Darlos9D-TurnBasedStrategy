@@ -974,12 +974,12 @@
 	Scene_ItemBase.prototype.useAction = function() {
 		this.playSeForItem();
 		var user = this.user();
+		this.applyAction();
 		if(user) {
 			if(user.useActionEquip(this.actionInfo())) {
 				this._actorWindow.setDisplayMode(true);
 			}
 		}
-		this.applyAction();
 		this.checkGameover();
 		this._actorWindow.refresh();
 		this._itemWindow.refresh();

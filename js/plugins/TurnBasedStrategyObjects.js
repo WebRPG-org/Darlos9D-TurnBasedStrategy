@@ -249,6 +249,11 @@
 		$gameMap.clearCameraFocus();
 	};
 	
+	Game_System.prototype.setTbsActorDamage = function(partyPositionId, partName, damage) {
+		var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(partyPositionId));
+		battler.setDamage(partName, damage);
+	};
+	
 	//item
 	Game_Item.prototype.actions = function() {
 		if(!this.isWeapon() && !this.isArmor() && !this.isItem()) {
