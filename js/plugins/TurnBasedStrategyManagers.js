@@ -160,6 +160,7 @@ BattleManager.initMembers = function() {
 	this._actionTimer = 0;
 	this._hitMissDelay = [];
 	this._showCastAnimation = true;
+	this._equipmentBaseToughness = 12;
 };
 
 BattleManager.setLeftActorStatusWindow = function(actorStatusWindow) {
@@ -607,6 +608,8 @@ BattleManager.invokeNormalAction = function(subject, target, resultsPerGroup) {
 	totalResults.stress.rightArm = 0;
 	totalResults.stress.leftLeg = 0;
 	totalResults.stress.rightLeg = 0;
+	totalResults.stress.leftHeld = 0;
+	totalResults.stress.rightHeld = 0;
 	totalResults.stress.mind = 0;
 	totalResults.stress.other = 0;
 	totalResults.damage = {};
@@ -616,6 +619,8 @@ BattleManager.invokeNormalAction = function(subject, target, resultsPerGroup) {
 	totalResults.damage.rightArm = 0;
 	totalResults.damage.leftLeg = 0;
 	totalResults.damage.rightLeg = 0;
+	totalResults.damage.leftHeld = 0;
+	totalResults.damage.rightHeld = 0;
 	totalResults.damage.mind = 0;
 	totalResults.heal = {};
 	totalResults.heal.stress = 0;
@@ -625,6 +630,8 @@ BattleManager.invokeNormalAction = function(subject, target, resultsPerGroup) {
 	totalResults.heal.rightArm = 0;
 	totalResults.heal.leftLeg = 0;
 	totalResults.heal.rightLeg = 0;
+	totalResults.heal.leftHeld = 0;
+	totalResults.heal.rightHeld = 0;
 	totalResults.heal.mind = 0;
 	totalResults.dodged = true;
 	totalResults.hit = {};
@@ -635,6 +642,8 @@ BattleManager.invokeNormalAction = function(subject, target, resultsPerGroup) {
 	totalResults.hit.rightArm = false;
 	totalResults.hit.leftLeg = false;
 	totalResults.hit.rightLeg = false;
+	totalResults.hit.leftHeld = false;
+	totalResults.hit.rightHeld = false;
 	totalResults.buffs = [];
 	totalResults.downed = false;
 	totalResults.revived = false;
@@ -646,6 +655,8 @@ BattleManager.invokeNormalAction = function(subject, target, resultsPerGroup) {
 		totalResults.stress.rightArm += results.stress.rightArm;
 		totalResults.stress.leftLeg += results.stress.leftLeg;
 		totalResults.stress.rightLeg += results.stress.rightLeg;
+		totalResults.stress.leftHeld += results.stress.leftHeld;
+		totalResults.stress.rightHeld += results.stress.rightHeld;
 		totalResults.stress.mind += results.stress.mind;
 		totalResults.stress.other += results.stress.other;
 		totalResults.damage.head += results.damage.head;
@@ -670,6 +681,8 @@ BattleManager.invokeNormalAction = function(subject, target, resultsPerGroup) {
 		totalResults.hit.rightArm = results.hit.rightArm ? true : totalResults.hit.rightArm;
 		totalResults.hit.leftLeg = results.hit.leftLeg ? true : totalResults.hit.leftLeg;
 		totalResults.hit.rightLeg = results.hit.rightLeg ? true : totalResults.hit.rightLeg;
+		totalResults.hit.leftHeld = results.hit.leftHeld ? true : totalResults.hit.leftHeld;
+		totalResults.hit.rightHeld = results.hit.rightHeld ? true : totalResults.hit.rightHeld;
 		totalResults.buffs = results.buffs.concat(results.buffs);
 		totalResults.downed = results.downed ? true : totalResults.downed;
 		totalResults.revived = results.revived ? true : totalResults.revived;
@@ -704,13 +717,15 @@ BattleManager.shouldSkipTarget = function(hitGroups, target, targetsByHit) {
 	return shouldSkip;
 };
 
-BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targetsByHit, hitGroupIndex, vitalOnly) {
+BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targetsByHit, hitGroupIndex, targetingType) {
 	var battlersByHit = [];
 	targetsByHit[hitGroupIndex].forEach(function (targets) {
 		var battlers = targets.map(function (hitTarget) { return hitTarget.battler; });
 		battlersByHit.push(battlers);
 	});
 	
+	var targetLeftHeldProt = target.protection("leftHeld");
+	var targetRightHeldProt = target.protection("rightHeld");
 	var targetHeadProt = target.protection("head");
 	var targetTorsoProt = target.protection("torso");
 	var targetLeftArmProt = target.protection("leftArm");
@@ -718,6 +733,20 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 	var targetLeftLegProt = target.protection("leftLeg");
 	var targetRightLegProt = target.protection("rightLeg");
 	var targetMentalProt = target.mentalProtection();
+	targetLeftHeldProt.armor.blunt *= 10;
+	targetLeftHeldProt.armor.cut *= 10;
+	targetLeftHeldProt.armor.bullet *= 10;
+	targetLeftHeldProt.armor.fire *= 10;
+	targetLeftHeldProt.armor.ice *= 10;
+	targetLeftHeldProt.armor.corrosion *= 10;
+	targetLeftHeldProt.armor.conducted *= 10;
+	targetRightHeldProt.armor.blunt *= 10;
+	targetRightHeldProt.armor.cut *= 10;
+	targetRightHeldProt.armor.bullet *= 10;
+	targetRightHeldProt.armor.fire *= 10;
+	targetRightHeldProt.armor.ice *= 10;
+	targetRightHeldProt.armor.corrosion *= 10;
+	targetRightHeldProt.armor.conducted *= 10;
 	targetHeadProt.armor.blunt *= 10;
 	targetHeadProt.armor.cut *= 10;
 	targetHeadProt.armor.bullet *= 10;
@@ -770,6 +799,8 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 	results.stress.rightArm = 0;
 	results.stress.leftLeg = 0;
 	results.stress.rightLeg = 0;
+	results.stress.leftHeld = 0;
+	results.stress.rightHeld = 0;
 	results.stress.mind = 0;
 	results.stress.other = 0;
 	results.damage = {};
@@ -779,6 +810,8 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 	results.damage.rightArm = 0;
 	results.damage.leftLeg = 0;
 	results.damage.rightLeg = 0;
+	results.damage.leftHeld = 0;
+	results.damage.rightHeld = 0;
 	results.damage.mind = 0;
 	results.heal = {};
 	results.heal.stress = 0;
@@ -788,9 +821,13 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 	results.heal.rightArm = 0;
 	results.heal.leftLeg = 0;
 	results.heal.rightLeg = 0;
+	results.heal.leftHeld = 0;
+	results.heal.rightHeld = 0;
 	results.heal.mind = 0;
 	results.dodged = true;
 	results.hit = {};
+	results.hit.leftHeld = false;
+	results.hit.rightHeld = false;
 	results.hit.mind = false;
 	results.hit.head = false;
 	results.hit.torso = false;
@@ -822,8 +859,8 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 		results.skipTarget = false;
 		var damage = hit.damage;
 		if(damage) {
-			var subjectStress = subject.stressModifier();
-			var targetStress = target.stressModifier();
+			var subjectStress = subject.stress();
+			var targetStress = target.stress();
 			
 			var accBonus = hit.accuracyBonus === undefined ? 0 : hit.accuracyBonus;
 			var accSkill = 0;
@@ -842,7 +879,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						break;
 				}
 			}
-			var acc = accBonus + accSkill;
+			var acc = accBonus + accSkill * 3;
 			
 			var hitDamage = this.getCompleteDamage(subject, actionInfo, hit);
 			hitDamage.blunt *= 10;
@@ -876,6 +913,8 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 			var hitResult = {};
 			hitResult.dodged = true;
 			hitResult.hit = {};
+			hitResult.hit.leftHeld = false;
+			hitResult.hit.rightHeld = false;
 			hitResult.hit.head = false;
 			hitResult.hit.torso = false;
 			hitResult.hit.leftArm = false;
@@ -889,6 +928,8 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 			if(hit.aoe !== undefined && hit.aoe > 0) {
 				if(isSolid || isFluid) {
 					hitResult.dodged = false;
+					hitResult.hit.leftHeld = true;
+					hitResult.hit.rightHeld = true;
 					hitResult.hit.head = true;
 					hitResult.hit.torso = true;
 					hitResult.hit.leftArm = true;
@@ -902,7 +943,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 				}
 			} else {
 				if(isSolid || isFluid) {
-					if(!vitalOnly && this._tbsTargetPart != undefined && this._tbsTargetPart != "mobility" && this._tbsTargetPart != "vital") {
+					if(targetingType === undefined && this._tbsTargetPart != undefined && this._tbsTargetPart != "mobility" && this._tbsTargetPart != "vital") {
 						hitResult.dodged = false;
 						hitResult.hit[this._tbsTargetPart] = true;
 					} else {
@@ -911,8 +952,13 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						var defendingWithLegs = target.limbsType() === "winged" && target.isFlying();
 						var leftDefendingLimbProt = defendingWithLegs ? targetLeftLegProt : targetLeftArmProt;
 						var rightDefendingLimbProt = defendingWithLegs ? targetRightLegProt : targetRightArmProt;
+						var leftDefendingHeldProt = targetLeftArmProt;
+						var rightDefendingHeldProt = targetRightArmProt;
 						var leftLimbDamagePotential = this.getPartDamagePotential(hitDamage, leftDefendingLimbProt);
 						var rightLimbDamagePotential = this.getPartDamagePotential(hitDamage, rightDefendingLimbProt);
+						var leftHeldDamagePotential = this.getPartDamagePotential(hitDamage, leftDefendingHeldProt);
+						var rightHeldDamagePotential = this.getPartDamagePotential(hitDamage, rightDefendingHeldProt);
+						
 						var leftLimbFirst = false;
 						if(leftLimbDamagePotential < rightLimbDamagePotential) {
 							leftLimbFirst = true;
@@ -926,6 +972,40 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						if(!leftLimbFirst) {
 							firstLimbProt = rightDefendingLimbProt;
 							secondLimbProt = leftDefendingLimbProt;
+						}
+						
+						var leftHeldFirst = false;
+						var useFirstHeld = false;
+						var useSecondHeld = false;
+						if(target.equips()[0] && target.equips()[1]) {
+							useFirstHeld = true;
+							useSecondHeld = true;
+							if(leftHeldDamagePotential < rightHeldDamagePotential) {
+								leftHeldFirst = true;
+							} else if (leftHeldDamagePotential === rightHeldDamagePotential) {
+								if(target.handedness() === "right") {
+									leftHeldFirst = true;
+								}
+							}
+						} else if(target.equips()[0]) {
+							if(target.handedness === "left") {
+								leftHeldFirst = true;
+							}
+							useFirstHeld = true;
+						} else if(target.equips()[1]) {
+							if(target.handedness === "right") {
+								leftHeldFirst = true;
+								useFirstHeld = true;
+							}
+							useFirstHeld = true;
+						}
+						
+						
+						var firstHeldProt = leftDefendingHeldProt;
+						var secondHeldProt = rightDefendingHeldProt;
+						if(!leftHeldFirst) {
+							firstHeldProt = rightDefendingHeldProt;
+							secondHeldProt = leftDefendingHeldProt;
 						}
 						
 						var criticalPartProt = targetHeadProt;
@@ -951,31 +1031,41 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							}
 						}
 						
-						var eva = target.totalSkill("physEvade");
+						var eva = target.totalSkill("physEvade") * 3;
 						if(isSolid) {
 							hitResult = this.calculateBodyPartHit(targetStress, bodyPartAccRoll, eva,
 								criticalPartProt.defense.solid,
 								vitalPartProt.defense.solid,
 								firstLimbProt.defense.solid,
 								secondLimbProt.defense.solid,
+								firstHeldProt.defense.solid,
+								secondHeldProt.defense.solid,
 								leftLimbFirst,
+								leftHeldFirst,
 								targetingMobility,
 								leftMobilityFirst,
 								defendingWithLegs,
 								target.isDown(),
-								vitalOnly);
+								targetingType,
+								useFirstHeld,
+								useSecondHeld);
 						} else if (isFluid) {
 							hitResult = this.calculateBodyPartHit(targetStress, bodyPartAccRoll, eva,
 								criticalPartProt.defense.fluid,
 								vitalPartProt.defense.fluid,
 								firstLimbProt.defense.fluid,
 								secondLimbProt.defense.fluid,
+								firstHeldProt.defense.fluid,
+								secondHeldProt.defense.fluid,
 								leftLimbFirst,
+								leftHeldFirst,
 								targetingMobility,
 								leftMobilityFirst,
 								defendingWithLegs,
 								target.isDown(),
-								vitalOnly);
+								targetingType,
+								useFirstHeld,
+								useSecondHeld);
 						}
 					}
 					if(isMental && !hitResult.dodged) {
@@ -991,9 +1081,9 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 			}
 			if(!hitResult.dodged) {
 				if(hitResult.hit.head || hitResult.hit.torso || hitResult.hit.leftArm || hitResult.hit.rightArm
-					|| hitResult.hit.leftLeg || hitResult.hit.rightLeg) {
-					var eva = target.totalSkill("physEvade");
-					var tripEva = target.totalSkill("tripEvade");
+					|| hitResult.hit.leftLeg || hitResult.hit.rightLeg || hitResult.hit.leftHeld || hitResult.hit.rightHeld) {
+					var eva = target.totalSkill("physEvade") * 3;
+					var tripEva = target.totalSkill("tripEvade") * 3;
 					if(hitResult.hit.head) {
 						var damageAccRoll = this.rollForRanks(acc, subjectStress);
 						results.hit.head = true;
@@ -1005,7 +1095,6 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							targetHeadProt, 
 							target.toughness(), 
 							targetStress,
-							target.getDamage("head"),
 							target.isDown(),
 							true);
 						results.stress.head += damageResult.stress;
@@ -1025,7 +1114,6 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							targetTorsoProt, 
 							target.toughness(), 
 							targetStress,
-							target.getDamage("torso"),
 							target.isDown(),
 							false);
 						results.stress.torso += damageResult.stress;
@@ -1045,7 +1133,6 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							targetLeftArmProt, 
 							target.toughness(), 
 							targetStress,
-							target.getDamage("leftArm"),
 							target.isDown(),
 							target.limbsType() === "winged" && target.isFlying());
 						results.stress.leftArm += damageResult.stress;
@@ -1054,7 +1141,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							results.shouldPassTurn = false;
 						}
 						if(target.limbsType() !== "winged" || !target.isFlying() && results.shouldCleave) {
-							var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult);
+							var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult, "vitalOnly");
 							results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
 							results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
 							results.stress.torso += cleaveResults.stress.torso;
@@ -1074,7 +1161,6 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							targetRightArmProt, 
 							target.toughness(), 
 							targetStress,
-							target.getDamage("rightArm"),
 							target.isDown(),
 							target.limbsType() === "winged" && target.isFlying());
 						results.stress.rightArm += damageResult.stress;
@@ -1083,7 +1169,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							results.shouldPassTurn = false;
 						}
 						if(target.limbsType() !== "winged" || !target.isFlying() && results.shouldCleave) {
-							var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult);
+							var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult, "vitalOnly");
 							results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
 							results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
 							results.stress.torso += cleaveResults.stress.torso;
@@ -1103,7 +1189,6 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							targetLeftLegProt, 
 							target.toughness(), 
 							targetStress,
-							target.getDamage("leftLeg"),
 							target.isDown(),
 							target.limbsType() !== "quadrupedal" && (target.limbsType() !== "winged" || !target.isFlying()));
 						results.stress.leftLeg += damageResult.stress;
@@ -1112,7 +1197,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							results.shouldPassTurn = false;
 						}
 						if(target.limbsType() === "winged" && target.isFlying() && results.shouldCleave) {
-							var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult);
+							var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult, "vitalOnly");
 							results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
 							results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
 							results.stress.torso += cleaveResults.stress.torso;
@@ -1132,7 +1217,6 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							targetRightLegProt, 
 							target.toughness(), 
 							targetStress,
-							target.getDamage("rightLeg"),
 							target.isDown(),
 							target.limbsType() !== "quadrupedal" && (target.limbsType() !== "winged" || !target.isFlying()));
 						results.stress.rightLeg += damageResult.stress;
@@ -1141,13 +1225,91 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							results.shouldPassTurn = false;
 						}
 						if(target.limbsType() === "winged" && target.isFlying() && results.shouldCleave) {
-							var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult);
+							var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult, "vitalOnly");
 							results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
 							results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
 							results.stress.torso += cleaveResults.stress.torso;
 							results.stress.head += cleaveResults.stress.head;
 							results.damage.torso += cleaveResults.damage.torso;
 							results.damage.head += cleaveResults.damage.head;
+						}
+					}
+					if(hitResult.hit.leftHeld) {
+						var damageAccRoll = this.rollForRanks(acc, subjectStress);
+						results.hit.leftHeld = true;
+						var damageResult = this.resolvePhysicalDamage(
+							hitDamage, 
+							damageAccRoll, 
+							eva,
+							tripEva,
+							targetLeftHeldProt, 
+							this._equipmentBaseToughness, 
+							targetStress,
+							target.isDown(),
+							false);
+						results.stress.leftHeld += damageResult.stress;
+						if(damageResult.stress > 0 || damageResult.damage > 0) {
+							results.shouldPassTurn = false;
+						}
+						if(results.shouldCleave) {
+							var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult, "limbsAndVital");
+							results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
+							results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
+							results.hit.leftArm = cleaveResults.hit.leftArm ? true : results.hit.leftArm;
+							results.hit.rightArm = cleaveResults.hit.rightArm ? true : results.hit.rightArm;
+							results.hit.leftLeg = cleaveResults.hit.leftLeg ? true : results.hit.leftLeg;
+							results.hit.rightLeg = cleaveResults.hit.rightLeg ? true : results.hit.rightLeg;
+							results.stress.torso += cleaveResults.stress.torso;
+							results.stress.head += cleaveResults.stress.head;
+							results.stress.leftArm += cleaveResults.stress.leftArm;
+							results.stress.rightArm += cleaveResults.stress.rightArm;
+							results.stress.leftLeg += cleaveResults.stress.leftLeg;
+							results.stress.rightLeg += cleaveResults.stress.rightLeg;
+							results.damage.torso += cleaveResults.damage.torso;
+							results.damage.head += cleaveResults.damage.head;
+							results.damage.leftArm += cleaveResults.damage.leftArm;
+							results.damage.rightArm += cleaveResults.damage.rightArm;
+							results.damage.leftLeg += cleaveResults.damage.leftLeg;
+							results.damage.rightLeg += cleaveResults.damage.rightLeg;
+						}
+					}
+					if(hitResult.hit.rightHeld) {
+						var damageAccRoll = this.rollForRanks(acc, subjectStress);
+						results.hit.rightHeld = true;
+						var damageResult = this.resolvePhysicalDamage(
+							hitDamage, 
+							damageAccRoll, 
+							eva,
+							tripEva,
+							targetRightHeldProt, 
+							this._equipmentBaseToughness, 
+							targetStress,
+							target.isDown(),
+							false);
+						results.stress.rightHeld += damageResult.stress;
+						if(damageResult.stress > 0 || damageResult.damage > 0) {
+							results.shouldPassTurn = false;
+						}
+						if(results.shouldCleave) {
+							var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult, "limbsAndVital");
+							results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
+							results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
+							results.hit.leftArm = cleaveResults.hit.leftArm ? true : results.hit.leftArm;
+							results.hit.rightArm = cleaveResults.hit.rightArm ? true : results.hit.rightArm;
+							results.hit.leftLeg = cleaveResults.hit.leftLeg ? true : results.hit.leftLeg;
+							results.hit.rightLeg = cleaveResults.hit.rightLeg ? true : results.hit.rightLeg;
+							results.stress.torso += cleaveResults.stress.torso;
+							results.stress.head += cleaveResults.stress.head;
+							results.stress.leftArm += cleaveResults.stress.leftArm;
+							results.stress.rightArm += cleaveResults.stress.rightArm;
+							results.stress.leftLeg += cleaveResults.stress.leftLeg;
+							results.stress.rightLeg += cleaveResults.stress.rightLeg;
+							results.damage.torso += cleaveResults.damage.torso;
+							results.damage.head += cleaveResults.damage.head;
+							results.damage.leftArm += cleaveResults.damage.leftArm;
+							results.damage.rightArm += cleaveResults.damage.rightArm;
+							results.damage.leftLeg += cleaveResults.damage.leftLeg;
+							results.damage.rightLeg += cleaveResults.damage.rightLeg;
 						}
 					}
 				}
@@ -1162,7 +1324,6 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						targetMentalProt, 
 						target.mentalToughness(), 
 						targetStress,
-						target.getDamage("mind"),
 						target.isDown());
 					results.stress.mind += damageResult.stress;
 					results.damage.mind += damageResult.damage;
@@ -1293,7 +1454,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 	return results;
 };
 
-BattleManager.cleaveMath = function(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult) {
+BattleManager.cleaveMath = function(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult, targetingType) {
 	var hitGroup = {};
 	hitGroup.hits = [];
 	var newHit = {};
@@ -1311,7 +1472,7 @@ BattleManager.cleaveMath = function(subject, actionInfo, hit, target, targetsByH
 	if(damageResult.remainingPower.ice > 0) { newHit.damage.ice = damageResult.remainingPower.ice; }
 	if(damageResult.remainingPower.corrosion > 0) { newHit.damage.corrosion = damageResult.remainingPower.corrosion; }
 	hitGroup.hits.push(newHit);
-	return this.combatMath(subject, actionInfo, hitGroup, target, targetsByHit, hitGroupIndex, true);
+	return this.combatMath(subject, actionInfo, hitGroup, target, targetsByHit, hitGroupIndex, targetingType);
 };
 
 BattleManager.getPartDamagePotential = function(damage, partProt) {
@@ -1477,10 +1638,15 @@ BattleManager.getCompleteDamage = function(subject, actionInfo, hit) {
 	return completeDamage;
 };
 
-BattleManager.calculateBodyPartHit = function(stress, accRoll, dodgeEva, criticalDef, vitalDef, firstLimbDef, secondLimbDef, leftLimbFirst, targetingMobility, leftMobilityFirst, defendingWithLegs, isDown, vitalOnly) {
+BattleManager.calculateBodyPartHit = function(stress, accRoll, dodgeEva, criticalDef, vitalDef,
+		firstLimbDef, secondLimbDef, firstHeldDef, secondHeldDef, leftLimbFirst, leftHeldFirst, targetingMobility, leftMobilityFirst,
+		defendingWithLegs, isDown, targetingType, useFirstHeld, useSecondHeld)
+{
 	var results = {};
 	results.dodged = false;
 	results.hit = {};
+	results.hit.leftHeld = false;
+	results.hit.rightHeld = false;
 	results.hit.head = false;
 	results.hit.torso = false;
 	results.hit.leftArm = false;
@@ -1488,16 +1654,16 @@ BattleManager.calculateBodyPartHit = function(stress, accRoll, dodgeEva, critica
 	results.hit.leftLeg = false;
 	results.hit.rightLeg = false;
 	results.hit.mind = false;
-	results.evaResultBeat = 0;
-	results.evaResultUnder = 0;
-	results.beatBy = 0;
-	var dodgeEvaRoll = this.rollForRanks(dodgeEva, isDown ? 5 : stress);
-	var criticalEvaRoll = this.rollForRanks(criticalDef + dodgeEva, isDown ? 5 : stress);
-	var vitalEvaRoll = this.rollForRanks(vitalDef + dodgeEva, isDown ? 5 : stress);
-	var firstLimbEvaRoll = this.rollForRanks(firstLimbDef + dodgeEva, isDown ? 5 : stress);
-	var secondLimbEvaRoll = this.rollForRanks(secondLimbDef + dodgeEva, isDown ? 5 : stress);
-	if((vitalOnly && accRoll >= dodgeEvaRoll + vitalEvaRoll + criticalEvaRoll)
-		|| accRoll >= dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll + criticalEvaRoll) {
+	var criticalEvaRoll = this.rollForRanks(criticalDef + dodgeEva, isDown ? 100 : stress);
+	var vitalEvaRoll = this.rollForRanks(vitalDef + dodgeEva, isDown ? 100 : stress);
+	var firstLimbEvaRoll = this.rollForRanks(firstLimbDef + dodgeEva, isDown ? 100 : stress);
+	var secondLimbEvaRoll = this.rollForRanks(secondLimbDef + dodgeEva, isDown ? 100 : stress);
+	var firstHeldEvaRoll = useFirstHeld ? this.rollForRanks(firstHeldDef + dodgeEva, isDown ? 100 : stress) : 0;
+	var secondHeldEvaRoll = useSecondHeld ? this.rollForRanks(secondHeldDef + dodgeEva, isDown ? 100 : stress) : 0;
+	if((targetingType === "vitalOnly" && accRoll > vitalEvaRoll + criticalEvaRoll)
+		|| (targetingType === "limbsAndVital" && accRoll > firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll + criticalEvaRoll)
+		|| (targetingType === undefined && accRoll > firstHeldEvaRoll + secondHeldEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll + criticalEvaRoll))
+	{
 		if(targetingMobility) {
 			if(leftMobilityFirst) {
 				if(defendingWithLegs) {
@@ -1515,32 +1681,10 @@ BattleManager.calculateBodyPartHit = function(stress, accRoll, dodgeEva, critica
 		} else {
 			results.hit.head = true;
 		}
-		results.evaResultBeat = dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll + criticalEvaRoll;
-		results.beatBy = accRoll - (dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll + criticalEvaRoll);
-	} else if((vitalOnly && accRoll >= dodgeEvaRoll + vitalEvaRoll)
-		|| accRoll >= dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll) {
-		if(targetingMobility) {
-			if(leftMobilityFirst) {
-				if(defendingWithLegs) {
-					results.hit.rightArm = true;
-				} else {
-					results.hit.rightLeg = true;
-				}
-			} else {
-				if(defendingWithLegs) {
-					results.hit.leftArm = true;
-				} else {
-					results.hit.leftLeg = true;
-				}
-			}
-		} else {
-			results.hit.head = true;
-		}
-		results.evaResultBeat = dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll;
-		results.evaResultUnder = dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll + criticalEvaRoll;
-		results.beatBy = accRoll - (dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll);
-	} else if((vitalOnly && accRoll >= dodgeEvaRoll)
-		|| accRoll >= dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll) {
+	} else if((targetingType === "vitalOnly" && accRoll > vitalEvaRoll)
+		|| (targetingType === "limbsAndVital" && accRoll > firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll)
+		|| (targetingType === undefined && accRoll > firstHeldEvaRoll + secondHeldEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll))
+	{
 		if(targetingMobility) {
 			if(leftMobilityFirst) {
 				if(defendingWithLegs) {
@@ -1558,10 +1702,10 @@ BattleManager.calculateBodyPartHit = function(stress, accRoll, dodgeEva, critica
 		} else {
 			results.hit.torso = true;
 		}
-		results.evaResultBeat = dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll;
-		results.evaResultUnder = dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll;
-		results.beatBy = accRoll - (dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll);
-	} else if(!vitalOnly && accRoll >= dodgeEvaRoll + firstLimbEvaRoll) {
+	} else if(targetingType !== "vitalOnly"
+		&& ((targetingType === "limbsAndVital" && accRoll > firstLimbEvaRoll + secondLimbEvaRoll)
+		|| (targetingType === undefined && accRoll > firstHeldEvaRoll + secondHeldEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll)))
+	{
 		if(leftLimbFirst) {
 			if(defendingWithLegs) {
 				results.hit.rightLeg = true;
@@ -1575,10 +1719,10 @@ BattleManager.calculateBodyPartHit = function(stress, accRoll, dodgeEva, critica
 				results.hit.leftArm = true;
 			}
 		}
-		results.evaResultBeat = dodgeEvaRoll + firstLimbEvaRoll;
-		results.evaResultUnder = dodgeEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll;
-		results.beatBy = accRoll - (dodgeEvaRoll + firstLimbEvaRoll);
-	} else if(!vitalOnly && accRoll >= dodgeEvaRoll) {
+	} else if(targetingType !== "vitalOnly"
+		&& ((targetingType === "limbsAndVital" && accRoll > firstLimbEvaRoll)
+		|| (targetingType === undefined && accRoll > firstHeldEvaRoll + secondHeldEvaRoll + firstLimbEvaRoll)))
+	{
 		if(leftLimbFirst) {
 			if(defendingWithLegs) {
 				results.hit.leftLeg = true;
@@ -1592,14 +1736,20 @@ BattleManager.calculateBodyPartHit = function(stress, accRoll, dodgeEva, critica
 				results.hit.rightArm = true;
 			}
 		}
-		results.evaResultBeat = dodgeEvaRoll;
-		results.evaResultUnder = dodgeEvaRoll + firstLimbEvaRoll;
-		results.beatBy = accRoll - dodgeEvaRoll;
+	} else if(useSecondHeld && targetingType === undefined && accRoll > firstHeldEvaRoll + secondHeldEvaRoll) {
+		if(leftHeldFirst) {
+			results.hit.rightHeld = true;
+		} else {
+			results.hit.leftHeld = true;
+		}
+	} else if(useFirstHeld && targetingType === undefined && accRoll > firstHeldEvaRoll) {
+		if(leftHeldFirst) {
+			results.hit.leftHeld = true;
+		} else {
+			results.hit.rightHeld = true;
+		}
 	} else {
 		results.dodged = true;
-		results.evaResultBeat = 0;
-		results.evaResultUnder = dodgeEvaRoll;
-		results.beatBy = accRoll;
 	}
 	return results;
 };
@@ -1615,79 +1765,31 @@ BattleManager.calculateMentalHit = function(stress, accRoll, dodgeEva, mentalDef
 	results.hit.leftLeg = false;
 	results.hit.rightLeg = false;
 	results.hit.mind = false;
-	results.evaResultBeat = 0;
-	results.evaResultUnder = 0;
-	results.beatBy = 0;
-	var totalEva = dodgeEva;
-	totalEva += mentalDef + dodgeEva;
-	var dodgeEvaPercent = 0;
-	var mindEvaPercent = 0;
-	if(totalEva > 0) {
-		dodgeEvaPercent = dodgeEva / totalEva;
-		mindEvaPercent = (mentalDef + dodgeEva) / totalEva;
-	}
-	var evaRoll = this.rollForRanks(totalEva, isDown ? 5 : stress);
-	var dodgeEvaRoll = evaRoll * dodgeEvaPercent;
-	var mindEvaRoll = evaRoll * mindEvaPercent;
-	if (accRoll >= dodgeEvaPercent + mindEvaRoll) {
+	var mindEvaRoll = this.rollForRanks(mentalDef + dodgeEva, isDown ? 100 : stress);
+	if (accRoll > mindEvaRoll) {
 		results.hit.mind = true;
-		results.evaResultBeat = dodgeEvaRoll + mindEvaRoll;
-		results.beatBy = accRoll - (dodgeEvaRoll + mindEvaRoll);
-	} else if (accRoll >= dodgeEvaPercent) {
-		results.hit.mind = true;
-		results.evaResultBeat = dodgeEvaRoll;
-		results.evaResultUnder = dodgeEvaRoll + mindEvaRoll;
-		results.beatBy = accRoll - dodgeEvaRoll;
 	} else {
 		results.dodged = true;
-		results.evaResultBeat = 0;
-		results.evaResultUnder = dodgeEvaRoll;
-		results.beatBy = accRoll;
 	}
 	return results;
 };
 
-BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva, partProt, tough, stress, partDam, isDown, extraStress) {
+BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva, partProt, tough, stress, isDown, extraStress) {
 	var solidEva = eva + partProt.defense.solid;
 	var fluidEva = eva + partProt.defense.fluid;
-	var solidEvaRoll = this.rollForRanks(solidEva, isDown ? 5 : stress);
-	var tripEvaRoll = this.rollForRanks(tripEva, isDown ? 5 : stress);
-	var fluidEvaRoll = this.rollForRanks(fluidEva, isDown ? 5 : stress);
+	var solidEvaRoll = this.rollForRanks(solidEva, isDown ? 100 : stress);
+	var tripEvaRoll = this.rollForRanks(tripEva, isDown ? 100 : stress);
+	var fluidEvaRoll = this.rollForRanks(fluidEva, isDown ? 100 : stress);
 	var solidDamScale = solidEvaRoll <= 0 ? (accRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accRoll / solidEvaRoll));
 	var tripDamScale = tripEvaRoll <= 0 ? (accRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accRoll / tripEvaRoll));
 	var fluidDamScale = fluidEvaRoll <= 0 ? (accRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accRoll / fluidEvaRoll));
 	
-	var solidRegularBypass = false;
-	var solidThrustBypass = false;
-	var solidStilettoBypass = false;
-	var fluidBypass = false;
-	
-	if(partProt.coverage.solid >= 3) {
-		solidThrustBypass = solidDamScale >= 1.5;
-		solidStilettoBypass = solidDamScale >= 1.25;
-	} else if(partProt.coverage.solid >= 2) {
-		solidRegularBypass = solidDamScale >= 1.5;
-		solidThrustBypass = solidDamScale >= 1.25;
-		solidStilettoBypass = solidDamScale >= 1;
-	} else if(partProt.coverage.solid >= 1) {
-		solidRegularBypass = solidDamScale >= 1.25;
-		solidThrustBypass = solidDamScale >= 1;
-		solidStilettoBypass = solidDamScale >= 0.75;
-	} else {
-		solidRegularBypass = solidDamScale >= 1;
-		solidThrustBypass = solidDamScale >= 0.75;
-		solidStilettoBypass = true;
-	}
-	
-	if(partProt.coverage.fluid >= 3) {
-		
-	} else if(partProt.coverage.fluid >= 2) {
-		fluidBypass = fluidDamScale >= 1.25;
-	} else if(partProt.coverage.fluid >= 1) {
-		fluidBypass = fluidDamScale >= 1;
-	} else {
-		fluidBypass = fluidDamScale >= 0.75;
-	}
+	var solidCoverage = Math.min(10, partProt.defense.solid);
+	var fluidCoverage = Math.min(10, partProt.defense.fluid);
+	var solidRegularBypass = solidDamScale > (solidCoverage / 10) * 2.5;
+	var solidThrustBypass = solidDamScale > (solidCoverage / 10) * 1.66;
+	var solidStilettoBypass = solidDamScale > (solidCoverage / 10) * 1.49;
+	var fluidBypass = fluidDamScale >= (fluidCoverage / 10) * 1.66;
 	
 	var returnObj = {};
 	returnObj.remainingPower = {};
@@ -1742,15 +1844,15 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva,
 		|| finalIcePow > 0
 		|| finalCorrosionPow > 0 ? 20 : 0;
 	
-	returnObj.remainingPower.blunt = finalBluntPow > tough * 2 ? finalBluntPow - tough * 2 : 0;
-	returnObj.remainingPower.cut = finalCutPow > tough * 2 ? finalCutPow - tough * 2 : 0;
-	returnObj.remainingPower.keen = finalKeenPow > tough * 2 ? finalKeenPow - tough * 2 : 0;
-	returnObj.remainingPower.thrust = finalThrustPow > tough * 2 ? finalThrustPow - tough * 2 : 0;
-	returnObj.remainingPower.stiletto = finalStilettoPow > tough * 2 ? finalStilettoPow - tough * 2 : 0;
-	returnObj.remainingPower.fire = finalFirePow > tough * 2 ? finalFirePow - tough * 2 : 0;
-	returnObj.remainingPower.ice = finalIcePow > tough * 2 ? finalIcePow - tough * 2 : 0;
-	returnObj.remainingPower.corrosion = finalCorrosionPow > tough * 2 ? finalCorrosionPow - tough * 2 : 0;
-	returnObj.remainingPower.lightning = lightningFirePow > tough * 2 ? lightningFirePow - tough * 2 : 0;
+	returnObj.remainingPower.blunt = finalBluntPow > tough * 100 ? finalBluntPow - tough * 100 : 0;
+	returnObj.remainingPower.cut = finalCutPow > tough * 100 ? finalCutPow - tough * 100 : 0;
+	returnObj.remainingPower.keen = finalKeenPow > tough * 100 ? finalKeenPow - tough * 100 : 0;
+	returnObj.remainingPower.thrust = finalThrustPow > tough * 100 ? finalThrustPow - tough * 100 : 0;
+	returnObj.remainingPower.stiletto = finalStilettoPow > tough * 100 ? finalStilettoPow - tough * 100 : 0;
+	returnObj.remainingPower.fire = finalFirePow > tough * 100 ? finalFirePow - tough * 100 : 0;
+	returnObj.remainingPower.ice = finalIcePow > tough * 100 ? finalIcePow - tough * 100 : 0;
+	returnObj.remainingPower.corrosion = finalCorrosionPow > tough * 100 ? finalCorrosionPow - tough * 100 : 0;
+	returnObj.remainingPower.lightning = lightningFirePow > tough * 100 ? lightningFirePow - tough * 100 : 0;
 	returnObj.shouldCleave = hitDamage.overkillType !== undefined && hitDamage.overkillType === "cleave"
 		&& (returnObj.remainingPower.blunt > 0 || returnObj.remainingPower.cut > 0 || returnObj.remainingPower.keen
 		|| returnObj.remainingPower.thrust || returnObj.remainingPower.stiletto || returnObj.remainingPower.corrosion
@@ -1768,21 +1870,12 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva,
 	return returnObj;
 };
 
-BattleManager.resolveMentalDamage = function(hitDamage, accRoll, eva, partProt, tough, stress, partDam, isDown) {
+BattleManager.resolveMentalDamage = function(hitDamage, accRoll, eva, partProt, tough, stress, isDown) {
 	var totalEva = eva + partProt.defense;
-	var evaRoll = this.rollForRanks(totalEva, isDown ? 5 : stress);
+	var evaRoll = this.rollForRanks(totalEva, isDown ? 100 : stress);
 	var damScale = evaRoll <= 0 ? (accRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accRoll / evaRoll));
 	
-	var bypass = false;
-	if(partProt.defense >= 3) {
-		
-	} else if(partProt.defense >= 2) {
-		bypass = damScale >= 1.25;
-	} else if(partProt.defense >= 1) {
-		bypass = damScale >= 1;
-	} else {
-		bypass = damScale >= 0.75;
-	}
+	var bypass = damScale >= (Math.min(10, partProt.defense) / 10) * 1.66;
 	
 	var finalPow = Math.max(0, damScale * hitDamage.mental - (bypass ? tough : partProt.armor + tough));
 	
@@ -1798,14 +1891,13 @@ BattleManager.resolveMentalDamage = function(hitDamage, accRoll, eva, partProt, 
 	return returnObj;
 };
 
-BattleManager.rollForRanks = function(ranks, stressModifier) {
-	var adjustStress = Math.max(0, Math.min(5, stressModifier));
-	var adjustedRanks = Math.max(0, ranks + 3 - adjustStress);
+BattleManager.rollForRanks = function(ranks, stress) {
+	var adjustStress = Math.max(0, Math.min(100, stress));
+	var adjustedRanks = Math.max(0, ranks*10 + 100 - adjustStress);
 	if(adjustStress >= 5) {
 		adjustedRanks = Math.max(0, Math.floor(adjustedRanks / 2));
 	}
-	var adjustedRanks = Math.max(1, adjustedRanks);
-	return this.rollDoubleDice(adjustedRanks);
+	return adjustedRanks > 0 ? this.rollDoubleDice(adjustedRanks) : 0;
 };
 
 BattleManager.rollDoubleDice = function(sides) {
@@ -1820,7 +1912,8 @@ BattleManager.applyActionResults = function(results, target) {
 	if(target.blankDummy()) { return; }
 	var initialDownState = target.isDown();
 	var totalStress = results.stress.other + results.stress.mind + results.stress.head + results.stress.torso
-		+ results.stress.leftArm + results.stress.rightArm + results.stress.leftLeg + results.stress.rightLeg;
+		+ results.stress.leftArm + results.stress.rightArm + results.stress.leftLeg + results.stress.rightLeg
+		+ results.stress.leftHeld + results.stress.rightHeld;
 	target.adjustStress(totalStress - results.heal.stress);
 	target.adjustDamage("mind", results.damage.mind - results.heal.mind);
 	target.adjustDamage("head", results.damage.head - results.heal.head);

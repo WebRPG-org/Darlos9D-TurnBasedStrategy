@@ -199,6 +199,8 @@ Window_ItemStatusBase.prototype.drawSkillRequirements = function() {
 };
 
 Window_ItemStatusBase.prototype.drawProtection = function() {
+	var leftHeldProt = this.getCompleteProtection({});
+	var rightHeldProt = this.getCompleteProtection({});
 	var headProt = this.getCompleteProtection({});
 	var torsoProt = this.getCompleteProtection({});
 	var leftArmProt = this.getCompleteProtection({});
@@ -206,6 +208,8 @@ Window_ItemStatusBase.prototype.drawProtection = function() {
 	var leftLegProt = this.getCompleteProtection({});
 	var rightLegProt = this.getCompleteProtection({});
 	var mentalProt = this.getCompleteTypeProtection({});
+	var leftHeldProtTemp = leftHeldProt;
+	var rightHeldProtTemp = rightHeldProt;
 	var headProtTemp = headProt;
 	var torsoProtTemp = torsoProt;
 	var leftArmProtTemp = leftArmProt;
@@ -215,6 +219,8 @@ Window_ItemStatusBase.prototype.drawProtection = function() {
 	var mentalProtTemp = mentalProt;
 	
 	if (this._actor) {
+		leftHeldProt = this._actor.protection("leftHeld");
+		rightHeldProt = this._actor.protection("rightHeld");
 		headProt = this._actor.protection("head");
 		torsoProt = this._actor.protection("torso");
 		leftArmProt = this._actor.protection("leftArm");
@@ -224,6 +230,8 @@ Window_ItemStatusBase.prototype.drawProtection = function() {
 		mentalProt = this._actor.mentalProtection();
 		
 		if(this._tempActor) {
+			leftHeldProtTemp = this._tempActor.protection("leftHeld");
+			rightHeldProtTemp = this._tempActor.protection("rightHeld");
 			headProtTemp = this._tempActor.protection("head");
 			torsoProtTemp = this._tempActor.protection("torso");
 			leftArmProtTemp = this._tempActor.protection("leftArm");
@@ -232,6 +240,8 @@ Window_ItemStatusBase.prototype.drawProtection = function() {
 			rightLegProtTemp = this._tempActor.protection("rightLeg");
 			mentalProtTemp = this._tempActor.mentalProtection();
 		} else {
+			leftHeldProtTemp = leftHeldProt;
+			rightHeldProtTemp = rightHeldProt;
 			headProtTemp = headProt;
 			torsoProtTemp = torsoProt;
 			leftArmProtTemp = leftArmProt;
@@ -242,14 +252,18 @@ Window_ItemStatusBase.prototype.drawProtection = function() {
 		}
 	} else if (this._actionsItem && this._actionsItem.tbsStats.protection) {
 		var protection = this._actionsItem.tbsStats.protection;
+		leftHeldProt = this.getCompleteProtection({});
+		rightHeldProt = this.getCompleteProtection(protection.equippedArm);
 		headProt = this.getCompleteProtection(protection.head);
 		torsoProt = this.getCompleteProtection(protection.torso);
 		leftArmProt = this.getCompleteProtection(protection.arms);
-		rightArmProt = protection.equippedArm ? this.getCompleteProtection(protection.equippedArm) : this.getCompleteProtection(protection.arms);
+		rightArmProt = this.getCompleteProtection(protection.arms);
 		leftLegProt = this.getCompleteProtection(protection.legs);
 		rightLegProt = this.getCompleteProtection(protection.legs);
 		mentalProt = this.getCompleteMentalProtection(protection.mental);
 		
+		leftHeldProtTemp = leftHeldProt;
+		rightHeldProtTemp = rightHeldProt;
 		headProtTemp = headProt;
 		torsoProtTemp = torsoProt;
 		leftArmProtTemp = leftArmProt;
@@ -273,15 +287,17 @@ Window_ItemStatusBase.prototype.drawProtection = function() {
 	this.drawIcon(this.getIconIdFor("corrosion"), 		typesX + typesWidth * 7, 	0);
 	this.drawIcon(this.getIconIdFor("conducted"), 		typesX + typesWidth * 8, 	0);
 	
-	this.drawPhysProtection("Head", headProtTemp, headProt, typesRightAlignX, typesWidth, this.lineHeight());
-	this.drawPhysProtection("Torso", torsoProtTemp, torsoProt, typesRightAlignX, typesWidth, this.lineHeight() * 2);
-	this.drawPhysProtection("R Arm", rightArmProtTemp, rightArmProt, typesRightAlignX, typesWidth, this.lineHeight() * 3);
-	this.drawPhysProtection("L Arm", leftArmProtTemp, leftArmProt, typesRightAlignX, typesWidth, this.lineHeight() * 4);
-	this.drawPhysProtection("R Leg", rightLegProtTemp, rightLegProt, typesRightAlignX, typesWidth, this.lineHeight() * 5);
-	this.drawPhysProtection("L Leg", leftLegProtTemp, leftLegProt, typesRightAlignX, typesWidth, this.lineHeight() * 6);
+	this.drawPhysProtection("R Wpn", rightHeldProtTemp, rightHeldProt, typesRightAlignX, typesWidth, this.lineHeight());
+	this.drawPhysProtection("L Wpn", leftHeldProtTemp, leftHeldProt, typesRightAlignX, typesWidth, this.lineHeight() * 2);
+	this.drawPhysProtection("Head", headProtTemp, headProt, typesRightAlignX, typesWidth, this.lineHeight() * 3);
+	this.drawPhysProtection("Torso", torsoProtTemp, torsoProt, typesRightAlignX, typesWidth, this.lineHeight() * 4);
+	this.drawPhysProtection("R Arm", rightArmProtTemp, rightArmProt, typesRightAlignX, typesWidth, this.lineHeight() * 5);
+	this.drawPhysProtection("L Arm", leftArmProtTemp, leftArmProt, typesRightAlignX, typesWidth, this.lineHeight() * 6);
+	this.drawPhysProtection("R Leg", rightLegProtTemp, rightLegProt, typesRightAlignX, typesWidth, this.lineHeight() * 7);
+	this.drawPhysProtection("L Leg", leftLegProtTemp, leftLegProt, typesRightAlignX, typesWidth, this.lineHeight() * 8);
 	
-	this.drawIcon(this.getIconIdFor("mentalDefense"), typesX, this.lineHeight() * 8);
-	this.drawIcon(this.getIconIdFor("psychic"), typesX + typesWidth * 2, this.lineHeight() * 8);
+	//this.drawIcon(this.getIconIdFor("mentalDefense"), typesX, this.lineHeight() * 8);
+	//this.drawIcon(this.getIconIdFor("psychic"), typesX + typesWidth * 2, this.lineHeight() * 8);
 	this.changeTextColor(this.systemColor());
 	this.drawText("Mind", 0, this.lineHeight() * 9);
 	this.setTextColorForComparison(mentalProtTemp.defense, mentalProt.defense);
@@ -749,7 +765,7 @@ Window_TbsActorStatus.prototype.drawActorStress = function(battler, x, y) {
 			this.changeTextColor(this.deathColor());
 		} else { this.changeTextColor(this.crisisColor()); }
 	} else { this.resetTextColor(); }
-	this.drawText(battler.stress(), x + 14*2, y, 14*3, 'right');
+	this.drawText(battler.stress() > 0 ? battler.stress() : "-", x + 14*2, y, 14*3, 'right');
 	this.resetTextColor();
 };
 
@@ -2237,7 +2253,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 				this.changeTextColor(this.deathColor());
 			} else { this.changeTextColor(this.crisisColor()); }
 		} else { this.resetTextColor(); }
-		this.drawText(actor.getDamage(part), x + 14*2, y, 14*3, 'right');
+		this.drawText(actor.getDamage(part) > 0 ? actor.getDamage(part) : "-", x + 14*2, y, 14*3, 'right');
 		this.resetTextColor();
 	};
 	
@@ -3315,6 +3331,22 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 	};
 	
 	//BattleLog
+	Window_BattleLog.prototype.initialize = function() {
+		var width = this.windowWidth();
+		var height = this.windowHeight();
+		Window_Selectable.prototype.initialize.call(this, 0, 150, width, height);
+		this.opacity = 0;
+		this._lines = [];
+		this._methods = [];
+		this._waitCount = 0;
+		this._waitMode = '';
+		this._baseLineStack = [];
+		this._spriteset = null;
+		this.createBackBitmap();
+		this.createBackSprite();
+		this.refresh();
+	};
+	
 	Window_BattleLog.prototype.performActionStart = function(subject, action) {
 		//subject.performActionStart(action);
 	};
@@ -3429,11 +3461,11 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 				results.damage.rightLeg < results.heal.rightLeg ||
 				(results.stress.other + results.stress.mind + results.stress.head + results.stress.torso +
 				results.stress.leftArm + results.stress.rightArm + results.stress.leftLeg +
-				results.stress.rightLeg) < results.heal.stress) {
+				results.stress.rightLeg + results.stress.leftHeld + results.stress.rightHeld) < results.heal.stress) {
 				target.performRecovery();
 			} else if((results.stress.other + results.stress.mind + results.stress.head + results.stress.torso +
 				results.stress.leftArm + results.stress.rightArm + results.stress.leftLeg +
-				results.stress.rightLeg) > results.heal.stress) {
+				results.stress.rightLeg + results.stress.leftHeld + results.stress.rightHeld) > results.heal.stress) {
 				target.performStress();
 			} else {
 				target.performDeflection();
@@ -3494,18 +3526,18 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 		//this.displayCritical(target);
 		//this.push('popupDamage', target);
 		//this.push('popupDamage', subject);
-		this.displayResultsValues(target, results);
+		this.displayResultsValues(subject, target, results);
 		this.displayAffectedStatus(target, results);
 		//this.displayFailure(target);
 		this.push('waitForNewLine');
 		this.push('popBaseLine');
 	};
 	
-	Window_BattleLog.prototype.displayResultsValues = function(target, results) {
+	Window_BattleLog.prototype.displayResultsValues = function(subject, target, results) {
 		if (results.dodged) {
 			this.displayDodge(target);
 		} else {
-			this.displayPartsDamage(target, results);
+			this.displayPartsDamage(subject, target, results);
 			this.displayStress(target, results);
 		}
 		this.push('wait');
@@ -3517,7 +3549,7 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 		this.push('addText', fmt.format(target.displayName()));
 	};
 
-	Window_BattleLog.prototype.displayPartsDamage = function(target, results) {
+	Window_BattleLog.prototype.displayPartsDamage = function(subject, target, results) {
 		var hitCount = results.hit.mind ? 1 : 0;
 		hitCount += results.hit.head ? 1 : 0;
 		hitCount += results.hit.torso ? 1 : 0;
@@ -3525,6 +3557,8 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 		hitCount += results.hit.leftArm ? 1 : 0;
 		hitCount += results.hit.rightLeg ? 1 : 0;
 		hitCount += results.hit.leftLeg ? 1 : 0;
+		hitCount += results.hit.leftHeld ? 1 : 0;
+		hitCount += results.hit.rightHeld ? 1 : 0;
 		var lines = 0;
 		if(hitCount > 1) {
 			var totalDamage = results.damage["mind"]
@@ -3568,24 +3602,36 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 				}
 			}
 		} else {
-			lines += this.displayPartDamage(target, results, "mind");
-			lines += this.displayPartDamage(target, results, "head");
-			lines += this.displayPartDamage(target, results, "torso");
-			lines += this.displayPartDamage(target, results, "rightArm");
-			lines += this.displayPartDamage(target, results, "leftArm");
-			lines += this.displayPartDamage(target, results, "rightLeg");
-			lines += this.displayPartDamage(target, results, "leftLeg");
+			lines += this.displayPartDamage(subject, target, results, "mind");
+			lines += this.displayPartDamage(subject, target, results, "head");
+			lines += this.displayPartDamage(subject, target, results, "torso");
+			lines += this.displayPartDamage(subject, target, results, "rightArm");
+			lines += this.displayPartDamage(subject, target, results, "leftArm");
+			lines += this.displayPartDamage(subject, target, results, "rightLeg");
+			lines += this.displayPartDamage(subject, target, results, "leftLeg");
+			lines += this.displayPartDamage(subject, target, results, "rightHeld");
+			lines += this.displayPartDamage(subject, target, results, "leftHeld");
 		}
 		return lines;
 	};
 
-	Window_BattleLog.prototype.displayPartDamage = function(target, results, partName) {
+	Window_BattleLog.prototype.displayPartDamage = function(subject, target, results, partName) {
 		var partDisplayText = partName;
 		switch(partName) {
 			case "leftArm": partDisplayText = "left arm"; break;
 			case "rightArm": partDisplayText = "right arm"; break;
 			case "leftLeg": partDisplayText = "left leg"; break;
 			case "rightLeg": partDisplayText = "right leg"; break;
+			case "leftHeld":
+				partDisplayText = target.handedness() === "left"
+					? target.equips()[0] ? target.equips()[0].name : "main weapon"
+					: target.equips()[1] ? target.equips()[1].name : "offhand weapon";
+				break;
+			case "rightHeld":
+				partDisplayText = target.handedness() === "left"
+					? target.equips()[1] ? target.equips()[1].name : "offhand weapon"
+					: target.equips()[0] ? target.equips()[0].name : "main weapon";
+				break;
 		}
 		if(results.damage[partName] !== results.heal[partName]) {
 			var text = "";
@@ -3611,7 +3657,8 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
 
 	Window_BattleLog.prototype.displayStress = function(target, results) {
 		var totalStress = results.stress.other + results.stress.mind + results.stress.head + results.stress.torso
-			+ results.stress.leftArm + results.stress.rightArm + results.stress.leftLeg + results.stress.rightLeg;
+			+ results.stress.leftArm + results.stress.rightArm + results.stress.leftLeg + results.stress.rightLeg
+			 + results.stress.leftHeld + results.stress.rightHeld;
 		if(totalStress !== results.heal.stress) {
 			var text = "";
 			var diff = Math.abs(totalStress - results.heal.stress);

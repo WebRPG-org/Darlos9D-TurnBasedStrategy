@@ -616,11 +616,11 @@
 	};
 	
 	Game_BattlerBase.prototype.toughness = function() {
-		return 3;
+		return 6;
 	};
 	
 	Game_BattlerBase.prototype.mentalToughness = function() {
-		return 3;
+		return 6;
 	};
 	
 	Game_BattlerBase.prototype.stressRecovery = function() {
@@ -684,18 +684,17 @@
 	};
 	
 	Game_Enemy.prototype.toughness = function() {
-		return this.enemy().tbsStats.toughness === undefined ? 3 : this.enemy().tbsStats.toughness;
+		return this.enemy().tbsStats.toughness === undefined 
+			? Game_Battler.prototype.toughness.call(this)
+			: this.enemy().tbsStats.toughness;
 	};
 	
 	//fetching equipment stats
-	Game_BattlerBase.prototype.sumProtection = function(protOne, protTwo, sumCoverage) {
+	Game_BattlerBase.prototype.sumProtection = function(protOne, protTwo) {
 		var defaultProtection = {};
 		defaultProtection.defense = {};
 		defaultProtection.defense.solid = 0;
 		defaultProtection.defense.fluid = 0;
-		defaultProtection.coverage = {};
-		defaultProtection.coverage.solid = 0;
-		defaultProtection.coverage.fluid = 0;
 		defaultProtection.armor = {};
 		defaultProtection.armor.blunt = 0;
 		defaultProtection.armor.cut = 0;
@@ -712,10 +711,6 @@
 		if(protOne.defense.solid === undefined) { protOne.defense.solid = 0; }
 		if(protOne.defense.fluid === undefined) { protOne.defense.fluid = 0; }
 		
-		if(protOne.coverage === undefined) { protOne.coverage = defaultProtection.coverage; }
-		if(protOne.coverage.solid === undefined) { protOne.coverage.solid = 0; }
-		if(protOne.coverage.fluid === undefined) { protOne.coverage.fluid = 0; }
-		
 		if(protOne.armor === undefined) { protOne.armor = defaultProtection.armor; }
 		if(protOne.armor.blunt === undefined) { protOne.armor.blunt = 0; }
 		if(protOne.armor.cut === undefined) { protOne.armor.cut = 0; }
@@ -731,12 +726,6 @@
 		{
 			protOne.defense.solid += protTwo.defense.solid === undefined ? 0 : protTwo.defense.solid;
 			protOne.defense.fluid += protTwo.defense.fluid === undefined ? 0 : protTwo.defense.fluid;
-		}
-		
-		if(sumCoverage && protTwo.coverage !== undefined)
-		{
-			protOne.coverage.solid += protTwo.coverage.solid === undefined ? 0 : protTwo.coverage.solid;
-			protOne.coverage.fluid += protTwo.coverage.fluid === undefined ? 0 : protTwo.coverage.fluid;
 		}
 		
 		if(protTwo.armor !== undefined)
@@ -826,9 +815,6 @@
 		totalProtection.defense = {};
 		totalProtection.defense.solid = 0;
 		totalProtection.defense.fluid = 0;
-		totalProtection.coverage = {};
-		totalProtection.coverage.solid = 0;
-		totalProtection.coverage.fluid = 0;
 		totalProtection.armor = {};
 		totalProtection.armor.blunt = 0;
 		totalProtection.armor.cut = 0;
@@ -863,25 +849,20 @@
 	
 	Game_BattlerBase.prototype.sumPartProtection = function(protOne, protTwo, bodyPart, equipIndex, hands) {
 		if(!protTwo) { return protOne; }
-		protOne = this.sumProtection(protOne, protTwo.fullBody, true);
+		if(bodyPart !== "leftHeld" && bodyPart !== "rightHeld") {
+			protOne = this.sumProtection(protOne, protTwo.fullBody, true);
+		}
 		protOne = this.sumProtection(protOne, protTwo[bodyPart], true);
 		
-		if(bodyPart === "leftArm")
+		if((bodyPart === "leftHeld" && ((this.handedness() === "left" && equipIndex == 0)
+			|| (this.handedness() === "right" && equipIndex == 1)))
+			|| (bodyPart === "rightHeld" && ((this.handedness() === "right" && equipIndex == 0)
+			|| (this.handedness() === "left" && equipIndex == 1))))
 		{
-			if((equipIndex == 0 && (this.handedness() === "left" || (hands && hands === 2)))
-				|| (equipIndex == 1 && this.handedness() === "right"))
-			{
-				protOne = this.sumProtection(protOne, protTwo.equippedArm);
-			}
-			protOne = this.sumProtection(protOne, protTwo.arms, true);
+			protOne = this.sumProtection(protOne, protTwo.equippedArm);
 		}
-		else if(bodyPart === "rightArm")
+		else if(bodyPart === "leftArm" || bodyPart === "rightArm")
 		{
-			if((equipIndex == 0 && (this.handedness() === "right" || (hands && hands === 2)))
-				|| (equipIndex == 1 && this.handedness() === "left"))
-			{
-				protOne = this.sumProtection(protOne, protTwo.equippedArm);
-			}
 			protOne = this.sumProtection(protOne, protTwo.arms, true);
 		}
 		else if(bodyPart === "leftLeg" || bodyPart === "rightLeg")
