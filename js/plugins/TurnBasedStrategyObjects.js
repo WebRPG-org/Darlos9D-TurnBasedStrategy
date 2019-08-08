@@ -1995,15 +1995,17 @@
 	
 	Game_Map.prototype.updateTbsActionBattleScene = function() {
 		if(this._tbsInActionBattleScene) { return; }
-		if(!this._tbsSelectedAction.skipBattleScene && this.isAnyTbsActionTargets(true)) {
-			if(this._tbsCurAfterBtlScnFrames === -1) {
-				this._tbsCurAfterBtlScnFrames = this._tbsAfterBtlScnFrames;
+		if(this._tbsCurAfterBtlScnFrames === -1) {
+			var noTargets = !this.isAnyTbsActionTargets(true);
+			this._tbsCurAfterBtlScnFrames = this._tbsAfterBtlScnFrames * (noTargets ? 2 : 1);
+			if(noTargets) {
+				SoundManager.playBuzzer();
+			}
+			return;
+		} else {
+			this._tbsCurAfterBtlScnFrames--;
+			if(this._tbsCurAfterBtlScnFrames > 0) {
 				return;
-			} else {
-				this._tbsCurAfterBtlScnFrames--;
-				if(this._tbsCurAfterBtlScnFrames > 0) {
-					return;
-				}
 			}
 		}
 		this._tbsCurAfterBtlScnFrames = -1;

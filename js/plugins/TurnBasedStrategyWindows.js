@@ -2197,6 +2197,38 @@ Window_TbsBreadcrumb.prototype.updateOpen = function() {
         }
     }
 };
+
+//-----------------------------------------------------------------------------
+// Window_TbsNoTarget
+//
+// The window for informing the player that an action had no target
+
+function Window_TbsNoTarget() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_TbsNoTarget.prototype = Object.create(Window_Base.prototype);
+Window_TbsNoTarget.prototype.constructor = Window_TbsNoTarget;
+
+Window_TbsNoTarget.prototype.initialize = function() {
+    Window_Base.prototype.initialize.call(this,
+		Graphics.boxWidth / 2 - this.windowWidth() / 2,
+		Graphics.boxHeight / 2 - this.windowHeight() / 2,
+		this.windowWidth(), this.windowHeight());
+    this.refresh();
+};
+
+Window_TbsNoTarget.prototype.refresh = function() {
+	this.drawText("No target", this.textPadding(), 0);
+};
+
+Window_TbsNoTarget.prototype.windowWidth = function() {
+	return 14*9 + this.standardPadding()*2 + this.textPadding()*2;
+};
+
+Window_TbsNoTarget.prototype.windowHeight = function() {
+	return this.fittingHeight(1);
+};
  
 (function() {
 	//base

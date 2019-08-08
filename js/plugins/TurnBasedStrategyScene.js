@@ -92,9 +92,15 @@
 					this._tbsBreadcrumbWindowThree.setBreadcrumbInfo(undefined);
 					this._tbsBreadcrumbWindowFour.close();
 					this._tbsBreadcrumbWindowFour.setBreadcrumbInfo(undefined);
+					if(!$gameMap.isAnyTbsActionTargets(true)) {
+						this._tbsNoTargetWindow.show();
+						this._tbsNoTargetWindow.open();
+					}
 				}
 				this.updateBreadcrumbs();
 				return;
+			} else {
+				this._tbsNoTargetWindow.close();
 			}
 			if($gameMap.checkTbsTurnJustStarted()) {
 				this._tbsActorWindow.show();
@@ -273,6 +279,7 @@
 			this._tbsBreadcrumbWindowFour.setBreadcrumbInfo(undefined);
 			$gameMap.setBreadcrumbStage("none");
 			this._tbsBattleJustStarted = true;
+			this._tbsNoTargetWindow.close();
 		}
 	};
 	
@@ -354,6 +361,7 @@
 		this.createTbsTargetNameWindow();
 		this.createTbsTargetPartWindow();
 		this.createTbsBreadcrumbWindows();
+		this.createTbsNoTargetWindow();
 	};
 
 	Scene_Map.prototype.createTbsActorStatusWindow = function() {
@@ -477,6 +485,14 @@
 		this._tbsBreadcrumbWindowFour.addOtherBreadcrumbWindow(this._tbsBreadcrumbWindowOne);
 		this._tbsBreadcrumbWindowFour.addOtherBreadcrumbWindow(this._tbsBreadcrumbWindowTwo);
 		this._tbsBreadcrumbWindowFour.addOtherBreadcrumbWindow(this._tbsBreadcrumbWindowThree);
+	};
+	
+	Scene_Map.prototype.createTbsNoTargetWindow = function() {
+		this._tbsNoTargetWindow = new Window_TbsNoTarget();
+		this.addWindow(this._tbsNoTargetWindow);
+		this._tbsNoTargetWindow.hide();
+		this._tbsNoTargetWindow.close();
+		this._tbsNoTargetWindow.deactivate();
 	};
 	
 	Scene_Map.prototype.onActorOk = function() {
