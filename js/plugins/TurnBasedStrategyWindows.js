@@ -3511,7 +3511,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		this.push('waitForMovement');
 		//this.push('performAction', subject, action);
 		//this.push('showInitialAnimations', targets.clone()[0].battler, action.hits);
-		this.displayAction(subject, action);
+		//this.displayAction(subject, action);
 	};
 
 	Window_BattleLog.prototype.endAction = function(subject) {
@@ -3558,8 +3558,10 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		//this.displayCritical(target);
 		//this.push('popupDamage', target);
 		//this.push('popupDamage', subject);
-		this.displayResultsValues(subject, target, results);
+		//this.displayResultsValues(subject, target, results);
 		this.displayAffectedStatus(target, results);
+		this.push('wait');
+		this.push('wait');
 		//this.displayFailure(target);
 		this.push('waitForNewLine');
 		this.push('popBaseLine');
@@ -3744,7 +3746,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 			this.push('performCollapse', target);
 			this.push('popBaseLine');
 			this.push('pushBaseLine');
-			this.push('addText', target.displayName() + " is taken down!");
+			//this.push('addText', target.displayName() + " is taken down!");
 			this.push('waitForEffect');
 		}
 	};
@@ -3760,7 +3762,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		if(results.revived) {
 			this.push('popBaseLine');
 			this.push('pushBaseLine');
-			this.push('addText', target.displayName() + " can function again!");
+			//this.push('addText', target.displayName() + " can function again!");
 		}
 	};
 
