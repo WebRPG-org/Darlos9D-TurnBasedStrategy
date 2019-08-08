@@ -1102,6 +1102,24 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
 							results.shouldPassTurn = false;
 						}
+						if(damageResult.shouldConduct) {
+							var conductResults = this.conductMath(target, damageResult, "head");
+							results.stress.torso += conductResults.stress.torso;
+							results.stress.leftArm += conductResults.stress.leftArm;
+							results.stress.rightArm += conductResults.stress.rightArm;
+							results.stress.leftLeg += conductResults.stress.leftLeg;
+							results.stress.rightLeg += conductResults.stress.rightLeg;
+							results.damage.torso += conductResults.damage.torso;
+							results.damage.leftArm += conductResults.damage.leftArm;
+							results.damage.rightArm += conductResults.damage.rightArm;
+							results.damage.leftLeg += conductResults.damage.leftLeg;
+							results.damage.rightLeg += conductResults.damage.rightLeg;
+							results.hit.torso = conductResults.damage.torso > 0 ? true : results.hit.torso;
+							results.hit.leftArm = conductResults.damage.leftArm > 0 ? true : results.hit.leftArm;
+							results.hit.rightArm = conductResults.damage.rightArm > 0 ? true : results.hit.rightArm;
+							results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
+							results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
+						}
 					}
 					if(hitResult.hit.torso) {
 						var damageAccRoll = this.rollForRanks(acc, subjectStress);
@@ -1120,6 +1138,21 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						results.damage.torso += damageResult.damage;
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
 							results.shouldPassTurn = false;
+						}
+						if(damageResult.shouldConduct) {
+							var conductResults = this.conductMath(target, damageResult, "torso");
+							results.stress.leftArm += conductResults.stress.leftArm;
+							results.stress.rightArm += conductResults.stress.rightArm;
+							results.stress.leftLeg += conductResults.stress.leftLeg;
+							results.stress.rightLeg += conductResults.stress.rightLeg;
+							results.damage.leftArm += conductResults.damage.leftArm;
+							results.damage.rightArm += conductResults.damage.rightArm;
+							results.damage.leftLeg += conductResults.damage.leftLeg;
+							results.damage.rightLeg += conductResults.damage.rightLeg;
+							results.hit.leftArm = conductResults.damage.leftArm > 0 ? true : results.hit.leftArm;
+							results.hit.rightArm = conductResults.damage.rightArm > 0 ? true : results.hit.rightArm;
+							results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
+							results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
 						}
 					}
 					if(hitResult.hit.leftArm) {
@@ -1149,6 +1182,18 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							results.damage.torso += cleaveResults.damage.torso;
 							results.damage.head += cleaveResults.damage.head;
 						}
+						if(damageResult.shouldConduct) {
+							var conductResults = this.conductMath(target, damageResult, "leftArm");
+							results.stress.torso += conductResults.stress.torso;
+							results.stress.leftLeg += conductResults.stress.leftLeg;
+							results.stress.rightLeg += conductResults.stress.rightLeg;
+							results.damage.torso += conductResults.damage.torso;
+							results.damage.leftLeg += conductResults.damage.leftLeg;
+							results.damage.rightLeg += conductResults.damage.rightLeg;
+							results.hit.torso = conductResults.damage.torso > 0 ? true : results.hit.torso;
+							results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
+							results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
+						}
 					}
 					if(hitResult.hit.rightArm) {
 						var damageAccRoll = this.rollForRanks(acc, subjectStress);
@@ -1176,6 +1221,18 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							results.stress.head += cleaveResults.stress.head;
 							results.damage.torso += cleaveResults.damage.torso;
 							results.damage.head += cleaveResults.damage.head;
+						}
+						if(damageResult.shouldConduct) {
+							var conductResults = this.conductMath(target, damageResult, "rightArm");
+							results.stress.torso += conductResults.stress.torso;
+							results.stress.leftLeg += conductResults.stress.leftLeg;
+							results.stress.rightLeg += conductResults.stress.rightLeg;
+							results.damage.torso += conductResults.damage.torso;
+							results.damage.leftLeg += conductResults.damage.leftLeg;
+							results.damage.rightLeg += conductResults.damage.rightLeg;
+							results.hit.torso = conductResults.damage.torso > 0 ? true : results.hit.torso;
+							results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
+							results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
 						}
 					}
 					if(hitResult.hit.leftLeg) {
@@ -1272,6 +1329,24 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							results.damage.leftLeg += cleaveResults.damage.leftLeg;
 							results.damage.rightLeg += cleaveResults.damage.rightLeg;
 						}
+						if(damageResult.shouldConduct) {
+							var conductResults = this.conductMath(target, damageResult, "leftHeld");
+							results.stress.torso += conductResults.stress.torso;
+							results.stress.leftArm += conductResults.stress.leftArm;
+							results.stress.rightArm += conductResults.stress.rightArm;
+							results.stress.leftLeg += conductResults.stress.leftLeg;
+							results.stress.rightLeg += conductResults.stress.rightLeg;
+							results.damage.torso += conductResults.damage.torso;
+							results.damage.leftArm += conductResults.damage.leftArm;
+							results.damage.rightArm += conductResults.damage.rightArm;
+							results.damage.leftLeg += conductResults.damage.leftLeg;
+							results.damage.rightLeg += conductResults.damage.rightLeg;
+							results.hit.torso = conductResults.damage.torso > 0 ? true : results.hit.torso;
+							results.hit.leftArm = conductResults.damage.leftArm > 0 ? true : results.hit.leftArm;
+							results.hit.rightArm = conductResults.damage.rightArm > 0 ? true : results.hit.rightArm;
+							results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
+							results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
+						}
 					}
 					if(hitResult.hit.rightHeld) {
 						var damageAccRoll = this.rollForRanks(acc, subjectStress);
@@ -1310,6 +1385,24 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							results.damage.rightArm += cleaveResults.damage.rightArm;
 							results.damage.leftLeg += cleaveResults.damage.leftLeg;
 							results.damage.rightLeg += cleaveResults.damage.rightLeg;
+						}
+						if(damageResult.shouldConduct) {
+							this.conductMath(target, damageResult, "rightHeld");
+							results.stress.torso += conductResults.stress.torso;
+							results.stress.leftArm += conductResults.stress.leftArm;
+							results.stress.rightArm += conductResults.stress.rightArm;
+							results.stress.leftLeg += conductResults.stress.leftLeg;
+							results.stress.rightLeg += conductResults.stress.rightLeg;
+							results.damage.torso += conductResults.damage.torso;
+							results.damage.leftArm += conductResults.damage.leftArm;
+							results.damage.rightArm += conductResults.damage.rightArm;
+							results.damage.leftLeg += conductResults.damage.leftLeg;
+							results.damage.rightLeg += conductResults.damage.rightLeg;
+							results.hit.torso = conductResults.damage.torso > 0 ? true : results.hit.torso;
+							results.hit.leftArm = conductResults.damage.leftArm > 0 ? true : results.hit.leftArm;
+							results.hit.rightArm = conductResults.damage.rightArm > 0 ? true : results.hit.rightArm;
+							results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
+							results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
 						}
 					}
 				}
@@ -1473,6 +1566,86 @@ BattleManager.cleaveMath = function(subject, actionInfo, hit, target, targetsByH
 	if(damageResult.remainingPower.corrosion > 0) { newHit.damage.corrosion = damageResult.remainingPower.corrosion; }
 	hitGroup.hits.push(newHit);
 	return this.combatMath(subject, actionInfo, hitGroup, target, targetsByHit, hitGroupIndex, targetingType);
+};
+
+BattleManager.conductMath = function(target, damageResult, startingPart) {
+	var conductResults = {};
+	conductResults.damage = {};
+	conductResults.stress = {};
+	conductResults.damage.torso = 0;
+	conductResults.damage.leftArm = 0;
+	conductResults.damage.rightArm = 0;
+	conductResults.damage.leftLeg = 0;
+	conductResults.damage.rightLeg = 0;
+	conductResults.stress.torso = 0;
+	conductResults.stress.leftArm = 0;
+	conductResults.stress.rightArm = 0;
+	conductResults.stress.leftLeg = 0;
+	conductResults.stress.rightLeg = 0;
+	var tough = target.toughness();
+	var lightningPow = damageResult.remainingPower.lightning;
+	if(lightningPow <= 0) {
+		return conductResults;
+	}
+	switch(startingPart) {
+		case "head":
+			conductResults = this.conductMath(target, damageResult, "torso");
+			conductResults.damage.torso += Math.max(0, Math.ceil(lightningPow / tough - 1));
+			conductResults.stress.torso += 40 + Math.floor(conductResults.damage.torso / 2.5);
+			break;
+		case "torso":
+			var random = Math.random();
+			if(target.limbsType() === "quadrupedal") {
+				if(random >= 0.75) {
+					conductResults = this.conductMath(target, damageResult, "leftArm");
+					conductResults.damage.leftArm += Math.max(0, Math.ceil(lightningPow / tough - 1));
+					conductResults.stress.leftArm += 20 + Math.floor(conductResults.damage.leftArm / 2.5);
+				} else if(random >= 0.5) {
+					conductResults = this.conductMath(target, damageResult, "rightArm");
+					conductResults.damage.rightArm += Math.max(0, Math.ceil(lightningPow / tough - 1));
+					conductResults.stress.rightArm += 20 + Math.floor(conductResults.damage.rightArm / 2.5);
+				} else if(random >= 0.25) {
+					conductResults = this.conductMath(target, damageResult, "leftLeg");
+					conductResults.damage.leftLeg += Math.max(0, Math.ceil(lightningPow / tough - 1));
+					conductResults.stress.leftLeg += 20 + Math.floor(conductResults.damage.leftLeg / 2.5);
+				} else {
+					conductResults = this.conductMath(target, damageResult, "rightLeg");
+					conductResults.damage.rightLeg += Math.max(0, Math.ceil(lightningPow / tough - 1));
+					conductResults.stress.rightLeg += 20 + Math.floor(conductResults.damage.rightLeg / 2.5);
+				}
+			} else {
+				var extraStress = target.limbsType() === "winged" && target.isFlying() ? 0 : 20;
+				if(random >= 0.5) {
+					conductResults = this.conductMath(target, damageResult, "leftLeg");
+					conductResults.damage.leftLeg += Math.max(0, Math.ceil(lightningPow / tough - 1));
+					conductResults.stress.leftLeg += 20 + extraStress + Math.floor(conductResults.damage.leftLeg / 2.5);
+				} else {
+					conductResults = this.conductMath(target, damageResult, "rightLeg");
+					conductResults.damage.rightLeg += Math.max(0, Math.ceil(lightningPow / tough - 1));
+					conductResults.stress.rightLeg += 20 + extraStress + Math.floor(conductResults.damage.rightLeg / 2.5);
+				}
+			}
+			break;
+		case "leftArm":
+		case "rightArm":
+			if(target.limbsType() !== "quadrupedal") {
+				conductResults = this.conductMath(target. damageResult, "torso");
+				conductResults.damage.torso += Math.max(0, Math.ceil(lightningPow / tough - 1));
+				conductResults.stress.torso += 20 + Math.floor(conductResults.damage.torso / 2.5);
+			}
+			break;
+		case "leftHeld":
+			conductResults = this.conductMath(target, damageResult, "leftArm");
+			conductResults.damage.leftArm += Math.max(0, Math.ceil(lightningPow / tough - 1));
+			conductResults.stress.leftArm += 20 + Math.floor(conductResults.damage.leftArm / 2.5);
+			break;
+		case "rightHeld":
+			conductResults = this.conductMath(target, damageResult, "rightArm");
+			conductResults.damage.rightArm += Math.max(0, Math.ceil(lightningPow / tough - 1));
+			conductResults.stress.rightArm += Math.floor(damageResult.remainingPower.lightning / 2.5);
+			break;
+	}
+	return conductResults;
 };
 
 BattleManager.getPartDamagePotential = function(damage, partProt) {
@@ -1852,7 +2025,7 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva,
 	returnObj.remainingPower.fire = finalFirePow > tough * 100 ? finalFirePow - tough * 100 : 0;
 	returnObj.remainingPower.ice = finalIcePow > tough * 100 ? finalIcePow - tough * 100 : 0;
 	returnObj.remainingPower.corrosion = finalCorrosionPow > tough * 100 ? finalCorrosionPow - tough * 100 : 0;
-	returnObj.remainingPower.lightning = lightningFirePow > tough * 100 ? lightningFirePow - tough * 100 : 0;
+	returnObj.remainingPower.lightning = lightningFirePow;
 	returnObj.shouldCleave = hitDamage.overkillType !== undefined && hitDamage.overkillType === "cleave"
 		&& (returnObj.remainingPower.blunt > 0 || returnObj.remainingPower.cut > 0 || returnObj.remainingPower.keen
 		|| returnObj.remainingPower.thrust || returnObj.remainingPower.stiletto || returnObj.remainingPower.corrosion
