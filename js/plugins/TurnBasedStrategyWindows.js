@@ -3479,6 +3479,8 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 				}
 			});
 		}
+		target.setTbsResults(results);
+		target.startDamagePopup();
 		if (results.dodged) {
 			target.performEvasion();
 		} else {
@@ -3505,6 +3507,66 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		}
 	};
 	
+	Window_BattleLog.prototype.showStressCost = function(subject, stressCost) {
+		var totalResults = {};
+		totalResults.stress = {};
+		totalResults.stress.head = stressCost;
+		totalResults.stress.torso = 0;
+		totalResults.stress.leftArm = 0;
+		totalResults.stress.rightArm = 0;
+		totalResults.stress.leftLeg = 0;
+		totalResults.stress.rightLeg = 0;
+		totalResults.stress.leftHeld = 0;
+		totalResults.stress.rightHeld = 0;
+		totalResults.stress.mind = 0;
+		totalResults.stress.other = 0;
+		totalResults.damage = {};
+		totalResults.damage.head = 0;
+		totalResults.damage.torso = 0;
+		totalResults.damage.leftArm = 0;
+		totalResults.damage.rightArm = 0;
+		totalResults.damage.leftLeg = 0;
+		totalResults.damage.rightLeg = 0;
+		totalResults.damage.leftHeld = 0;
+		totalResults.damage.rightHeld = 0;
+		totalResults.damage.mind = 0;
+		totalResults.heal = {};
+		totalResults.heal.stress = 0;
+		totalResults.heal.head = 0;
+		totalResults.heal.torso = 0;
+		totalResults.heal.leftArm = 0;
+		totalResults.heal.rightArm = 0;
+		totalResults.heal.leftLeg = 0;
+		totalResults.heal.rightLeg = 0;
+		totalResults.heal.leftHeld = 0;
+		totalResults.heal.rightHeld = 0;
+		totalResults.heal.mind = 0;
+		totalResults.dodged = false;
+		totalResults.hit = {};
+		totalResults.hit.mind = false;
+		totalResults.hit.head = false;
+		totalResults.hit.torso = false;
+		totalResults.hit.leftArm = false;
+		totalResults.hit.rightArm = false;
+		totalResults.hit.leftLeg = false;
+		totalResults.hit.rightLeg = false;
+		totalResults.hit.leftHeld = false;
+		totalResults.hit.rightHeld = false;
+		totalResults.critical = {};
+		totalResults.critical.mind = false;
+		totalResults.critical.head = false;
+		totalResults.critical.torso = false;
+		totalResults.critical.leftArm = false;
+		totalResults.critical.rightArm = false;
+		totalResults.critical.leftLeg = false;
+		totalResults.critical.rightLeg = false;
+		totalResults.buffs = [];
+		totalResults.downed = false;
+		totalResults.revived = false;
+		subject.setTbsResults(totalResults);
+		subject.startDamagePopup();
+	};
+	
 	Window_BattleLog.prototype.startAction = function(subject, action, targets) {
 		//var item = action.item();
 		this.push('performActionStart', subject, action);
@@ -3518,6 +3580,10 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		this.push('waitForNewLine');
 		this.push('clear');
 		this.push('performActionEnd', subject);
+	};
+	
+	Window_BattleLog.prototype.displayRegeneration = function(subject) {
+		//this.push('popupDamage', subject);
 	};
 	
 	Window_BattleLog.prototype.displayAction = function(subject, action) {

@@ -261,6 +261,47 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 		});
 	};
 	
+	Sprite_Battler.prototype.setupDamagePopup = function() {
+		if (this._battler.isDamagePopupRequested()) {
+			var results = this._battler.getTbsResults();
+			if(results.dodged) {
+				this.setupSingleDamagePopup(false, 0, "dodged");
+			} else {
+				this.setupSingleDamagePopup(results.hit.head, results.damage.head - results.heal.head,
+					"physicalDamage", results.critical.head, 0, -60);
+				this.setupSingleDamagePopup(results.hit.torso, results.damage.torso - results.heal.torso,
+					"physicalDamage");
+				this.setupSingleDamagePopup(results.hit.leftArm, results.damage.leftArm - results.heal.leftArm,
+					"physicalDamage", results.critical.leftArm, -90);
+				this.setupSingleDamagePopup(results.hit.rightArm, results.damage.rightArm - results.heal.rightArm,
+					"physicalDamage", results.critical.rightArm, 90);
+				this.setupSingleDamagePopup(results.hit.leftLeg, results.damage.leftLeg - results.heal.leftLeg,
+					"physicalDamage", results.critical.leftLeg, -45, 60);
+				this.setupSingleDamagePopup(results.hit.rightLeg, results.damage.rightLeg - results.heal.rightLeg,
+					"physicalDamage", results.critical.rightLeg, 45, 60);
+				this.setupSingleDamagePopup(results.hit.mind, results.damage.mind - results.heal.mind,
+					"mentalDamage", results.critical.mind, -90, -60);
+				var totalStress = results.stress.head + results.stress.torso + results.stress.leftArm
+					+ results.stress.rightArm + results.stress.leftLeg + results.stress.rightLeg
+					+ results.stress.leftHeld + results.stress.rightHeld - results.heal.stress;
+				this.setupSingleDamagePopup(totalStress != 0, totalStress, "stress", false, 90, -60);
+			}
+			this._battler.clearDamagePopup();
+			this._battler.clearResult();
+			this._battler.clearTbsResults();
+		}
+	};
+	
+	Sprite_Battler.prototype.setupSingleDamagePopup = function(hit, numValue, resultType, critical, xOffset, yOffset) {
+		if(!hit && resultType !== "dodged") { return; }
+		var sprite = new Sprite_Damage();
+		sprite.x = this.x + this.damageOffsetX() + (xOffset === undefined ? 0 : xOffset);
+		sprite.y = this.y + this.damageOffsetY() + (yOffset === undefined ? 0 : yOffset);
+		sprite.setupManual(numValue, resultType, critical);
+		this._damages.push(sprite);
+		this.parent.addChild(sprite);
+	};
+	
 	//sprite actor
 	Sprite_Actor.prototype.setBattler = function(battler) {
 		Sprite_Battler.prototype.setBattler.call(this, battler);
@@ -312,6 +353,22 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 	
 	Sprite_Animation.prototype.stop = function() {
 		this._duration = 0;
+	};
+	
+	//sprite damage
+	Sprite_Damage.prototype.setupManual = function(numValue, resultType, critical) {
+		if (resultType === "dodged") {
+			this.createMiss();
+		} else if (resultType === "physicalDamage") {
+			this.createDigits(0, numValue);
+		} else if (resultType === "mentalDamage") {
+			this.createDigits(2, numValue);
+		} else if (resultType === "stress") {
+			this.createDigits(2, numValue);
+		}
+		if (critical) {
+			this.setupCriticalEffect();
+		}
 	};
 	
 	//sprite state icon

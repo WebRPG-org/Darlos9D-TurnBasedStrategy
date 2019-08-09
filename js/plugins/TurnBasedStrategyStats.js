@@ -506,6 +506,19 @@
 		this._screenX = 0;
 		this._screenY = 0;
 		this._shouldMoveIn = false;
+		this._tbsResults = undefined;
+	};
+	
+	Game_Battler.prototype.setTbsResults = function(tbsResults) {
+		this._tbsResults = tbsResults;
+	};
+	
+	Game_Battler.prototype.getTbsResults = function() {
+		return this._tbsResults;
+	};
+	
+	Game_Battler.prototype.clearTbsResults = function() {
+		this._tbsResults = undefined;
 	};
 	
 	Game_Battler.prototype.performDeflection = function() {
@@ -616,11 +629,11 @@
 	};
 	
 	Game_BattlerBase.prototype.toughness = function() {
-		return 6;
+		return 4;
 	};
 	
 	Game_BattlerBase.prototype.mentalToughness = function() {
-		return 6;
+		return 4;
 	};
 	
 	Game_BattlerBase.prototype.stressRecovery = function() {

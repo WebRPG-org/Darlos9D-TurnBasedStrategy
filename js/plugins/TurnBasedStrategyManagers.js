@@ -160,7 +160,7 @@ BattleManager.initMembers = function() {
 	this._actionTimer = 0;
 	this._hitMissDelay = [];
 	this._showCastAnimation = true;
-	this._equipmentBaseToughness = 12;
+	this._equipmentBaseToughness = 8;
 };
 
 BattleManager.setLeftActorStatusWindow = function(actorStatusWindow) {
@@ -564,6 +564,7 @@ BattleManager.updateAction = function() {
 			if(this._tbsTargets.length <= 0) {
 				if(this._tbsActionInfo.action.stressCost !== undefined) {
 					this._subject.battler.adjustStress(this._tbsActionInfo.action.stressCost);
+					this._logWindow.showStressCost(this._subject.battler, this._tbsActionInfo.action.stressCost);
 				}
 			}
 			this.invokeAction(this._subject.battler, target.battler, this._resultsPerGroup);
@@ -644,10 +645,17 @@ BattleManager.invokeNormalAction = function(subject, target, resultsPerGroup) {
 	totalResults.hit.rightLeg = false;
 	totalResults.hit.leftHeld = false;
 	totalResults.hit.rightHeld = false;
+	totalResults.critical = {};
+	totalResults.critical.mind = false;
+	totalResults.critical.head = false;
+	totalResults.critical.torso = false;
+	totalResults.critical.leftArm = false;
+	totalResults.critical.rightArm = false;
+	totalResults.critical.leftLeg = false;
+	totalResults.critical.rightLeg = false;
 	totalResults.buffs = [];
 	totalResults.downed = false;
 	totalResults.revived = false;
-	totalResults.dodged = true;
 	resultsPerGroup.forEach(function (results) {
 		totalResults.stress.head += results.stress.head;
 		totalResults.stress.torso += results.stress.torso;
@@ -683,6 +691,13 @@ BattleManager.invokeNormalAction = function(subject, target, resultsPerGroup) {
 		totalResults.hit.rightLeg = results.hit.rightLeg ? true : totalResults.hit.rightLeg;
 		totalResults.hit.leftHeld = results.hit.leftHeld ? true : totalResults.hit.leftHeld;
 		totalResults.hit.rightHeld = results.hit.rightHeld ? true : totalResults.hit.rightHeld;
+		totalResults.critical.mind = results.critical.mind ? true : totalResults.critical.mind;
+		totalResults.critical.head = results.critical.head ? true : totalResults.critical.head;
+		totalResults.critical.torso = results.critical.torso ? true : totalResults.critical.torso;
+		totalResults.critical.leftArm = results.critical.leftArm ? true : totalResults.critical.leftArm;
+		totalResults.critical.rightArm = results.critical.rightArm ? true : totalResults.critical.rightArm;
+		totalResults.critical.leftLeg = results.critical.leftLeg ? true : totalResults.critical.leftLeg;
+		totalResults.critical.rightLeg = results.critical.rightLeg ? true : totalResults.critical.rightLeg;
 		totalResults.buffs = results.buffs.concat(results.buffs);
 		totalResults.downed = results.downed ? true : totalResults.downed;
 		totalResults.revived = results.revived ? true : totalResults.revived;
@@ -835,6 +850,14 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 	results.hit.rightArm = false;
 	results.hit.leftLeg = false;
 	results.hit.rightLeg = false;
+	results.critical = {};
+	results.critical.mind = false;
+	results.critical.head = false;
+	results.critical.torso = false;
+	results.critical.leftArm = false;
+	results.critical.rightArm = false;
+	results.critical.leftLeg = false;
+	results.critical.rightLeg = false;
 	results.buffs = [];
 	results.downed = false;
 	results.revived = false;
@@ -1099,6 +1122,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							true);
 						results.stress.head += damageResult.stress;
 						results.damage.head += damageResult.damage;
+						results.critical.head = damageResult.critical ? true : results.critical.head;
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
 							results.shouldPassTurn = false;
 						}
@@ -1119,6 +1143,16 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							results.hit.rightArm = conductResults.damage.rightArm > 0 ? true : results.hit.rightArm;
 							results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
 							results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
+							results.critical.torso = conductResults.damage.torso > 0 && damageResult.critical
+								? true : results.critical.torso;
+							results.critical.leftArm = conductResults.damage.leftArm > 0 && damageResult.critical
+								? true : results.critical.leftArm;
+							results.critical.rightArm = conductResults.damage.rightArm > 0 && damageResult.critical
+								? true : results.critical.rightArm;
+							results.critical.leftLeg = conductResults.damage.leftLeg > 0 && damageResult.critical
+								? true : results.critical.leftLeg;
+							results.critical.rightLeg = conductResults.damage.rightLeg > 0 && damageResult.critical
+								? true : results.critical.rightLeg;
 						}
 					}
 					if(hitResult.hit.torso) {
@@ -1136,6 +1170,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							false);
 						results.stress.torso += damageResult.stress;
 						results.damage.torso += damageResult.damage;
+						results.critical.torso = damageResult.critical ? true : results.critical.torso;
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
 							results.shouldPassTurn = false;
 						}
@@ -1153,6 +1188,14 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							results.hit.rightArm = conductResults.damage.rightArm > 0 ? true : results.hit.rightArm;
 							results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
 							results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
+							results.critical.leftArm = conductResults.damage.leftArm > 0 && damageResult.critical
+								? true : results.critical.leftArm;
+							results.critical.rightArm = conductResults.damage.rightArm > 0 && damageResult.critical
+								? true : results.critical.rightArm;
+							results.critical.leftLeg = conductResults.damage.leftLeg > 0 && damageResult.critical
+								? true : results.critical.leftLeg;
+							results.critical.rightLeg = conductResults.damage.rightLeg > 0 && damageResult.critical
+								? true : results.critical.rightLeg;
 						}
 					}
 					if(hitResult.hit.leftArm) {
@@ -1170,6 +1213,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							target.limbsType() === "winged" && target.isFlying());
 						results.stress.leftArm += damageResult.stress;
 						results.damage.leftArm += damageResult.damage;
+						results.critical.leftArm = damageResult.critical ? true : results.critical.leftArm;
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
 							results.shouldPassTurn = false;
 						}
@@ -1193,6 +1237,12 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							results.hit.torso = conductResults.damage.torso > 0 ? true : results.hit.torso;
 							results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
 							results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
+							results.critical.torso = conductResults.damage.torso > 0 && damageResult.critical
+								? true : results.critical.torso;
+							results.critical.leftLeg = conductResults.damage.leftLeg > 0 && damageResult.critical
+								? true : results.critical.leftLeg;
+							results.critical.rightLeg = conductResults.damage.rightLeg > 0 && damageResult.critical
+								? true : results.critical.rightLeg;
 						}
 					}
 					if(hitResult.hit.rightArm) {
@@ -1210,6 +1260,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							target.limbsType() === "winged" && target.isFlying());
 						results.stress.rightArm += damageResult.stress;
 						results.damage.rightArm += damageResult.damage;
+						results.critical.rightArm = damageResult.critical ? true : results.critical.rightArm;
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
 							results.shouldPassTurn = false;
 						}
@@ -1233,6 +1284,12 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							results.hit.torso = conductResults.damage.torso > 0 ? true : results.hit.torso;
 							results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
 							results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
+							results.critical.torso = conductResults.damage.torso > 0 && damageResult.critical
+								? true : results.critical.torso;
+							results.critical.leftLeg = conductResults.damage.leftLeg > 0 && damageResult.critical
+								? true : results.critical.leftLeg;
+							results.critical.rightLeg = conductResults.damage.rightLeg > 0 && damageResult.critical
+								? true : results.critical.rightLeg;
 						}
 					}
 					if(hitResult.hit.leftLeg) {
@@ -1250,6 +1307,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							target.limbsType() !== "quadrupedal" && (target.limbsType() !== "winged" || !target.isFlying()));
 						results.stress.leftLeg += damageResult.stress;
 						results.damage.leftLeg += damageResult.damage;
+						results.critical.leftLeg = damageResult.critical ? true : results.critical.leftLeg;
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
 							results.shouldPassTurn = false;
 						}
@@ -1278,6 +1336,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							target.limbsType() !== "quadrupedal" && (target.limbsType() !== "winged" || !target.isFlying()));
 						results.stress.rightLeg += damageResult.stress;
 						results.damage.rightLeg += damageResult.damage;
+						results.critical.rightLeg = damageResult.critical ? true : results.critical.rightLeg;
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
 							results.shouldPassTurn = false;
 						}
@@ -1303,7 +1362,8 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							this._equipmentBaseToughness, 
 							targetStress,
 							target.isDown(),
-							false);
+							false,
+							true);
 						results.stress.leftHeld += damageResult.stress;
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
 							results.shouldPassTurn = false;
@@ -1346,6 +1406,16 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							results.hit.rightArm = conductResults.damage.rightArm > 0 ? true : results.hit.rightArm;
 							results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
 							results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
+							results.critical.torso = conductResults.damage.torso > 0 && damageResult.critical
+								? true : results.critical.torso;
+							results.critical.leftArm = conductResults.damage.leftArm > 0 && damageResult.critical
+								? true : results.critical.leftArm;
+							results.critical.rightArm = conductResults.damage.rightArm > 0 && damageResult.critical
+								? true : results.critical.rightArm;
+							results.critical.leftLeg = conductResults.damage.leftLeg > 0 && damageResult.critical
+								? true : results.critical.leftLeg;
+							results.critical.rightLeg = conductResults.damage.rightLeg > 0 && damageResult.critical
+								? true : results.critical.rightLeg;
 						}
 					}
 					if(hitResult.hit.rightHeld) {
@@ -1360,7 +1430,8 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							this._equipmentBaseToughness, 
 							targetStress,
 							target.isDown(),
-							false);
+							false,
+							true);
 						results.stress.rightHeld += damageResult.stress;
 						if(damageResult.stress > 0 || damageResult.damage > 0) {
 							results.shouldPassTurn = false;
@@ -1403,6 +1474,16 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							results.hit.rightArm = conductResults.damage.rightArm > 0 ? true : results.hit.rightArm;
 							results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
 							results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
+							results.critical.torso = conductResults.damage.torso > 0 && damageResult.critical
+								? true : results.critical.torso;
+							results.critical.leftArm = conductResults.damage.leftArm > 0 && damageResult.critical
+								? true : results.critical.leftArm;
+							results.critical.rightArm = conductResults.damage.rightArm > 0 && damageResult.critical
+								? true : results.critical.rightArm;
+							results.critical.leftLeg = conductResults.damage.leftLeg > 0 && damageResult.critical
+								? true : results.critical.leftLeg;
+							results.critical.rightLeg = conductResults.damage.rightLeg > 0 && damageResult.critical
+								? true : results.critical.rightLeg;
 						}
 					}
 				}
@@ -1420,6 +1501,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						target.isDown());
 					results.stress.mind += damageResult.stress;
 					results.damage.mind += damageResult.damage;
+					results.critical.mind = damageResult.critical ? true : results.critical.mind;
 					if(damageResult.stress > 0 || damageResult.damage > 0) {
 						results.shouldPassTurn = false;
 					}
@@ -1947,7 +2029,7 @@ BattleManager.calculateMentalHit = function(stress, accRoll, dodgeEva, mentalDef
 	return results;
 };
 
-BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva, partProt, tough, stress, isDown, extraStress) {
+BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva, partProt, tough, stress, isDown, extraStress, fullCoverage) {
 	var solidEva = eva + partProt.defense.solid;
 	var fluidEva = eva + partProt.defense.fluid;
 	var solidEvaRoll = this.rollForRanks(solidEva, isDown ? 100 : stress);
@@ -1957,8 +2039,8 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva,
 	var tripDamScale = tripEvaRoll <= 0 ? (accRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accRoll / tripEvaRoll));
 	var fluidDamScale = fluidEvaRoll <= 0 ? (accRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accRoll / fluidEvaRoll));
 	
-	var solidCoverage = Math.min(10, partProt.defense.solid);
-	var fluidCoverage = Math.min(10, partProt.defense.fluid);
+	var solidCoverage = fullCoverage ? 10 : Math.min(10, partProt.defense.solid);
+	var fluidCoverage = fullCoverage ? 10 : Math.min(10, partProt.defense.fluid);
 	var solidRegularBypass = solidDamScale > (solidCoverage / 10) * 2.5;
 	var solidThrustBypass = solidDamScale > (solidCoverage / 10) * 1.66;
 	var solidStilettoBypass = solidDamScale > (solidCoverage / 10) * 1.49;
@@ -1966,45 +2048,61 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva,
 	
 	var returnObj = {};
 	returnObj.remainingPower = {};
+	returnObj.critical = false;
 	
 	var bluntPow = hitDamage.blunt;
 	var finalCutPow = Math.max(0, solidDamScale * hitDamage.cut - (solidRegularBypass ? tough : partProt.armor.cut + tough));
 	bluntPow += Math.max(0, solidDamScale * hitDamage.cut - finalCutPow) / 2;
 	var finalCutDamage = Math.max(0, Math.ceil(finalCutPow / tough - 1));
+	returnObj.critical = finalCutDamage > 0 && solidRegularBypass ? true : returnObj.critical;
 	
 	var finalKeenPow = Math.max(0, solidDamScale * hitDamage.keen - (solidRegularBypass ? tough : partProt.armor.cut + tough));
 	bluntPow += Math.max(0, solidDamScale * hitDamage.keen - finalKeenPow) / 4;
-	finalCutDamage += Math.max(0, Math.ceil(finalKeenPow / tough - 1));
+	var finalKeenDamage = Math.max(0, Math.ceil(finalKeenPow / tough - 1));
+	returnObj.critical = finalKeenDamage > 0 && solidRegularBypass ? true : returnObj.critical;
+	finalCutDamage += finalKeenDamage;
 	
 	var finalThrustPow = Math.max(0, solidDamScale * hitDamage.thrust - (solidThrustBypass ? tough : partProt.armor.cut + tough));
 	bluntPow += Math.max(0, solidDamScale * hitDamage.thrust - finalThrustPow) / 4;
-	finalCutDamage += Math.max(0, Math.ceil(finalThrustPow / tough - 1));
+	var finalThrustDamage = Math.max(0, Math.ceil(finalThrustPow / tough - 1));
+	returnObj.critical = finalThrustDamage > 0 && solidThrustBypass ? true : returnObj.critical;
+	finalCutDamage += finalThrustDamage;
 	
 	var finalStilettoPow = Math.max(0, solidDamScale * hitDamage.stiletto - (solidStilettoBypass ? tough : partProt.armor.cut + tough));
 	bluntPow += Math.max(0, solidDamScale * hitDamage.stiletto - finalStilettoPow) / 8;
-	finalCutDamage += Math.max(0, Math.ceil(finalStilettoPow / tough - 1));
+	var finalStilettoDamage = Math.max(0, Math.ceil(finalStilettoPow / tough - 1));
+	returnObj.critical = finalStilettoDamage > 0 && solidStilettoBypass ? true : returnObj.critical;
+	finalCutDamage += finalStilettoDamage;
 	
 	var finalBulletPow = Math.max(0, solidDamScale * hitDamage.bullet - (solidThrustBypass ? tough : partProt.armor.bullet + tough));
 	bluntPow += Math.max(0, solidDamScale * hitDamage.bullet - finalBulletPow);
 	var finalBulletDamage = Math.max(0, Math.ceil(finalBulletPow / tough - 1));
+	returnObj.critical = finalBulletDamage > 0 && solidThrustBypass ? true : returnObj.critical;
 	returnObj.remainingPower.bullet = finalBulletPow > tough * 2 ? finalBulletPow - tough * 2 : 0;
 	var bulletBluntPow = finalBulletPow > 0 ? finalBulletPow * Math.max(0, 1 - returnObj.remainingPower.bullet / finalBulletPow) : 0;
 	
 	var finalBluntPow = Math.max(0, solidDamScale * bluntPow - (solidRegularBypass ? tough : partProt.armor.blunt + tough));
 	var finalBluntDamage = Math.max(0, Math.ceil(finalBluntPow / tough - 1));
-	finalBluntDamage += Math.max(0, Math.ceil(bulletBluntPow / tough - 1));
+	returnObj.critical = finalBluntDamage > 0 && solidRegularBypass ? true : returnObj.critical;
+	var bulletBluntDamage = Math.max(0, Math.ceil(bulletBluntPow / tough - 1));
+	finalBluntDamage += bulletBluntDamage;
 	
 	var finalFirePow = Math.max(0, fluidDamScale * hitDamage.fire - (fluidBypass ? tough : partProt.armor.fire + tough));
 	var finalFireDamage = Math.max(0, Math.ceil(finalFirePow / tough - 1));
+	returnObj.critical = finalFireDamage > 0 && fluidBypass ? true : returnObj.critical;
 	
 	var finalIcePow = Math.max(0, fluidDamScale * hitDamage.ice - (fluidBypass ? tough : partProt.armor.ice + tough));
 	var finalIceDamage = Math.max(0, Math.ceil(finalIcePow / tough - 1));
+	returnObj.critical = finalIceDamage > 0 && fluidBypass ? true : returnObj.critical;
 	
 	var finalCorrosionPow = Math.max(0, fluidDamScale * hitDamage.corrosion - (fluidBypass ? tough : partProt.armor.corrosion + tough));
 	var finalCorrosionDamage = Math.max(0, Math.ceil(finalCorrosionPow / tough - 1));
+	returnObj.critical = finalCorrosionDamage > 0 && fluidBypass ? true : returnObj.critical;
 	
 	var lightningFirePow = Math.max(0, solidDamScale * hitDamage.lightning - (solidThrustBypass ? tough : partProt.armor.conducted + tough));
-	finalFireDamage += Math.max(0, Math.ceil(lightningFirePow / tough - 1));
+	var lightningFireDamage = Math.max(0, Math.ceil(lightningFirePow / tough - 1));
+	returnObj.critical = lightningFireDamage > 0 && solidThrustBypass ? true : returnObj.critical;
+	finalFireDamage += lightningFireDamage;
 	
 	
 	var stressInflicted = finalBluntPow > 0
@@ -2055,6 +2153,7 @@ BattleManager.resolveMentalDamage = function(hitDamage, accRoll, eva, partProt, 
 	var stress = finalPow > 0 ? 20 : 0;
 	
 	var finalDamage = Math.min(100, Math.max(0, Math.ceil(finalPow / tough - 1)));
+	returnObj.critical = finalDamage > 0 && bypass;
 	
 	stress += finalDamage / 2.5;
 	
