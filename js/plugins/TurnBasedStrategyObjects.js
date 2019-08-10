@@ -249,8 +249,8 @@
 		$gameMap.setCameraFocus(x, y, speed);
 	};
 	
-	Game_System.prototype.clearCameraFocus = function() {
-		$gameMap.clearCameraFocus();
+	Game_System.prototype.clearCameraFocus = function(resetToPlayer, speed) {
+		$gameMap.clearCameraFocus(resetToPlayer, speed);
 	};
 	
 	Game_System.prototype.setTbsActorDamage = function(partyPositionId, partName, damage) {
@@ -332,6 +332,7 @@
 		this._cameraFocusX = undefined;
 		this._cameraFocusY = undefined;
 		this._cameraFocusDirection = undefined;
+		this._cameraFocusResetToPlayer = undefined;
 		this._resetCameraAfterBattle = undefined;
 		this._mapBgm = undefined;
 	};
@@ -353,11 +354,14 @@
 		this._cameraFocusX = x;
 		this._cameraFocusY = y;
 		this._scrollSpeed = speed;
+		this._cameraFocusResetToPlayer = undefined;
 	};
 	
-	Game_Map.prototype.clearCameraFocus = function() {
+	Game_Map.prototype.clearCameraFocus = function(resetToPlayer, speed) {
 		this._cameraFocusX = undefined;
 		this._cameraFocusY = undefined;
+		this._cameraFocusResetToPlayer = resetToPlayer;
+		this._scrollSpeed = speed;
 	};
 	
 	Game_Map.prototype.getCameraFocus = function() {
@@ -663,13 +667,23 @@
 			} else {
 				this._scrollRest -= this.scrollDistance();
 			}
-		} else if(this._cameraFocusX !== undefined && this._cameraFocusY !== undefined) {
+		} else if(this._cameraFocusResetToPlayer || (this._cameraFocusX !== undefined && this._cameraFocusY !== undefined)) {
+			var focusX = this._cameraFocusX;
+			var focusY = this._cameraFocusY;
+			if(this._cameraFocusResetToPlayer && (this._cameraFocusX === undefined || this._cameraFocusY === undefined)) {
+				focusX = $gamePlayer.x - Math.floor($gameMap.screenTileX() / 2);
+				focusY = $gamePlayer.y - Math.floor($gameMap.screenTileY() / 2);;
+			}
 			if(Number.isInteger(this._displayX) && Number.isInteger(this._displayY)) {
 				this._cameraFocusDirection = undefined;
+				if(this._cameraFocusResetToPlayer && this._displayX == focusX & this._displayY == focusY) {
+					this._cameraFocusResetToPlayer = false;
+					return;
+				}
 			}
-			if((this._displayX !== this._cameraFocusX || this._displayY !== this._cameraFocusY)
+			if((this._displayX !== focusX || this._displayY !== focusY)
 				&& this._cameraFocusDirection === undefined) {
-				this._cameraFocusDirection = this.findDirection(this._displayX, this._displayY, this._cameraFocusX, this._cameraFocusY);
+				this._cameraFocusDirection = this.findDirection(this._displayX, this._displayY, focusX, focusY);
 			}
 			if(this._cameraFocusDirection !== undefined) {
 				this.doScroll(this._cameraFocusDirection, this.scrollDistance());
@@ -678,7 +692,7 @@
 	};
 	
 	Game_Map.prototype.setDisplayPos = function(x, y) {
-		if(this._cameraFocusX !== undefined && this._cameraFocusY !== undefined) { return; }
+		if(this._cameraFocusResetToPlayer || (this._cameraFocusX !== undefined && this._cameraFocusY !== undefined)) { return; }
 		if (this.isLoopHorizontal()) {
 			this._displayX = x.mod(this.width());
 			this._parallaxX = x;
@@ -715,7 +729,11 @@
 	};
 	
 	Game_Map.prototype.scrollDown = function(distance, isEventScroll) {
-		if(!isEventScroll && this._cameraFocusX !== undefined && this._cameraFocusY !== undefined) { return; }
+		if(!isEventScroll
+			&& (this._cameraFocusResetToPlayer || (this._cameraFocusX !== undefined && this._cameraFocusY !== undefined)))
+		{
+			return;
+		}
 		if (this.isLoopVertical()) {
 			this._displayY += distance;
 			this._displayY %= $dataMap.height;
@@ -731,7 +749,11 @@
 	};
 
 	Game_Map.prototype.scrollLeft = function(distance, isEventScroll) {
-		if(!isEventScroll && this._cameraFocusX !== undefined && this._cameraFocusY !== undefined) { return; }
+		if(!isEventScroll
+			&& (this._cameraFocusResetToPlayer || (this._cameraFocusX !== undefined && this._cameraFocusY !== undefined)))
+		{
+			return;
+		}
 		if (this.isLoopHorizontal()) {
 			this._displayX += $dataMap.width - distance;
 			this._displayX %= $dataMap.width;
@@ -746,7 +768,11 @@
 	};
 
 	Game_Map.prototype.scrollRight = function(distance, isEventScroll) {
-		if(!isEventScroll && this._cameraFocusX !== undefined && this._cameraFocusY !== undefined) { return; }
+		if(!isEventScroll
+			&& (this._cameraFocusResetToPlayer || (this._cameraFocusX !== undefined && this._cameraFocusY !== undefined)))
+		{
+			return;
+		}
 		if (this.isLoopHorizontal()) {
 			this._displayX += distance;
 			this._displayX %= $dataMap.width;
@@ -762,7 +788,11 @@
 	};
 
 	Game_Map.prototype.scrollUp = function(distance, isEventScroll) {
-		if(!isEventScroll && this._cameraFocusX !== undefined && this._cameraFocusY !== undefined) { return; }
+		if(!isEventScroll
+			&& (this._cameraFocusResetToPlayer || (this._cameraFocusX !== undefined && this._cameraFocusY !== undefined)))
+		{
+			return;
+		}
 		if (this.isLoopVertical()) {
 			this._displayY += $dataMap.height - distance;
 			this._displayY %= $dataMap.height;
@@ -1289,7 +1319,7 @@
 					}
 				});
 				if(this._resetCameraAfterBattle) {
-					this.clearCameraFocus();
+					this.clearCameraFocus(true, 5);
 				}
 				this.setTbsCursorFocus(this._tbsLeadCharacter.chara.x, this._tbsLeadCharacter.chara.y);
 				this.focusTbsCursor();
