@@ -267,14 +267,30 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 			if(results.dodged) {
 				this.setupSingleDamagePopup(false, 0, "dodged");
 			} else {
+				var leftArmHit = results.hit.leftArm;
+				var leftArmDamage = results.damage.leftArm - results.heal.leftArm;
+				var leftArmCrit = results.critical.leftArm;
+				if(!results.hit.leftArm && results.hit.leftHeld) {
+					leftArmHit = true;
+					leftArmDamage = 0;
+					leftArmCrit = false;
+				}
+				this.setupSingleDamagePopup(leftArmHit, leftArmDamage, "physicalDamage", leftArmCrit, -90);
+					
+				var rightArmHit = results.hit.rightArm;
+				var rightArmDamage = results.damage.rightArm - results.heal.rightArm;
+				var rightArmCrit = results.critical.rightArm;
+				if(!results.hit.rightArm && results.hit.rightHeld) {
+					rightArmHit = true;
+					rightArmDamage = 0;
+					rightArmCrit = false;
+				}
+				this.setupSingleDamagePopup(rightArmHit, rightArmDamage, "physicalDamage", rightArmCrit, 90);
+				
 				this.setupSingleDamagePopup(results.hit.head, results.damage.head - results.heal.head,
 					"physicalDamage", results.critical.head, 0, -60);
 				this.setupSingleDamagePopup(results.hit.torso, results.damage.torso - results.heal.torso,
 					"physicalDamage");
-				this.setupSingleDamagePopup(results.hit.leftArm, results.damage.leftArm - results.heal.leftArm,
-					"physicalDamage", results.critical.leftArm, -90);
-				this.setupSingleDamagePopup(results.hit.rightArm, results.damage.rightArm - results.heal.rightArm,
-					"physicalDamage", results.critical.rightArm, 90);
 				this.setupSingleDamagePopup(results.hit.leftLeg, results.damage.leftLeg - results.heal.leftLeg,
 					"physicalDamage", results.critical.leftLeg, -45, 60);
 				this.setupSingleDamagePopup(results.hit.rightLeg, results.damage.rightLeg - results.heal.rightLeg,

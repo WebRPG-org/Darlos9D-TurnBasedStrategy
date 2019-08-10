@@ -609,7 +609,15 @@
 	};
 	
 	Game_BattlerBase.prototype.totalSkill = function(skill) {
-		return this.skillPoints(skill);
+		return this.skillPoints(skill) + this.getSkillBuff(skill);
+	};
+	
+	Game_BattlerBase.prototype.getSkillBuff = function(skill) {
+		var total = 0;
+		this._tbsBuffs.forEach(function (buff) {
+			total += buff.core === undefined ? 0 : buff.core[skill];
+		});
+		return total;
 	};
 	
 	Game_BattlerBase.prototype.baseRange = function() {
@@ -657,7 +665,8 @@
 	};
 	
 	Game_Actor.prototype.totalSkill = function(skill) {
-		return (this.currentClass().tbsStats.startingSkills[skill] === undefined ? 0 : this.currentClass().tbsStats.startingSkills[skill]) + this.skillPoints(skill);
+		return (this.currentClass().tbsStats.startingSkills[skill] === undefined ? 0 : this.currentClass().tbsStats.startingSkills[skill])
+			+ this.skillPoints(skill) + this.getSkillBuff(skill);
 	};
 	
 	Game_Actor.prototype.baseProtection = function() {
@@ -677,7 +686,8 @@
 	};
 	
 	Game_Enemy.prototype.totalSkill = function(skill) {
-		return (this.enemy().tbsStats.startingSkills[skill] === undefined ? 0 : this.enemy().tbsStats.startingSkills[skill]) + this.skillPoints(skill);
+		return (this.enemy().tbsStats.startingSkills[skill] === undefined ? 0 : this.enemy().tbsStats.startingSkills[skill])
+			+ this.skillPoints(skill) + this.getSkillBuff(skill);
 	};
 	
 	Game_Enemy.prototype.isFlying = function() {
@@ -836,7 +846,7 @@
 		totalProtection = this.sumPartProtection(totalProtection, this.baseProtection(), bodyPart);
 		
 		var that = this;
-		this._buffs.forEach(function (buff) {
+		this._tbsBuffs.forEach(function (buff) {
 			if(buff.protection) {
 				totalProtection = that.sumPartProtection(totalProtection, buff.protection, bodyPart);
 			}
@@ -897,7 +907,7 @@
 		}
 		
 		var that = this;
-		this._buffs.forEach(function (buff) {
+		this._tbsBuffs.forEach(function (buff) {
 			if(buff.protection && buff.protection.mental) {
 				if(buff.protection.mental.defense !== undefined) {
 					totalProtection.defense += buff.protection.mental.defense;

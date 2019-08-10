@@ -2448,17 +2448,24 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 						var j;
 						for(j = 0; j < buffs.length; j++) {
 							var prot = buffs[j].protection;
-							if(!prot) { continue; }
-							var fullBody = prot.fullBody;
-							if(fullBody && fullBody.defense) {
-								var defense = fullBody.defense;
-								damageLineOffset += this.drawHeal(defense.solid, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("solidDefense")) ? 1 : 0;
-								damageLineOffset += this.drawHeal(defense.fluid, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("fluidDefense")) ? 1 : 0;
+							if(prot) {
+								var fullBody = prot.fullBody;
+								if(fullBody && fullBody.defense) {
+									var defense = fullBody.defense;
+									damageLineOffset += this.drawHeal(defense.solid, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("solidDefense")) ? 1 : 0;
+									damageLineOffset += this.drawHeal(defense.fluid, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("fluidDefense")) ? 1 : 0;
+								}
+								var mental = prot.mental;
+								if(mental) {
+									damageLineOffset += this.drawHeal(mental.defense, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("mentalDefense")) ? 1 : 0;
+								}
 							}
-							var mental = prot.mental;
-							if(mental) {
-								damageLineOffset += this.drawHeal(mental.defense, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("mentalDefense")) ? 1 : 0;
-							} 
+							var core = buffs[j].core;
+							if(core) {
+								damageLineOffset += this.drawHeal(core.physEvade, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("solidDefense")) ? 1 : 0;
+								damageLineOffset += this.drawHeal(core.tripEvade, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("tripEvade")) ? 1 : 0;
+								damageLineOffset += this.drawHeal(core.mentalEvade, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("mentalDefense")) ? 1 : 0;
+							}
 						}
 					}
 				}
@@ -2536,6 +2543,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		switch(type) {
 			case "solidDefense":   	return  81; break;
 			case "fluidDefense":   	return  69; break;
+			case "tripEvade":   	return  82; break;
 			case "mentalDefense":	return 302; break;
 			
 			case "trip":          	return   6; break;

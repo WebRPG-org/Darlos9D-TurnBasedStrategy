@@ -1631,6 +1631,15 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						newBuff.protection.mind.defense = mental.defense === undefined ? 0 : mental.defense;
 					}
 				}
+				newBuff.core = {};
+				newBuff.core.physEvade = 0;
+				newBuff.core.tripEvade = 0;
+				newBuff.core.mentalEvade = 0;
+				if(buff.core) {
+					newBuff.core.physEvade = buff.core.physEvade === undefined ? 0 : buff.core.physEvade;
+					newBuff.core.tripEvade = buff.core.tripEvade === undefined ? 0 : buff.core.tripEvade;
+					newBuff.core.mentalEvade = buff.core.mentalEvade === undefined ? 0 : buff.core.mentalEvade;
+				}
 				results.buffs.push(newBuff);
 			});
 		}
@@ -1946,10 +1955,10 @@ BattleManager.calculateBodyPartHit = function(stress, accRoll, dodgeEva, critica
 	results.hit.leftLeg = false;
 	results.hit.rightLeg = false;
 	results.hit.mind = false;
-	var criticalEvaRoll = this.rollForRanks(criticalDef + dodgeEva, isDown ? 100 : stress);
-	var vitalEvaRoll = this.rollForRanks(vitalDef + dodgeEva, isDown ? 100 : stress);
-	var firstLimbEvaRoll = this.rollForRanks(firstLimbDef + dodgeEva, isDown ? 100 : stress);
-	var secondLimbEvaRoll = this.rollForRanks(secondLimbDef + dodgeEva, isDown ? 100 : stress);
+	var criticalEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : stress);
+	var vitalEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : stress);
+	var firstLimbEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : stress);
+	var secondLimbEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : stress);
 	var firstHeldEvaRoll = useFirstHeld ? this.rollForRanks(firstHeldDef + dodgeEva, isDown ? 100 : stress) : 0;
 	var secondHeldEvaRoll = useSecondHeld ? this.rollForRanks(secondHeldDef + dodgeEva, isDown ? 100 : stress) : 0;
 	if((targetingType === "vitalOnly" && accRoll > vitalEvaRoll + criticalEvaRoll)
@@ -2035,13 +2044,57 @@ BattleManager.calculateBodyPartHit = function(stress, accRoll, dodgeEva, critica
 			results.hit.leftHeld = true;
 		}
 	} else if(useFirstHeld && targetingType === undefined && accRoll > firstHeldEvaRoll) {
-		if(leftHeldFirst) {
-			results.hit.leftHeld = true;
+		if(useSecondHeld) {
+			var dodgeRatio = (dodgeEva + secondHeldDef == 0) ? 0 : (dodgeEva / (dodgeEva + secondHeldDef));
+			var dodgeAmount = dodgeRatio * secondHeldEvaRoll;
+			if(accRoll > dodgeAmount) {
+				if(leftHeldFirst) {
+					results.hit.rightHeld = true;
+				} else {
+					results.hit.leftHeld = true;
+				}
+			} else {
+				if(leftHeldFirst) {
+					results.hit.leftHeld = true;
+				} else {
+					results.hit.rightHeld = true;
+				}
+			}
 		} else {
-			results.hit.rightHeld = true;
+			if(leftHeldFirst) {
+				results.hit.leftHeld = true;
+			} else {
+				results.hit.rightHeld = true;
+			}
 		}
 	} else {
-		results.dodged = true;
+		if(useFirstHeld) {
+			var dodgeRatio = (dodgeEva + firstHeldDef == 0) ? 0 : (dodgeEva / (dodgeEva + firstHeldDef));
+			var dodgeAmount = dodgeRatio * firstHeldEvaRoll;
+			if(accRoll > dodgeAmount) {
+				if(leftHeldFirst) {
+					results.hit.leftHeld = true;
+				} else {
+					results.hit.rightHeld = true;
+				}
+			} else {
+				results.dodged = true;
+			}
+		} else if(useSecondHeld) {
+			var dodgeRatio = (dodgeEva + secondHeldDef == 0) ? 0 : (dodgeEva / (dodgeEva + secondHeldDef));
+			var dodgeAmount = dodgeRatio * secondHeldEvaRoll;
+			if(accRoll > dodgeAmount) {
+				if(leftHeldFirst) {
+					results.hit.rightHeld = true;
+				} else {
+					results.hit.leftHeld = true;
+				}
+			} else {
+				results.dodged = true;
+			}
+		} else {
+			results.dodged = true;
+		}
 	}
 	return results;
 };
