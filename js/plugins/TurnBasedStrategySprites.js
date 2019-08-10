@@ -362,13 +362,17 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 		} else if (resultType === "physicalDamage") {
 			this.createDigits(0, numValue);
 		} else if (resultType === "mentalDamage") {
-			this.createDigits(2, numValue);
+			this.createDigits(5, numValue);
 		} else if (resultType === "stress") {
 			this.createDigits(2, numValue);
 		}
 		if (critical) {
 			this.setupCriticalEffect();
 		}
+	};
+	
+	Sprite_Damage.prototype.digitHeight = function() {
+		return this._damageBitmap ? this._damageBitmap.height / 7 : 0;
 	};
 	
 	//sprite state icon

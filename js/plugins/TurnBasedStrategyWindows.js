@@ -727,11 +727,11 @@ Window_TbsActorStatus.prototype.initialize = function(x, y) {
 };
 
 Window_TbsActorStatus.prototype.windowWidth = function() {
-	return this.standardPadding() * 2 + 14 * 24 + 4 + Window_Base._iconWidth * 4;
+	return this.standardPadding() * 2 + 14 * 18 + 4 + Window_Base._iconWidth * 2;
 };
 
 Window_TbsActorStatus.prototype.windowHeight = function() {
-	return this.standardPadding() * 2 + this.lineHeight() * 2;
+	return this.standardPadding() * 2 + this.lineHeight() * 3;
 };
 
 Window_TbsActorStatus.prototype.setTbsActor = function(tbsActor, forceRefresh) {
@@ -749,9 +749,9 @@ Window_TbsActorStatus.prototype.setTbsActor = function(tbsActor, forceRefresh) {
 Window_TbsActorStatus.prototype.refresh = function() {
     this.contents.clear();
     if (this._tbsActor) {
-		this.drawActorStress(this._tbsActor.battler, 0, 0);
+		this.drawActorStress(this._tbsActor.battler, 14*12, 0);
         this.drawActorDamage(this._tbsActor.battler, 0, 0);
-        this.drawActorBuffs(this._tbsActor.battler, 14*24+4, 0);
+        this.drawActorBuffs(this._tbsActor.battler, 14*18, 0);
     }
 	//this.drawLine(this.lineHeight(), 0, this.contentsWidth() - this.lineHeight());
 	//this.drawLine(this.lineHeight(), this.lineHeight()*4, this.contentsWidth() - this.lineHeight());
@@ -760,11 +760,11 @@ Window_TbsActorStatus.prototype.refresh = function() {
 Window_TbsActorStatus.prototype.drawActorStress = function(battler, x, y) {
 	this.changeTextColor(this.systemColor());
 	this.drawText("St", x, y, 14*2);
-	if(battler.stress() >= 20) {
-		if(battler.stress() >= 100) {
-			this.changeTextColor(this.deathColor());
-		} else { this.changeTextColor(this.crisisColor()); }
-	} else { this.resetTextColor(); }
+	if(battler.stress() >= 100) {
+		this.changeTextColor(this.deathColor());
+	} else {
+		this.changeTextColor(this.crisisColor());
+	}
 	this.drawText(battler.stress() > 0 ? battler.stress() : "-", x + 14*2, y, 14*3, 'right');
 	this.resetTextColor();
 };
@@ -773,7 +773,7 @@ Window_TbsActorStatus.prototype.drawActorBuffs = function(battler, x, y) {
 	var iconHeight = Window_Base._iconHeight;
 	var iconSeparation = 4;
 	var buffs = battler.tbsBuffs();
-	var iconRowWidth = 4;
+	var iconRowWidth = 2;
 	var curX = x;
 	var curY = y;
 	var i;
@@ -2268,22 +2268,34 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	Window_Base.prototype.drawActorDamage = function(actor, x, y) {
 		var xIncrement = 84;
 		
-		this.drawActorPartDamge(actor, "mind"    , x				, y + this.lineHeight() , "Mi");
-		this.drawActorPartDamge(actor, "head"    , x+xIncrement		, y						, "He");
-		this.drawActorPartDamge(actor, "torso"   , x+xIncrement		, y + this.lineHeight()	, "To");
-		this.drawActorPartDamge(actor, "leftArm" , x+xIncrement*2	, y						, "LA");
-		this.drawActorPartDamge(actor, "leftLeg" , x+xIncrement*2	, y + this.lineHeight()	, "LL");
-		this.drawActorPartDamge(actor, "rightArm", x+xIncrement*3	, y						, "RA");
-		this.drawActorPartDamge(actor, "rightLeg", x+xIncrement*3	, y + this.lineHeight()	, "RL");
+		this.drawActorMentalDamge(actor, "mind"    , x				, y							, "Mi");
+		this.drawActorPartDamge(actor, "head"    , x+xIncrement		, y							, "He");
+		this.drawActorPartDamge(actor, "leftArm" , x				, y + this.lineHeight()		, "LA");
+		this.drawActorPartDamge(actor, "torso"   , x+xIncrement		, y + this.lineHeight()		, "To");
+		this.drawActorPartDamge(actor, "rightArm", x+xIncrement*2	, y + this.lineHeight()		, "RA");
+		this.drawActorPartDamge(actor, "leftLeg" , x+xIncrement*0.5	, y + this.lineHeight()*2	, "LL");
+		this.drawActorPartDamge(actor, "rightLeg", x+xIncrement*1.5	, y + this.lineHeight()*2	, "RL");
+	};
+	
+	Window_Base.prototype.drawActorMentalDamge = function(actor, part, x, y, label) {
+		this.changeTextColor(this.systemColor());
+		this.drawText(label, x, y, 14*2);
+		if(actor.getDamage(part) >= 100) {
+			this.changeTextColor(this.deathColor());
+		} else {
+			this.resetTextColor();
+			this.changePaintOpacity(false);
+		}
+		this.drawText(actor.getDamage(part) > 0 ? actor.getDamage(part) : "-", x + 14*2, y, 14*3, 'right');
+		this.resetTextColor();
+		this.changePaintOpacity(true);
 	};
 	
 	Window_Base.prototype.drawActorPartDamge = function(actor, part, x, y, label) {
 		this.changeTextColor(this.systemColor());
 		this.drawText(label, x, y, 14*2);
-		if(actor.getDamage(part) >= 50) {
-			if(actor.getDamage(part) >= 100) {
-				this.changeTextColor(this.deathColor());
-			} else { this.changeTextColor(this.crisisColor()); }
+		if(actor.getDamage(part) >= 100) {
+			this.changeTextColor(this.deathColor());
 		} else { this.resetTextColor(); }
 		this.drawText(actor.getDamage(part) > 0 ? actor.getDamage(part) : "-", x + 14*2, y, 14*3, 'right');
 		this.resetTextColor();
@@ -2585,6 +2597,16 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	Window_Base.prototype.iconIndexForAction = function(action) {
 		if(action.menuIcon !== undefined) { return action.menuIcon; }
 		return 79;
+	};
+	
+	//menu status
+	Window_MenuStatus.prototype.drawItemStatus = function(index) {
+		var actor = $gameParty.members()[index];
+		var rect = this.itemRect(index);
+		var x = rect.x + 162;
+		var y = rect.y;
+		var width = rect.width - x - this.textPadding();
+		this.drawActorSimpleStatus(actor, x, y, width);
 	};
 	
 	//menu actor

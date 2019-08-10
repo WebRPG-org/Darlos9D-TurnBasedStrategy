@@ -406,10 +406,6 @@
 		this.setDamage(part, (this._damage[part] === undefined ? 0 : this._damage[part]) + change);
 	};
 	
-	Game_BattlerBase.prototype.getDamageModifier = function(part) {
-		return Math.floor(this.getDamage(part) / 20);
-	};
-	
 	Game_BattlerBase.prototype.getDamage = function(part) {
 		return this._damage[part];
 	};
