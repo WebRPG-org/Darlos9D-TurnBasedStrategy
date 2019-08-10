@@ -1313,6 +1313,7 @@
 							if(battler.getDamage("mind") >= 100) { battler.setDamage("mind", 99); }
 							if(battler.getDamage("torso") >= 100) { battler.setDamage("torso", 99); }
 							battler.setStress(0);
+							battler.clearStressCost();
 							battler.clearTbsBuffs();
 							battler.setDisplayName(undefined);
 						});
@@ -1386,7 +1387,8 @@
 								+ battler.getDamage("leftArm") / 20
 								+ battler.getDamage("rightArm") / 20;
 						}
-						battler.adjustStress(Math.floor(damageStress));
+						battler.adjustStress(Math.floor(damageStress-battler.stressRecovery()));
+						battler.clearStressCost();
 					}
 				}
 			}
@@ -1401,7 +1403,6 @@
 				for(j = 0; j < this._tbsForces[i].actors.length; j++) {
 					var battler = this._tbsForces[i].actors[j].battler;
 					if(this._tbsCurrentTurnForce === i) {
-						battler.adjustStress(-battler.stressRecovery());
 						battler.tickTbsBuffs();
 					}
 				}

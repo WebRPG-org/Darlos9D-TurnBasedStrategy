@@ -336,6 +336,7 @@
 		this._skillPoints.blackMagic = 0;
 		
 		this._displayName = undefined;
+		this._stressCost = 0;
 	};
 	
 	Game_BattlerBase.prototype.setDisplayName = function(displayName) {
@@ -641,7 +642,15 @@
 	};
 	
 	Game_BattlerBase.prototype.stressRecovery = function() {
-		return 20;
+		return Math.max(0, 20 - this._stressCost);
+	};
+	
+	Game_BattlerBase.prototype.adjustStressCost = function(adjustValue) {
+		this._stressCost = Math.max(0, this._stressCost + adjustValue);
+	};
+	
+	Game_BattlerBase.prototype.clearStressCost = function() {
+		this._stressCost = 0;
 	};
 	
 	Game_BattlerBase.prototype.baseProtection = function() {
