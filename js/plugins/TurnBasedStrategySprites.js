@@ -270,22 +270,26 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 				var leftArmHit = results.hit.leftArm;
 				var leftArmDamage = results.damage.leftArm - results.heal.leftArm;
 				var leftArmCrit = results.critical.leftArm;
+				var leftArmResultsType = "physicalDamage";
 				if(!results.hit.leftArm && results.hit.leftHeld) {
 					leftArmHit = true;
 					leftArmDamage = 0;
 					leftArmCrit = false;
+					leftArmResultsType = "blocked";
 				}
-				this.setupSingleDamagePopup(leftArmHit, leftArmDamage, "physicalDamage", leftArmCrit, -90);
+				this.setupSingleDamagePopup(leftArmHit, leftArmDamage, leftArmResultsType, leftArmCrit, -90);
 					
 				var rightArmHit = results.hit.rightArm;
 				var rightArmDamage = results.damage.rightArm - results.heal.rightArm;
 				var rightArmCrit = results.critical.rightArm;
+				var rightArmResultsType = "physicalDamage";
 				if(!results.hit.rightArm && results.hit.rightHeld) {
 					rightArmHit = true;
 					rightArmDamage = 0;
 					rightArmCrit = false;
+					rightArmResultsType = "blocked";
 				}
-				this.setupSingleDamagePopup(rightArmHit, rightArmDamage, "physicalDamage", rightArmCrit, 90);
+				this.setupSingleDamagePopup(rightArmHit, rightArmDamage, rightArmResultsType, rightArmCrit, 90);
 				
 				this.setupSingleDamagePopup(results.hit.head, results.damage.head - results.heal.head,
 					"physicalDamage", results.critical.head, 0, -60);
@@ -375,6 +379,8 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 	Sprite_Damage.prototype.setupManual = function(numValue, resultType, critical) {
 		if (resultType === "dodged") {
 			this.createMiss();
+		} else if (resultType === "blocked") {
+			this.createBlock();
 		} else if (resultType === "physicalDamage") {
 			this.createDigits(0, numValue);
 		} else if (resultType === "mentalDamage") {
@@ -385,6 +391,14 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 		if (critical) {
 			this.setupCriticalEffect();
 		}
+	};
+	
+	Sprite_Damage.prototype.createBlock = function() {
+		var w = this.digitWidth();
+		var h = this.digitHeight();
+		var sprite = this.createChildSprite();
+		sprite.setFrame(4 * w, 4 * h, 5 * w, h);
+		sprite.dy = 0;
 	};
 	
 	Sprite_Damage.prototype.digitHeight = function() {

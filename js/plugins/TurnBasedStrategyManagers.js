@@ -1770,12 +1770,12 @@ BattleManager.conductMath = function(target, damageResult, startingPart) {
 };
 
 BattleManager.getPartDamagePotential = function(damage, partProt, tough, fullCoverage) {
-	var solidCoverage = fullCoverage ? 10 : Math.min(10, partProt.defense.solid);
-	var fluidCoverage = fullCoverage ? 10 : Math.min(10, partProt.defense.fluid);
-	var solidRegularBypass = 1.5 > (solidCoverage / 10) * this._damageStressDivisor;
-	var solidThrustBypass = 1.5 > (solidCoverage / 10) * 1.66;
-	var solidStilettoBypass = 1.5 > (solidCoverage / 10) * 1.49;
-	var fluidBypass = 1.5 >= (fluidCoverage / 10) * 1.66;
+	var solidCoverage = fullCoverage ? 100 : Math.min(100, partProt.defense.solid);
+	var fluidCoverage = fullCoverage ? 100 : Math.min(100, partProt.defense.fluid);
+	var solidRegularBypass = 1.5 > (solidCoverage / 100) * 2.5;
+	var solidThrustBypass = 1.5 > (solidCoverage / 100) * 1.66;
+	var solidStilettoBypass = 1.5 > (solidCoverage / 100) * 1.49;
+	var fluidBypass = 1.5 >= (fluidCoverage / 100) * 1.66;
 	
 	var damagePotential = Math.max(0, damage.blunt - (solidRegularBypass ? partProt.armor.blunt + tough : tough));
 	damagePotential += Math.max(0, damage.cut - (solidRegularBypass ? partProt.armor.cut + tough : tough));
@@ -2120,8 +2120,10 @@ BattleManager.calculateMentalHit = function(stress, accRoll, dodgeEva, mentalDef
 };
 
 BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva, partProt, tough, stress, isDown, extraStress, fullCoverage) {
-	var solidEva = eva + partProt.defense.solid;
-	var fluidEva = eva + partProt.defense.fluid;
+	var solidDef = fullCoverage ? Math.max(100, partProt.defense.solid) : partProt.defense.solid;
+	var fluidDef = fullCoverage ? Math.max(100, partProt.defense.fluid) : partProt.defense.fluid;
+	var solidEva = eva + solidDef;
+	var fluidEva = eva + fluidDef;
 	var solidEvaRoll = this.rollForRanks(solidEva, isDown ? 100 : stress);
 	var tripEvaRoll = this.rollForRanks(tripEva, isDown ? 100 : stress);
 	var fluidEvaRoll = this.rollForRanks(fluidEva, isDown ? 100 : stress);
@@ -2129,12 +2131,12 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva,
 	var tripDamScale = tripEvaRoll <= 0 ? (accRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accRoll / tripEvaRoll));
 	var fluidDamScale = fluidEvaRoll <= 0 ? (accRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accRoll / fluidEvaRoll));
 	
-	var solidCoverage = fullCoverage ? 10 : Math.min(10, partProt.defense.solid);
-	var fluidCoverage = fullCoverage ? 10 : Math.min(10, partProt.defense.fluid);
-	var solidRegularBypass = solidDamScale > (solidCoverage / 10) * this._damageStressDivisor;
-	var solidThrustBypass = solidDamScale > (solidCoverage / 10) * 1.66;
-	var solidStilettoBypass = solidDamScale > (solidCoverage / 10) * 1.49;
-	var fluidBypass = fluidDamScale >= (fluidCoverage / 10) * 1.66;
+	var solidCoverage = Math.min(100, solidDef);
+	var fluidCoverage = Math.min(100, fluidDef);
+	var solidRegularBypass = solidDamScale > (solidCoverage / 100) * 2.5;
+	var solidThrustBypass = solidDamScale > (solidCoverage / 100) * 1.66;
+	var solidStilettoBypass = solidDamScale > (solidCoverage / 100) * 1.49;
+	var fluidBypass = fluidDamScale >= (fluidCoverage / 100) * 1.66;
 	
 	var returnObj = {};
 	returnObj.remainingPower = {};
@@ -2236,7 +2238,7 @@ BattleManager.resolveMentalDamage = function(hitDamage, accRoll, eva, partProt, 
 	var evaRoll = this.rollForRanks(totalEva, isDown ? 100 : stress);
 	var damScale = evaRoll <= 0 ? (accRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accRoll / evaRoll));
 	
-	var bypass = damScale >= (Math.min(10, partProt.defense) / 10) * 1.66;
+	var bypass = damScale >= (Math.min(10, partProt.defense) / 100) * 1.66;
 	
 	var finalPow = Math.max(0, damScale * hitDamage.mental - (bypass ? tough : partProt.armor + tough));
 	
