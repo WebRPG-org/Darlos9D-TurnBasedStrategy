@@ -1001,16 +1001,18 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						var rightDefendingLimbProt = defendingWithLegs ? targetRightLegProt : targetRightArmProt;
 						var leftDefendingHeldProt = targetLeftArmProt;
 						var rightDefendingHeldProt = targetRightArmProt;
-						var leftLimbDamagePotential = this.getPartDamagePotential(hitDamage, leftDefendingLimbProt);
-						var rightLimbDamagePotential = this.getPartDamagePotential(hitDamage, rightDefendingLimbProt);
-						var leftHeldDamagePotential = this.getPartDamagePotential(hitDamage, leftDefendingHeldProt);
-						var rightHeldDamagePotential = this.getPartDamagePotential(hitDamage, rightDefendingHeldProt);
+						var leftLimbDamagePotential = this.getPartDamagePotential(hitDamage, leftDefendingLimbProt, target.toughness());
+						var rightLimbDamagePotential = this.getPartDamagePotential(hitDamage, rightDefendingLimbProt, target.toughness());
+						var leftHeldDamagePotential = this.getPartDamagePotential(hitDamage, leftDefendingHeldProt, target.toughness(), true);
+						var rightHeldDamagePotential = this.getPartDamagePotential(hitDamage, rightDefendingHeldProt, target.toughness(), true);
 						
 						var leftLimbFirst = false;
 						if(leftLimbDamagePotential < rightLimbDamagePotential) {
 							leftLimbFirst = true;
 						} else if (leftLimbDamagePotential === rightLimbDamagePotential) {
-							if(target.handedness() === "right") {
+							if(Math.random() >= 0.5) {
+								leftLimbFirst = false;
+							} else {
 								leftLimbFirst = true;
 							}
 						}
@@ -1030,7 +1032,9 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							if(leftHeldDamagePotential < rightHeldDamagePotential) {
 								leftHeldFirst = true;
 							} else if (leftHeldDamagePotential === rightHeldDamagePotential) {
-								if(target.handedness() === "right") {
+								if(Math.random() >= 0.5) {
+									leftHeldFirst = false;
+								} else {
 									leftHeldFirst = true;
 								}
 							}
@@ -1061,12 +1065,14 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						if(targetingMobility) {
 							var leftMobilityLimbProt = defendingWithLegs ? targetLeftArmProt : targetLeftLegProt;
 							var rightMobilityLimbProt = defendingWithLegs ? targetRightArmProt : targetRightLegProt ;
-							var leftMobilityDamagePotential = this.getPartDamagePotential(hitDamage, leftMobilityLimbProt);
-							var rightMobilityDamagePotential = this.getPartDamagePotential(hitDamage, rightMobilityLimbProt);
+							var leftMobilityDamagePotential = this.getPartDamagePotential(hitDamage, leftMobilityLimbProt, target.toughness());
+							var rightMobilityDamagePotential = this.getPartDamagePotential(hitDamage, rightMobilityLimbProt, target.toughness());
 							if(leftMobilityDamagePotential < rightMobilityDamagePotential) {
 								leftMobilityFirst = true;
 							} else if (leftMobilityDamagePotential === rightMobilityDamagePotential) {
-								if(target.handedness() === "right") {
+								if(Math.random() >= 0.5) {
+									leftMobilityFirst = false;
+								} else {
 									leftMobilityFirst = true;
 								}
 							}
@@ -1754,17 +1760,24 @@ BattleManager.conductMath = function(target, damageResult, startingPart) {
 	return conductResults;
 };
 
-BattleManager.getPartDamagePotential = function(damage, partProt) {
-	var damagePotential = Math.max(0, damage.blunt - (partProt.defense.solid > 1 ? partProt.armor.blunt : 0));
-	damagePotential += Math.max(0, damage.cut - (partProt.defense.solid > 1 ? partProt.armor.cut : 0));
-	damagePotential += Math.max(0, damage.keen - (partProt.defense.solid > 1 ? partProt.armor.cut : 0));
-	damagePotential += Math.max(0, damage.thrust - (partProt.defense.solid > 2 ? partProt.armor.cut : 0));
-	damagePotential += Math.max(0, damage.lightning - (partProt.defense.solid > 2 ? partProt.armor.conducted : 0));
-	damagePotential += damage.stiletto;
-	damagePotential += Math.max(0, damage.bullet - (partProt.defense.solid > 2 ? partProt.armor.bullet : 0));
-	damagePotential += Math.max(0, damage.fire - (partProt.defense.fluid > 2 ? partProt.armor.fire : 0));
-	damagePotential += Math.max(0, damage.ice - (partProt.defense.fluid > 2 ? partProt.armor.ice : 0));
-	damagePotential += Math.max(0, damage.corrosion - (partProt.defense.fluid > 2 ? partProt.armor.corrosion : 0));
+BattleManager.getPartDamagePotential = function(damage, partProt, tough, fullCoverage) {
+	var solidCoverage = fullCoverage ? 10 : Math.min(10, partProt.defense.solid);
+	var fluidCoverage = fullCoverage ? 10 : Math.min(10, partProt.defense.fluid);
+	var solidRegularBypass = 1.5 > (solidCoverage / 10) * this._damageStressDivisor;
+	var solidThrustBypass = 1.5 > (solidCoverage / 10) * 1.66;
+	var solidStilettoBypass = 1.5 > (solidCoverage / 10) * 1.49;
+	var fluidBypass = 1.5 >= (fluidCoverage / 10) * 1.66;
+	
+	var damagePotential = Math.max(0, damage.blunt - (solidRegularBypass ? partProt.armor.blunt + tough : tough));
+	damagePotential += Math.max(0, damage.cut - (solidRegularBypass ? partProt.armor.cut + tough : tough));
+	damagePotential += Math.max(0, damage.keen - (solidRegularBypass ? partProt.armor.cut + tough : tough));
+	damagePotential += Math.max(0, damage.thrust - (solidThrustBypass ? partProt.armor.cut + tough : tough));
+	damagePotential += Math.max(0, damage.lightning - (solidThrustBypass ? partProt.armor.conducted + tough : tough));
+	damagePotential += Math.max(0, damage.stiletto - (solidStilettoBypass ? partProt.armor.cut + tough : tough));
+	damagePotential += Math.max(0, damage.bullet - (solidThrustBypass ? partProt.armor.bullet + tough : tough));
+	damagePotential += Math.max(0, damage.fire - (fluidBypass ? partProt.armor.fire + tough : tough));
+	damagePotential += Math.max(0, damage.ice - (fluidBypass ? partProt.armor.ice + tough : tough));
+	damagePotential += Math.max(0, damage.corrosion - (fluidBypass ? partProt.armor.corrosion + tough : tough));
 	return damagePotential;
 };
 
