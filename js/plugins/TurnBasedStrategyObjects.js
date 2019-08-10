@@ -2779,8 +2779,8 @@
 				}
 			}
 			var cFocus = $gameMap.getCameraFocus();
-			if(cFocus.x !== undefined && cFocus.y !== undefined && (centerX < cFocus.x && centerY < cFocus.y
-				&& centerX >= cFocus.x + Math.floor(this.screenTileX()) && centerY >= cFocus.y + Math.floor(this.screenTileY())))
+			if(cFocus.x !== undefined && cFocus.y !== undefined && (centerX < cFocus.x || centerY < cFocus.y
+				|| centerX >= cFocus.x + Math.floor(this.screenTileX()) || centerY >= cFocus.y + Math.floor(this.screenTileY())))
 			{
 				return returnArray;	
 			}
@@ -2810,8 +2810,8 @@
 							continue;
 						}
 					}
-					if(cFocus.x !== undefined && cFocus.y !== undefined && (targetX < cFocus.x && targetY < cFocus.y
-						&& targetX >= cFocus.x + Math.floor(this.screenTileX()) && targetY >= cFocus.y + Math.floor(this.screenTileY())))
+					if(cFocus.x !== undefined && cFocus.y !== undefined && (targetX < cFocus.x || targetY < cFocus.y
+						|| targetX >= cFocus.x + Math.floor(this.screenTileX()) || targetY >= cFocus.y + Math.floor(this.screenTileY())))
 					{
 						continue;	
 					}
