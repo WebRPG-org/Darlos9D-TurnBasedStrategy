@@ -161,6 +161,13 @@ BattleManager.initMembers = function() {
 	this._hitMissDelay = [];
 	this._showCastAnimation = true;
 	this._equipmentBaseToughness = 8;
+	this._accMult = 10;
+	this._evaMult = 10;
+	this._accEvaSkillMult = 2;
+	this._damageMult = 10;
+	this._armorMult = 10;
+	this._damageStressDivisor = 2.5;
+	this._baseHitStress = 20;
 };
 
 BattleManager.setLeftActorStatusWindow = function(actorStatusWindow) {
@@ -748,63 +755,80 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 	var targetLeftLegProt = target.protection("leftLeg");
 	var targetRightLegProt = target.protection("rightLeg");
 	var targetMentalProt = target.mentalProtection();
-	targetLeftHeldProt.armor.blunt *= 10;
-	targetLeftHeldProt.armor.cut *= 10;
-	targetLeftHeldProt.armor.bullet *= 10;
-	targetLeftHeldProt.armor.fire *= 10;
-	targetLeftHeldProt.armor.ice *= 10;
-	targetLeftHeldProt.armor.corrosion *= 10;
-	targetLeftHeldProt.armor.conducted *= 10;
-	targetRightHeldProt.armor.blunt *= 10;
-	targetRightHeldProt.armor.cut *= 10;
-	targetRightHeldProt.armor.bullet *= 10;
-	targetRightHeldProt.armor.fire *= 10;
-	targetRightHeldProt.armor.ice *= 10;
-	targetRightHeldProt.armor.corrosion *= 10;
-	targetRightHeldProt.armor.conducted *= 10;
-	targetHeadProt.armor.blunt *= 10;
-	targetHeadProt.armor.cut *= 10;
-	targetHeadProt.armor.bullet *= 10;
-	targetHeadProt.armor.fire *= 10;
-	targetHeadProt.armor.ice *= 10;
-	targetHeadProt.armor.corrosion *= 10;
-	targetHeadProt.armor.conducted *= 10;
-	targetTorsoProt.armor.blunt *= 10;
-	targetTorsoProt.armor.cut *= 10;
-	targetTorsoProt.armor.bullet *= 10;
-	targetTorsoProt.armor.fire *= 10;
-	targetTorsoProt.armor.ice *= 10;
-	targetTorsoProt.armor.corrosion *= 10;
-	targetTorsoProt.armor.conducted *= 10;
-	targetLeftArmProt.armor.blunt *= 10;
-	targetLeftArmProt.armor.cut *= 10;
-	targetLeftArmProt.armor.bullet *= 10;
-	targetLeftArmProt.armor.fire *= 10;
-	targetLeftArmProt.armor.ice *= 10;
-	targetLeftArmProt.armor.corrosion *= 10;
-	targetLeftArmProt.armor.conducted *= 10;
-	targetRightArmProt.armor.blunt *= 10;
-	targetRightArmProt.armor.cut *= 10;
-	targetRightArmProt.armor.bullet *= 10;
-	targetRightArmProt.armor.fire *= 10;
-	targetRightArmProt.armor.ice *= 10;
-	targetRightArmProt.armor.corrosion *= 10;
-	targetRightArmProt.armor.conducted *= 10;
-	targetLeftLegProt.armor.blunt *= 10;
-	targetLeftLegProt.armor.cut *= 10;
-	targetLeftLegProt.armor.bullet *= 10;
-	targetLeftLegProt.armor.fire *= 10;
-	targetLeftLegProt.armor.ice *= 10;
-	targetLeftLegProt.armor.corrosion *= 10;
-	targetLeftLegProt.armor.conducted *= 10;
-	targetRightLegProt.armor.blunt *= 10;
-	targetRightLegProt.armor.cut *= 10;
-	targetRightLegProt.armor.bullet *= 10;
-	targetRightLegProt.armor.fire *= 10;
-	targetRightLegProt.armor.ice *= 10;
-	targetRightLegProt.armor.corrosion *= 10;
-	targetRightLegProt.armor.conducted *= 10;
-	targetMentalProt.armor *= 10;
+	targetLeftHeldProt.defense.solid *= this._evaMult;
+	targetLeftHeldProt.defense.fluid *= this._evaMult;
+	targetLeftHeldProt.armor.blunt *= this._armorMult;
+	targetLeftHeldProt.armor.cut *= this._armorMult;
+	targetLeftHeldProt.armor.bullet *= this._armorMult;
+	targetLeftHeldProt.armor.fire *= this._armorMult;
+	targetLeftHeldProt.armor.ice *= this._armorMult;
+	targetLeftHeldProt.armor.corrosion *= this._armorMult;
+	targetLeftHeldProt.armor.conducted *= this._armorMult;
+	targetRightHeldProt.defense.solid *= this._evaMult;
+	targetRightHeldProt.defense.fluid *= this._evaMult;
+	targetRightHeldProt.armor.blunt *= this._armorMult;
+	targetRightHeldProt.armor.cut *= this._armorMult;
+	targetRightHeldProt.armor.bullet *= this._armorMult;
+	targetRightHeldProt.armor.fire *= this._armorMult;
+	targetRightHeldProt.armor.ice *= this._armorMult;
+	targetRightHeldProt.armor.corrosion *= this._armorMult;
+	targetRightHeldProt.armor.conducted *= this._armorMult;
+	targetHeadProt.defense.solid *= this._evaMult;
+	targetHeadProt.defense.fluid *= this._evaMult;
+	targetHeadProt.armor.blunt *= this._armorMult;
+	targetHeadProt.armor.cut *= this._armorMult;
+	targetHeadProt.armor.bullet *= this._armorMult;
+	targetHeadProt.armor.fire *= this._armorMult;
+	targetHeadProt.armor.ice *= this._armorMult;
+	targetHeadProt.armor.corrosion *= this._armorMult;
+	targetHeadProt.armor.conducted *= this._armorMult;
+	targetTorsoProt.defense.solid *= this._evaMult;
+	targetTorsoProt.defense.fluid *= this._evaMult;
+	targetTorsoProt.armor.blunt *= this._armorMult;
+	targetTorsoProt.armor.cut *= this._armorMult;
+	targetTorsoProt.armor.bullet *= this._armorMult;
+	targetTorsoProt.armor.fire *= this._armorMult;
+	targetTorsoProt.armor.ice *= this._armorMult;
+	targetTorsoProt.armor.corrosion *= this._armorMult;
+	targetTorsoProt.armor.conducted *= this._armorMult;
+	targetLeftArmProt.defense.solid *= this._evaMult;
+	targetLeftArmProt.defense.fluid *= this._evaMult;
+	targetLeftArmProt.armor.blunt *= this._armorMult;
+	targetLeftArmProt.armor.cut *= this._armorMult;
+	targetLeftArmProt.armor.bullet *= this._armorMult;
+	targetLeftArmProt.armor.fire *= this._armorMult;
+	targetLeftArmProt.armor.ice *= this._armorMult;
+	targetLeftArmProt.armor.corrosion *= this._armorMult;
+	targetLeftArmProt.armor.conducted *= this._armorMult;
+	targetRightArmProt.defense.solid *= this._evaMult;
+	targetRightArmProt.defense.fluid *= this._evaMult;
+	targetRightArmProt.armor.blunt *= this._armorMult;
+	targetRightArmProt.armor.cut *= this._armorMult;
+	targetRightArmProt.armor.bullet *= this._armorMult;
+	targetRightArmProt.armor.fire *= this._armorMult;
+	targetRightArmProt.armor.ice *= this._armorMult;
+	targetRightArmProt.armor.corrosion *= this._armorMult;
+	targetRightArmProt.armor.conducted *= this._armorMult;
+	targetLeftLegProt.defense.solid *= this._evaMult;
+	targetLeftLegProt.defense.fluid *= this._evaMult;
+	targetLeftLegProt.armor.blunt *= this._armorMult;
+	targetLeftLegProt.armor.cut *= this._armorMult;
+	targetLeftLegProt.armor.bullet *= this._armorMult;
+	targetLeftLegProt.armor.fire *= this._armorMult;
+	targetLeftLegProt.armor.ice *= this._armorMult;
+	targetLeftLegProt.armor.corrosion *= this._armorMult;
+	targetLeftLegProt.armor.conducted *= this._armorMult;
+	targetRightLegProt.defense.solid *= this._evaMult;
+	targetRightLegProt.defense.fluid *= this._evaMult;
+	targetRightLegProt.armor.blunt *= this._armorMult;
+	targetRightLegProt.armor.cut *= this._armorMult;
+	targetRightLegProt.armor.bullet *= this._armorMult;
+	targetRightLegProt.armor.fire *= this._armorMult;
+	targetRightLegProt.armor.ice *= this._armorMult;
+	targetRightLegProt.armor.corrosion *= this._armorMult;
+	targetRightLegProt.armor.conducted *= this._armorMult;
+	targetMentalProt.defense *= this._evaMult;
+	targetMentalProt.armor *= this._armorMult;
 	var i;
 	var results = {};
 	results.stress = {};
@@ -902,21 +926,21 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						break;
 				}
 			}
-			var acc = accBonus + accSkill * 3;
+			var acc = (accBonus + accSkill * this._accEvaSkillMult) * this._accMult;
 			
 			var hitDamage = this.getCompleteDamage(subject, actionInfo, hit);
-			hitDamage.blunt *= 10;
-			hitDamage.cut *= 10;
-			hitDamage.keen *= 10;
-			hitDamage.thrust *= 10;
-			hitDamage.stiletto *= 10;
-			hitDamage.bullet *= 10;
-			hitDamage.lightning *= 10;
-			hitDamage.trip *= 10;
-			hitDamage.fire *= 10;
-			hitDamage.ice *= 10;
-			hitDamage.corrosion *= 10;
-			hitDamage.psychic *= 10;
+			hitDamage.blunt *= this._damageMult;
+			hitDamage.cut *= this._damageMult;
+			hitDamage.keen *= this._damageMult;
+			hitDamage.thrust *= this._damageMult;
+			hitDamage.stiletto *= this._damageMult;
+			hitDamage.bullet *= this._damageMult;
+			hitDamage.lightning *= this._damageMult;
+			hitDamage.trip *= this._damageMult;
+			hitDamage.fire *= this._damageMult;
+			hitDamage.ice *= this._damageMult;
+			hitDamage.corrosion *= this._damageMult;
+			hitDamage.psychic *= this._damageMult;
 			
 			var isSolid = hitDamage.blunt > 0
 				|| hitDamage.cut > 0
@@ -1054,7 +1078,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 							}
 						}
 						
-						var eva = target.totalSkill("physEvade") * 3;
+						var eva = (target.totalSkill("physEvade") * this._accEvaSkillMult) * this._evaMult;
 						if(isSolid) {
 							hitResult = this.calculateBodyPartHit(targetStress, bodyPartAccRoll, eva,
 								criticalPartProt.defense.solid,
@@ -1096,7 +1120,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 					}
 				} else if(isMental) {
 					var bodyPartAccRoll = this.rollForRanks(acc, subjectStress);
-					var eva = target.totalSkill("mentalEvade");
+					var eva = (target.totalSkill("mentalEvade") * this._accEvaSkillMult) * this._evaMult;
 					hitResult = this.calculateMentalHit(targetStress, bodyPartAccRoll, eva,
 						targetMentalProt.defense,
 						target.isDown());
@@ -1105,8 +1129,8 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 			if(!hitResult.dodged) {
 				if(hitResult.hit.head || hitResult.hit.torso || hitResult.hit.leftArm || hitResult.hit.rightArm
 					|| hitResult.hit.leftLeg || hitResult.hit.rightLeg || hitResult.hit.leftHeld || hitResult.hit.rightHeld) {
-					var eva = target.totalSkill("physEvade") * 3;
-					var tripEva = target.totalSkill("tripEvade") * 3;
+					var eva = (target.totalSkill("physEvade") * this._accEvaSkillMult) * this._evaMult;
+					var tripEva = (target.totalSkill("tripEvade") * this._accEvaSkillMult) * this._evaMult;
 					if(hitResult.hit.head) {
 						var damageAccRoll = this.rollForRanks(acc, subjectStress);
 						results.hit.head = true;
@@ -1490,7 +1514,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 				if(hitResult.hit.mind) {
 					var damageAccRoll = this.rollForRanks(acc, subjectStress);
 					results.hit.mind = true;
-					var eva = target.totalSkill("mentalEvade");
+					var eva = (target.totalSkill("mentalEvade") * this._accEvaSkillMult) * this._evaMult;
 					var damageResult = this.resolveMentalDamage(
 						hitDamage, 
 						damageAccRoll, 
@@ -1522,7 +1546,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 			if(heal.damage !== undefined) {
 				if(this._tbsTargetPart != undefined && this._tbsTargetPart != "mobility" && this._tbsTargetPart != "vital") {
 					results.heal[this._tbsTargetPart] = heal.damage;
-					results.stress.other = Math.floor(Math.min(target.getDamage(this._tbsTargetPart), heal.damage) / 2.5);
+					results.stress.other = Math.floor(Math.min(target.getDamage(this._tbsTargetPart), heal.damage) / this._damageStressDivisor);
 				} else {
 					results.heal.head += heal.damage;
 					results.heal.torso += heal.damage;
@@ -1536,12 +1560,12 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 					results.hit.rightArm = true;
 					results.hit.leftLeg = true;
 					results.hit.rightLeg = true;
-					var stressFromHealing = Math.min(target.getDamage("head"), heal.damage) / 2.5;
-					stressFromHealing += Math.min(target.getDamage("torso"), heal.damage) / 2.5;
-					stressFromHealing += Math.min(target.getDamage("leftArm"), heal.damage) / 2.5;
-					stressFromHealing += Math.min(target.getDamage("rightArm"), heal.damage) / 2.5;
-					stressFromHealing += Math.min(target.getDamage("leftLeg"), heal.damage) / 2.5;
-					stressFromHealing += Math.min(target.getDamage("rightLeg"), heal.damage) / 2.5;
+					var stressFromHealing = Math.min(target.getDamage("head"), heal.damage) / this._damageStressDivisor;
+					stressFromHealing += Math.min(target.getDamage("torso"), heal.damage) / this._damageStressDivisor;
+					stressFromHealing += Math.min(target.getDamage("leftArm"), heal.damage) / this._damageStressDivisor;
+					stressFromHealing += Math.min(target.getDamage("rightArm"), heal.damage) / this._damageStressDivisor;
+					stressFromHealing += Math.min(target.getDamage("leftLeg"), heal.damage) / this._damageStressDivisor;
+					stressFromHealing += Math.min(target.getDamage("rightLeg"), heal.damage) / this._damageStressDivisor;
 					results.stress.other += Math.floor(stressFromHealing);
 				}
 			}
@@ -1673,7 +1697,7 @@ BattleManager.conductMath = function(target, damageResult, startingPart) {
 		case "head":
 			conductResults = this.conductMath(target, damageResult, "torso");
 			conductResults.damage.torso += Math.max(0, Math.ceil(lightningPow / tough - 1));
-			conductResults.stress.torso += 40 + Math.floor(conductResults.damage.torso / 2.5);
+			conductResults.stress.torso += this._baseHitStress * 2 + Math.floor(conductResults.damage.torso / this._damageStressDivisor);
 			break;
 		case "torso":
 			var random = Math.random();
@@ -1681,30 +1705,30 @@ BattleManager.conductMath = function(target, damageResult, startingPart) {
 				if(random >= 0.75) {
 					conductResults = this.conductMath(target, damageResult, "leftArm");
 					conductResults.damage.leftArm += Math.max(0, Math.ceil(lightningPow / tough - 1));
-					conductResults.stress.leftArm += 20 + Math.floor(conductResults.damage.leftArm / 2.5);
+					conductResults.stress.leftArm += this._baseHitStress + Math.floor(conductResults.damage.leftArm / this._damageStressDivisor);
 				} else if(random >= 0.5) {
 					conductResults = this.conductMath(target, damageResult, "rightArm");
 					conductResults.damage.rightArm += Math.max(0, Math.ceil(lightningPow / tough - 1));
-					conductResults.stress.rightArm += 20 + Math.floor(conductResults.damage.rightArm / 2.5);
+					conductResults.stress.rightArm += this._baseHitStress + Math.floor(conductResults.damage.rightArm / this._damageStressDivisor);
 				} else if(random >= 0.25) {
 					conductResults = this.conductMath(target, damageResult, "leftLeg");
 					conductResults.damage.leftLeg += Math.max(0, Math.ceil(lightningPow / tough - 1));
-					conductResults.stress.leftLeg += 20 + Math.floor(conductResults.damage.leftLeg / 2.5);
+					conductResults.stress.leftLeg += this._baseHitStress + Math.floor(conductResults.damage.leftLeg / this._damageStressDivisor);
 				} else {
 					conductResults = this.conductMath(target, damageResult, "rightLeg");
 					conductResults.damage.rightLeg += Math.max(0, Math.ceil(lightningPow / tough - 1));
-					conductResults.stress.rightLeg += 20 + Math.floor(conductResults.damage.rightLeg / 2.5);
+					conductResults.stress.rightLeg += this._baseHitStress + Math.floor(conductResults.damage.rightLeg / this._damageStressDivisor);
 				}
 			} else {
-				var extraStress = target.limbsType() === "winged" && target.isFlying() ? 0 : 20;
+				var extraStress = target.limbsType() === "winged" && target.isFlying() ? 0 : this._baseHitStress;
 				if(random >= 0.5) {
 					conductResults = this.conductMath(target, damageResult, "leftLeg");
 					conductResults.damage.leftLeg += Math.max(0, Math.ceil(lightningPow / tough - 1));
-					conductResults.stress.leftLeg += 20 + extraStress + Math.floor(conductResults.damage.leftLeg / 2.5);
+					conductResults.stress.leftLeg += this._baseHitStress + extraStress + Math.floor(conductResults.damage.leftLeg / this._damageStressDivisor);
 				} else {
 					conductResults = this.conductMath(target, damageResult, "rightLeg");
 					conductResults.damage.rightLeg += Math.max(0, Math.ceil(lightningPow / tough - 1));
-					conductResults.stress.rightLeg += 20 + extraStress + Math.floor(conductResults.damage.rightLeg / 2.5);
+					conductResults.stress.rightLeg += this._baseHitStress + extraStress + Math.floor(conductResults.damage.rightLeg / this._damageStressDivisor);
 				}
 			}
 			break;
@@ -1713,18 +1737,18 @@ BattleManager.conductMath = function(target, damageResult, startingPart) {
 			if(target.limbsType() !== "quadrupedal") {
 				conductResults = this.conductMath(target. damageResult, "torso");
 				conductResults.damage.torso += Math.max(0, Math.ceil(lightningPow / tough - 1));
-				conductResults.stress.torso += 20 + Math.floor(conductResults.damage.torso / 2.5);
+				conductResults.stress.torso += this._baseHitStress + Math.floor(conductResults.damage.torso / this._damageStressDivisor);
 			}
 			break;
 		case "leftHeld":
 			conductResults = this.conductMath(target, damageResult, "leftArm");
 			conductResults.damage.leftArm += Math.max(0, Math.ceil(lightningPow / tough - 1));
-			conductResults.stress.leftArm += 20 + Math.floor(conductResults.damage.leftArm / 2.5);
+			conductResults.stress.leftArm += this._baseHitStress + Math.floor(conductResults.damage.leftArm / this._damageStressDivisor);
 			break;
 		case "rightHeld":
 			conductResults = this.conductMath(target, damageResult, "rightArm");
 			conductResults.damage.rightArm += Math.max(0, Math.ceil(lightningPow / tough - 1));
-			conductResults.stress.rightArm += Math.floor(damageResult.remainingPower.lightning / 2.5);
+			conductResults.stress.rightArm += Math.floor(damageResult.remainingPower.lightning / this._damageStressDivisor);
 			break;
 	}
 	return conductResults;
@@ -2041,7 +2065,7 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva,
 	
 	var solidCoverage = fullCoverage ? 10 : Math.min(10, partProt.defense.solid);
 	var fluidCoverage = fullCoverage ? 10 : Math.min(10, partProt.defense.fluid);
-	var solidRegularBypass = solidDamScale > (solidCoverage / 10) * 2.5;
+	var solidRegularBypass = solidDamScale > (solidCoverage / 10) * this._damageStressDivisor;
 	var solidThrustBypass = solidDamScale > (solidCoverage / 10) * 1.66;
 	var solidStilettoBypass = solidDamScale > (solidCoverage / 10) * 1.49;
 	var fluidBypass = fluidDamScale >= (fluidCoverage / 10) * 1.66;
@@ -2113,7 +2137,7 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva,
 		|| finalBulletPow > 0
 		|| finalFirePow > 0
 		|| finalIcePow > 0
-		|| finalCorrosionPow > 0 ? 20 : 0;
+		|| finalCorrosionPow > 0 ? this._baseHitStress : 0;
 	
 	returnObj.remainingPower.blunt = finalBluntPow > tough * 100 ? finalBluntPow - tough * 100 : 0;
 	returnObj.remainingPower.cut = finalCutPow > tough * 100 ? finalCutPow - tough * 100 : 0;
@@ -2133,10 +2157,10 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, accRoll, eva, tripEva,
 	returnObj.damage = Math.min(100, finalBluntDamage + finalCutDamage
 		+ finalBulletDamage + finalFireDamage + finalIceDamage + finalCorrosionDamage);
 	
-	stressInflicted += returnObj.damage / 2.5;
+	stressInflicted += returnObj.damage / this._damageStressDivisor;
 	stressInflicted += Math.max(0, Math.ceil((tripDamScale * hitDamage.trip) / tough - 1));
 	
-	returnObj.stress = Math.floor(extraStress && stressInflicted > 0 ? stressInflicted + 20 : stressInflicted);
+	returnObj.stress = Math.floor(extraStress && stressInflicted > 0 ? stressInflicted + this._baseHitStress : stressInflicted);
 	
 	return returnObj;
 };
@@ -2150,22 +2174,22 @@ BattleManager.resolveMentalDamage = function(hitDamage, accRoll, eva, partProt, 
 	
 	var finalPow = Math.max(0, damScale * hitDamage.mental - (bypass ? tough : partProt.armor + tough));
 	
-	var stress = finalPow > 0 ? 20 : 0;
+	var stress = finalPow > 0 ? this._baseHitStress : 0;
 	
 	var finalDamage = Math.min(100, Math.max(0, Math.ceil(finalPow / tough - 1)));
 	returnObj.critical = finalDamage > 0 && bypass;
 	
-	stress += finalDamage / 2.5;
+	stress += finalDamage / this._damageStressDivisor;
 	
 	var returnObj = {};
-	returnObj.stress = Math.floor(stress > 0 ? stress + 20 : stress);
+	returnObj.stress = Math.floor(stress > 0 ? stress + this._baseHitStress : stress);
 	returnObj.damage = finalDamage;
 	return returnObj;
 };
 
 BattleManager.rollForRanks = function(ranks, stress) {
 	var adjustStress = Math.max(0, Math.min(100, stress));
-	var adjustedRanks = Math.max(0, ranks*10 + 100 - adjustStress);
+	var adjustedRanks = Math.max(0, ranks + 100 - adjustStress);
 	if(adjustStress >= 5) {
 		adjustedRanks = Math.max(0, Math.floor(adjustedRanks / 2));
 	}
