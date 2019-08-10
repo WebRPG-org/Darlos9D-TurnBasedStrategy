@@ -1278,8 +1278,12 @@ Window_TbsAction.prototype.windowWidth = function() {
 	if(this._actionInfos.length > 0) {
 		var longestLength = 0;
 		this._actionInfos.forEach(function (actionInfo) {
-			if(longestLength < actionInfo.action.name.length) {
-				longestLength = actionInfo.action.name.length;
+			var thisLength = actionInfo.action.name.length;
+			if(actionInfo.action.stressCost !== undefined && actionInfo.action.stressCost > 0) {
+				thisLength += 3;
+			}
+			if(longestLength < thisLength) {
+				longestLength = thisLength;
 			}
 		});
 		return this.standardPadding() * 2 + longestLength * 14 + Window_Base._iconWidth + this.textPadding() * 3;
@@ -1430,6 +1434,11 @@ Window_TbsAction.prototype.drawItem = function(index) {
 		}
 		this.drawIcon(iconIndex, this.textPadding(), this.lineHeight() * index + 2);
 		this.drawText(action.name, this.textPadding() * 2 + iconBoxWidth, this.lineHeight() * index);
+		if(action.stressCost !== undefined && action.stressCost > 0) {
+			this.changeTextColor(this.crisisColor());
+			this.drawText(action.stressCost, this.textPadding(), this.lineHeight() * index,
+				this.windowWidth() - this.standardPadding()*2 - this.textPadding()*2, "right");
+		}
 		this.resetTextColor();
 		this.changePaintOpacity(1);
 	}
@@ -1524,8 +1533,8 @@ Window_TbsAction.prototype.updateClose = function() {
 };
 
 Window_TbsAction.prototype.refreshWindowContents = function(dontSelectFirst) {
-	this.move(this.x, this.y, this.windowWidth(), this.windowHeight());
 	this.refresh(dontSelectFirst);
+	this.move(this.x, this.y, this.windowWidth(), this.windowHeight());
 };
 
 Window_TbsAction.prototype.refresh = function(dontSelectFirst) {
@@ -3015,6 +3024,11 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 			this.changePaintOpacity(this.isEnabled(action));
 			this.drawIcon(iconIndex, rect.x + 2, rect.y + 2);
 			this.drawText(action.name, rect.x + iconBoxWidth, rect.y, rect.width - costWidth - iconBoxWidth);
+			if(action.stressCost !== undefined && action.stressCost > 0) {
+				this.changeTextColor(this.crisisColor());
+				this.drawText(action.stressCost, rect.x, rect.y, rect.width, 'right');
+				this.resetTextColor();
+			}
 			this.changePaintOpacity(1);
 		}
 	};
