@@ -1550,10 +1550,10 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 				results.heal.stress += heal.stress ;
 			}
 			if(heal.damage !== undefined) {
-				if(this._tbsTargetPart != undefined && this._tbsTargetPart != "mobility" && this._tbsTargetPart != "vital") {
+				if((hit.aoe === undefined || hit.aoe <= 0) && this._tbsTargetPart != undefined) {
 					results.heal[this._tbsTargetPart] = heal.damage;
 					results.stress.other = Math.floor(Math.min(target.getDamage(this._tbsTargetPart), heal.damage) / this._damageStressDivisor);
-				} else {
+				} else if(hit.aoe !== undefined && hit.aoe >= 1) {
 					results.heal.head += heal.damage;
 					results.heal.torso += heal.damage;
 					results.heal.leftArm += heal.damage;
