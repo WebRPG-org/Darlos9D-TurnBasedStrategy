@@ -398,8 +398,7 @@
 
 	Scene_Map.prototype.createTbsActionInfoWindow = function() {
 		var wx = Graphics.boxWidth - 298;
-		var wy = Graphics.boxHeight - (7 * 36 + 18 * 2);
-		this._tbsActionInfoWindow = new Window_TbsActionInfo(wx, wy);
+		this._tbsActionInfoWindow = new Window_TbsActionInfo(wx, 0);
 		this.addWindow(this._tbsActionInfoWindow);
 		this._tbsActionInfoWindow.hide();
 	};
