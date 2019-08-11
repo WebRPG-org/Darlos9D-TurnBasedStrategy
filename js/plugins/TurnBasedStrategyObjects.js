@@ -1388,7 +1388,7 @@
 								+ battler.getDamage("rightArm") / 20;
 						}
 						battler.adjustStress(Math.floor(damageStress-battler.stressRecovery()));
-						battler.clearStressCost();
+						battler.applyStressCost();
 					}
 				}
 			}

@@ -570,7 +570,6 @@ BattleManager.updateAction = function() {
 			}
 			if(this._tbsTargets.length <= 0) {
 				if(this._tbsActionInfo.action.stressCost !== undefined) {
-					this._subject.battler.adjustStress(this._tbsActionInfo.action.stressCost);
 					this._subject.battler.adjustStressCost(this._tbsActionInfo.action.stressCost);
 					this._logWindow.showStressCost(this._subject.battler, this._tbsActionInfo.action.stressCost);
 				}
@@ -2279,7 +2278,12 @@ BattleManager.applyActionResults = function(results, target) {
 	var totalStress = results.stress.other + results.stress.mind + results.stress.head + results.stress.torso
 		+ results.stress.leftArm + results.stress.rightArm + results.stress.leftLeg + results.stress.rightLeg
 		+ results.stress.leftHeld + results.stress.rightHeld;
-	target.adjustStress(totalStress - results.heal.stress);
+	var prevStress = target.stress();
+	var stressAdjust = totalStress - results.heal.stress;
+	target.adjustStress(stressAdjust);
+	if(stressAdjust < 0 && target.stress() > 0 && prevStress + stressAdjust < target.stress()) {
+		target.adjustStressCost(stressAdjust + (prevStress - target.stress()));
+	}
 	target.adjustDamage("mind", results.damage.mind - results.heal.mind);
 	target.adjustDamage("head", results.damage.head - results.heal.head);
 	target.adjustDamage("torso", results.damage.torso - results.heal.torso);

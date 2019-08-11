@@ -395,7 +395,7 @@
 	};
 	
 	Game_BattlerBase.prototype.stress = function() {
-		return this._stress;
+		return Math.max(0, this._stress + this._stressCost);
 	};
 	
 	Game_BattlerBase.prototype.setDamage = function(part, damage) {
@@ -642,7 +642,7 @@
 	};
 	
 	Game_BattlerBase.prototype.stressRecovery = function() {
-		return Math.max(0, 20 - this._stressCost);
+		return 20;
 	};
 	
 	Game_BattlerBase.prototype.adjustStressCost = function(adjustValue) {
@@ -651,6 +651,11 @@
 	
 	Game_BattlerBase.prototype.clearStressCost = function() {
 		this._stressCost = 0;
+	};
+	
+	Game_BattlerBase.prototype.applyStressCost = function() {
+		this.adjustStress(this._stressCost);
+		this.clearStressCost();
 	};
 	
 	Game_BattlerBase.prototype.baseProtection = function() {
