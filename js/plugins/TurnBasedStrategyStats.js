@@ -446,6 +446,20 @@
 		this._items[index].type = "";
 		$gameMap.requestRefresh();
 	};
+	
+	Game_BattlerBase.prototype.swapItemLocations = function(indexOne, indexTwo) {
+		var itemOne = {};
+		var itemTwo = {};
+		itemOne.type = this._items[indexOne].type;
+		itemOne.id = this._items[indexOne].id;
+		itemTwo.type = this._items[indexTwo].type;
+		itemTwo.id = this._items[indexTwo].id;
+		this._items[indexOne].type = itemTwo.type;
+		this._items[indexOne].id = itemTwo.id;
+		this._items[indexTwo].type = itemOne.type;
+		this._items[indexTwo].id = itemOne.id;
+		$gameMap.requestRefresh();
+	};
 
 	Game_BattlerBase.prototype.allItems = function() {
 		return this.items();

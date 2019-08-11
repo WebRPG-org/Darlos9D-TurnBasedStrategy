@@ -1038,7 +1038,7 @@
 		this._commandWindow.setSlotWindow(this._slotWindow);
 		this._commandWindow.setHandler('equipWeapons',    this.commandEquip.bind(this, "weapons"));
 		this._commandWindow.setHandler('equipAccessories', this.commandEquip.bind(this, "accessories"));
-		this._commandWindow.setHandler('equipItems',    this.commandEquip.bind(this, "items"));
+		this._commandWindow.setHandler('organizeItems',    this.commandOrganize.bind(this));
 		this._commandWindow.setHandler('cancel',   this.popScene.bind(this));
 		this._commandWindow.setHandler('pagedown', this.nextActor.bind(this));
 		this._commandWindow.setHandler('pageup',   this.previousActor.bind(this));
@@ -1069,6 +1069,7 @@
 		this._itemWindow.setHandler('cancel', this.onItemCancel.bind(this));
 		this._itemWindow.setHandler('control', this.nextStatusPage.bind(this));
 		this._itemWindow.setHandler('shift',   this.prevStatusPage.bind(this));
+		this._commandWindow.setItemWindow(this._itemWindow);
 		this._slotWindow.setItemWindow(this._itemWindow);
 		this.addWindow(this._itemWindow);
 	};
@@ -1087,7 +1088,14 @@
 		this._slotWindow.select(0);
 		this._commandWindow.hide();
 		this._statusWindow.show();
-		this._itemWindow.showItems(true);
+	};
+	
+	Scene_Equip.prototype.commandOrganize = function() {
+		this._slotWindow.setSlotsType("none");
+		this._itemWindow.activate();
+		this._itemWindow.select(0);
+		this._commandWindow.hide();
+		this._statusWindow.show();
 	};
 
 	Scene_Equip.prototype.onSlotCancel = function() {
@@ -1096,18 +1104,46 @@
 		this._commandWindow.activate();
 		this._commandWindow.show();
 		this._statusWindow.hide();
-		this._itemWindow.showItems(false);
 	};
 	
 	Scene_Equip.prototype.onItemOk = function() {
-		SoundManager.playEquip();
-		this.actor().changeEquip(this._slotWindow.index() + this._slotWindow.slotsOffset(),
-			this._itemWindow.item(), this._itemWindow.index());
-		this._slotWindow.activate();
-		this._slotWindow.refresh();
-		this._itemWindow.deselect();
+		if(this._itemWindow.organizeMode()) {
+			if(this._itemWindow.isOrgSelected()) {
+				SoundManager.playOk();
+			} else {
+				SoundManager.playEquip();
+			}
+		} else {
+			SoundManager.playEquip();
+			this.actor().changeEquip(this._slotWindow.index() + this._slotWindow.slotsOffset(),
+				this._itemWindow.item(), this._itemWindow.index());
+			this._slotWindow.activate();
+			this._slotWindow.refresh();
+			this._itemWindow.deselect();
+			this._itemWindow.deactivate();
+			this._statusWindow.refresh();
+		}
 		this._itemWindow.refresh();
-		this._statusWindow.refresh();
+	};
+	
+	Scene_Equip.prototype.onItemCancel = function() {
+		if(this._itemWindow.organizeMode()) {
+			if(this._itemWindow.isOrgSelected()) {
+				this._itemWindow.clearOrgSelect();
+			} else {
+				this._itemWindow.deselect();
+				this._itemWindow.deactivate();
+				this._slotWindow.setSlotsType("none");
+				this._slotWindow.deselect();
+				this._commandWindow.activate();
+				this._commandWindow.show();
+				this._statusWindow.hide();
+			}
+		} else {
+			this._itemWindow.deselect();
+			this._itemWindow.deactivate();
+			this._slotWindow.activate();
+		}
 	};
 	
 	Scene_Equip.prototype.nextStatusPage = function() {

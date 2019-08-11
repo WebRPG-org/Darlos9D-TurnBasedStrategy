@@ -3050,6 +3050,14 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	Window_EquipCommand.prototype.initialize = function(x, y, width) {
 		this._windowWidth = width;
 		Window_HorzCommand.prototype.initialize.call(this, x, y);
+		this._itemWindow = undefined;
+	};
+	
+	Window_EquipCommand.prototype.setItemWindow = function(itemWindow) {
+		if(this._itemWindow != itemWindow) {
+			this._itemWindow = itemWindow;
+			this.refresh();
+		}
 	};
 	
 	Window_EquipCommand.prototype.update = function() {
@@ -3070,6 +3078,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 				default:
 			}
 			this._slotWindow.setSlotsType(slotsType);
+			this._itemWindow.setOrganizeMode(this.index() == 2);
 		}
 	};
 	
@@ -3081,13 +3090,13 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	};
 	
 	Window_EquipCommand.prototype.maxCols = function() {
-		return 2;
+		return 3;
 	};
 	
 	Window_EquipCommand.prototype.makeCommandList = function() {
 		this.addCommand("Held",   'equipWeapons');
 		this.addCommand("Accessory", 'equipAccessories');
-		//this.addCommand("Item",    'equipItems');
+		this.addCommand("Organize",    'organizeItems');
 	};
 	
 	//equip slot
@@ -3157,6 +3166,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		if (this._actor && this._statusWindow && (!this._itemWindow || !this._itemWindow.isOpenAndActive())) {
 			if (this._slotsType != this._prevSlotsType) {
 				if(this._slotsType === "weapons") {
+					var slotType = this._slotsType;
 					if(this.index() == 0) {
 						slotType = this._actor.heldSlotOne();
 					}
@@ -3176,6 +3186,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 					this._statusWindow.showNone();
 				}
 			}
+			this._statusWindow.setActor(this._slotsType !== "items" ? this._actor : null);
 			this._statusWindow.setActionsItem(this._actor.equips()[this.index() + this.slotsOffset()]);
 		}
 		this._prevIndex = this.index();
@@ -3192,7 +3203,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 				return 5;
 				break;
 			case "items":
-				return 6;
+				return 0;
 				break;
 			default:
 				return 0;
@@ -3244,16 +3255,28 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	Window_EquipItem.prototype.initialize = function(x, y, width, height) {
 		Window_ItemList.prototype.initialize.call(this, x, y, width, height);
 		this._actor = null;
-		this._slotId = "none";
+		this._slotId = 0;
 		this._slotType = "none";
-		this._showItems = false;
 		this._slotWindow = undefined;
+		this._organizeMode = false;
+		this._orgSelectIndex = -1;
 		this.makeItemList();
 	};
 	
 	Window_EquipItem.prototype.setSlotWindow = function(slotWindow) {
 		if (this._slotWindow !== slotWindow) {
 			this._slotWindow = slotWindow;
+			this.refresh();
+		}
+	};
+	
+	Window_EquipItem.prototype.organizeMode = function() {
+		return this._organizeMode;
+	};
+	
+	Window_EquipItem.prototype.setOrganizeMode = function(mode) {
+		if(this._organizeMode !== mode) {
+			this._organizeMode = mode;
 			this.refresh();
 		}
 	};
@@ -3271,14 +3294,6 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 			this.refresh();
 			this.resetScroll();
 		}
-	};
-
-	Window_EquipItem.prototype.showItems = function(showItems) {
-		this._showItems = showItems;
-	};
-
-	Window_EquipItem.prototype.showingItems = function() {
-		return this._showItems;
 	};
 	
 	Window_EquipItem.prototype.makeItemList = function() {
@@ -3309,15 +3324,36 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 
 	Window_EquipItem.prototype.updateHelp = function() {
 		Window_ItemList.prototype.updateHelp.call(this);
-		if (this._actor && this._statusWindow) {
-			var actor = JsonEx.makeDeepCopy(this._actor);
-			actor.forceChangeEquip(this._slotId, this.item());
-			this._statusWindow.setTempActor(actor);
+		if (this._actor && this._statusWindow && this.isOpenAndActive()) {
+			if(this._organizeMode) {
+				this.setHelpWindowItem(this.item());
+				this._statusWindow.setTempActor(null);
+			} else {
+				var actor = JsonEx.makeDeepCopy(this._actor);
+				actor.forceChangeEquip(this._slotId, this.item());
+				this._statusWindow.setTempActor(actor);
+			}
 		}
 	};
 	
 	Window_EquipItem.prototype.needsNumber = function() {
 		false;
+	};
+	
+	Window_EquipItem.prototype.drawItem = function(index) {
+		var item = this._data[index];
+		var rect = this.itemRect(index);
+		rect.width -= this.textPadding();
+		if (item) {
+			var numberWidth = this.numberWidth();
+			this.changePaintOpacity(this.isEnabled(item));
+			this.drawItemName(item, rect.x, rect.y, rect.width - numberWidth);
+			this.drawItemNumber(item, rect.x, rect.y, rect.width);
+			this.changePaintOpacity(1);
+		}
+		if (this._orgSelectIndex >= 0 && this._orgSelectIndex == index) {
+			this.drawOrgSelectBrackets(rect.x, rect.y, rect.width);
+		}
 	};
 	
 	Window_EquipItem.prototype.drawItemNumber = function(item, x, y, width) {
@@ -3327,7 +3363,52 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		}
 	};
 	
+	Window_EquipItem.prototype.drawOrgSelectBrackets = function(x, y, width) {
+		this.changeTextColor(this.crisisColor());
+		this.drawText('[________________________', x, y, width);
+		this.drawText( '````````````````````````]', x, y, width, 'right');
+		this.resetTextColor();
+	};
+	
+	Window_EquipItem.prototype.processOk = function() {
+		if (this.isCurrentItemEnabled()) {
+			this.updateInputData();
+			if(this._organizeMode) {
+				if(this._orgSelectIndex < 0) {
+					this._orgSelectIndex = this.index();
+				} else {
+					this._actor.swapItemLocations(this._orgSelectIndex, this.index());
+					this._orgSelectIndex = -1;
+				}
+			} else {
+				this.deactivate();
+			}
+			this.callOkHandler();
+		} else {
+			this.playBuzzerSound();
+		}
+	};
+	
+	Window_EquipItem.prototype.processCancel = function() {
+		SoundManager.playCancel();
+		this.updateInputData();
+		if(!this._organizeMode || this._orgSelectIndex < 0) {
+			this.deactivate();
+		}
+		this.callCancelHandler();
+	};
+	
+	Window_EquipItem.prototype.isOrgSelected = function() {
+		return this._orgSelectIndex >= 0;
+	};
+	
+	Window_EquipItem.prototype.clearOrgSelect = function() {
+		this._orgSelectIndex = -1;
+		this.refresh();
+	};
+	
 	Window_EquipItem.prototype.isEnabled = function(item) {
+		if (this._organizeMode) { return true; }
 		if (!this.isOpenAndActive() && (!this._slotWindow || !this._slotWindow.isOpenAndActive())) { return false; }
 		if (!item) { return true; }
 		if (this._actor) {
