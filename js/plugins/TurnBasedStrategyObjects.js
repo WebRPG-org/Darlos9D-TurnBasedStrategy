@@ -32,6 +32,7 @@
 		this._tbsDamageSpritesToAdd = [];
 		this._shouldClearTbsDamageSprites = false;
 		this._damageSpritesExist = false;
+		this._itemReceiver = undefined;
 	};
 	
 	Game_Temp.prototype.addTbsPartyMember = function(forceId, partyId, startingX, startingY, label, labelType) {
@@ -220,6 +221,18 @@
 		return !this._damageSpritesExist;
 	};
 	
+	Game_Temp.prototype.setItemReceiver = function(receiver) {
+		this._itemReceiver = receiver;
+	};
+	
+	Game_Temp.prototype.clearItemReceiver = function() {
+		this._itemReceiver = undefined;
+	};
+	
+	Game_Temp.prototype.getItemReceiver = function() {
+		return this._itemReceiver;
+	};
+	
 	//system
 	Game_System.prototype.addTbsPartyMember = function(forceId, partyId, startingX, startingY) {
 		$gameTemp.addTbsPartyMember(forceId, partyId, startingX, startingY);
@@ -256,6 +269,43 @@
 	Game_System.prototype.setTbsActorDamage = function(partyPositionId, partName, damage) {
 		var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(partyPositionId));
 		battler.setDamage(partName, damage);
+	};
+	
+	Game_System.prototype.giveItemToParty = function(itemId) {
+		var i;
+		for(i = 0; i < $gameParty.size(); i++) {
+			var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(i));
+			if(battler.numItems() < battler.maxItems()) {
+				battler.gainItem($dataItems[itemId]);
+				$gameTemp.setItemReceiver(battler.displayName());
+			}
+		}
+	};
+	
+	Game_System.prototype.giveWeaponToParty = function(itemId) {
+		var i;
+		for(i = 0; i < $gameParty.size(); i++) {
+			var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(i));
+			if(battler.numItems() < battler.maxItems()) {
+				battler.gainItem($dataWeapons[itemId]);
+				$gameTemp.setItemReceiver(battler.displayName());
+			}
+		}
+	};
+	
+	Game_System.prototype.giveArmorToParty = function(itemId) {
+		var i;
+		for(i = 0; i < $gameParty.size(); i++) {
+			var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(i));
+			if(battler.numItems() < battler.maxItems()) {
+				battler.gainItem($dataArmors[itemId]);
+				$gameTemp.setItemReceiver(battler.displayName());
+			}
+		}
+	};
+	
+	Game_System.prototype.getItemReceiver = function() {
+		return $gameTemp.getItemReceiver();
 	};
 	
 	//item

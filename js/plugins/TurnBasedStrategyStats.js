@@ -337,6 +337,107 @@
 		
 		this._displayName = undefined;
 		this._stressCost = 0;
+		this.initAllItems();
+	};
+
+	Game_BattlerBase.prototype.initAllItems = function() {
+		this._items = {};
+		this._weapons = {};
+		this._armors = {};
+	};
+	
+	Game_BattlerBase.prototype.items = function() {
+		var list = [];
+		for (var id in this._items) {
+			list.push($dataItems[id]);
+		}
+		return list;
+	};
+
+	Game_BattlerBase.prototype.inventoryWeapons = function() {
+		var list = [];
+		for (var id in this._weapons) {
+			list.push($dataWeapons[id]);
+		}
+		return list;
+	};
+
+	Game_BattlerBase.prototype.inventoryArmors = function() {
+		var list = [];
+		for (var id in this._armors) {
+			list.push($dataArmors[id]);
+		}
+		return list;
+	};
+	
+	Game_BattlerBase.prototype.itemContainer = function(item) {
+		if (!item) {
+			return null;
+		} else if (DataManager.isItem(item)) {
+			return this._items;
+		} else if (DataManager.isWeapon(item)) {
+			return this._weapons;
+		} else if (DataManager.isArmor(item)) {
+			return this._armors;
+		} else {
+			return null;
+		}
+	};
+	
+	Game_BattlerBase.prototype.numItems = function() {
+		var count = 0;
+		var items = this.allItems();
+		items.forEach(function (item) {
+			var container = this.itemContainer(item);
+			if(container && container[item.id] !== undefined) {
+				count += container[item.id];
+			}
+		}, this);
+		return count;
+	};
+	
+	Game_BattlerBase.prototype.hasItem = function(item) {
+		var container = this.itemContainer(item);
+		return container && container[item.id] > 0;
+	};
+
+	Game_BattlerBase.prototype.maxItems = function() {
+		return 6;
+	};
+	
+	Game_BattlerBase.prototype.tradeItemWithSelf = function() {
+	};
+	
+	Game_BattlerBase.prototype.gainItem = function(item) {
+		if(this.numItems() >= this.maxItems()) { return false; }
+		var container = this.itemContainer(item);
+		if (container) {
+			if(container[item.id] === undefined) { container[item.id] = 0; }
+			container[item.id]++;
+			$gameMap.requestRefresh();
+		}
+		return true;
+	};
+	
+	Game_BattlerBase.prototype.loseItem = function(item) {
+		var container = this.itemContainer(item);
+		if (container) {
+			if(container[item.id] === undefined || container[item.id] <= 0) { return false; }
+			container[item.id]--;
+			if (container[item.id] === 0) {
+				delete container[item.id];
+			}
+			$gameMap.requestRefresh();
+		}
+		return true;
+	};
+
+	Game_BattlerBase.prototype.equipItems = function() {
+		return this.inventoryWeapons().concat(this.inventoryArmors());
+	};
+
+	Game_BattlerBase.prototype.allItems = function() {
+		return this.items().concat(this.equipItems());
 	};
 	
 	Game_BattlerBase.prototype.setDisplayName = function(displayName) {
@@ -1076,8 +1177,18 @@
 		return value;
 	};
 	
+	Game_Actor.prototype.tradeItemWithSelf = function(newItem, oldItem) {
+		if (newItem && !this.hasItem(newItem)) {
+			return false;
+		} else {
+			this.gainItem(oldItem);
+			this.loseItem(newItem);
+			return true;
+		}
+	};
+	
 	Game_Actor.prototype.changeEquip = function(slotId, item) {
-		if (this.tradeItemWithParty(item, this.equips()[slotId])) {
+		if (this.tradeItemWithSelf(item, this.equips()[slotId])) {
 			this._equips[slotId].setObject(item);
 			this.refresh();
 		}

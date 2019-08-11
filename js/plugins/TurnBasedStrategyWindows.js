@@ -3083,7 +3083,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	Window_EquipCommand.prototype.makeCommandList = function() {
 		this.addCommand("Held",   'equipWeapons');
 		this.addCommand("Accessory", 'equipAccessories');
-		this.addCommand("Item",    'equipItems');
+		//this.addCommand("Item",    'equipItems');
 	};
 	
 	//equip slot
@@ -3266,6 +3266,17 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 
 	Window_EquipItem.prototype.showingItems = function() {
 		return this._showItems;
+	};
+	
+	Window_EquipItem.prototype.makeItemList = function() {
+		if(this._actor) {
+			this._data = this._actor.allItems().filter(function(item) {
+				return this.includes(item);
+			}, this);
+		}
+		if (this.includes(null)) {
+			this._data.push(null);
+		}
 	};
 
 	Window_EquipItem.prototype.includes = function(item) {
