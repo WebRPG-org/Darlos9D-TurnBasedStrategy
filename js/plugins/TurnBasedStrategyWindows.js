@@ -3080,6 +3080,10 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		}
 	};
 	
+	Window_EquipCommand.prototype.maxCols = function() {
+		return 2;
+	};
+	
 	Window_EquipCommand.prototype.makeCommandList = function() {
 		this.addCommand("Held",   'equipWeapons');
 		this.addCommand("Accessory", 'equipAccessories');
@@ -3284,7 +3288,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 			return false;
 		}
 		
-		if (item === null) {
+		if (item === null && this._actor.totalItemCount() < this._actor.maxItems()) {
 			return true;
 		}
 		if ((this._slotType === "mainHand" && DataManager.isWeapon(item) && item.tbsStats.hands) ||
@@ -3303,6 +3307,13 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 			var actor = JsonEx.makeDeepCopy(this._actor);
 			actor.forceChangeEquip(this._slotId, this.item());
 			this._statusWindow.setTempActor(actor);
+		}
+	};
+	
+	Window_EquipItem.prototype.drawItemNumber = function(item, x, y, width) {
+		if (this.needsNumber() && this._actor) {
+			this.drawText(':', x, y, width - this.textWidth('00'), 'right');
+			this.drawText(this._actor.numItems(item), x, y, width, 'right');
 		}
 	};
 	

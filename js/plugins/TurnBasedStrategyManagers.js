@@ -443,7 +443,7 @@ BattleManager.endTurn = function() {
     this._phase = 'turnEnd';
     this._preemptive = false;
     this._surprise = false;
-	this._tbsActors[0].battler.useActionEquip(this._tbsActionInfo);
+	this._tbsActors[0].battler.useActionItem(this._tbsActionInfo);
     this.allBattleMembers().forEach(function(tbsActor) {
 		tbsActor.battler.clearCurrentlyOngoingAnims();
         tbsActor.battler.onTurnEnd();

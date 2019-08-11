@@ -275,7 +275,7 @@
 		var i;
 		for(i = 0; i < $gameParty.size(); i++) {
 			var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(i));
-			if(battler.numItems() < battler.maxItems()) {
+			if(battler.totalItemCount() < battler.maxItems()) {
 				battler.gainItem($dataItems[itemId]);
 				$gameTemp.setItemReceiver(battler.displayName());
 			}
@@ -286,7 +286,7 @@
 		var i;
 		for(i = 0; i < $gameParty.size(); i++) {
 			var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(i));
-			if(battler.numItems() < battler.maxItems()) {
+			if(battler.totalItemCount() < battler.maxItems()) {
 				battler.gainItem($dataWeapons[itemId]);
 				$gameTemp.setItemReceiver(battler.displayName());
 			}
@@ -297,7 +297,7 @@
 		var i;
 		for(i = 0; i < $gameParty.size(); i++) {
 			var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(i));
-			if(battler.numItems() < battler.maxItems()) {
+			if(battler.totalItemCount() < battler.maxItems()) {
 				battler.gainItem($dataArmors[itemId]);
 				$gameTemp.setItemReceiver(battler.displayName());
 			}

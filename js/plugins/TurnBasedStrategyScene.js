@@ -991,7 +991,7 @@
 		var user = this.user();
 		this.applyAction();
 		if(user) {
-			if(user.useActionEquip(this.actionInfo())) {
+			if(user.useActionItem(this.actionInfo())) {
 				this._actorWindow.setDisplayMode(true);
 			}
 		}

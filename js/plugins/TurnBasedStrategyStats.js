@@ -384,7 +384,12 @@
 		}
 	};
 	
-	Game_BattlerBase.prototype.numItems = function() {
+	Game_BattlerBase.prototype.numItems = function(item) {
+		var container = this.itemContainer(item);
+		return container ? container[item.id] || 0 : 0;
+	};
+	
+	Game_BattlerBase.prototype.totalItemCount = function() {
 		var count = 0;
 		var items = this.allItems();
 		items.forEach(function (item) {
@@ -397,8 +402,7 @@
 	};
 	
 	Game_BattlerBase.prototype.hasItem = function(item) {
-		var container = this.itemContainer(item);
-		return container && container[item.id] > 0;
+		return this.numItems(item) > 0;
 	};
 
 	Game_BattlerBase.prototype.maxItems = function() {
@@ -409,7 +413,7 @@
 	};
 	
 	Game_BattlerBase.prototype.gainItem = function(item) {
-		if(this.numItems() >= this.maxItems()) { return false; }
+		if(this.totalItemCount() >= this.maxItems()) { return false; }
 		var container = this.itemContainer(item);
 		if (container) {
 			if(container[item.id] === undefined) { container[item.id] = 0; }
@@ -936,6 +940,64 @@
 				}
 			}
 		}
+		var items = this.items();
+		if(items && items.length) {
+			var i;
+			for(i = 0; i < items.length; i++)
+			{
+				if(items[i] && items[i].tbsStats.actions && items[i].tbsStats.actions.length > 0)
+				{
+					var j;
+					var actions = items[i].tbsStats.actions;
+					for(j = 0; j < actions.length; j++)
+					{
+						var returnActionInfo = {};
+						returnActionInfo.action = actions[j];
+						returnActionInfo.sourceEquip = items[i];
+						returnActionInfo.sourceEquipSlotId = -1;
+						returnActionInfo.canTargetBodyPart = false;
+						returnActionInfo.canTargetDownedBodyPart = false;
+						if(actions[j].hitGroups && actions[j].hitGroups.length > 0) {
+							var groups = actions[j].hitGroups;
+							var k;
+							for(k = 0; k < groups.length; k++) {
+								if(groups[k].hits && groups[k].hits.length > 0) {
+									var hits = groups[k].hits;
+									returnActionInfo.canTargetBodyPart = hits.some(function (hit) {
+										if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+											return true;
+										}
+										return false;
+									});
+									returnActionInfo.canTargetDownedBodyPart = hits.some(function (hit) {
+										if(hit.aoe === undefined || hit.aoe <= 0) {
+											return true;
+										}
+										return false;
+									});
+								}
+							}
+						}
+						
+						var requirements = actions[j].skillRequirements;
+						
+						if(requirements === undefined) { returnActionInfos.push(returnActionInfo); continue; }
+						
+						var canUseAction = true;
+						for(k = 0; k < requirements.length; k++)
+						{
+							if(this.totalSkill(requirements[k].skill) < requirements[k].level)
+							{
+								canUseAction = false;
+								break;
+							}
+						}
+						if(!canUseAction) { continue; }
+						returnActionInfos.push(returnActionInfo);
+					}
+				}
+			}
+		}
 		return returnActionInfos;
 	};
 	
@@ -1157,9 +1219,17 @@
 	Game_Battler.prototype.changeEquip = function(slotId, item) {
 	};
 	
-	Game_Battler.prototype.useActionEquip = function(actionInfo) {
-		if(!actionInfo || !actionInfo.action.consumesItem || !actionInfo.sourceEquip || actionInfo.sourceEquipSlotId === undefined) { return false; }
-		this.changeEquip(actionInfo.sourceEquipSlotId, null);
+	Game_Battler.prototype.consumeItem = function(item) {
+		if (DataManager.isItem(item) && item.consumable) {
+			this.loseItem(item);
+		}
+	};
+	
+	Game_Battler.prototype.useActionItem = function(actionInfo) {
+		if(!actionInfo || !actionInfo.action.consumesItem || !actionInfo.sourceEquip) { return false; }
+		if(actionInfo.sourceEquipSlotId !== undefined && actionInfo.sourceEquipSlotId >= 0) {
+			this.changeEquip(actionInfo.sourceEquipSlotId, null);
+		}
 		this.consumeItem(actionInfo.sourceEquip);
 		return true;
 	};
