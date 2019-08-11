@@ -301,7 +301,7 @@
 		return weaponImageId;
 	};
 	
-	//adding tracked battler stats
+	//battler base
 	Game_BattlerBase.prototype.initMembers = function() {
 		this._hp = 1;
 		this._mp = 0;
@@ -341,63 +341,50 @@
 	};
 
 	Game_BattlerBase.prototype.initAllItems = function() {
-		this._items = {};
-		this._weapons = {};
-		this._armors = {};
+		this._items = [];
+		var i;
+		for(i = 0; i < this.maxItems(); i++) {
+			var item = {};
+			item.type = "";
+			item.id = 0;
+			this._items[i] = item;
+		}
 	};
 	
 	Game_BattlerBase.prototype.items = function() {
-		var list = [];
-		for (var id in this._items) {
-			list.push($dataItems[id]);
-		}
-		return list;
-	};
-
-	Game_BattlerBase.prototype.inventoryWeapons = function() {
-		var list = [];
-		for (var id in this._weapons) {
-			list.push($dataWeapons[id]);
-		}
-		return list;
-	};
-
-	Game_BattlerBase.prototype.inventoryArmors = function() {
-		var list = [];
-		for (var id in this._armors) {
-			list.push($dataArmors[id]);
-		}
-		return list;
+		return this._items;
 	};
 	
-	Game_BattlerBase.prototype.itemContainer = function(item) {
+	Game_BattlerBase.prototype.itemType = function(item) {
 		if (!item) {
-			return null;
+			return "";
 		} else if (DataManager.isItem(item)) {
-			return this._items;
+			return "item";
 		} else if (DataManager.isWeapon(item)) {
-			return this._weapons;
+			return "weapon";
 		} else if (DataManager.isArmor(item)) {
-			return this._armors;
+			return "armor";
 		} else {
-			return null;
+			return "";
 		}
 	};
 	
 	Game_BattlerBase.prototype.numItems = function(item) {
-		var container = this.itemContainer(item);
-		return container ? container[item.id] || 0 : 0;
+		var count = 0;
+		var type = this.itemType(item);
+		var i;
+		for(i = 0; i < this.maxItems(); i++) {
+			count += this._items[i].type === type && this._items[i].id === item.id ? 1 : 0;
+		}
+		return count;
 	};
 	
 	Game_BattlerBase.prototype.totalItemCount = function() {
 		var count = 0;
-		var items = this.allItems();
-		items.forEach(function (item) {
-			var container = this.itemContainer(item);
-			if(container && container[item.id] !== undefined) {
-				count += container[item.id];
-			}
-		}, this);
+		var i;
+		for(i = 0; i < this.maxItems(); i++) {
+			count += this._items[i].id > 0 && this._items[i].type !== "";
+		}
 		return count;
 	};
 	
@@ -414,34 +401,54 @@
 	
 	Game_BattlerBase.prototype.gainItem = function(item) {
 		if(this.totalItemCount() >= this.maxItems()) { return false; }
-		var container = this.itemContainer(item);
-		if (container) {
-			if(container[item.id] === undefined) { container[item.id] = 0; }
-			container[item.id]++;
-			$gameMap.requestRefresh();
+		var type = this.itemType(item);
+		var gained = false;
+		var i;
+		for(i = 0; i < maxItems(); i++) {
+			if(this._items[i].id <= 0 && this._items[i].type === "") {
+				this._items[i].id = item.id;
+				this._items[i].type = type;
+				gained = true;
+				$gameMap.requestRefresh();
+				break;
+			}
 		}
-		return true;
+		return gained;
 	};
 	
 	Game_BattlerBase.prototype.loseItem = function(item) {
-		var container = this.itemContainer(item);
-		if (container) {
-			if(container[item.id] === undefined || container[item.id] <= 0) { return false; }
-			container[item.id]--;
-			if (container[item.id] === 0) {
-				delete container[item.id];
+		var type = this.itemType(item);
+		var lost = false;
+		var i;
+		for(i = 0; i < maxItems(); i++) {
+			if(this._items[i].type === type && this._items[i].id === item.id) {
+				this._items[i].id = 0;
+				this._items[i].type = "";
+				lost = true;
+				$gameMap.requestRefresh();
+				break;
 			}
-			$gameMap.requestRefresh();
 		}
-		return true;
+		return lost;
 	};
-
-	Game_BattlerBase.prototype.equipItems = function() {
-		return this.inventoryWeapons().concat(this.inventoryArmors());
+	
+	Game_BattlerBase.prototype.gainItemAtIndex = function(item, index) {
+		var type = this.itemType(item);
+		index = Math.max(0, Math.min(this.maxItems()-1, index));
+		this._items[index].id = item ? item.id : 0;
+		this._items[index].type = type;
+		$gameMap.requestRefresh();
+	};
+	
+	Game_BattlerBase.prototype.loseItemAtIndex = function(index) {
+		index = Math.max(0, Math.min(this.maxItems()-1, index));
+		this._items[index].id = 0;
+		this._items[index].type = "";
+		$gameMap.requestRefresh();
 	};
 
 	Game_BattlerBase.prototype.allItems = function() {
-		return this.items().concat(this.equipItems());
+		return this.items();
 	};
 	
 	Game_BattlerBase.prototype.setDisplayName = function(displayName) {
@@ -589,119 +596,6 @@
 		}
 	};
 	
-	Game_Battler.prototype.initMembers = function() {
-		Game_BattlerBase.prototype.initMembers.call(this);
-		this._actions = [];
-		this._speed = 0;
-		this._result = new Game_ActionResult();
-		this._actionState = '';
-		this._lastTargetIndex = 0;
-		this._animations = [];
-		this._ongoingAnimations = [];
-		this._currentlyOngoingAnims = [];
-		this._damagePopup = false;
-		this._effectType = null;
-		this._motionType = null;
-		this._weaponImageId = 0;
-		this._motionRefresh = false;
-		this._selected = false;
-		this._screenX = 0;
-		this._screenY = 0;
-		this._shouldMoveIn = false;
-		this._tbsResults = undefined;
-	};
-	
-	Game_Battler.prototype.setTbsResults = function(tbsResults) {
-		this._tbsResults = tbsResults;
-	};
-	
-	Game_Battler.prototype.getTbsResults = function() {
-		return this._tbsResults;
-	};
-	
-	Game_Battler.prototype.clearTbsResults = function() {
-		this._tbsResults = undefined;
-	};
-	
-	Game_Battler.prototype.performDeflection = function() {
-		SoundManager.playDeflectionSound();
-	};
-	
-	Game_Battler.prototype.performStress = function() {
-		SoundManager.playStressSound();
-	};
-	
-	Game_Battler.prototype.setShouldMoveIn = function(should) {
-		this._shouldMoveIn = false;
-	};
-	
-	Game_Battler.prototype.setScreenPos = function(x, y) {
-		this._screenX = x;
-		this._screenY = y;
-	};
-	
-	Game_Battler.prototype.shouldMoveIn = function() {
-		return this._shouldMoveIn;
-	};
-	
-	Game_Battler.prototype.screenX = function() {
-		return this._screenX;
-	};
-
-	Game_Battler.prototype.screenY = function() {
-		return this._screenY;
-	};
-	
-	Game_Actor.prototype.performDeflection = function() {
-		Game_Battler.prototype.performDeflection.call(this);
-		this.requestMotion('evade');
-	};
-	
-	Game_Actor.prototype.performStress = function() {
-		Game_Battler.prototype.performStress.call(this);
-		if (this.isSpriteVisible()) {
-			this.requestMotion('damage');
-		} else {
-			$gameScreen.startShake(5, 5, 10);
-		}
-	};
-	
-	Game_Actor.prototype.checkLearnedSkills = function() {
-		var i;
-		for(i = 0; i < $dataSkills.length; i++) {
-			var skillStats = $dataSkills[i].tbsStats;
-			if(skillStats.unlearnable || !skillStats.action || !skillStats.action.skillRequirements) {
-				continue;
-			}
-			
-			var skillReqs = skillStats.action.skillRequirements;
-			var shouldLearn = true;
-			var j;
-			for(j = 0; j < skillReqs.length; j++) {
-				if(this.skillPoints(skillReqs[j].skill) < skillReqs[j].level) {
-					shouldLearn = false;
-					break;
-				}
-			}
-			
-			if(shouldLearn) {
-				this.learnSkill(i);
-			} else {
-				this.forgetSkill(i);
-			}
-		}
-	};
-	
-	Game_Enemy.prototype.performStress = function() {
-		//Game_Battler.prototype.performStress.call(this);
-		//this.requestEffect('blink');
-	};
-	
-	Game_Enemy.prototype.isSpriteVisible = function() {
-		return true;
-	};
-	
-	//fetching inherent stats
 	Game_BattlerBase.prototype.handedness = function() {
 		return "right";
 	};
@@ -771,63 +665,6 @@
 		return false;
 	};
 	
-	Game_Actor.prototype.handedness = function() {
-		return this.actor().tbsStats.handedness;
-	};
-	
-	Game_Actor.prototype.limbsType = function() {
-		return this.actor().tbsStats.limbsType;
-	};
-	
-	Game_Actor.prototype.uniqueSkills = function() {
-		return this.currentClass().tbsStats.uniqueSkills;
-	};
-	
-	Game_Actor.prototype.totalSkill = function(skill) {
-		return (this.currentClass().tbsStats.startingSkills[skill] === undefined ? 0 : this.currentClass().tbsStats.startingSkills[skill])
-			+ this.skillPoints(skill) + this.getSkillBuff(skill);
-	};
-	
-	Game_Actor.prototype.baseProtection = function() {
-		return this.currentClass().tbsStats.protection;
-	};
-	
-	Game_Enemy.prototype.handedness = function() {
-		return this.enemy().tbsStats.handedness;
-	};
-	
-	Game_Enemy.prototype.limbsType = function() {
-		return this.enemy().tbsStats.limbsType;
-	};
-	
-	Game_Enemy.prototype.uniqueSkills = function() {
-		return this.enemy().tbsStats.uniqueSkills;
-	};
-	
-	Game_Enemy.prototype.totalSkill = function(skill) {
-		return (this.enemy().tbsStats.startingSkills[skill] === undefined ? 0 : this.enemy().tbsStats.startingSkills[skill])
-			+ this.skillPoints(skill) + this.getSkillBuff(skill);
-	};
-	
-	Game_Enemy.prototype.isFlying = function() {
-		return this.enemy().tbsStats.flying;
-	};
-	
-	Game_Enemy.prototype.baseProtection = function() {
-		return this.enemy().tbsStats.protection;
-	};
-	
-	Game_Enemy.prototype.blankDummy = function() {
-		return !!this.enemy().tbsStats.blankDummy;
-	};
-	
-	Game_Enemy.prototype.toughness = function() {
-		return this.enemy().tbsStats.toughness === undefined 
-			? Game_Battler.prototype.toughness.call(this)
-			: this.enemy().tbsStats.toughness;
-	};
-	
-	//fetching equipment stats
 	Game_BattlerBase.prototype.sumProtection = function(protOne, protTwo) {
 		var defaultProtection = {};
 		defaultProtection.defense = {};
@@ -940,20 +777,28 @@
 				}
 			}
 		}
-		var items = this.items();
-		if(items && items.length) {
+		var actorItems = this.items();
+		if(actorItems && actorItems.length) {
 			var i;
-			for(i = 0; i < items.length; i++)
+			for(i = 0; i < actorItems.length; i++)
 			{
-				if(items[i] && items[i].tbsStats.actions && items[i].tbsStats.actions.length > 0)
+				var item = undefined;
+				if(actorItems[i].type === "item") {
+					item = $dataItems[actorItems[i].id];
+				} else if(actorItems[i].type === "weapon") {
+					item = $dataWeapons[actorItems[i].id];
+				} else if(actorItems[i].type === "armor") {
+					item = $dataArmors[actorItems[i].id];
+				}
+				if(item && item.tbsStats.actions && item.tbsStats.actions.length > 0)
 				{
 					var j;
-					var actions = items[i].tbsStats.actions;
+					var actions = item.tbsStats.actions;
 					for(j = 0; j < actions.length; j++)
 					{
 						var returnActionInfo = {};
 						returnActionInfo.action = actions[j];
-						returnActionInfo.sourceEquip = items[i];
+						returnActionInfo.sourceEquip = item;
 						returnActionInfo.sourceEquipSlotId = -1;
 						returnActionInfo.canTargetBodyPart = false;
 						returnActionInfo.canTargetDownedBodyPart = false;
@@ -1114,38 +959,6 @@
 		return totalProtection;
 	};
 	
-	Game_Enemy.prototype.equips = function() {
-		var returnEquips = [];
-		var equipment = this.enemy().tbsStats.equipment;
-		if(!equipment) { return returnEquips; }
-		if($dataWeapons[equipment.mainHand]) { returnEquips.push($dataWeapons[equipment.mainHand]); }
-		if($dataWeapons[equipment.offhand]) { returnEquips.push($dataWeapons[equipment.offhand]); }
-		if($dataArmors[equipment.accessoryOne]) { returnEquips.push($dataArmors[equipment.accessoryOne]); }
-		if($dataArmors[equipment.accessoryTwo]) { returnEquips.push($dataArmors[equipment.accessoryTwo]); }
-		if($dataArmors[equipment.accessoryThree]) { returnEquips.push($dataArmors[equipment.accessoryThree]); }
-		if($dataArmors[equipment.accessoryFour]) { returnEquips.push($dataArmors[equipment.accessoryFour]); }
-		if($dataArmors[equipment.accessoryFive]) { returnEquips.push($dataArmors[equipment.accessoryFive]); }
-		if($dataItems[equipment.itemOne]) { returnEquips.push($dataItems[equipment.itemOne]); }
-		if($dataItems[equipment.itemTwo]) { returnEquips.push($dataItems[equipment.itemTwo]); }
-		if($dataItems[equipment.itemThree]) { returnEquips.push($dataItems[equipment.itemThree]); }
-		if($dataItems[equipment.itemFour]) { returnEquips.push($dataItems[equipment.itemFour]); }
-		if($dataItems[equipment.itemFive]) { returnEquips.push($dataItems[equipment.itemFive]); }
-		if($dataItems[equipment.itemSix]) { returnEquips.push($dataItems[equipment.itemSix]); }
-		
-		return returnEquips;
-	};
-	
-	Game_Enemy.prototype.skills = function() {
-		var returnSkills = [];
-		var actions = this.enemy().actions;
-		if(!actions) { return returnSkills; }
-		this.enemy().actions.forEach(function (action) {
-			if($dataSkills[action.skillId]) { returnSkills.push($dataSkills[action.skillId]); }
-		});
-		return returnSkills;
-	};
-	
-	//general changes to battler base
 	Game_BattlerBase.prototype.traitsWithId = function(code, id) {
 		return this.allTraits().filter(function(trait) {
 			if(!trait) { return false; }
@@ -1172,7 +985,6 @@
 		}
 	};
 	
-	//general changes to battler base
 	Game_BattlerBase.prototype.canUseAction = function(actionInfo) {
 		if(!actionInfo || !actionInfo.action) { return false; }
 		var action = actionInfo.action;
@@ -1215,7 +1027,70 @@
 		this.adjustDamage("rightLeg", -hit.heal.damage);
 	};
 	
-	//general changes to battler
+	//battler
+	Game_Battler.prototype.initMembers = function() {
+		Game_BattlerBase.prototype.initMembers.call(this);
+		this._actions = [];
+		this._speed = 0;
+		this._result = new Game_ActionResult();
+		this._actionState = '';
+		this._lastTargetIndex = 0;
+		this._animations = [];
+		this._ongoingAnimations = [];
+		this._currentlyOngoingAnims = [];
+		this._damagePopup = false;
+		this._effectType = null;
+		this._motionType = null;
+		this._weaponImageId = 0;
+		this._motionRefresh = false;
+		this._selected = false;
+		this._screenX = 0;
+		this._screenY = 0;
+		this._shouldMoveIn = false;
+		this._tbsResults = undefined;
+	};
+	
+	Game_Battler.prototype.setTbsResults = function(tbsResults) {
+		this._tbsResults = tbsResults;
+	};
+	
+	Game_Battler.prototype.getTbsResults = function() {
+		return this._tbsResults;
+	};
+	
+	Game_Battler.prototype.clearTbsResults = function() {
+		this._tbsResults = undefined;
+	};
+	
+	Game_Battler.prototype.performDeflection = function() {
+		SoundManager.playDeflectionSound();
+	};
+	
+	Game_Battler.prototype.performStress = function() {
+		SoundManager.playStressSound();
+	};
+	
+	Game_Battler.prototype.setShouldMoveIn = function(should) {
+		this._shouldMoveIn = false;
+	};
+	
+	Game_Battler.prototype.setScreenPos = function(x, y) {
+		this._screenX = x;
+		this._screenY = y;
+	};
+	
+	Game_Battler.prototype.shouldMoveIn = function() {
+		return this._shouldMoveIn;
+	};
+	
+	Game_Battler.prototype.screenX = function() {
+		return this._screenX;
+	};
+
+	Game_Battler.prototype.screenY = function() {
+		return this._screenY;
+	};
+	
 	Game_Battler.prototype.changeEquip = function(slotId, item) {
 	};
 	
@@ -1234,58 +1109,6 @@
 		return true;
 	};
 	
-	//general changes to actor
-	Game_Actor.prototype.paramPlus = function(paramId) {
-		var value = Game_Battler.prototype.paramPlus.call(this, paramId);
-		var equips = this.equips();
-		for (var i = 0; i < equips.length; i++) {
-			var item = equips[i];
-			if (item && item.params) {
-				value += item.params[paramId];
-			}
-		}
-		return value;
-	};
-	
-	Game_Actor.prototype.tradeItemWithSelf = function(newItem, oldItem) {
-		if (newItem && !this.hasItem(newItem)) {
-			return false;
-		} else {
-			this.gainItem(oldItem);
-			this.loseItem(newItem);
-			return true;
-		}
-	};
-	
-	Game_Actor.prototype.changeEquip = function(slotId, item) {
-		if (this.tradeItemWithSelf(item, this.equips()[slotId])) {
-			this._equips[slotId].setObject(item);
-			this.refresh();
-		}
-	};
-	
-	Game_Actor.prototype.releaseUnequippableItems = function(forcing) {
-		for (;;) {
-			var slots = this.equipSlots();
-			var equips = this.equips();
-			var changed = false;
-			for (var i = 0; i < equips.length; i++) {
-				var item = equips[i];
-				if (item && !this.canEquip(item)) {
-					if (!forcing) {
-						this.tradeItemWithParty(null, item);
-					}
-					this._equips[i].setObject(null);
-					changed = true;
-				}
-			}
-			if (!changed) {
-				break;
-			}
-		}
-	};
-	
-	//battle action and animation stuff
 	Game_Battler.prototype.performActionStart = function(action) {
 		//if (!action.isGuard()) {
 			this.setActionState('acting');
@@ -1352,6 +1175,118 @@
 		});
 		this._currentlyOngoingAnims = remainingArray;
 		return returnArray;
+	};
+	
+	//actor
+	Game_Actor.prototype.performDeflection = function() {
+		Game_Battler.prototype.performDeflection.call(this);
+		this.requestMotion('evade');
+	};
+	
+	Game_Actor.prototype.performStress = function() {
+		Game_Battler.prototype.performStress.call(this);
+		if (this.isSpriteVisible()) {
+			this.requestMotion('damage');
+		} else {
+			$gameScreen.startShake(5, 5, 10);
+		}
+	};
+	
+	Game_Actor.prototype.checkLearnedSkills = function() {
+		var i;
+		for(i = 0; i < $dataSkills.length; i++) {
+			var skillStats = $dataSkills[i].tbsStats;
+			if(skillStats.unlearnable || !skillStats.action || !skillStats.action.skillRequirements) {
+				continue;
+			}
+			
+			var skillReqs = skillStats.action.skillRequirements;
+			var shouldLearn = true;
+			var j;
+			for(j = 0; j < skillReqs.length; j++) {
+				if(this.skillPoints(skillReqs[j].skill) < skillReqs[j].level) {
+					shouldLearn = false;
+					break;
+				}
+			}
+			
+			if(shouldLearn) {
+				this.learnSkill(i);
+			} else {
+				this.forgetSkill(i);
+			}
+		}
+	};
+	
+	Game_Actor.prototype.handedness = function() {
+		return this.actor().tbsStats.handedness;
+	};
+	
+	Game_Actor.prototype.limbsType = function() {
+		return this.actor().tbsStats.limbsType;
+	};
+	
+	Game_Actor.prototype.uniqueSkills = function() {
+		return this.currentClass().tbsStats.uniqueSkills;
+	};
+	
+	Game_Actor.prototype.totalSkill = function(skill) {
+		return (this.currentClass().tbsStats.startingSkills[skill] === undefined ? 0 : this.currentClass().tbsStats.startingSkills[skill])
+			+ this.skillPoints(skill) + this.getSkillBuff(skill);
+	};
+	
+	Game_Actor.prototype.baseProtection = function() {
+		return this.currentClass().tbsStats.protection;
+	};
+	
+	Game_Actor.prototype.paramPlus = function(paramId) {
+		var value = Game_Battler.prototype.paramPlus.call(this, paramId);
+		var equips = this.equips();
+		for (var i = 0; i < equips.length; i++) {
+			var item = equips[i];
+			if (item && item.params) {
+				value += item.params[paramId];
+			}
+		}
+		return value;
+	};
+	
+	Game_Actor.prototype.tradeItemWithSelf = function(newItem, oldItem, itemIndex) {
+		if (newItem && !this.hasItem(newItem)) {
+			return false;
+		} else {
+			this.loseItemAtIndex(itemIndex);
+			this.gainItemAtIndex(oldItem, itemIndex);
+			return true;
+		}
+	};
+	
+	Game_Actor.prototype.changeEquip = function(slotId, item, itemIndex) {
+		if (this.tradeItemWithSelf(item, this.equips()[slotId], itemIndex)) {
+			this._equips[slotId].setObject(item);
+			this.refresh();
+		}
+	};
+	
+	Game_Actor.prototype.releaseUnequippableItems = function(forcing) {
+		for (;;) {
+			var slots = this.equipSlots();
+			var equips = this.equips();
+			var changed = false;
+			for (var i = 0; i < equips.length; i++) {
+				var item = equips[i];
+				if (item && !this.canEquip(item)) {
+					if (!forcing) {
+						this.tradeItemWithParty(null, item);
+					}
+					this._equips[i].setObject(null);
+					changed = true;
+				}
+			}
+			if (!changed) {
+				break;
+			}
+		}
 	};
 	
 	Game_Actor.prototype.performActionStart = function(action) {
@@ -1425,6 +1360,82 @@
 		if ($gameParty.inBattle()) {
 			SoundManager.playActorCollapse();
 		}
+	};
+	
+	//enemy
+	Game_Enemy.prototype.performStress = function() {
+		//Game_Battler.prototype.performStress.call(this);
+		//this.requestEffect('blink');
+	};
+	
+	Game_Enemy.prototype.isSpriteVisible = function() {
+		return true;
+	};
+	
+	Game_Enemy.prototype.handedness = function() {
+		return this.enemy().tbsStats.handedness;
+	};
+	
+	Game_Enemy.prototype.limbsType = function() {
+		return this.enemy().tbsStats.limbsType;
+	};
+	
+	Game_Enemy.prototype.uniqueSkills = function() {
+		return this.enemy().tbsStats.uniqueSkills;
+	};
+	
+	Game_Enemy.prototype.totalSkill = function(skill) {
+		return (this.enemy().tbsStats.startingSkills[skill] === undefined ? 0 : this.enemy().tbsStats.startingSkills[skill])
+			+ this.skillPoints(skill) + this.getSkillBuff(skill);
+	};
+	
+	Game_Enemy.prototype.isFlying = function() {
+		return this.enemy().tbsStats.flying;
+	};
+	
+	Game_Enemy.prototype.baseProtection = function() {
+		return this.enemy().tbsStats.protection;
+	};
+	
+	Game_Enemy.prototype.blankDummy = function() {
+		return !!this.enemy().tbsStats.blankDummy;
+	};
+	
+	Game_Enemy.prototype.toughness = function() {
+		return this.enemy().tbsStats.toughness === undefined 
+			? Game_Battler.prototype.toughness.call(this)
+			: this.enemy().tbsStats.toughness;
+	};
+	
+	Game_Enemy.prototype.equips = function() {
+		var returnEquips = [];
+		var equipment = this.enemy().tbsStats.equipment;
+		if(!equipment) { return returnEquips; }
+		if($dataWeapons[equipment.mainHand]) { returnEquips.push($dataWeapons[equipment.mainHand]); }
+		if($dataWeapons[equipment.offhand]) { returnEquips.push($dataWeapons[equipment.offhand]); }
+		if($dataArmors[equipment.accessoryOne]) { returnEquips.push($dataArmors[equipment.accessoryOne]); }
+		if($dataArmors[equipment.accessoryTwo]) { returnEquips.push($dataArmors[equipment.accessoryTwo]); }
+		if($dataArmors[equipment.accessoryThree]) { returnEquips.push($dataArmors[equipment.accessoryThree]); }
+		if($dataArmors[equipment.accessoryFour]) { returnEquips.push($dataArmors[equipment.accessoryFour]); }
+		if($dataArmors[equipment.accessoryFive]) { returnEquips.push($dataArmors[equipment.accessoryFive]); }
+		if($dataItems[equipment.itemOne]) { returnEquips.push($dataItems[equipment.itemOne]); }
+		if($dataItems[equipment.itemTwo]) { returnEquips.push($dataItems[equipment.itemTwo]); }
+		if($dataItems[equipment.itemThree]) { returnEquips.push($dataItems[equipment.itemThree]); }
+		if($dataItems[equipment.itemFour]) { returnEquips.push($dataItems[equipment.itemFour]); }
+		if($dataItems[equipment.itemFive]) { returnEquips.push($dataItems[equipment.itemFive]); }
+		if($dataItems[equipment.itemSix]) { returnEquips.push($dataItems[equipment.itemSix]); }
+		
+		return returnEquips;
+	};
+	
+	Game_Enemy.prototype.skills = function() {
+		var returnSkills = [];
+		var actions = this.enemy().actions;
+		if(!actions) { return returnSkills; }
+		this.enemy().actions.forEach(function (action) {
+			if($dataSkills[action.skillId]) { returnSkills.push($dataSkills[action.skillId]); }
+		});
+		return returnSkills;
 	};
 	
 	Game_Enemy.prototype.performActionStart = function(action) {

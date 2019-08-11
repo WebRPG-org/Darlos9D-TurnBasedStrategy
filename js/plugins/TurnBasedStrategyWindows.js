@@ -3247,6 +3247,15 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		this._slotId = "none";
 		this._slotType = "none";
 		this._showItems = false;
+		this._slotWindow = undefined;
+		this.makeItemList();
+	};
+	
+	Window_EquipItem.prototype.setSlotWindow = function(slotWindow) {
+		if (this._slotWindow !== slotWindow) {
+			this._slotWindow = slotWindow;
+			this.refresh();
+		}
 	};
 	
 	Window_EquipItem.prototype.update = function() {
@@ -3273,32 +3282,29 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	};
 	
 	Window_EquipItem.prototype.makeItemList = function() {
+		this._data = [];
 		if(this._actor) {
-			this._data = this._actor.allItems().filter(function(item) {
-				return this.includes(item);
+			this._actor.allItems().forEach(function(actorItem) {
+				var item = null;
+				if(actorItem.type === "item") {
+					item = $dataItems[actorItem.id];
+				} else if(actorItem.type === "weapon") {
+					item = $dataWeapons[actorItem.id];
+				} else if(actorItem.type === "armor") {
+					item = $dataArmors[actorItem.id];
+				}
+				this._data.push(item);
 			}, this);
-		}
-		if (this.includes(null)) {
-			this._data.push(null);
+		} else {
+			var i;
+			for(i = 0; i < Game_Actor.prototype.maxItems(); i++) {
+				this._data[i] = null;
+			}
 		}
 	};
 
 	Window_EquipItem.prototype.includes = function(item) {
-		if (!this._showItems) {
-			return false;
-		}
-		
-		if (item === null && this._actor.totalItemCount() < this._actor.maxItems()) {
-			return true;
-		}
-		if ((this._slotType === "mainHand" && DataManager.isWeapon(item) && item.tbsStats.hands) ||
-			(this._slotType === "offhand" && DataManager.isWeapon(item) && item.tbsStats.hands && item.tbsStats.hands === 1) ||
-			(this._slotType === "accessories" && DataManager.isArmor(item)) ||
-			(this._slotType === "items" && DataManager.isItem(item))) {
-			return this._actor.canEquip(item);
-		}
-		
-		return false;
+		return true;
 	};
 
 	Window_EquipItem.prototype.updateHelp = function() {
@@ -3310,6 +3316,10 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		}
 	};
 	
+	Window_EquipItem.prototype.needsNumber = function() {
+		false;
+	};
+	
 	Window_EquipItem.prototype.drawItemNumber = function(item, x, y, width) {
 		if (this.needsNumber() && this._actor) {
 			this.drawText(':', x, y, width - this.textWidth('00'), 'right');
@@ -3318,29 +3328,39 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	};
 	
 	Window_EquipItem.prototype.isEnabled = function(item) {
+		if (!this.isOpenAndActive() && (!this._slotWindow || !this._slotWindow.isOpenAndActive())) { return false; }
 		if (!item) { return true; }
 		if (this._actor) {
 			if(this._slotType === "mainHand") {
-				if(!this._actor.equips()[1] || (item.tbsStats.hands && item.tbsStats.hands === 1)) {
+				if(DataManager.isWeapon(item) && item.tbsStats.hands !== undefined
+					&& (!this._actor.equips()[1] || item.tbsStats.hands === 1))
+				{
 					return true;
 				}
-			} else if(this._slotType === "accessories" && item.tbsStats.limitedPart) {
-				var limitedParts = [];
-				var i;
-				for(i = 2; i < 6; i++) {
-					var equips = this._actor.equips();
-					if(equips[i] && equips[i].tbsStats.limitedPart) {
-						limitedParts.push(equips[i].tbsStats.limitedPart);
-					}
+			} else if(this._slotType === "offhand") {
+				if(DataManager.isWeapon(item) && item.tbsStats.hands !== undefined && item.tbsStats.hands === 1)
+				{
+					return true;
 				}
-				for(i = 0; i < limitedParts.length; i++) {
-					if(item.tbsStats.limitedPart === limitedParts[i]) {
-						return false;
+			} else if(this._slotType === "accessories") {
+				if(DataManager.isArmor(item)) {
+					if(item.tbsStats.limitedPart) {
+						var limitedParts = [];
+						var i;
+						for(i = 2; i < 7; i++) {
+							var equips = this._actor.equips();
+							if(equips[i] && equips[i].tbsStats.limitedPart) {
+								limitedParts.push(equips[i].tbsStats.limitedPart);
+							}
+						}
+						for(i = 0; i < limitedParts.length; i++) {
+							if(item.tbsStats.limitedPart === limitedParts[i]) {
+								return false;
+							}
+						}
 					}
+					return true;
 				}
-				return true;
-			} else {
-				return true;
 			}
 		}
 		return false;

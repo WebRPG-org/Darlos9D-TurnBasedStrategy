@@ -818,6 +818,20 @@
 		this.hideSubWindow(this._actorWindow);
 	};
 	
+	Scene_ItemBase.prototype.useAction = function() {
+		this.playSeForItem();
+		var user = this.user();
+		this.applyAction();
+		if(user) {
+			if(user.useActionItem(this.actionInfo())) {
+				this._actorWindow.setDisplayMode(true);
+			}
+		}
+		this.checkGameover();
+		this._actorWindow.refresh();
+		this._itemWindow.refresh();
+	};
+	
 	//item
 	Scene_Item.prototype.create = function() {
 		Scene_ItemBase.prototype.create.call(this);
@@ -986,20 +1000,6 @@
 		this._actionInfoWindow.hide();
 	};
 	
-	Scene_ItemBase.prototype.useAction = function() {
-		this.playSeForItem();
-		var user = this.user();
-		this.applyAction();
-		if(user) {
-			if(user.useActionItem(this.actionInfo())) {
-				this._actorWindow.setDisplayMode(true);
-			}
-		}
-		this.checkGameover();
-		this._actorWindow.refresh();
-		this._itemWindow.refresh();
-	};
-	
 	//equip
 	Scene_Equip.prototype.create = function() {
 		Scene_MenuBase.prototype.create.call(this);
@@ -1064,6 +1064,7 @@
 		this._itemWindow = new Window_EquipItem(wx, wy, ww, wh);
 		this._itemWindow.setHelpWindow(this._helpWindow);
 		this._itemWindow.setStatusWindow(this._statusWindow);
+		this._itemWindow.setSlotWindow(this._slotWindow);
 		this._itemWindow.setHandler('ok',     this.onItemOk.bind(this));
 		this._itemWindow.setHandler('cancel', this.onItemCancel.bind(this));
 		this._itemWindow.setHandler('control', this.nextStatusPage.bind(this));
@@ -1100,7 +1101,8 @@
 	
 	Scene_Equip.prototype.onItemOk = function() {
 		SoundManager.playEquip();
-		this.actor().changeEquip(this._slotWindow.index() + this._slotWindow.slotsOffset(), this._itemWindow.item());
+		this.actor().changeEquip(this._slotWindow.index() + this._slotWindow.slotsOffset(),
+			this._itemWindow.item(), this._itemWindow.index());
 		this._slotWindow.activate();
 		this._slotWindow.refresh();
 		this._itemWindow.deselect();
