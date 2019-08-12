@@ -495,6 +495,67 @@ Window_ItemStatus.prototype.numVisibleRows = function() {
 };
 
 //-----------------------------------------------------------------------------
+// Window_ActorItemName
+//
+// The window for displaying an actor's name in the inventory menu
+
+function Window_ActorItemName() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_ActorItemName.prototype = Object.create(Window_Base.prototype);
+Window_ActorItemName.prototype.constructor = Window_ActorItemName;
+
+Window_ActorItemName.prototype.initialize = function(x, y) {
+    Window_Base.prototype.initialize.call(this, x, y, this.windowWidth(), this.windowHeight());
+    this.refresh();
+    this.activate();
+	this._actor = undefined;
+};
+
+Window_ActorItemName.prototype.windowWidth = function() {
+	if(this._tbsActor) {
+		return this.standardPadding() * 2 + this._tbsActor.battler.displayName().length * 14 + this.textPadding() * 2;
+	} else {
+		return 300;
+	}
+};
+
+Window_ActorItemName.prototype.windowHeight = function() {
+	return this.fittingHeight(1);
+};
+
+Window_ActorItemName.prototype.setActor = function(actor) {
+	if(this._actor !== actor) {
+		this._actor = actor;
+		this.refreshWindowContents();
+	}
+};
+
+Window_ActorItemName.prototype.refreshWindowContents = function() {
+	this.move(this.x, this.y, this.windowWidth(), this.windowHeight());
+	this.createContents();
+	this.refresh();
+};
+
+Window_ActorItemName.prototype.refresh = function() {
+    if (this.contents) {
+        this.contents.clear();
+		if(this._actor) {
+			this.drawTargetNameText();
+		}
+    }
+};
+
+Window_ActorItemName.prototype.drawTargetNameText = function() {
+	if(this._actor) {
+		this.resetTextColor();
+		this.changePaintOpacity(true);
+		this.drawText(this._actor.displayName(), this.textPadding(), 0);
+	}
+};
+
+//-----------------------------------------------------------------------------
 // Window_SkillCharacterInfo
 //
 // The window for displaying some character info on the skill screen
@@ -2852,7 +2913,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		switch(this.index()) {
 			case 0:
 				this._actorItemWindows.forEach(function (itemWindow) {
-					itemWindow.show();
+					itemWindow.hideOrShow();
 				});
 				if(this._itemWindow) {
 					this._itemWindow.hide();
@@ -2907,6 +2968,8 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		this._previousWindow = undefined;
 		this._nextWindow = undefined;
 		this._orgSelectIndex = -1;
+		this._nameWindowYOffset = Math.floor(this.lineHeight() * 1.6);
+		this._yStartPosition = 0;
 	};
 	
 	Window_ItemList.prototype.windowHeight = function() {
@@ -2915,6 +2978,28 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	
 	Window_ItemList.prototype.maxItems = function() {
 		return this._actor ? this._actor.maxItems() : this._data ? this._data.length : 1;
+	};
+	
+	Window_ItemList.prototype.hideOrShow = function() {
+		if(this.y - this._nameWindowYOffset < this._yStartPosition) {
+			this.hide();
+		} else {
+			this.show();
+		}
+	};
+	
+	Window_ItemList.prototype.show = function() {
+		this.visible = true;
+		if(this._actorNameWindow) {
+			this._actorNameWindow.show();
+		}
+	};
+
+	Window_ItemList.prototype.hide = function() {
+		this.visible = false;
+		if(this._actorNameWindow) {
+			this._actorNameWindow.hide();
+		}
 	};
 	
 	Window_ItemList.prototype.item = function() {
@@ -3035,6 +3120,27 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		}
 	};
 	
+	Window_ItemList.prototype.setActorNameWindow = function(actorNameWindow) {
+		if (this._actorNameWindow !== actorNameWindow) {
+			this._actorNameWindow = actorNameWindow;
+			this.refresh();
+		}
+	}
+	
+	Window_ItemList.prototype.setNameWindowYOffset = function(offset) {
+		if (this._nameWindowYOffset !== offset) {
+			this._nameWindowYOffset = offset;
+			this.refresh();
+		}
+	}
+	
+	Window_ItemList.prototype.setYStartPosition = function(position) {
+		if (this._yStartPosition !== position) {
+			this._yStartPosition = position;
+			this.refresh();
+		}
+	}
+	
 	Window_ItemList.prototype.previousWindow = function() {
 		return this._previousWindow;
 	};
@@ -3085,6 +3191,52 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		return this.getOrgSelectInfo().orgSelectIndex >= 0;
 	};
 	
+	Window_ItemList.prototype.moveUp = function() {
+		this.move(this.x, this.y - this.height - this._nameWindowYOffset, this.width, this.height);
+		this._actorNameWindow.move(this._actorNameWindow.x,
+			this._actorNameWindow.y - this.height - this._nameWindowYOffset,
+			this._actorNameWindow.width, this._actorNameWindow.height);
+		this.hideOrShow();
+		this.refresh();
+	};
+	
+	Window_ItemList.prototype.moveDown = function() {
+		this.move(this.x, this.y + this.height + this._nameWindowYOffset, this.width, this.height);
+		this._actorNameWindow.move(this._actorNameWindow.x,
+			this._actorNameWindow.y + this.height + this._nameWindowYOffset,
+			this._actorNameWindow.width, this._actorNameWindow.height);
+		this.hideOrShow();
+		this.refresh();
+	};
+	
+	Window_ItemList.prototype.moveWindowsUp = function() {
+		this.moveUp();
+		var prevWindow = this._previousWindow;
+		while(prevWindow) {
+			prevWindow.moveUp();
+			prevWindow = prevWindow.previousWindow();
+		}
+		var nextWindow = this._nextWindow;
+		while(nextWindow) {
+			nextWindow.moveUp();
+			nextWindow = nextWindow.nextWindow();
+		}
+	};
+	
+	Window_ItemList.prototype.moveWindowsDown = function() {
+		this.moveDown();
+		var prevWindow = this._previousWindow;
+		while(prevWindow) {
+			prevWindow.moveDown();
+			prevWindow = prevWindow.previousWindow();
+		}
+		var nextWindow = this._nextWindow;
+		while(nextWindow) {
+			nextWindow.moveDown();
+			nextWindow = nextWindow.nextWindow();
+		}
+	};
+	
 	Window_ItemList.prototype.cursorDown = function(wrap) {
 		var index = this.index();
 		var maxItems = this.maxItems();
@@ -3097,6 +3249,9 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 			this.deselect();
 			this._nextWindow.activate();
 			this._nextWindow.select(((index + maxCols) % maxItems) - maxCols);
+			if(this._nextWindow.y + this._nextWindow.height > Graphics.boxHeight) {
+				this.moveWindowsUp();
+			}
 		}
 	};
 
@@ -3112,6 +3267,9 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 			this.deselect();
 			this._previousWindow.activate();
 			this._previousWindow.select((index - maxCols + maxItems) % maxItems);
+			if(this._previousWindow.y - this._nameWindowYOffset < this._yStartPosition) {
+				this.moveWindowsDown();
+			}
 		}
 	};
 
@@ -3127,6 +3285,9 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 			this.deselect();
 			this._nextWindow.activate();
 			this._nextWindow.select(-1);
+			if(this._nextWindow.y + this._nextWindow.height > Graphics.boxHeight) {
+				this.moveWindowsUp();
+			}
 		}
 	};
 
@@ -3142,6 +3303,9 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 			this.deselect();
 			this._previousWindow.activate();
 			this._previousWindow.select(maxItems-1);
+			if(this._previousWindow.y - this._nameWindowYOffset < this._yStartPosition) {
+				this.moveWindowsDown();
+			}
 		}
 	};
 	

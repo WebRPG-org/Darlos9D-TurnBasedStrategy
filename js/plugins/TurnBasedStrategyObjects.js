@@ -278,6 +278,7 @@
 			if(battler.totalItemCount() < battler.maxItems()) {
 				battler.gainItem($dataItems[itemId]);
 				$gameTemp.setItemReceiver(battler.displayName());
+				break;
 			}
 		}
 	};
@@ -289,6 +290,7 @@
 			if(battler.totalItemCount() < battler.maxItems()) {
 				battler.gainItem($dataWeapons[itemId]);
 				$gameTemp.setItemReceiver(battler.displayName());
+				break;
 			}
 		}
 	};
@@ -300,6 +302,7 @@
 			if(battler.totalItemCount() < battler.maxItems()) {
 				battler.gainItem($dataArmors[itemId]);
 				$gameTemp.setItemReceiver(battler.displayName());
+				break;
 			}
 		}
 	};

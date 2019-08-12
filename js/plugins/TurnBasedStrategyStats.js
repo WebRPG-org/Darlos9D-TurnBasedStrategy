@@ -404,7 +404,7 @@
 		var type = this.itemType(item);
 		var gained = false;
 		var i;
-		for(i = 0; i < maxItems(); i++) {
+		for(i = 0; i < this.maxItems(); i++) {
 			if(this._items[i].id <= 0 && this._items[i].type === "") {
 				this._items[i].id = item.id;
 				this._items[i].type = type;
@@ -420,7 +420,7 @@
 		var type = this.itemType(item);
 		var lost = false;
 		var i;
-		for(i = 0; i < maxItems(); i++) {
+		for(i = 0; i < this.maxItems(); i++) {
 			if(this._items[i].type === type && this._items[i].id === item.id) {
 				this._items[i].id = 0;
 				this._items[i].type = "";

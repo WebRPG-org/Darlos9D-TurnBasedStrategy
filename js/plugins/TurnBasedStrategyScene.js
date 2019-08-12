@@ -879,17 +879,30 @@
 		var wy = this._categoryWindow.height;
 		var i;
 		this._actorItemWindows = [];
+		this._actorItemNameWindows = [];
 		for(i = 0; i < $gameParty.size(); i++) {
-			this._actorItemWindows[i] = new Window_ItemList(0, wy, Graphics.boxWidth, Window_ItemList.prototype.windowHeight());
+			var nameWindowYOffset = Math.floor(Window_ItemList.prototype.lineHeight() * 1.6);
+			this._actorItemNameWindows[i] = new Window_ActorItemName(0, wy);
+			this._actorItemNameWindows[i].setActor($gameParty.members()[i]);
+			this._actorItemWindows[i] = new Window_ItemList(
+				0,
+				wy + nameWindowYOffset,
+				Graphics.boxWidth,
+				Window_ItemList.prototype.windowHeight()
+			);
 			this._actorItemWindows[i].setHandler('ok',     this.onActorItemOk.bind(this));
 			this._actorItemWindows[i].setHandler('cancel', this.onActorItemCancel.bind(this));
 			this._actorItemWindows[i].setActor($gameParty.members()[i]);
+			this._actorItemWindows[i].setNameWindowYOffset(nameWindowYOffset);
+			this._actorItemWindows[i].setYStartPosition(this._categoryWindow.height);
 			this.addWindow(this._actorItemWindows[i]);
+			this.addWindow(this._actorItemNameWindows[i]);
 			if(i > 0) {
 				this._actorItemWindows[i-1].setNextWindow(this._actorItemWindows[i]);
 				this._actorItemWindows[i].setPreviousWindow(this._actorItemWindows[i-1]);
 			}
-			wy += Window_ItemList.prototype.windowHeight();
+			this._actorItemWindows[i].setActorNameWindow(this._actorItemNameWindows[i]);
+			wy += Window_ItemList.prototype.windowHeight() + nameWindowYOffset;
 		}
 		this._categoryWindow.setActorItemWindows(this._actorItemWindows);
 	};
@@ -898,7 +911,7 @@
 		if(this._categoryWindow.index() == 0) {
 			var first = true;
 			this._actorItemWindows.forEach(function (itemWindow) {
-				if(first) {
+				if(first && itemWindow.visible) {
 					itemWindow.activate();
 					itemWindow.select(0);
 					first = false;
