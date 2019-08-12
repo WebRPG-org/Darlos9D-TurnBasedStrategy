@@ -838,10 +838,11 @@
 		this.createHelpWindow();
 		this._helpWindow.hide();
 		this.createCategoryWindow();
-		this.createDescriptionWindow();
 		this.createItemWindow();
-		this.createActorWindow();
 		this.createActorItemWindows();
+		this.createItemOptionsWindow();
+		this.createStatusWindow();
+		this.createActorWindow();
 	};
 	
 	Scene_Item.prototype.createCategoryWindow = function() {
@@ -852,25 +853,15 @@
 		this._categoryWindow.setHandler('cancel', this.popScene.bind(this));
 		this.addWindow(this._categoryWindow);
 	};
-
-	Scene_Item.prototype.createDescriptionWindow = function() {
-		var wx = 149;
-		var wy = this._categoryWindow.height;
-		var ww = Graphics.boxWidth - 298;
-		var wh = Window_SkillDescription.prototype.fittingHeight(10);
-		this._descriptionWindow = new Window_SkillDescription(wx, wy, ww, wh);
-		this._categoryWindow.setDescriptionWindow(this._descriptionWindow);
-		this.addWindow(this._descriptionWindow);
-	};
 	
 	Scene_Item.prototype.createItemWindow = function() {
-		var wy = this._descriptionWindow.y + this._descriptionWindow.height;
+		var wy = this._categoryWindow.height;
 		var wh = Graphics.boxHeight - wy;
 		this._itemWindow = new Window_ItemList(0, wy, Graphics.boxWidth, wh);
 		this._itemWindow.setHelpWindow(this._helpWindow);
-		this._itemWindow.setDescriptionWindow(this._descriptionWindow);
 		this._itemWindow.setHandler('ok',     this.onItemOk.bind(this));
 		this._itemWindow.setHandler('cancel', this.onItemCancel.bind(this));
+		this._itemWindow.deactivate();
 		this.addWindow(this._itemWindow);
 		this._categoryWindow.setItemWindow(this._itemWindow);
 	};
@@ -907,6 +898,90 @@
 		this._categoryWindow.setActorItemWindows(this._actorItemWindows);
 	};
 	
+	Scene_Item.prototype.createItemOptionsWindow = function() {
+		var wy = this._categoryWindow.height;
+		this._itemOptionsWindow = new Window_ItemOption(0, wy);
+		this._itemOptionsWindow.setHelpWindow(this._helpWindow);
+		this._itemOptionsWindow.setHandler('use',    this.commandItemUse.bind(this));
+		this._itemOptionsWindow.setHandler('stash',    this.commandItemStash.bind(this));
+		this._itemOptionsWindow.setHandler('give',    this.commandItemGive.bind(this));
+		this._itemOptionsWindow.setHandler('discard',    this.commandItemDiscard.bind(this));
+		this._itemOptionsWindow.setHandler('cancel',   this.commandItemCancel.bind(this));
+		this._itemOptionsWindow.hide();
+		this._itemOptionsWindow.deactivate();
+		this._itemWindow.setItemOptionsWindow(this._itemOptionsWindow);
+		this._actorItemWindows.forEach(function (itemWindow) {
+			itemWindow.setItemOptionsWindow(this._itemOptionsWindow);
+		}, this);
+		this.addWindow(this._itemOptionsWindow);
+	};
+
+	Scene_Item.prototype.createStatusWindow = function() {
+		var wx = Window_ItemOption.prototype.windowWidth();
+		var wy = this._categoryWindow.height;
+		this._statusWindow = new Window_ItemStatus(wx, wy);
+		this.addWindow(this._statusWindow);
+		this._statusWindow.hide();
+		this._itemWindow.setStatusWindow(this._statusWindow);
+		this._actorItemWindows.forEach(function (itemWindow) {
+			itemWindow.setStatusWindow(this._statusWindow);
+		}, this);
+	};
+	
+	Scene_Item.prototype.determineItem = function() {
+		var actionInfo = this.actionInfo();
+		if (actionInfo && actionInfo.action && this.actionIsEnabled(actionInfo.action)) {
+			this._actorWindow.x = 0;
+			this._actorWindow.show();
+			this._actorWindow.activate();
+			this._actorWindow.selectForActionInfo(actionInfo);
+			this._itemOptionsWindow.deactivate();
+		}
+	};
+	
+	Scene_Item.prototype.actionInfo = function() {
+		return this._itemOptionsWindow.actionInfo();
+	};
+	
+	Scene_Item.prototype.actionIsEnabled = function(action) {
+		return true;
+	};
+	
+	Scene_Item.prototype.user = function() {
+		return this._itemOptionsWindow.actor();
+	};
+	
+	Scene_Item.prototype.onActorCancel = function() {
+		this._actorWindow.setDisplayMode(false);
+		this._actorWindow.hide();
+		this._actorWindow.deactivate();
+		if(this._usedItemUp) {
+			this.commandItemCancel();
+			this._usedItemUp = false;
+		} else {
+			this._itemOptionsWindow.activate();
+			this._itemOptionsWindow.refresh();
+		}
+	};
+	
+	Scene_Item.prototype.useAction = function() {
+		this.playSeForItem();
+		var user = this.user();
+		this.applyAction();
+		if(user) {
+			if(user.useActionItem(this.actionInfo())) {
+				this._actorWindow.setDisplayMode(true);
+				this._usedItemUp = true;
+			}
+		}
+		this.checkGameover();
+		this._actorWindow.refresh();
+		this._itemWindow.refresh();
+		this._actorItemWindows.forEach(function (itemWindow) {
+			itemWindow.refresh();
+		});
+	};
+	
 	Scene_Item.prototype.onCategoryOk = function() {
 		if(this._categoryWindow.index() == 0) {
 			var first = true;
@@ -927,7 +1002,13 @@
 	};
 
 	Scene_Item.prototype.onActorItemOk = function() {
-		
+		this._actorItemWindows.forEach(function (itemWindow) {
+			itemWindow.deactivate();
+		});
+		this._statusWindow.show();
+		this._itemOptionsWindow.show();
+		this._itemOptionsWindow.select(0);
+		this._itemOptionsWindow.activate();
 	};
 
 	Scene_Item.prototype.onActorItemCancel = function() {
@@ -935,6 +1016,7 @@
 			itemWindow.clearOrgSelect();
 			itemWindow.deactivate();
 			itemWindow.deselect();
+			itemWindow.refresh();
 		});
 		this._categoryWindow.activate();
 	};
@@ -951,6 +1033,53 @@
 	Scene_Item.prototype.useItem = function() {
 		Scene_ItemBase.prototype.useItem.call(this);
 		this._itemWindow.redrawCurrentItem();
+	};
+	
+	Scene_Item.prototype.commandItemUse = function() {
+		this.determineItem();
+	};
+	
+	Scene_Item.prototype.commandItemStash = function() {
+		var actor = this._itemOptionsWindow.actor();
+		var item = this._itemOptionsWindow.item();
+		var itemIndex = this._itemOptionsWindow.itemIndex();
+		actor.loseItemAtIndex(itemIndex);
+		$gameParty.gainItem(item, 1, false);
+		this.commandItemCancel();
+	};
+	
+	Scene_Item.prototype.commandItemGive = function() {
+		this.commandItemCancel();
+	};
+	
+	Scene_Item.prototype.commandItemDiscard = function() {
+		var actor = this._itemOptionsWindow.actor();
+		if(actor) {
+			var itemIndex = this._itemOptionsWindow.itemIndex();
+			actor.loseItemAtIndex(itemIndex);
+		} else {
+			var item = this._itemOptionsWindow.item();
+			$gameParty.gainItem(item, -1, false);
+		}
+		this.commandItemCancel();
+	};
+	
+	Scene_Item.prototype.commandItemCancel = function() {
+		this._actorItemWindows.forEach(function (itemWindow) {
+			if(itemWindow.lastWindowUsed()) {
+				itemWindow.activate();
+				itemWindow.clearLastWindowUsed();
+			} else {
+				itemWindow.deactivate();
+				itemWindow.deselect();
+			}
+			itemWindow.refresh();
+		});
+		this._statusWindow.hide();
+		this._itemOptionsWindow.deactivate();
+		this._itemOptionsWindow.hide();
+		this._itemOptionsWindow.deselect();
+		this._itemOptionsWindow.clearFirstOkEaten();
 	};
 	
 	//skill

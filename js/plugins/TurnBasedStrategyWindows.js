@@ -556,6 +556,165 @@ Window_ActorItemName.prototype.drawTargetNameText = function() {
 };
 
 //-----------------------------------------------------------------------------
+// Window_ItemOption
+//
+// The window for selecting a skill type on the skill screen.
+
+function Window_ItemOption() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_ItemOption.prototype = Object.create(Window_Command.prototype);
+Window_ItemOption.prototype.constructor = Window_ItemOption;
+
+Window_ItemOption.prototype.initialize = function(x, y) {
+    Window_Command.prototype.initialize.call(this, x, y);
+    this._actor = null;
+	this._item = null;
+};
+
+Window_ItemOption.prototype.windowWidth = function() {
+    return 240;
+};
+
+Window_ItemOption.prototype.setActor = function(actor) {
+    if (this._actor !== actor) {
+        this._actor = actor;
+        this.refresh();
+        this.select(0);
+    }
+};
+
+Window_ItemOption.prototype.setItem = function(item) {
+    if (this._item !== item) {
+        this._item = item;
+        this.refresh();
+        this.select(0);
+    }
+};
+
+Window_ItemOption.prototype.setItemIndex = function(itemIndex) {
+    if (this._itemIndex !== itemIndex) {
+        this._itemIndex = itemIndex;
+    }
+};
+
+Window_ItemOption.prototype.numVisibleRows = function() {
+	var rows = 1;
+	if (this._item) {
+		if(this._actor) {
+			rows += 2;
+		} else {
+			rows += $gameParty.size();
+		}
+	}
+    return rows;
+};
+
+Window_ItemOption.prototype.makeCommandList = function() {
+    if (this._item) {
+		if(this._actor) {
+			var canUse = DataManager.isItem(this._item)
+				&& this._item.tbsStats.actions.some(function(action) { return this.isHealing(action); }, this);
+			this.addCommand("Use", 'use', canUse);
+			this.addCommand("Stash", 'stash', true);
+		} else {
+			$gameParty.members().forEach(function(member) {
+				var enabled = member.totalItemCount() < member.maxItems();
+				this.addCommand("Give " + member.displayName(), 'give', enabled, this.index());
+			}, this);
+		}
+		this.addCommand("Discard", 'discard', true);
+    }
+};
+
+Window_ItemOption.prototype.actor = function() {
+	return this._actor;
+};
+
+Window_ItemOption.prototype.item = function() {
+	return this._item;
+};
+
+Window_ItemOption.prototype.itemIndex = function() {
+	return this._itemIndex;
+};
+
+Window_ItemOption.prototype.actionInfo = function() {
+	var actionInfo = {};
+	actionInfo.action = undefined;
+	actionInfo.canTargetBodyPart = false;
+	actionInfo.canTargetDownedBodyPart = false;
+	actionInfo.sourceItemIndex = this._itemIndex;
+	if (this._item && this._actor) {
+		var action = undefined;
+		var i;
+		for(i = 0; i < this._item.tbsStats.actions.length; i++) {
+			if(this.isHealing(this._item.tbsStats.actions[i])) {
+				action = this._item.tbsStats.actions[i];
+				break;
+			}
+		}
+		if(!action) {
+			return actionInfo;
+		}
+		
+		actionInfo.action = action;
+		if(action.hitGroups && action.hitGroups.length > 0) {
+			action.hitGroups.forEach(function (hitGroup) {
+				if(!hitGroup.hits || hitGroup.hits.length == 0) { return; }
+				actionInfo.canTargetBodyPart = hitGroup.hits.some(function (hit) {
+					if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+						return true;
+					}
+					return false;
+				});
+				actionInfo.canTargetDownedBodyPart = hitGroup.hits.some(function (hit) {
+					if(hit.aoe === undefined || hit.aoe <= 0) {
+						return true;
+					}
+					return false;
+				});
+			});
+		}
+	}
+	return actionInfo;
+};
+
+Window_ItemOption.prototype.selectLast = function() {
+    var skill = this._actor.lastMenuSkill();
+    if (skill) {
+        this.selectExt(skill.stypeId);
+    } else {
+        this.select(0);
+    }
+};
+
+Window_ItemOption.prototype.refresh = function() {
+	this.move(this.x, this.y, this.width, this.windowHeight());
+	Window_Command.prototype.refresh.call(this);
+};
+
+Window_ItemOption.prototype.clearFirstOkEaten = function() {
+	this._firstOkEaten = false;
+};
+
+Window_ItemOption.prototype.processOk = function() {
+	if(!this._firstOkEaten) {
+		this._firstOkEaten = true;
+		return;
+	}
+    if (this.isCurrentItemEnabled()) {
+        this.playOkSound();
+        this.updateInputData();
+        this.deactivate();
+        this.callOkHandler();
+    } else {
+        this.playBuzzerSound();
+    }
+};
+
+//-----------------------------------------------------------------------------
 // Window_SkillCharacterInfo
 //
 // The window for displaying some character info on the skill screen
@@ -2884,6 +3043,13 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		});
 	};
 	
+	Window_Selectable.prototype.drawOrgSelectBrackets = function(x, y, width) {
+		this.changeTextColor(this.crisisColor());
+		this.drawText('|________________________', x, y, width);
+		this.drawText( '````````````````````````|', x, y, width, 'right');
+		this.resetTextColor();
+	};
+	
 	//item category
 	Window_ItemCategory.prototype.initialize = function() {
 		Window_HorzCommand.prototype.initialize.call(this, 0, 0);
@@ -2918,9 +3084,6 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 				if(this._itemWindow) {
 					this._itemWindow.hide();
 				}
-				if(this._descriptionWindow) {
-					this._descriptionWindow.hide();
-				}
 				break;
 			case 1:
 				this._actorItemWindows.forEach(function (itemWindow) {
@@ -2929,41 +3092,21 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 				if(this._itemWindow) {
 					this._itemWindow.show();
 				}
-				if(this._descriptionWindow) {
-					this._descriptionWindow.show();
-				}
 				break;
-		}
-		if(this._descriptionWindow && this.isOpenAndActive() && (!this._itemWindow || !this._itemWindow.isOpenAndActive())) {
-			switch(this.index()) {
-				case 0:
-					this._descriptionWindow.setDescription("Rearrange party inventory items.");
-					break;
-				case 1:
-					this._descriptionWindow.setDescription("Keys, of course, as well as anything else that is only useable in certain places.");
-					break;
-			}
 		}
 	};
 	
 	Window_ItemCategory.prototype.makeCommandList = function() {
 		this.addCommand("Organize",    'organize');
-		this.addCommand(TextManager.keyItem, 'keyItem');
+		this.addCommand("Stash", 'stash');
 	};
-	
-	Window_ItemCategory.prototype.setDescriptionWindow = function(descriptionWindow) {
-		if (this._descriptionWindow !== descriptionWindow) {
-			this._descriptionWindow = descriptionWindow;
-			this.update();
-		}
-	}
 	
 	//item list
 	Window_ItemList.prototype.initialize = function(x, y, width, height) {
 		Window_Selectable.prototype.initialize.call(this, x, y, width, height);
 		this._category = 'none';
 		this._data = [];
-		this._descriptionWindow = undefined;
+		this._statusWindow = undefined;
 		this._actor = undefined
 		this._previousWindow = undefined;
 		this._nextWindow = undefined;
@@ -3019,7 +3162,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		switch (this._category) {
 		case 'organize':
 			return !DataManager.isItem(item) || item.itypeId !== 2;
-		case 'keyItem':
+		case 'stash':
 			return DataManager.isItem(item) && item.itypeId === 2;
 		default:
 			return false;
@@ -3058,13 +3201,46 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		}
 	};
 	
+	Window_ItemList.prototype.deactivate = function() {
+		Window_Selectable.prototype.deactivate.call(this);
+	};
+	
 	Window_ItemList.prototype.update = function() {
 		Window_Selectable.prototype.update.call(this);
-		if(this._descriptionWindow && this.isOpenAndActive()) {
+		if(this._statusWindow && this._itemOptionsWindow && this.isOpenAndActive()) {
 			if(this.item()) {
-				this._descriptionWindow.setDescription(this.item().description);
+				if(this._actor) {
+					var item = null;
+					var actorItem = this.item();
+					if(actorItem.type === "item") {
+						item = $dataItems[actorItem.id];
+					} else if(actorItem.type === "weapon") {
+						item = $dataWeapons[actorItem.id];
+					} else if(actorItem.type === "armor") {
+						item = $dataArmors[actorItem.id];
+					}
+					this._statusWindow.setActionsItem(item);
+					if(item) {
+						this._statusWindow.showDescription();
+					} else {
+						this._statusWindow.showNone();
+					}
+					this._itemOptionsWindow.setActor(this._actor);
+					this._itemOptionsWindow.setItem(item);
+					this._itemOptionsWindow.setItemIndex(this.index());
+				} else {
+					this._statusWindow.setActionsItem(this.item());
+					this._statusWindow.showDescription();
+					this._itemOptionsWindow.setActor(null);
+					this._itemOptionsWindow.setItem(this.item());
+					this._itemOptionsWindow.setItemIndex(this.index());
+				}
 			} else {
-				this._descriptionWindow.setDescription("");
+				this._statusWindow.setActionsItem(null);
+				this._statusWindow.showNone();
+				this._itemOptionsWindow.setActor(null);
+				this._itemOptionsWindow.setItem(null);
+				this._itemOptionsWindow.setItemIndex(undefined);
 			}
 		}
 	};
@@ -3074,34 +3250,19 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		var rect = this.itemRect(index);
 		if (item) {
 			var numberWidth = this.numberWidth();
-			rect.width -= this.textPadding();
 			this.changePaintOpacity(this.isEnabled(item));
-			this.drawItemName(item, rect.x, rect.y, rect.width - numberWidth);
-			this.drawItemNumber(item, rect.x, rect.y, rect.width);
+			this.drawItemName(item, rect.x, rect.y, rect.width - numberWidth - this.textPadding());
+			this.drawItemNumber(item, rect.x, rect.y, rect.width - this.textPadding());
 			this.changePaintOpacity(1);
 		}
 		if(this._orgSelectIndex >= 0 && this._orgSelectIndex == index) {
 			this.drawOrgSelectBrackets(rect.x, rect.y, rect.width);
 		}
 	};
-	
-	Window_ItemList.prototype.drawOrgSelectBrackets = function(x, y, width) {
-		this.changeTextColor(this.crisisColor());
-		this.drawText('[________________________', x, y, width);
-		this.drawText( '````````````````````````]', x, y, width, 'right');
-		this.resetTextColor();
-	};
 
 	Window_ItemList.prototype.setActor = function(actor) {
 		if (this._actor !== actor) {
 			this._actor = actor;
-			this.refresh();
-		}
-	};
-	
-	Window_ItemList.prototype.setDescriptionWindow = function(descriptionWindow) {
-		if (this._descriptionWindow !== descriptionWindow) {
-			this._descriptionWindow = descriptionWindow;
 			this.refresh();
 		}
 	};
@@ -3124,6 +3285,20 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		if (this._actorNameWindow !== actorNameWindow) {
 			this._actorNameWindow = actorNameWindow;
 			this.refresh();
+		}
+	}
+	
+	Window_ItemList.prototype.setItemOptionsWindow = function(itemOptionsWindow) {
+		if (this._itemOptionsWindow !== itemOptionsWindow) {
+			this._itemOptionsWindow = itemOptionsWindow;
+			this.update();
+		}
+	}
+	
+	Window_ItemList.prototype.setStatusWindow = function(statusWindow) {
+		if (this._statusWindow !== statusWindow) {
+			this._statusWindow = statusWindow;
+			this.update();
 		}
 	}
 	
@@ -3309,23 +3484,49 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		}
 	};
 	
+	Window_ItemList.prototype.lastWindowUsed = function() {
+		return this._lastWindowUsed;
+	};
+	
+	Window_ItemList.prototype.clearLastWindowUsed = function() {
+		this._lastWindowUsed = false;
+	};
+	
 	Window_ItemList.prototype.processOk = function() {
 		if (this.isCurrentItemEnabled()) {
 			if(this._category === "organize") {
 				if(this.isOrgSelected()) {
-					SoundManager.playEquip();
-					var orgSelectInfo = this.getOrgSelectInfo();
-					var itemOne = {};
-					itemOne.id = this._actor.allItems()[this.index()].id;
-					itemOne.type = this._actor.allItems()[this.index()].type;
-					var itemTwo = {};
-					itemTwo.id = orgSelectInfo.window.actor().allItems()[orgSelectInfo.orgSelectIndex].id;
-					itemTwo.type = orgSelectInfo.window.actor().allItems()[orgSelectInfo.orgSelectIndex].type;
-					this._actor.gainActorItemAtIndex(itemTwo, this.index());
-					orgSelectInfo.window.actor().gainActorItemAtIndex(itemOne, orgSelectInfo.orgSelectIndex);
-					orgSelectInfo.window.clearOrgSelect();
-					this.refresh();
-					orgSelectInfo.window.refresh();
+					if(this._orgSelectIndex >= 0 && this._orgSelectIndex == this.index()) {
+						var item = this.item();
+						if(item.id <= 0 || item.type === "") {
+							SoundManager.playCancel();
+						} else {
+							this.playOkSound();
+							this.deactivate();
+							this._lastWindowUsed = true;
+							this.callOkHandler();
+						}
+						this._orgSelectIndex = -1;
+						this.refresh();
+					} else {
+						var orgSelectInfo = this.getOrgSelectInfo();
+						var itemOne = {};
+						itemOne.id = this._actor.allItems()[this.index()].id;
+						itemOne.type = this._actor.allItems()[this.index()].type;
+						var itemTwo = {};
+						itemTwo.id = orgSelectInfo.window.actor().allItems()[orgSelectInfo.orgSelectIndex].id;
+						itemTwo.type = orgSelectInfo.window.actor().allItems()[orgSelectInfo.orgSelectIndex].type;
+						if((itemOne.id <= 0 || itemOne.type === "") && (itemTwo.id <= 0 || itemTwo.type === "")) {
+							SoundManager.playCancel();
+						} else {
+							SoundManager.playEquip();
+							this._actor.gainActorItemAtIndex(itemTwo, this.index());
+							orgSelectInfo.window.actor().gainActorItemAtIndex(itemOne, orgSelectInfo.orgSelectIndex);
+						}
+						orgSelectInfo.window.clearOrgSelect();
+						this.refresh();
+						orgSelectInfo.window.refresh();
+					}
 				} else {
 					this._orgSelectIndex = this.index();
 					this.playOkSound();
@@ -3334,7 +3535,6 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 			}
 		} else {
 			this.updateInputData();
-			this.callOkHandler();
 			this.playBuzzerSound();
 		}
 	};
@@ -3342,7 +3542,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	Window_ItemList.prototype.processCancel = function() {
 		SoundManager.playCancel();
 		this.updateInputData();
-		if(this.category === "organize" && this.isOrgSelected()) {
+		if(this._category === "organize" && this.isOrgSelected()) {
 			var orgSelectInfo = this.getOrgSelectInfo();
 			orgSelectInfo.window.clearOrgSelect();
 			orgSelectInfo.window.refresh();
@@ -3855,12 +4055,11 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	Window_EquipItem.prototype.drawItem = function(index) {
 		var item = this._data[index];
 		var rect = this.itemRect(index);
-		rect.width -= this.textPadding();
 		if (item) {
 			var numberWidth = this.numberWidth();
 			this.changePaintOpacity(this.isEnabled(item));
-			this.drawItemName(item, rect.x, rect.y, rect.width - numberWidth);
-			this.drawItemNumber(item, rect.x, rect.y, rect.width);
+			this.drawItemName(item, rect.x, rect.y, rect.width - numberWidth - this.textPadding());
+			this.drawItemNumber(item, rect.x, rect.y, rect.width - this.textPadding());
 			this.changePaintOpacity(1);
 		}
 		if (this._orgSelectIndex >= 0 && this._orgSelectIndex == index) {
@@ -3873,13 +4072,6 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 			this.drawText(':', x, y, width - this.textWidth('00'), 'right');
 			this.drawText(this._actor.numItems(item), x, y, width, 'right');
 		}
-	};
-	
-	Window_EquipItem.prototype.drawOrgSelectBrackets = function(x, y, width) {
-		this.changeTextColor(this.crisisColor());
-		this.drawText('[________________________', x, y, width);
-		this.drawText( '````````````````````````]', x, y, width, 'right');
-		this.resetTextColor();
 	};
 	
 	Window_EquipItem.prototype.processOk = function() {

@@ -816,11 +816,12 @@
 					var j;
 					var actions = item.tbsStats.actions;
 					for(j = 0; j < actions.length; j++)
-					{
+					{0
 						var returnActionInfo = {};
 						returnActionInfo.action = actions[j];
 						returnActionInfo.sourceEquip = item;
 						returnActionInfo.sourceEquipSlotId = -1;
+						returnActionInfo.sourceItemIndex = i;
 						returnActionInfo.canTargetBodyPart = false;
 						returnActionInfo.canTargetDownedBodyPart = false;
 						if(actions[j].hitGroups && actions[j].hitGroups.length > 0) {
@@ -1122,11 +1123,16 @@
 	};
 	
 	Game_Battler.prototype.useActionItem = function(actionInfo) {
-		if(!actionInfo || !actionInfo.action.consumesItem || !actionInfo.sourceEquip) { return false; }
+		if(!actionInfo || !actionInfo.action.consumesItem
+			|| (!actionInfo.sourceEquip && actionInfo.sourceItemIndex === undefined)) { return false; }
 		if(actionInfo.sourceEquipSlotId !== undefined && actionInfo.sourceEquipSlotId >= 0) {
 			this.changeEquip(actionInfo.sourceEquipSlotId, null);
 		}
-		this.consumeItem(actionInfo.sourceEquip);
+		if(actionInfo.sourceItemIndex === undefined) {
+			this.consumeItem(actionInfo.sourceEquip);
+		} else {
+			this.loseItemAtIndex(actionInfo.sourceItemIndex);
+		}
 		return true;
 	};
 	
