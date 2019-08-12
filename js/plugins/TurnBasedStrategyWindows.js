@@ -2616,6 +2616,23 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		return 79;
 	};
 	
+	//menu command
+	Window_MenuCommand.prototype.addMainCommands = function() {
+		var enabled = this.areMainCommandsEnabled();
+		if (this.needsCommand('item')) {
+			this.addCommand('Inventory', 'item', enabled);
+		}
+		if (this.needsCommand('skill')) {
+			this.addCommand(TextManager.skill, 'skill', enabled);
+		}
+		if (this.needsCommand('equip')) {
+			this.addCommand(TextManager.equip, 'equip', enabled);
+		}
+		if (this.needsCommand('status')) {
+			this.addCommand(TextManager.status, 'status', enabled);
+		}
+	};
+	
 	//menu status
 	Window_MenuStatus.prototype.drawItemStatus = function(index) {
 		var actor = $gameParty.members()[index];
@@ -2807,16 +2824,19 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	};
 	
 	//item category
-	Window_ItemCategory.prototype.setDescriptionWindow = function(descriptionWindow) {
-		if (this._descriptionWindow !== descriptionWindow) {
-			this._descriptionWindow = descriptionWindow;
-			this.update();
-		}
+	Window_ItemCategory.prototype.initialize = function() {
+		Window_HorzCommand.prototype.initialize.call(this, 0, 0);
+		this._actorItemWindows = [];
+		this._descriptionWindow = undefined;
 	};
-
-	Window_ItemCategory.prototype.setStatusWindow = function(statusWindow) {
-		if (this._statusWindow !== statusWindow) {
-			this._statusWindow = statusWindow;
+	
+	Window_ItemCategory.prototype.maxCols = function() {
+		return 2;
+	};
+	
+	Window_ItemCategory.prototype.setActorItemWindows = function(itemWindows) {
+		if(this._actorItemWindows != itemWindows) {
+			this._actorItemWindows = itemWindows;
 			this.refresh();
 		}
 	};
@@ -2824,59 +2844,348 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	Window_ItemCategory.prototype.update = function() {
 		Window_HorzCommand.prototype.update.call(this);
 		if (this._itemWindow) {
-			this._itemWindow.setCategory(this.currentSymbol());
+			this._itemWindow.setCategory('keyItem');
+		}
+		this._actorItemWindows.forEach(function (itemWindow) {
+			itemWindow.setCategory('organize');
+		});
+		switch(this.index()) {
+			case 0:
+				this._actorItemWindows.forEach(function (itemWindow) {
+					itemWindow.show();
+				});
+				if(this._itemWindow) {
+					this._itemWindow.hide();
+				}
+				if(this._descriptionWindow) {
+					this._descriptionWindow.hide();
+				}
+				break;
+			case 1:
+				this._actorItemWindows.forEach(function (itemWindow) {
+					itemWindow.hide();
+				});
+				if(this._itemWindow) {
+					this._itemWindow.show();
+				}
+				if(this._descriptionWindow) {
+					this._descriptionWindow.show();
+				}
+				break;
 		}
 		if(this._descriptionWindow && this.isOpenAndActive() && (!this._itemWindow || !this._itemWindow.isOpenAndActive())) {
 			switch(this.index()) {
 				case 0:
-					this._descriptionWindow.setDescription("Consumable items and materials.");
+					this._descriptionWindow.setDescription("Rearrange party inventory items.");
 					break;
 				case 1:
-					this._descriptionWindow.setDescription("Weapons, shields, and other held equipment.");
-					break;
-				case 2:
-					this._descriptionWindow.setDescription("Wearable equipment that provides protection, and other passive enhancements.");
-					break;
-				case 3:
 					this._descriptionWindow.setDescription("Keys, of course, as well as anything else that is only useable in certain places.");
 					break;
 			}
 		}
-		if(this._statusWindow && this.isOpenAndActive()) {
-			switch(this.index()) {
-				case 0:
-					this._statusWindow.showDescription();
-					break;
-				case 1:
-					this._statusWindow.showActions();
-					break;
-				case 2:
-					this._statusWindow.showProtection();
-					break;
-				case 3:
-					this._statusWindow.showDescription();
-					break;
+	};
+	
+	Window_ItemCategory.prototype.makeCommandList = function() {
+		this.addCommand("Organize",    'organize');
+		this.addCommand(TextManager.keyItem, 'keyItem');
+	};
+	
+	Window_ItemCategory.prototype.setDescriptionWindow = function(descriptionWindow) {
+		if (this._descriptionWindow !== descriptionWindow) {
+			this._descriptionWindow = descriptionWindow;
+			this.update();
+		}
+	}
+	
+	//item list
+	Window_ItemList.prototype.initialize = function(x, y, width, height) {
+		Window_Selectable.prototype.initialize.call(this, x, y, width, height);
+		this._category = 'none';
+		this._data = [];
+		this._descriptionWindow = undefined;
+		this._actor = undefined
+		this._previousWindow = undefined;
+		this._nextWindow = undefined;
+		this._orgSelectIndex = -1;
+	};
+	
+	Window_ItemList.prototype.windowHeight = function() {
+		return this.fittingHeight(3);
+	};
+	
+	Window_ItemList.prototype.maxItems = function() {
+		return this._actor ? this._actor.maxItems() : this._data ? this._data.length : 1;
+	};
+	
+	Window_ItemList.prototype.item = function() {
+		var index = this.index();
+		if(this._actor) {
+			return index >= 0 ? this._actor.allItems()[index] : null;
+		} else {
+			return this._data && index >= 0 ? this._data[index] : null;
+		}
+	};
+	
+	Window_ItemList.prototype.isCurrentItemEnabled = function() {
+		return this.isEnabled(this.item());
+	};
+	
+	Window_ItemList.prototype.includes = function(item) {
+		switch (this._category) {
+		case 'organize':
+			return !DataManager.isItem(item) || item.itypeId !== 2;
+		case 'keyItem':
+			return DataManager.isItem(item) && item.itypeId === 2;
+		default:
+			return false;
+		}
+	};
+	
+	Window_ItemList.prototype.needsNumber = function() {
+		return !this._actor;
+	};
+	
+	Window_ItemList.prototype.isEnabled = function(item) {
+		return true;
+	};
+	
+	Window_ItemList.prototype.makeItemList = function() {
+		this._data = [];
+		if(this._actor) {
+			this._actor.allItems().forEach(function(actorItem) {
+				var item = null;
+				if(actorItem.type === "item") {
+					item = $dataItems[actorItem.id];
+				} else if(actorItem.type === "weapon") {
+					item = $dataWeapons[actorItem.id];
+				} else if(actorItem.type === "armor") {
+					item = $dataArmors[actorItem.id];
+				}
+				this._data.push(item);
+			}, this);
+		} else {
+			this._data = $gameParty.allItems().filter(function(item) {
+				return this.includes(item);
+			}, this);
+			if (this.includes(null)) {
+				this._data.push(null);
 			}
 		}
 	};
 	
-	//item list
 	Window_ItemList.prototype.update = function() {
 		Window_Selectable.prototype.update.call(this);
-		if(this._statusWindow && this.isOpenAndActive()) {
-			this._statusWindow.setActionsItem(this.item());
+		if(this._descriptionWindow && this.isOpenAndActive()) {
+			if(this.item()) {
+				this._descriptionWindow.setDescription(this.item().description);
+			} else {
+				this._descriptionWindow.setDescription("");
+			}
 		}
 	};
+	
+	Window_ItemList.prototype.drawItem = function(index) {
+		var item = this._data[index];
+		var rect = this.itemRect(index);
+		if (item) {
+			var numberWidth = this.numberWidth();
+			rect.width -= this.textPadding();
+			this.changePaintOpacity(this.isEnabled(item));
+			this.drawItemName(item, rect.x, rect.y, rect.width - numberWidth);
+			this.drawItemNumber(item, rect.x, rect.y, rect.width);
+			this.changePaintOpacity(1);
+		}
+		if(this._orgSelectIndex >= 0 && this._orgSelectIndex == index) {
+			this.drawOrgSelectBrackets(rect.x, rect.y, rect.width);
+		}
+	};
+	
+	Window_ItemList.prototype.drawOrgSelectBrackets = function(x, y, width) {
+		this.changeTextColor(this.crisisColor());
+		this.drawText('[________________________', x, y, width);
+		this.drawText( '````````````````````````]', x, y, width, 'right');
+		this.resetTextColor();
+	};
 
-	Window_ItemList.prototype.setStatusWindow = function(statusWindow) {
-		if (this._statusWindow !== statusWindow) {
-			this._statusWindow = statusWindow;
+	Window_ItemList.prototype.setActor = function(actor) {
+		if (this._actor !== actor) {
+			this._actor = actor;
 			this.refresh();
 		}
 	};
 	
-	Window_ItemList.prototype.isEnabled = function(item) {
-		return false;
+	Window_ItemList.prototype.setDescriptionWindow = function(descriptionWindow) {
+		if (this._descriptionWindow !== descriptionWindow) {
+			this._descriptionWindow = descriptionWindow;
+			this.refresh();
+		}
+	};
+	
+	Window_ItemList.prototype.setPreviousWindow = function(previousWindow) {
+		if (this._previousWindow !== previousWindow) {
+			this._previousWindow = previousWindow;
+			this.refresh();
+		}
+	};
+	
+	Window_ItemList.prototype.setNextWindow = function(nextWindow) {
+		if (this._nextWindow !== nextWindow) {
+			this._nextWindow = nextWindow;
+			this.refresh();
+		}
+	};
+	
+	Window_ItemList.prototype.previousWindow = function() {
+		return this._previousWindow;
+	};
+	
+	Window_ItemList.prototype.nextWindow = function() {
+		return this._nextWindow;
+	};
+	
+	Window_ItemList.prototype.orgSelectIndex = function() {
+		return this._orgSelectIndex;
+	};
+	
+	Window_ItemList.prototype.clearOrgSelect = function() {
+		this._orgSelectIndex = -1;
+	};
+	
+	Window_ItemList.prototype.actor = function() {
+		return this._actor;
+	};
+	
+	Window_ItemList.prototype.getOrgSelectInfo = function() {
+		var returnObj = {};
+		returnObj.orgSelectIndex = this._orgSelectIndex;
+		returnObj.window = this;
+		if(this._orgSelectIndex >= 0) { return returnObj; }
+		var prevWindow = this._previousWindow;
+		while(prevWindow) {
+			if(prevWindow.orgSelectIndex() >= 0) {
+				returnObj.orgSelectIndex = prevWindow.orgSelectIndex();
+				returnObj.window = prevWindow;
+				return returnObj;
+			}
+			prevWindow = prevWindow.previousWindow();
+		}
+		var nextWindow = this._nextWindow;
+		while(nextWindow) {
+			if(nextWindow.orgSelectIndex() >= 0) {
+				returnObj.orgSelectIndex = nextWindow.orgSelectIndex();
+				returnObj.window = nextWindow;
+				return returnObj;
+			}
+			nextWindow = nextWindow.nextWindow();
+		}
+		return returnObj;
+	};
+	
+	Window_ItemList.prototype.isOrgSelected = function() {
+		return this.getOrgSelectInfo().orgSelectIndex >= 0;
+	};
+	
+	Window_ItemList.prototype.cursorDown = function(wrap) {
+		var index = this.index();
+		var maxItems = this.maxItems();
+		var maxCols = this.maxCols();
+		if (index < maxItems - maxCols || (wrap && maxCols === 1)) {
+			this.select((index + maxCols) % maxItems);
+		}
+		if(index == this.index() && this._nextWindow) {
+			this.deactivate();
+			this.deselect();
+			this._nextWindow.activate();
+			this._nextWindow.select(((index + maxCols) % maxItems) - maxCols);
+		}
+	};
+
+	Window_ItemList.prototype.cursorUp = function(wrap) {
+		var index = this.index();
+		var maxItems = this.maxItems();
+		var maxCols = this.maxCols();
+		if (index >= maxCols || (wrap && maxCols === 1)) {
+			this.select((index - maxCols + maxItems) % maxItems);
+		}
+		if(index == this.index() && this._previousWindow) {
+			this.deactivate();
+			this.deselect();
+			this._previousWindow.activate();
+			this._previousWindow.select((index - maxCols + maxItems) % maxItems);
+		}
+	};
+
+	Window_ItemList.prototype.cursorRight = function(wrap) {
+		var index = this.index();
+		var maxItems = this.maxItems();
+		var maxCols = this.maxCols();
+		if (maxCols >= 2 && (index < maxItems - 1 || (wrap && this.isHorizontal()))) {
+			this.select((index + 1) % maxItems);
+		}
+		if(index == this.index() && this._nextWindow) {
+			this.deactivate();
+			this.deselect();
+			this._nextWindow.activate();
+			this._nextWindow.select(-1);
+		}
+	};
+
+	Window_ItemList.prototype.cursorLeft = function(wrap) {
+		var index = this.index();
+		var maxItems = this.maxItems();
+		var maxCols = this.maxCols();
+		if (maxCols >= 2 && (index > 0 || (wrap && this.isHorizontal()))) {
+			this.select((index - 1 + maxItems) % maxItems);
+		}
+		if(index == this.index() && this._previousWindow) {
+			this.deactivate();
+			this.deselect();
+			this._previousWindow.activate();
+			this._previousWindow.select(maxItems-1);
+		}
+	};
+	
+	Window_ItemList.prototype.processOk = function() {
+		if (this.isCurrentItemEnabled()) {
+			if(this._category === "organize") {
+				if(this.isOrgSelected()) {
+					SoundManager.playEquip();
+					var orgSelectInfo = this.getOrgSelectInfo();
+					var itemOne = {};
+					itemOne.id = this._actor.allItems()[this.index()].id;
+					itemOne.type = this._actor.allItems()[this.index()].type;
+					var itemTwo = {};
+					itemTwo.id = orgSelectInfo.window.actor().allItems()[orgSelectInfo.orgSelectIndex].id;
+					itemTwo.type = orgSelectInfo.window.actor().allItems()[orgSelectInfo.orgSelectIndex].type;
+					this._actor.gainActorItemAtIndex(itemTwo, this.index());
+					orgSelectInfo.window.actor().gainActorItemAtIndex(itemOne, orgSelectInfo.orgSelectIndex);
+					orgSelectInfo.window.clearOrgSelect();
+					this.refresh();
+					orgSelectInfo.window.refresh();
+				} else {
+					this._orgSelectIndex = this.index();
+					this.playOkSound();
+					this.refresh();
+				}
+			}
+		} else {
+			this.updateInputData();
+			this.callOkHandler();
+			this.playBuzzerSound();
+		}
+	};
+	
+	Window_ItemList.prototype.processCancel = function() {
+		SoundManager.playCancel();
+		this.updateInputData();
+		if(this.category === "organize" && this.isOrgSelected()) {
+			var orgSelectInfo = this.getOrgSelectInfo();
+			orgSelectInfo.window.clearOrgSelect();
+			orgSelectInfo.window.refresh();
+		} else {
+			this.deactivate();
+			this.callCancelHandler();
+		}
 	};
 	
 	//skill type
@@ -3253,7 +3562,9 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	
 	//equip item
 	Window_EquipItem.prototype.initialize = function(x, y, width, height) {
-		Window_ItemList.prototype.initialize.call(this, x, y, width, height);
+		Window_Selectable.prototype.initialize.call(this, x, y, width, height);
+		this._category = 'none';
+		this._data = [];
 		this._actor = null;
 		this._slotId = 0;
 		this._slotType = "none";
@@ -3261,6 +3572,44 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		this._organizeMode = false;
 		this._orgSelectIndex = -1;
 		this.makeItemList();
+	};
+	
+	Window_EquipItem.prototype.setCategory = function(category) {
+		if (this._category !== category) {
+			this._category = category;
+			this.refresh();
+			this.resetScroll();
+		}
+	};
+	
+	Window_EquipItem.prototype.maxCols = function() {
+		return 2;
+	};
+
+	Window_EquipItem.prototype.spacing = function() {
+		return 48;
+	};
+
+	Window_EquipItem.prototype.maxItems = function() {
+		return this._data ? this._data.length : 1;
+	};
+
+	Window_EquipItem.prototype.item = function() {
+		var index = this.index();
+		return this._data && index >= 0 ? this._data[index] : null;
+	};
+
+	Window_EquipItem.prototype.isCurrentItemEnabled = function() {
+		return this.isEnabled(this.item());
+	};
+	
+	Window_EquipItem.prototype.selectLast = function() {
+		var index = this._data.indexOf($gameParty.lastItem());
+		this.select(index >= 0 ? index : 0);
+	};
+	
+	Window_EquipItem.prototype.numberWidth = function() {
+		return this.textWidth('000');
 	};
 	
 	Window_EquipItem.prototype.setSlotWindow = function(slotWindow) {
@@ -3282,7 +3631,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	};
 	
 	Window_EquipItem.prototype.update = function() {
-		Window_ItemList.prototype.update.call(this);
+		Window_Selectable.prototype.update.call(this);
 		if(this._statusWindow && this.isOpenAndActive()) {
 			this._statusWindow.setActionsItem(this.item());
 		}
@@ -3323,10 +3672,9 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	};
 
 	Window_EquipItem.prototype.updateHelp = function() {
-		Window_ItemList.prototype.updateHelp.call(this);
+		this.setHelpWindowItem(this.item());
 		if (this._actor && this._statusWindow && this.isOpenAndActive()) {
 			if(this._organizeMode) {
-				this.setHelpWindowItem(this.item());
 				this._statusWindow.setTempActor(null);
 			} else {
 				var actor = JsonEx.makeDeepCopy(this._actor);
@@ -3445,6 +3793,12 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 			}
 		}
 		return false;
+	};
+	
+	Window_EquipItem.prototype.refresh = function() {
+		this.makeItemList();
+		this.createContents();
+		this.drawAllItems();
 	};
 	
 	//status

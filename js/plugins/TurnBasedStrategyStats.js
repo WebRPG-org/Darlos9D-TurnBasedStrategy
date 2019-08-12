@@ -447,6 +447,13 @@
 		$gameMap.requestRefresh();
 	};
 	
+	Game_BattlerBase.prototype.gainActorItemAtIndex = function(item, index) {
+		index = Math.max(0, Math.min(this.maxItems()-1, index));
+		this._items[index].id = item ? item.id : 0;
+		this._items[index].type = item ? item.type : "";
+		$gameMap.requestRefresh();
+	};
+	
 	Game_BattlerBase.prototype.swapItemLocations = function(indexOne, indexTwo) {
 		var itemOne = {};
 		var itemTwo = {};
