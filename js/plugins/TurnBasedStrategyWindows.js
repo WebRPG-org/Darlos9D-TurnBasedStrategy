@@ -621,7 +621,7 @@ Window_ItemOption.prototype.makeCommandList = function() {
 		} else {
 			$gameParty.members().forEach(function(member) {
 				var enabled = member.totalItemCount() < member.maxItems();
-				this.addCommand("Give " + member.displayName(), 'give', enabled, this.index());
+				this.addCommand("Give " + member.displayName(), 'give', enabled);
 			}, this);
 		}
 		this.addCommand("Discard", 'discard', true);
@@ -695,15 +695,7 @@ Window_ItemOption.prototype.refresh = function() {
 	Window_Command.prototype.refresh.call(this);
 };
 
-Window_ItemOption.prototype.clearFirstOkEaten = function() {
-	this._firstOkEaten = false;
-};
-
 Window_ItemOption.prototype.processOk = function() {
-	if(!this._firstOkEaten) {
-		this._firstOkEaten = true;
-		return;
-	}
     if (this.isCurrentItemEnabled()) {
         this.playOkSound();
         this.updateInputData();
@@ -3071,7 +3063,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	Window_ItemCategory.prototype.update = function() {
 		Window_HorzCommand.prototype.update.call(this);
 		if (this._itemWindow) {
-			this._itemWindow.setCategory('keyItem');
+			this._itemWindow.setCategory('stash');
 		}
 		this._actorItemWindows.forEach(function (itemWindow) {
 			itemWindow.setCategory('organize');
@@ -3192,12 +3184,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 				this._data.push(item);
 			}, this);
 		} else {
-			this._data = $gameParty.allItems().filter(function(item) {
-				return this.includes(item);
-			}, this);
-			if (this.includes(null)) {
-				this._data.push(null);
-			}
+			this._data = $gameParty.allItems();
 		}
 	};
 	
@@ -3532,11 +3519,19 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 					this.playOkSound();
 					this.refresh();
 				}
+			} else if (this._category === "stash") {
+				if(this.item()) {
+					this.playOkSound();
+					this.deactivate();
+					this.callOkHandler();
+				} else {
+					this.playBuzzerSound();
+				}
 			}
 		} else {
-			this.updateInputData();
 			this.playBuzzerSound();
 		}
+		this.updateInputData();
 	};
 	
 	Window_ItemList.prototype.processCancel = function() {

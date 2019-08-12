@@ -1022,7 +1022,11 @@
 	};
 
 	Scene_Item.prototype.onItemOk = function() {
-		
+		this._itemWindow.deactivate();
+		this._statusWindow.show();
+		this._itemOptionsWindow.show();
+		this._itemOptionsWindow.select(0);
+		this._itemOptionsWindow.activate();
 	};
 
 	Scene_Item.prototype.onItemCancel = function() {
@@ -1049,6 +1053,10 @@
 	};
 	
 	Scene_Item.prototype.commandItemGive = function() {
+		var actor = $gameParty.members()[this._itemOptionsWindow.index()];
+		var item = this._itemOptionsWindow.item();
+		actor.gainItem(item);
+		$gameParty.gainItem(item, -1, false);
 		this.commandItemCancel();
 	};
 	
@@ -1065,21 +1073,26 @@
 	};
 	
 	Scene_Item.prototype.commandItemCancel = function() {
+		var activated = false;
 		this._actorItemWindows.forEach(function (itemWindow) {
 			if(itemWindow.lastWindowUsed()) {
 				itemWindow.activate();
 				itemWindow.clearLastWindowUsed();
+				activated = true;
 			} else {
 				itemWindow.deactivate();
 				itemWindow.deselect();
 			}
 			itemWindow.refresh();
 		});
+		if(!activated) {
+			this._itemWindow.activate();
+		}
 		this._statusWindow.hide();
 		this._itemOptionsWindow.deactivate();
 		this._itemOptionsWindow.hide();
 		this._itemOptionsWindow.deselect();
-		this._itemOptionsWindow.clearFirstOkEaten();
+		this._itemWindow.refresh();
 	};
 	
 	//skill
