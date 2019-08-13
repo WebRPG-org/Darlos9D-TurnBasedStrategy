@@ -843,6 +843,7 @@
 		this.createItemOptionsWindow();
 		this.createStatusWindow();
 		this.createActorWindow();
+		this.createYesNoWindow();
 	};
 	
 	Scene_Item.prototype.createCategoryWindow = function() {
@@ -907,6 +908,8 @@
 		this._itemOptionsWindow.setHandler('give',    this.commandItemGive.bind(this));
 		this._itemOptionsWindow.setHandler('discard',    this.commandItemDiscard.bind(this));
 		this._itemOptionsWindow.setHandler('cancel',   this.commandItemCancel.bind(this));
+		this._itemOptionsWindow.setHandler('control', this.nextStatusPage.bind(this));
+		this._itemOptionsWindow.setHandler('shift',   this.prevStatusPage.bind(this));
 		this._itemOptionsWindow.hide();
 		this._itemOptionsWindow.deactivate();
 		this._itemWindow.setItemOptionsWindow(this._itemOptionsWindow);
@@ -926,6 +929,21 @@
 		this._actorItemWindows.forEach(function (itemWindow) {
 			itemWindow.setStatusWindow(this._statusWindow);
 		}, this);
+	};
+	
+	Scene_Item.prototype.createYesNoWindow = function() {
+		var wy = this._itemOptionsWindow.y + this._itemOptionsWindow.height;
+		this._yesNoWindow = new Window_YesNoConfirm(0, wy);
+		this._yesNoWindow.setHandler('yes',    this.commandItemDiscardConfirm.bind(this));
+		this._yesNoWindow.setHandler('no',    this.commandItemDiscardCancel.bind(this));
+		this._yesNoWindow.setHandler('cancel',    this.commandItemDiscardCancel.bind(this));
+		this.addWindow(this._yesNoWindow);
+		this._yesNoWindow.hide();
+		this._yesNoWindow.deactivate();
+		this._yesNoWindow.deselect();
+		this._itemOptionsWindow.setYesNoWindow(this._yesNoWindow);
+		this._yesNoWindow.setYesText("Discard");
+		this._yesNoWindow.setNoText("Don't");
 	};
 	
 	Scene_Item.prototype.determineItem = function() {
@@ -1061,6 +1079,13 @@
 	};
 	
 	Scene_Item.prototype.commandItemDiscard = function() {
+		this._itemOptionsWindow.deactivate();
+		this._yesNoWindow.show();
+		this._yesNoWindow.activate();
+		this._yesNoWindow.select(1);
+	};
+	
+	Scene_Item.prototype.commandItemDiscardConfirm = function() {
 		var actor = this._itemOptionsWindow.actor();
 		if(actor) {
 			var itemIndex = this._itemOptionsWindow.itemIndex();
@@ -1069,7 +1094,17 @@
 			var item = this._itemOptionsWindow.item();
 			$gameParty.gainItem(item, -1, false);
 		}
+		this._yesNoWindow.hide();
+		this._yesNoWindow.deactivate();
+		this._yesNoWindow.deselect();
 		this.commandItemCancel();
+	};
+	
+	Scene_Item.prototype.commandItemDiscardCancel = function() {
+		this._yesNoWindow.hide();
+		this._yesNoWindow.deactivate();
+		this._yesNoWindow.deselect();
+		this._itemOptionsWindow.activate();
 	};
 	
 	Scene_Item.prototype.commandItemCancel = function() {
@@ -1093,6 +1128,14 @@
 		this._itemOptionsWindow.hide();
 		this._itemOptionsWindow.deselect();
 		this._itemWindow.refresh();
+	};
+	
+	Scene_Item.prototype.nextStatusPage = function() {
+		this._statusWindow.nextStatusPage();
+	};
+	
+	Scene_Item.prototype.prevStatusPage = function() {
+		this._statusWindow.prevStatusPage();
 	};
 	
 	//skill

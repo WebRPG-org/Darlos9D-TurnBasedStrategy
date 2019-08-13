@@ -574,7 +574,7 @@ Window_ItemOption.prototype.initialize = function(x, y) {
 };
 
 Window_ItemOption.prototype.windowWidth = function() {
-    return 240;
+    return Graphics.boxWidth - Window_ItemStatus.prototype.windowWidth();
 };
 
 Window_ItemOption.prototype.setActor = function(actor) {
@@ -599,6 +599,12 @@ Window_ItemOption.prototype.setItemIndex = function(itemIndex) {
     }
 };
 
+Window_ItemOption.prototype.setYesNoWindow = function(yesNoWindow) {
+	if(this._yesNoWindow !== yesNoWindow) {
+		this._yesNoWindow = yesNoWindow;
+	}
+};
+
 Window_ItemOption.prototype.numVisibleRows = function() {
 	var rows = 1;
 	if (this._item) {
@@ -617,14 +623,14 @@ Window_ItemOption.prototype.makeCommandList = function() {
 			var canUse = DataManager.isItem(this._item)
 				&& this._item.tbsStats.actions.some(function(action) { return this.isHealing(action); }, this);
 			this.addCommand("Use", 'use', canUse);
-			this.addCommand("Stash", 'stash', true);
+			this.addCommand("Stash", 'stash', $gameSystem.isSaveEnabled());
 		} else {
 			$gameParty.members().forEach(function(member) {
 				var enabled = member.totalItemCount() < member.maxItems();
 				this.addCommand("Give " + member.displayName(), 'give', enabled);
 			}, this);
 		}
-		this.addCommand("Discard", 'discard', true);
+		this.addCommand("Discard", 'discard', !DataManager.isItem(this._item) || this._item.itypeId !== 2);
     }
 };
 
@@ -693,6 +699,9 @@ Window_ItemOption.prototype.selectLast = function() {
 Window_ItemOption.prototype.refresh = function() {
 	this.move(this.x, this.y, this.width, this.windowHeight());
 	Window_Command.prototype.refresh.call(this);
+	if(this._yesNoWindow) {
+		this._yesNoWindow.y = this.y + this.height;
+	}
 };
 
 Window_ItemOption.prototype.processOk = function() {
@@ -704,6 +713,59 @@ Window_ItemOption.prototype.processOk = function() {
     } else {
         this.playBuzzerSound();
     }
+};
+
+//-----------------------------------------------------------------------------
+// Window_YesNoConfirm
+//
+// The window for confirming yes or no on something.
+
+function Window_YesNoConfirm() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_YesNoConfirm.prototype = Object.create(Window_Command.prototype);
+Window_YesNoConfirm.prototype.constructor = Window_YesNoConfirm;
+
+Window_YesNoConfirm.prototype.initialize = function(x, y) {
+	this._yesText = "Yes";
+	this._noText = "No";
+    Window_Command.prototype.initialize.call(this, x, y);
+};
+
+Window_YesNoConfirm.prototype.windowWidth = function() {
+	var textLength = this._yesText.length > this._noText.length ? this._yesText.length : this._noText.length;
+    return this.standardPadding()*2 + this.textPadding()*2 + textLength*14;
+};
+
+Window_YesNoConfirm.prototype.setYesText = function(yesText) {
+	if(this._yesText !== yesText) {
+		this._yesText = yesText;
+		this.refresh();
+	}
+};
+
+Window_YesNoConfirm.prototype.setNoText = function(noText) {
+	if(this._noText !== noText) {
+		this._noText = noText;
+		this.refresh();
+	}
+};
+
+Window_YesNoConfirm.prototype.setYPos = function(yPos) {
+	if(this.x !== yPos) {
+		this.x = yPos;
+	}
+};
+
+Window_YesNoConfirm.prototype.makeCommandList = function() {
+    this.addCommand(this._yesText, 'yes');
+    this.addCommand(this._noText,  'no');
+};
+
+Window_YesNoConfirm.prototype.refresh = function() {
+	this.move(this.x, this.y, this.windowWidth(), this.height);
+	Window_Command.prototype.refresh.call(this);
 };
 
 //-----------------------------------------------------------------------------
@@ -3089,8 +3151,8 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	};
 	
 	Window_ItemCategory.prototype.makeCommandList = function() {
-		this.addCommand("Organize",    'organize');
-		this.addCommand("Stash", 'stash');
+		this.addCommand("Party",    'organize');
+		this.addCommand("Stash", 'stash', $gameSystem.isSaveEnabled());
 	};
 	
 	//item list
@@ -3166,7 +3228,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	};
 	
 	Window_ItemList.prototype.isEnabled = function(item) {
-		return true;
+		return this._actor || $gameSystem.isSaveEnabled();
 	};
 	
 	Window_ItemList.prototype.makeItemList = function() {
@@ -3208,7 +3270,13 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 					}
 					this._statusWindow.setActionsItem(item);
 					if(item) {
-						this._statusWindow.showDescription();
+						if(actorItem.type === "item") {
+							this._statusWindow.showActions();
+						} else if(actorItem.type === "weapon") {
+							this._statusWindow.showActions();
+						} else if(actorItem.type === "armor") {
+							this._statusWindow.showProtection();
+						}
 					} else {
 						this._statusWindow.showNone();
 					}
@@ -3217,7 +3285,15 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 					this._itemOptionsWindow.setItemIndex(this.index());
 				} else {
 					this._statusWindow.setActionsItem(this.item());
-					this._statusWindow.showDescription();
+					if(DataManager.isItem(this.item())) {
+						this._statusWindow.showActions();
+					} else if(DataManager.isWeapon(this.item())) {
+						this._statusWindow.showActions();
+					} else if(DataManager.isArmor(this.item())) {
+						this._statusWindow.showProtection();
+					} else {
+						this._statusWindow.showNone();
+					}
 					this._itemOptionsWindow.setActor(null);
 					this._itemOptionsWindow.setItem(this.item());
 					this._itemOptionsWindow.setItemIndex(this.index());
