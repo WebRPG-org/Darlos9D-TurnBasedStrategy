@@ -539,7 +539,8 @@ BattleManager.updateAction = function() {
 			var delay = hitGroup.delay === undefined || hitGroup.delay < 0 ? 0 : hitGroup.delay;
 			if(delay == this._actionTimer) {
 				this._resultsPerGroup[i] = this.combatMath(this._subject.battler, this._tbsActionInfo, hitGroup, this._tbsTargets[0].battler, this._tbsTargetsByHit, i);
-				this._hitMissDelay[i] = this._logWindow.showInitialAnimations(this._subject.battler, hitGroup, this._resultsPerGroup[i].initialAnimationIds, this._tbsTargets[0].battler, this._showCastAnimation);
+				this._hitMissDelay[i] = this._logWindow.showInitialAnimations(this._subject.battler, hitGroup,
+					this._resultsPerGroup[i].initialAnimationIds, this._tbsTargets[0].battler, this._showCastAnimation);
 				this._showCastAnimation = false;
 			}
 			if(this._actionTimer < delay) {
@@ -550,7 +551,7 @@ BattleManager.updateAction = function() {
 			if(this._hitMissDelay[i] !== undefined) {
 				if(this._hitMissDelay[i] <= 0) {
 					this._hitMissDelay[i] = undefined;
-					this._logWindow.showHitMissAnimations(this._tbsTargets[0].battler, this._resultsPerGroup[i]);
+					this._logWindow.showHitMissAnimations(this._subject.battler, this._tbsTargets[0].battler, this._resultsPerGroup[i]);
 					this.applyActionResults(this._resultsPerGroup[i], this._tbsTargets[0].battler);
 					this.refreshLeftActorStatusWindow(true);
 					this.refreshRightActorStatusWindow(true);

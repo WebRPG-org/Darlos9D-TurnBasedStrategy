@@ -4359,7 +4359,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 			if(animationId !== undefined && animationId > 0) {
 				var animation = $dataAnimations[animationId];
 				if (animation) {
-					target.startAnimation(animationId, false, that.animationBaseDelay());
+					target.startAnimation(animationId, subject.isEnemy(), that.animationBaseDelay());
 					if(animation.frames.length > highestDelay) {
 						highestDelay = animation.frames.length;
 					}
@@ -4373,7 +4373,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		//if (animationId < 0) {
 		//	this.showAttackAnimation(subject, targets);
 		//} else {
-			this.showNormalAnimation(targets, animationId);
+			this.showNormalAnimation(subject, targets, animationId);
 		//}
 	};
 
@@ -4386,33 +4386,33 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	};
 
 	Window_BattleLog.prototype.showActorAttackAnimation = function(subject, targets) {
-		this.showNormalAnimation(targets, subject.attackAnimationId1(), false);
-		this.showNormalAnimation(targets, subject.attackAnimationId2(), true);
+		this.showNormalAnimation(subject, targets, subject.attackAnimationId1());
+		this.showNormalAnimation(subject, targets, subject.attackAnimationId2());
 	};
 
 	Window_BattleLog.prototype.showEnemyAttackAnimation = function(subject, targets) {
 		SoundManager.playEnemyAttack();
 	};
 
-	Window_BattleLog.prototype.showNormalAnimation = function(targets, animationId, mirror) {
+	Window_BattleLog.prototype.showNormalAnimation = function(subject, targets, animationId) {
 		var animation = $dataAnimations[animationId];
 		if (animation) {
 			var delay = this.animationBaseDelay();
 			var nextDelay = this.animationNextDelay();
 			targets.forEach(function(target) {
-				target.battler.startAnimation(animationId, mirror, delay);
+				target.battler.startAnimation(animationId, subject.isEnemy(), delay);
 				delay += nextDelay;
 			});
 		}
 	};
 	
-	Window_BattleLog.prototype.showHitMissAnimations = function(target, results) {
+	Window_BattleLog.prototype.showHitMissAnimations = function(subject, target, results) {
 		if(results.animationIds.length > 0) {
 			results.animationIds.forEach(function (animationId) {
 				if(animationId !== undefined && animationId > 0) {
 					var animation = $dataAnimations[animationId];
 					if (animation) {
-						target.startAnimation(animationId, false, 0);
+						target.startAnimation(animationId, subject.isEnemy(), 0);
 					}
 				}
 			});
@@ -4422,7 +4422,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 				if(animationId !== undefined && animationId > 0) {
 					var animation = $dataAnimations[animationId];
 					if (animation) {
-						target.startOngoingAnimation(animationId, false, 0);
+						target.startOngoingAnimation(animationId, subject.isEnemy(), 0);
 					}
 				}
 			});

@@ -1389,6 +1389,10 @@
 		}
 	};
 	
+	Game_Actor.prototype.startAnimation = function(animationId, mirror, delay) {
+		Game_Battler.prototype.startAnimation.call(this, animationId, mirror, delay);
+	};
+	
 	//enemy
 	Game_Enemy.prototype.performStress = function() {
 		//Game_Battler.prototype.performStress.call(this);
