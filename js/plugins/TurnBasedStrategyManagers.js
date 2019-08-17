@@ -571,7 +571,7 @@ BattleManager.updateAction = function() {
 			}
 			if(this._tbsTargets.length <= 0) {
 				if(this._tbsActionInfo.action.stressCost !== undefined) {
-					this._subject.battler.adjustStressCost(this._tbsActionInfo.action.stressCost);
+					this._subject.battler.adjustStress(this._tbsActionInfo.action.stressCost);
 					this._logWindow.showStressCost(this._subject.battler, this._tbsActionInfo.action.stressCost);
 				}
 			}

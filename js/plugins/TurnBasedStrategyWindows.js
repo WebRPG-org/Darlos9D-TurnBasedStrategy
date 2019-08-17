@@ -1033,6 +1033,7 @@ Window_TbsActorStatus.prototype.refresh = function() {
 
 Window_TbsActorStatus.prototype.drawActorStress = function(battler, x, y) {
 	this.changeTextColor(this.systemColor());
+	this.drawText("[                 ]", x+14*5, y, 14*19);
 	this.drawText("St", x, y, 14*2);
 	if(battler.stress() >= 100) {
 		this.changeTextColor(this.deathColor());
@@ -1040,11 +1041,14 @@ Window_TbsActorStatus.prototype.drawActorStress = function(battler, x, y) {
 		this.changeTextColor(this.crisisColor());
 	}
 	this.drawText(battler.stress(), x + 14*2, y, 14*3, 'right');
-	this.drawText("[               ]", x+14*5, y, 14*17);
-	var pips = Math.round((battler.stress() / 100) * 15);
+	var pips = (battler.stress() / 100) * 17;
 	var i;
 	for(i = 0; i < pips; i++) {
-		this.drawText("=", x+14*(6+i), y, 14);
+		var width = 14;
+		if(pips - i > 0 && pips - i < 1) {
+			width *= pips - i;
+		}
+		this.drawText("=", x+14*(6+i), y, width);
 	}
 	this.resetTextColor();
 };
@@ -4471,13 +4475,13 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		if(showCastAnimation && hitGroup.attackMotion && hitGroup.attackMotion.castAnimationId !== undefined && hitGroup.attackMotion.castAnimationId > 0) {
 			var animation = $dataAnimations[hitGroup.attackMotion.castAnimationId];
 			if (animation) {
-				subject.startAnimation(hitGroup.attackMotion.castAnimationId, false, 0);
+				subject.startAnimation(hitGroup.attackMotion.castAnimationId, subject.isEnemy(), 0);
 			}
 		}
 		if(hitGroup.attackMotion && hitGroup.attackMotion.delayedCastAnimationId !== undefined && hitGroup.attackMotion.delayedCastAnimationId > 0) {
 			var animation = $dataAnimations[hitGroup.attackMotion.delayedCastAnimationId];
 			if (animation) {
-				subject.startAnimation(hitGroup.attackMotion.delayedCastAnimationId, false, this.animationBaseDelay());
+				subject.startAnimation(hitGroup.attackMotion.delayedCastAnimationId, subject.isEnemy(), this.animationBaseDelay());
 			}
 		}
 		var highestDelay = 0;
