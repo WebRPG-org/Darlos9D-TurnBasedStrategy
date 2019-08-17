@@ -641,7 +641,7 @@
 				if(pendingActor.labelType === "replace") {
 					actor.battler.setDisplayName(pendingActor.label);
 				} else {
-					actor.battler.setDisplayName(actor.battler.name() + " " + pendingActor.label);
+					actor.battler.setDisplayName(actor.battler.nickname() + " " + pendingActor.label);
 				}
 			}
 			actor.canActThisRound = !actor.battler.isDown();

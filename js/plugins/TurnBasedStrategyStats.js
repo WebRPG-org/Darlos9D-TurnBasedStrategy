@@ -330,13 +330,22 @@
 		this._skillPoints.tripEvade = 0;
 		this._skillPoints.mentalEvade = 0;
 		
+		this._skillPoints.manualDex = 0;
+		this._skillPoints.perception = 0;
+		
 		this._skillPoints.meleeWeapons = 0;
 		this._skillPoints.throwingWeapons = 0;
+		this._skillPoints.rangedWeapons = 0;
 		this._skillPoints.whiteMagic = 0;
 		this._skillPoints.blackMagic = 0;
+		this._skillPoints.lockpicking = 0;
+		this._skillPoints.electronics = 0;
+		this._skillPoints.computers = 0;
 		
 		this._displayName = undefined;
 		this._stressCost = 0;
+		this._skillXP = 0;
+		this._respecXP = 0;
 		this.initAllItems();
 	};
 
@@ -477,7 +486,15 @@
 	};
 	
 	Game_BattlerBase.prototype.displayName = function() {
-		return this._displayName == undefined ? this.name() : this._displayName;
+		return this._displayName == undefined ? this.nickname() : this._displayName;
+	};
+	
+	Game_BattlerBase.prototype.nickname = function() {
+		return this.name();
+	};
+	
+	Game_BattlerBase.prototype.name = function() {
+		return "";
 	};
 	
 	Game_BattlerBase.prototype.refresh = function() {
@@ -597,6 +614,22 @@
 	
 	Game_BattlerBase.prototype.skillPoints = function(skill) {
 		return !this._skillPoints[skill] === undefined ? 0 : this._skillPoints[skill];
+	};
+	
+	Game_BattlerBase.prototype.skillXP = function() {
+		return this._skillXP;
+	};
+	
+	Game_BattlerBase.prototype.adjustSkillXP = function(amount) {
+		this._skillXP = Math.max(0, this._skillXP - amount);
+	};
+	
+	Game_BattlerBase.prototype.respecXP = function() {
+		return this._respecXP;
+	};
+	
+	Game_BattlerBase.prototype.adjustRespecXP = function(amount) {
+		this._respecXP = Math.max(0, this._respecXP - amount);
 	};
 	
 	Game_BattlerBase.prototype.isDead = function() {

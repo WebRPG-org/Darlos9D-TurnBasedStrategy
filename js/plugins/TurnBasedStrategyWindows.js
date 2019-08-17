@@ -298,12 +298,12 @@ Window_ItemStatusBase.prototype.drawProtection = function() {
 	
 	//this.drawIcon(this.getIconIdFor("mentalDefense"), typesX, this.lineHeight() * 8);
 	//this.drawIcon(this.getIconIdFor("psychic"), typesX + typesWidth * 2, this.lineHeight() * 8);
-	this.changeTextColor(this.systemColor());
-	this.drawText("Mind", 0, this.lineHeight() * 9);
-	this.setTextColorForComparison(mentalProtTemp.defense, mentalProt.defense);
-	this.drawText(mentalProtTemp.defense > 0 ? mentalProtTemp.defense : "-", typesRightAlignX, this.lineHeight() * 9, 100, 'right');
-	this.setTextColorForComparison(mentalProtTemp.armor, mentalProt.armor);
-	this.drawText(mentalProtTemp.armor > 0 ? mentalProtTemp.armor : "-", typesRightAlignX + typesWidth * 2, this.lineHeight() * 9, 100, 'right');
+	//this.changeTextColor(this.systemColor());
+	//this.drawText("Mind", 0, this.lineHeight() * 9);
+	//this.setTextColorForComparison(mentalProtTemp.defense, mentalProt.defense);
+	//this.drawText(mentalProtTemp.defense > 0 ? mentalProtTemp.defense : "-", typesRightAlignX, this.lineHeight() * 9, 100, 'right');
+	//this.setTextColorForComparison(mentalProtTemp.armor, mentalProt.armor);
+	//this.drawText(mentalProtTemp.armor > 0 ? mentalProtTemp.armor : "-", typesRightAlignX + typesWidth * 2, this.lineHeight() * 9, 100, 'right');
 	this.resetTextColor();
 };
 
@@ -798,7 +798,7 @@ Window_SkillCharacterInfo.prototype.setActor = function(actor) {
 Window_SkillCharacterInfo.prototype.refresh = function() {
     this.contents.clear();
     if (this._actor) {
-		this.drawActorName(this._actor, 0, 0);
+		this.drawActorNickname(this._actor, 0, 0);
     }
 };
  
@@ -940,13 +940,13 @@ Window_EquipCharacterInfo.prototype.setActor = function(actor) {
 Window_EquipCharacterInfo.prototype.refresh = function() {
     this.contents.clear();
     if (this._actor) {
-		this.drawActorName(this._actor, 0, 0);
+		this.drawActorNickname(this._actor, 0, 0, Graphics.boxWidth/2);
 		var handedness = "Left Handed";
 		if(this._actor.handedness() === "right") {
 			handedness = "Right Handed";
 		}
 		this.resetTextColor();
-		this.drawText(handedness, 186, 0);
+		this.drawText(handedness, Graphics.boxWidth/2, 0, Graphics.boxWidth/2);
 		/* this.changeTextColor(this.systemColor());
 		this.drawText("Class Skills", 500, 0);
 		var skillsPosition = 708;
@@ -1001,11 +1001,11 @@ Window_TbsActorStatus.prototype.initialize = function(x, y) {
 };
 
 Window_TbsActorStatus.prototype.windowWidth = function() {
-	return this.standardPadding() * 2 + 14 * 18 + 4 + Window_Base._iconWidth * 2;
+	return this.standardPadding()*2 + this.textPadding()*2 + 14*24;
 };
 
 Window_TbsActorStatus.prototype.windowHeight = function() {
-	return this.standardPadding() * 2 + this.lineHeight() * 3;
+	return this.standardPadding()*2 + this.lineHeight()*5;
 };
 
 Window_TbsActorStatus.prototype.setTbsActor = function(tbsActor, forceRefresh) {
@@ -1023,9 +1023,9 @@ Window_TbsActorStatus.prototype.setTbsActor = function(tbsActor, forceRefresh) {
 Window_TbsActorStatus.prototype.refresh = function() {
     this.contents.clear();
     if (this._tbsActor) {
-		this.drawActorStress(this._tbsActor.battler, 14*12, 0);
-        this.drawActorDamage(this._tbsActor.battler, 0, 0);
-        this.drawActorBuffs(this._tbsActor.battler, 14*18, 0);
+		this.drawActorStress(this._tbsActor.battler, this.textPadding(), 0);
+        this.drawActorDamage(this._tbsActor.battler, this.textPadding(), this.lineHeight());
+        //this.drawActorBuffs(this._tbsActor.battler, 14*22, 0);
     }
 	//this.drawLine(this.lineHeight(), 0, this.contentsWidth() - this.lineHeight());
 	//this.drawLine(this.lineHeight(), this.lineHeight()*4, this.contentsWidth() - this.lineHeight());
@@ -1039,7 +1039,13 @@ Window_TbsActorStatus.prototype.drawActorStress = function(battler, x, y) {
 	} else {
 		this.changeTextColor(this.crisisColor());
 	}
-	this.drawText(battler.stress() > 0 ? battler.stress() : "-", x + 14*2, y, 14*3, 'right');
+	this.drawText(battler.stress(), x + 14*2, y, 14*3, 'right');
+	this.drawText("[               ]", x+14*5, y, 14*17);
+	var pips = Math.round((battler.stress() / 100) * 15);
+	var i;
+	for(i = 0; i < pips; i++) {
+		this.drawText("=", x+14*(6+i), y, 14);
+	}
 	this.resetTextColor();
 };
 
@@ -2541,26 +2547,45 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		var lineHeight = this.lineHeight();
 		var x2 = x + 180;
 		var width2 = Math.min(200, width - 180 - this.textPadding());
-		this.drawActorName(actor, x, y);
+		this.drawActorNickname(actor, x, y);
+		this.changePaintOpacity(false);
+		this.drawActorClass(actor, x, y+lineHeight);
+		this.changePaintOpacity(true);
+		this.drawActorSkillXP(actor, x, y+lineHeight*2, 14*12);
 		//this.drawActorIcons(actor, x, y + lineHeight * 2);
 		//this.drawActorStress(actor, x, y + lineHeight);
-		this.drawActorDamage(actor, x, y + lineHeight);
+		this.drawActorSimpleDamage(actor, x+14*14, y);
         //this.drawActorBuffs(actor, x+14*24+4, y + lineHeight);
 	};
 	
-	Window_Base.prototype.drawActorDamage = function(actor, x, y) {
-		var xIncrement = 84;
-		
-		this.drawActorMentalDamge(actor, "mind"    , x				, y							, "Mi");
-		this.drawActorPartDamge(actor, "head"    , x+xIncrement		, y							, "He");
-		this.drawActorPartDamge(actor, "leftArm" , x				, y + this.lineHeight()		, "LA");
-		this.drawActorPartDamge(actor, "torso"   , x+xIncrement		, y + this.lineHeight()		, "To");
-		this.drawActorPartDamge(actor, "rightArm", x+xIncrement*2	, y + this.lineHeight()		, "RA");
-		this.drawActorPartDamge(actor, "leftLeg" , x+xIncrement*0.5	, y + this.lineHeight()*2	, "LL");
-		this.drawActorPartDamge(actor, "rightLeg", x+xIncrement*1.5	, y + this.lineHeight()*2	, "RL");
+	Window_Base.prototype.drawActorSkillXP = function(actor, x, y, width) {
+		this.changeTextColor(this.systemColor());
+		this.drawText("SP", x, y, width);
+		this.drawText("RP", x, y+this.lineHeight(), width);
+		this.resetTextColor();
+		this.drawText(actor.skillXP(), x, y, width, 'right');
+		this.drawText(actor.respecXP(), x, y+this.lineHeight(), width, 'right');
 	};
 	
-	Window_Base.prototype.drawActorMentalDamge = function(actor, part, x, y, label) {
+	Window_Base.prototype.drawActorDamage = function(actor, x, y) {
+		this.drawActorPartDamage(actor, "head"    , x		, y							, "He");
+		this.drawActorPartDamage(actor, "torso"   , x		, y + this.lineHeight()		, "To");
+		this.drawActorLimbDamage(actor, "leftArm" , x		, y + this.lineHeight()*2	, "Ar");
+		this.drawActorLimbDamage(actor, "rightArm", x+14*13	, y + this.lineHeight()*2);
+		this.drawActorLimbDamage(actor, "leftLeg" , x		, y + this.lineHeight()*3	, "Le");
+		this.drawActorLimbDamage(actor, "rightLeg", x+14*13	, y + this.lineHeight()*3);
+	};
+	
+	Window_Base.prototype.drawActorSimpleDamage = function(actor, x, y) {
+		this.drawActorSimplePartDamage(actor, "head"    , x		, y							, "He");
+		this.drawActorSimplePartDamage(actor, "torso"   , x		, y + this.lineHeight()		, "To");
+		this.drawActorSimpleLimbDamage(actor, "leftArm" , x		, y + this.lineHeight()*2	, "Ar");
+		this.drawActorSimpleLimbDamage(actor, "rightArm", x+14*8	, y + this.lineHeight()*2);
+		this.drawActorSimpleLimbDamage(actor, "leftLeg" , x		, y + this.lineHeight()*3	, "Le");
+		this.drawActorSimpleLimbDamage(actor, "rightLeg", x+14*8	, y + this.lineHeight()*3);
+	};
+	
+	Window_Base.prototype.drawActorMentalDamage = function(actor, part, x, y, label) {
 		this.changeTextColor(this.systemColor());
 		this.drawText(label, x, y, 14*2);
 		if(actor.getDamage(part) >= 100) {
@@ -2574,13 +2599,80 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		this.changePaintOpacity(true);
 	};
 	
-	Window_Base.prototype.drawActorPartDamge = function(actor, part, x, y, label) {
+	Window_Base.prototype.drawActorPartDamage = function(actor, part, x, y, label) {
 		this.changeTextColor(this.systemColor());
 		this.drawText(label, x, y, 14*2);
-		if(actor.getDamage(part) >= 100) {
+		this.drawText("[                 ]", x+14*5, y, 14*19);
+		var health = 100 - actor.getDamage(part);
+		this.resetTextColor();
+		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
-		} else { this.resetTextColor(); }
-		this.drawText(actor.getDamage(part) > 0 ? actor.getDamage(part) : "-", x + 14*2, y, 14*3, 'right');
+		}
+		this.drawText(health, x + 14*2, y, 14*3, 'right');
+		var pips = (health / 100) * 17;
+		var i;
+		for(i = 0; i < pips; i++) {
+			var width = 14;
+			if(pips - i > 0 && pips - i < 1) {
+				width *= pips - i;
+			}
+			this.drawText("=", x+14*(6+i), y, width);
+		}
+		this.resetTextColor();
+	};
+	
+	Window_Base.prototype.drawActorLimbDamage = function(actor, part, x, y, label) {
+		this.changeTextColor(this.systemColor());
+		if(label) {
+			this.drawText(label, x, y, 14*2);
+		} else {
+			x -= 14*2;
+		}
+		this.drawText("[      ]", x+14*5, y, 14*8);
+		var health = 100 - actor.getDamage(part);
+		this.resetTextColor();
+		if(health <= 0) {
+			this.changeTextColor(this.deathColor());
+		}
+		this.drawText(health, x + 14*2, y, 14*3, 'right');
+		var pips = (health / 100) * 6;
+		var i;
+		for(i = 0; i < pips; i++) {
+			var width = 14;
+			if(pips - i > 0 && pips - i < 1) {
+				width *= pips - i;
+			}
+			this.drawText("=", x+14*(6+i), y, width);
+		}
+		this.resetTextColor();
+	};
+	
+	Window_Base.prototype.drawActorSimplePartDamage = function(actor, part, x, y, label) {
+		this.changeTextColor(this.systemColor());
+		this.drawText(label, x, y, 14*2);
+		x += 14*4;
+		var health = 100 - actor.getDamage(part);
+		this.resetTextColor();
+		if(health <= 0) {
+			this.changeTextColor(this.deathColor());
+		}
+		this.drawText(health, x + 14*2, y, 14*3, 'right');
+		this.resetTextColor();
+	};
+	
+	Window_Base.prototype.drawActorSimpleLimbDamage = function(actor, part, x, y, label) {
+		if(label) {
+			this.changeTextColor(this.systemColor());
+			this.drawText(label, x, y, 14*2);
+		} else {
+			x -= 14*2;
+		}
+		var health = 100 - actor.getDamage(part);
+		this.resetTextColor();
+		if(health <= 0) {
+			this.changeTextColor(this.deathColor());
+		}
+		this.drawText(health, x + 14*3, y, 14*3, 'right');
 		this.resetTextColor();
 	};
 	
@@ -2647,12 +2739,12 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		var nameOffset = drawName ? 254 : 0;
 		var curLineOffset = lineOffset;
 		var hitGroups = action.hitGroups;
+		var reqLacked = false;
 		if(!hitGroups) { return 0; }
 		var n;
 		for(n = 0; n < hitGroups.length; n++) {
 			var hits = hitGroups[n].hits;
 			if(!hits) { continue; }
-			var reqLacked = false;
 			var i;
 			for(i = 0; i < hits.length; i++) {
 				var lineHeight = this.lineHeight() * (actionIndex + n + i + 1 + curLineOffset);
@@ -2668,7 +2760,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 				this.drawText((hits[i].damage || hits[i].debuffs) && accuracyBonus > 0 ? accuracyBonus : "-", nameOffset + 8, lineHeight, 100, 'right');
 				this.drawText(hits[i].aoe > 0 ? hits[i].aoe : "-", nameOffset + 124, lineHeight, 100, 'right');
 				
-				if(i === 0) {
+				if(i === 0 && n === 0) {
 					if(actor) {
 						var reqs = action.skillRequirements;
 						if(reqs && reqs.length > 0) {
@@ -2694,7 +2786,15 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 						if(reqLacked) {
 							this.changeTextColor(this.deathColor());
 						}
-						this.drawText(": Effect " + (i+1), 0, lineHeight);
+						if(i === 0) {
+							var groupText = n + "th";
+							if(n == 0) { groupText = "1st"; }
+							else if(n == 1) { groupText = "2nd"; }
+							else if(n == 3) { groupText = "3rd"; }
+							this.drawText(": " + groupText, 0, lineHeight);
+						} else {
+							this.drawText(":", 0, lineHeight);
+						}
 						this.resetTextColor();
 					}
 				}
@@ -2721,7 +2821,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 						damageLineOffset += this.drawDamageForType(hitDamage.ice, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("ice"));
 						damageLineOffset += this.drawDamageForType(hitDamage.corrosion, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("corrosion"));
 						damageLineOffset += this.drawDamageForType(hitDamage.lightning, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("conducted"));
-						damageLineOffset += this.drawDamage(hitDamage.psychic, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("psychic")) ? 1 : 0;
+						//damageLineOffset += this.drawDamage(hitDamage.psychic, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("psychic")) ? 1 : 0;
 					}
 					if(heal) {
 						damageLineOffset += this.drawHeal(heal.stress, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("healStress")) ? 1 : 0;
@@ -2740,14 +2840,14 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 								}
 								var mental = prot.mental;
 								if(mental) {
-									damageLineOffset += this.drawHeal(mental.defense, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("mentalDefense")) ? 1 : 0;
+									//damageLineOffset += this.drawHeal(mental.defense, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("mentalDefense")) ? 1 : 0;
 								}
 							}
 							var core = buffs[j].core;
 							if(core) {
 								damageLineOffset += this.drawHeal(core.physEvade, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("solidDefense")) ? 1 : 0;
 								damageLineOffset += this.drawHeal(core.tripEvade, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("tripEvade")) ? 1 : 0;
-								damageLineOffset += this.drawHeal(core.mentalEvade, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("mentalDefense")) ? 1 : 0;
+								//damageLineOffset += this.drawHeal(core.mentalEvade, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("mentalDefense")) ? 1 : 0;
 							}
 						}
 					}
@@ -2816,6 +2916,15 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 				break;
 			case "blackMagic":
 				return "Black Magic";
+				break;
+			case "lockpicking":
+				return "Lockpicking";
+				break;
+			case "electronics":
+				return "Electronics";
+				break;
+			case "computers":
+				return "Computers";
 				break;
 			default:
 				return "UNKNOWN NAME";
@@ -3099,8 +3208,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	
 	Window_Selectable.prototype.drawOrgSelectBrackets = function(x, y, width) {
 		this.changeTextColor(this.crisisColor());
-		this.drawText('|________________________', x, y, width);
-		this.drawText( '````````````````````````|', x, y, width, 'right');
+		this.drawText('__________________________', x, y, width);
 		this.resetTextColor();
 	};
 	
@@ -4241,6 +4349,15 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		}
 	};
 	
+	Window_Status.prototype.drawBlock1 = function(y) {
+		this.drawActorName(this._actor, this.textPadding(), y, 14*28);
+		var handedness = "Left Handed";
+		if(this._actor.handedness() === "right") {
+			handedness = "Right Handed";
+		}
+		this.drawText(handedness, this.width-this.standardPadding()-this.textPadding()-14*13, y, 14*12);
+	};
+	
 	Window_Status.prototype.drawBlock2 = function(y) {
 		this.drawActorFace(this._actor, 12, y);
 		this.drawBasicInfo(204, y);
@@ -4264,35 +4381,21 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	
 	Window_Status.prototype.drawBasicInfo = function(x, y) {
 		var lineHeight = this.lineHeight();
-		this.drawActorIcons(this._actor, x, y + lineHeight * 1);
+		this.drawActorNickname(this._actor, x, y);
+		this.changePaintOpacity(false);
+		this.drawActorClass(this._actor, x, y+lineHeight);
+		this.changePaintOpacity(true);
+		this.drawActorSkillXP(this._actor, x, y+lineHeight*2, 14*12);
+		//this.drawActorIcons(this._actor, x, y + lineHeight * 2);
+		//this.drawActorStress(this._actor, x, y + lineHeight);
+		this.drawActorDamage(this._actor, 432, y);
+        //this.drawActorBuffs(this._actor, x+14*24+4, y + lineHeight);
 	};
 	
 	Window_Status.prototype.drawParametersColumnOne = function(x, y) {
 		var y2 = y + this.lineHeight();
 		this.resetTextColor();
-		this.drawText("Accuracy Skills", x, y2, 250);
-		y2 += this.lineHeight();
-		this.drawSkillLevel("Melee", "meleeAcc", x, y2);
-		y2 += this.lineHeight();
-		this.drawSkillLevel("Ranged", "rangedAcc", x, y2);
-		y2 += this.lineHeight();
-		this.drawSkillLevel("Mental", "mentalAcc", x, y2);
-		y2 += this.lineHeight();
-		y2 += this.lineHeight();
-		this.resetTextColor();
-		this.drawText("Evasive Skills", x, y2, 250);
-		y2 += this.lineHeight();
-		this.drawSkillLevel("Physical", "physEvade", x, y2);
-		y2 += this.lineHeight();
-		this.drawSkillLevel("Balance", "tripEvade", x, y2);
-		y2 += this.lineHeight();
-		this.drawSkillLevel("Mental", "mentalEvade", x, y2);
-	};
-	
-	Window_Status.prototype.drawParametersColumnTwo = function(x, y) {
-		var y2 = y + this.lineHeight();
-		this.resetTextColor();
-		this.drawText("Class Skills", x, y2, 250);
+		this.drawText("Ability", x, y2, 250);
 		y2 += this.lineHeight();
 		var uniqueSkills = this._actor.uniqueSkills();
 		var i;
@@ -4301,6 +4404,30 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 			this.drawSkillLevel(this.getDisplayNameForUniqueSkill(uniqueSkills[i]), uniqueSkills[i], x, y2);
 			y2 += this.lineHeight();
 		}
+	};
+	
+	Window_Status.prototype.drawParametersColumnTwo = function(x, y) {
+		var y2 = y + this.lineHeight();
+		this.resetTextColor();
+		this.drawText("Accuracy", x, y2, 250);
+		y2 += this.lineHeight();
+		this.drawSkillLevel("Melee", "meleeAcc", x, y2);
+		y2 += this.lineHeight();
+		this.drawSkillLevel("Ranged", "rangedAcc", x, y2);
+		y2 += this.lineHeight();
+		this.resetTextColor();
+		this.drawText("Defense", x, y2, 250);
+		y2 += this.lineHeight();
+		this.drawSkillLevel("Evasion", "physEvade", x, y2);
+		y2 += this.lineHeight();
+		this.drawSkillLevel("Balance", "tripEvade", x, y2);
+		y2 += this.lineHeight();
+		this.resetTextColor();
+		this.drawText("Utility", x, y2, 250);
+		y2 += this.lineHeight();
+		this.drawSkillLevel("Manual Dex", "manualDex", x, y2);
+		y2 += this.lineHeight();
+		this.drawSkillLevel("Perception", "perception", x, y2);
 	};
 	
 	Window_Status.prototype.drawSkillLevel = function(displayName, skill, x, y) {
