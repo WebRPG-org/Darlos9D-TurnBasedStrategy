@@ -342,6 +342,15 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 		}
 	};
 	
+	Sprite_Actor.prototype.startMotion = function(motionType) {
+		var newMotion = Sprite_Actor.MOTIONS[motionType];
+		//if (this._motion !== newMotion) {
+			this._motion = newMotion;
+			this._motionCount = 0;
+			this._pattern = 0;
+		//}
+	};
+	
 	//sprite enemy
 	Sprite_Enemy.prototype.setBattler = function(battler) {
 		Sprite_Battler.prototype.setBattler.call(this, battler);
