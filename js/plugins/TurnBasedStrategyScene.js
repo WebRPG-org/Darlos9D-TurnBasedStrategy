@@ -360,6 +360,7 @@
 		this.createMessageWindow();
 		this.createScrollTextWindow();
 		this.createTbsActorStatusWindow();
+		this.createTbsActorStressWindow();
 		this.createTbsActorWindow();
 		this.createTbsActionTypeWindow();
 		this.createTbsActionInfoWindow();
@@ -372,11 +373,23 @@
 	};
 
 	Scene_Map.prototype.createTbsActorStatusWindow = function() {
-		var wx = Graphics.boxWidth - Window_TbsActorStatus.prototype.windowWidth();
+		var wx = Graphics.boxWidth
+			- Window_TbsActorStatus.prototype.windowWidth()
+			- Window_TbsActorStress.prototype.windowWidth()
+			+ Window_TbsActorStress.prototype.standardPadding();
 		this._tbsActorStatusWindow = new Window_TbsActorStatus(wx, 0);
 		this.addWindow(this._tbsActorStatusWindow);
 		this._tbsActorStatusWindow.hide();
 		this._tbsActorStatusWindow.close();
+	};
+
+	Scene_Map.prototype.createTbsActorStressWindow = function() {
+		var wx = Graphics.boxWidth - Window_TbsActorStress.prototype.windowWidth();
+		this._tbsActorStressWindow = new Window_TbsActorStress(wx, 0);
+		this.addWindow(this._tbsActorStressWindow);
+		this._tbsActorStressWindow.hide();
+		this._tbsActorStressWindow.close();
+		this._tbsActorStatusWindow.setActorStressWindow(this._tbsActorStressWindow);
 	};
 
 	Scene_Map.prototype.createTbsActorWindow = function() {
@@ -700,6 +713,8 @@
 		this.createScrollTextWindow();
 		this.createTbsLeftActorStatusWindow();
 		this.createTbsRightActorStatusWindow();
+		this.createTbsLeftActorStressWindow();
+		this.createTbsRightActorStressWindow();
 		this.createTbsLeftActorNameWindow();
 		this.createTbsRightActorNameWindow();
 	};
@@ -711,27 +726,45 @@
 	};
 
 	Scene_Battle.prototype.createTbsLeftActorStatusWindow = function() {
+		var wx = Window_TbsActorStress.prototype.windowWidth() - Window_TbsActorStress.prototype.standardPadding();
 		var wy = Graphics.boxHeight - Window_TbsActorStatus.prototype.windowHeight();
-		this._tbsLeftActorStatusWindow = new Window_TbsActorStatus(0, wy);
+		this._tbsLeftActorStatusWindow = new Window_TbsActorStatus(wx, wy);
 		this.addWindow(this._tbsLeftActorStatusWindow);
 	};
 
 	Scene_Battle.prototype.createTbsRightActorStatusWindow = function() {
-		var wx = Graphics.boxWidth - Window_TbsActorStatus.prototype.windowWidth();
+		var wx = Graphics.boxWidth - Window_TbsActorStatus.prototype.windowWidth()
+			- Window_TbsActorStress.prototype.windowWidth() + Window_TbsActorStress.prototype.standardPadding();
 		var wy = 0;
 		this._tbsRightActorStatusWindow = new Window_TbsActorStatus(wx, wy);
 		this.addWindow(this._tbsRightActorStatusWindow);
 	};
 
+	Scene_Battle.prototype.createTbsLeftActorStressWindow = function() {
+		var wy = Graphics.boxHeight - Window_TbsActorStress.prototype.windowHeight();
+		this._tbsLeftActorStressWindow = new Window_TbsActorStress(0, wy);
+		this.addWindow(this._tbsLeftActorStressWindow);
+		this._tbsLeftActorStatusWindow.setActorStressWindow(this._tbsLeftActorStressWindow);
+	};
+
+	Scene_Battle.prototype.createTbsRightActorStressWindow = function() {
+		var wx = Graphics.boxWidth - Window_TbsActorStress.prototype.windowWidth();
+		var wy = 0;
+		this._tbsRightActorStressWindow = new Window_TbsActorStress(wx, wy);
+		this.addWindow(this._tbsRightActorStressWindow);
+		this._tbsRightActorStatusWindow.setActorStressWindow(this._tbsRightActorStressWindow);
+	};
+
 	Scene_Battle.prototype.createTbsLeftActorNameWindow = function() {
-		var wx = this._tbsLeftActorStatusWindow.width;
+		var wx = this._tbsLeftActorStatusWindow.width + this._tbsLeftActorStressWindow.width - this._tbsLeftActorStressWindow.standardPadding();
 		var wy = Graphics.boxHeight - Window_TbsTargetName.prototype.windowHeight();
 		this._tbsLeftActorNameWindow = new Window_TbsTargetName(wx, wy);
 		this.addWindow(this._tbsLeftActorNameWindow);
 	};
 
 	Scene_Battle.prototype.createTbsRightActorNameWindow = function() {
-		var wx = Graphics.boxWidth - this._tbsRightActorStatusWindow.width - Window_TbsTargetName.prototype.windowWidth();
+		var wx = Graphics.boxWidth - this._tbsRightActorStatusWindow.width - Window_TbsTargetName.prototype.windowWidth()
+			- this._tbsRightActorStressWindow.width + this._tbsRightActorStressWindow.standardPadding();
 		var wy = this._tbsRightActorStatusWindow.y;
 		this._tbsRightActorNameWindow = new Window_TbsTargetName(wx, wy);
 		this.addWindow(this._tbsRightActorNameWindow);

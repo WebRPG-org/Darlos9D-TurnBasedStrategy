@@ -1032,14 +1032,15 @@ Window_TbsActorStatus.prototype.constructor = Window_TbsActorStatus;
 Window_TbsActorStatus.prototype.initialize = function(x, y) {
     Window_Base.prototype.initialize.call(this, x, y, this.windowWidth(), this.windowHeight());
     this._tbsActor = null;
+	this._actorStressWindow = undefined;
 };
 
 Window_TbsActorStatus.prototype.windowWidth = function() {
-	return this.standardPadding()*2 + this.textPadding()*2 + 14*24;
+	return this.standardPadding()*2 + this.textPadding()*2 + 14*22;
 };
 
 Window_TbsActorStatus.prototype.windowHeight = function() {
-	return this.standardPadding()*2 + this.lineHeight()*5;
+	return this.standardPadding()*2 + this.lineHeight()*4;
 };
 
 Window_TbsActorStatus.prototype.setTbsActor = function(tbsActor, forceRefresh) {
@@ -1049,16 +1050,29 @@ Window_TbsActorStatus.prototype.setTbsActor = function(tbsActor, forceRefresh) {
 		}
         this._tbsActor = tbsActor;
         this.refresh();
+		if(this._actorStressWindow) {
+			this._actorStressWindow.setTbsActor(this._tbsActor);
+			this._actorStressWindow.refresh();
+		}
     } else if(forceRefresh) {
 		this.refresh();
+		if(this._actorStressWindow) {
+			this._actorStressWindow.refresh();
+		}
+	}
+};
+
+Window_TbsActorStatus.prototype.setActorStressWindow = function(stressWindow) {
+	if (this._actorStressWindow !== stressWindow) {
+		this._actorStressWindow = stressWindow;
 	}
 };
 
 Window_TbsActorStatus.prototype.refresh = function() {
     this.contents.clear();
     if (this._tbsActor) {
-		this.drawActorStress(this._tbsActor.battler, this.textPadding(), 0);
-        this.drawActorDamage(this._tbsActor.battler, this.textPadding(), this.lineHeight());
+		//this.drawActorStress(this._tbsActor.battler, this.textPadding(), 0);
+        this.drawActorDamage(this._tbsActor.battler, this.textPadding(), 0);
         //this.drawActorBuffs(this._tbsActor.battler, 14*22, 0);
     }
 	//this.drawLine(this.lineHeight(), 0, this.contentsWidth() - this.lineHeight());
@@ -1128,6 +1142,121 @@ Window_TbsActorStatus.prototype.updateClose = function() {
 			this._shouldReOpen = false;
         }
     }
+};
+
+Window_TbsActorStatus.prototype.open = function() {
+	Window_Base.prototype.open.call(this);
+	if(this._actorStressWindow) {
+		this._actorStressWindow.open();
+	}
+};
+
+Window_TbsActorStatus.prototype.close = function() {
+	Window_Base.prototype.close.call(this);
+	if(this._actorStressWindow) {
+		this._actorStressWindow.close();
+	}
+};
+
+Window_TbsActorStatus.prototype.show = function() {
+	Window_Base.prototype.show.call(this);
+	if(this._actorStressWindow) {
+		this._actorStressWindow.show();
+	}
+};
+
+Window_TbsActorStatus.prototype.hide = function() {
+	Window_Base.prototype.hide.call(this);
+	if(this._actorStressWindow) {
+		this._actorStressWindow.hide();
+	}
+};
+
+//-----------------------------------------------------------------------------
+// Window_TbsActorStress
+//
+// The window for displaying a tbs actor's stress during a turn based strategy battle
+
+function Window_TbsActorStress() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_TbsActorStress.prototype = Object.create(Window_Base.prototype);
+Window_TbsActorStress.prototype.constructor = Window_TbsActorStress;
+
+Window_TbsActorStress.prototype.initialize = function(x, y) {
+    Window_Base.prototype.initialize.call(this, x, y, this.windowWidth(), this.windowHeight());
+    this._tbsActor = null;
+};
+
+Window_TbsActorStress.prototype.windowWidth = function() {
+	return this.standardPadding()*2 + this.textPadding()*2 + 14*2;
+};
+
+Window_TbsActorStress.prototype.windowHeight = function() {
+	return this.standardPadding()*2 + this.lineHeight()*5;
+};
+
+Window_TbsActorStress.prototype.setTbsActor = function(tbsActor) {
+    if (this._tbsActor !== tbsActor) {
+        this._tbsActor = tbsActor;
+    }
+};
+
+Window_TbsActorStress.prototype.refresh = function() {
+    this.contents.clear();
+    if (this._tbsActor) {
+		this.drawActorStress(this._tbsActor.battler, this.textPadding(), 0);
+    }
+};
+
+Window_TbsActorStress.prototype.drawActorStress = function(battler, x, y) {
+	var lineHeight = this.lineHeight() - 5;
+	this.changeTextColor(this.systemColor());
+	this.drawText("S", x, y, 14);
+	this.drawText("t", x, y+lineHeight, 14);
+	this.drawText("_", x+14+this.textPadding()/2, y-this.lineHeight()+7, 14);
+	this.drawText("_", x+14+this.textPadding()/2, y+this.lineHeight()*4, 14);
+	if(battler.stress() >= 100) {
+		this.changeTextColor(this.deathColor());
+	} else {
+		this.changeTextColor(this.crisisColor());
+	}
+	var numStress = battler.stress();
+	var numHeight = 2;
+	if(numStress >= 100) {
+		this.drawText(1, x, y+lineHeight*numHeight, 14);
+		numStress -= 100;
+		numHeight++;
+		if(numStress <= 0) {
+			this.drawText(0, x, y+lineHeight*numHeight, 14);
+			numHeight++;
+		}
+	}
+	if(numStress >= 10) {
+		this.drawText(Math.floor(numStress/10), x, y+lineHeight*numHeight, 14);
+		numStress -= 10 * Math.floor(numStress/10);
+		numHeight++;
+	}
+	this.drawText(numStress, x, y+lineHeight*numHeight, 14);
+	var pips = (battler.stress() / 100) * 5;
+	var pipsBaseY = y + 6;
+	if(pips - Math.floor(pips) > 0) {
+		var pipHeight = lineHeight * (pips - Math.floor(pips));
+		var pipY = lineHeight - pipHeight;
+		this.drawText("|", x+14, pipsBaseY+lineHeight*(4-Math.floor(pips))+pipY, 14);
+		this.drawText("|", x+14+this.textPadding(), pipsBaseY+lineHeight*(4-Math.floor(pips))+pipY, 14);
+	}
+	var i;
+	for(i = 0; i < Math.floor(pips); i++) {
+		this.drawText("|", x+14, pipsBaseY+lineHeight*(4-i), 14);
+		this.drawText("|", x+14+this.textPadding(), pipsBaseY+lineHeight*(4-i), 14);
+	}
+	this.resetTextColor();
+};
+
+Window_TbsActorStress.prototype.drawTextWithHeight = function(text, x, y, maxWidth, height, align) {
+    this.contents.drawText(text, x, y, maxWidth, height, align);
 };
 
 //-----------------------------------------------------------------------------
@@ -2600,9 +2729,9 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		this.drawActorPartDamage(actor, "head"    , x		, y							, "He");
 		this.drawActorPartDamage(actor, "torso"   , x		, y + this.lineHeight()		, "To");
 		this.drawActorLimbDamage(actor, "leftArm" , x		, y + this.lineHeight()*2	, "Ar");
-		this.drawActorLimbDamage(actor, "rightArm", x+14*13	, y + this.lineHeight()*2);
+		this.drawActorLimbDamage(actor, "rightArm", x+14*12	, y + this.lineHeight()*2);
 		this.drawActorLimbDamage(actor, "leftLeg" , x		, y + this.lineHeight()*3	, "Le");
-		this.drawActorLimbDamage(actor, "rightLeg", x+14*13	, y + this.lineHeight()*3);
+		this.drawActorLimbDamage(actor, "rightLeg", x+14*12	, y + this.lineHeight()*3);
 	};
 	
 	Window_Base.prototype.drawActorSimpleDamage = function(actor, x, y) {
@@ -2631,14 +2760,14 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	Window_Base.prototype.drawActorPartDamage = function(actor, part, x, y, label) {
 		this.changeTextColor(this.systemColor());
 		this.drawText(label, x, y, 14*2);
-		this.drawText("[                 ]", x+14*5, y, 14*19);
+		this.drawText("[               ]", x+14*5, y, 14*17);
 		var health = 100 - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
 		}
 		this.drawText(health, x + 14*2, y, 14*3, 'right');
-		var pips = (health / 100) * 17;
+		var pips = (health / 100) * 15;
 		var i;
 		for(i = 0; i < pips; i++) {
 			var width = 14;
@@ -2657,14 +2786,14 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		} else {
 			x -= 14*2;
 		}
-		this.drawText("[      ]", x+14*5, y, 14*8);
+		this.drawText("[     ]", x+14*5, y, 14*7);
 		var health = 100 - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
 		}
 		this.drawText(health, x + 14*2, y, 14*3, 'right');
-		var pips = (health / 100) * 6;
+		var pips = (health / 100) * 5;
 		var i;
 		for(i = 0; i < pips; i++) {
 			var width = 14;
