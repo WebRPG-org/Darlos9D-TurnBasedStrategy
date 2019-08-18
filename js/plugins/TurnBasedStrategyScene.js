@@ -738,6 +738,15 @@
 	};
 	
 	//item base
+	Scene_ItemBase.prototype.createActorBodyPartWindow = function() {
+		this._actorBodyPartWindow = new Window_ActorBodyPart(0, 0);
+		this._actorBodyPartWindow.setHandler('targetPart',     this.onActorBodyPartOk.bind(this));
+		this._actorBodyPartWindow.setHandler('cancel',     this.onActorBodyPartCancel.bind(this));
+		this.addWindow(this._actorBodyPartWindow);
+		this._actorBodyPartWindow.hide();
+		this._actorBodyPartWindow.deactivate();
+	};
+	
 	Scene_ItemBase.prototype.determineItem = function() {
 		var actionInfo = this.actionInfo();
 		if (actionInfo && actionInfo.action && this.actionIsEnabled(actionInfo.action)) {
@@ -756,10 +765,50 @@
 	
 	Scene_ItemBase.prototype.onActorOk = function() {
 		if (this.canUseAction()) {
-			this.useAction();
+			if(this.actionEffectTargetsBodyPart()) {
+				SoundManager.playOk();
+				this._actorWindow.deactivate();
+				this._actorBodyPartWindow.show();
+				this._actorBodyPartWindow.activate();
+				this._actorBodyPartWindow.select(0);
+			} else {
+				this._actorBodyPart = undefined;
+				this.useAction();
+			}
 		} else {
 			SoundManager.playBuzzer();
 		}
+	};
+	
+	Scene_ItemBase.prototype.onActorBodyPartOk = function() {
+		this._actorBodyPart = undefined;
+		switch(this._actorBodyPartWindow.currentExt()) {
+			case 1:
+				this._actorBodyPart = "head";
+				break;
+			case 2:
+				this._actorBodyPart = "torso";
+				break;
+			case 3:
+				this._actorBodyPart = "rightArm";
+				break;
+			case 4:
+				this._actorBodyPart = "leftArm";
+				break;
+			case 5:
+				this._actorBodyPart = "rightLeg";
+				break;
+			case 6:
+				this._actorBodyPart = "leftLeg";
+				break;
+		}
+		this.useAction();
+	};
+	
+	Scene_ItemBase.prototype.onActorBodyPartCancel = function() {
+		this._actorWindow.activate();
+		this._actorBodyPartWindow.hide();
+		this._actorBodyPartWindow.deactivate();
 	};
 	
 	Scene_ItemBase.prototype.actionTargetActors = function() {
@@ -803,6 +852,21 @@
 		});
 	};
 	
+	Scene_ItemBase.prototype.actionEffectTargetsBodyPart = function() {
+		var actionInfo = this.actionInfo();
+		if(!actionInfo || !actionInfo.action || !actionInfo.action.hitGroups || actionInfo.action.hitGroups.length == 0) { return false; }
+		var hitGroups = actionInfo.action.hitGroups;
+		
+		return hitGroups.some(function(hitGroup) {
+			if(!hitGroup.hits || hitGroup.hits.length == 0) { return false; }
+			return hitGroup.hits.some(function(hit) {
+				if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0
+					&& (hit.aoe == undefined || hit.aoe <= 0)) { return true; }
+				return false;
+			});
+		});
+	};
+	
 	Scene_ItemBase.prototype.applyAction = function() {
 		var actionInfo = this.actionInfo();
 		if(!actionInfo || !actionInfo.action || !actionInfo.action.hitGroups || actionInfo.action.hitGroups.length == 0) { return false; }
@@ -814,11 +878,11 @@
 				if(!hitGroup.hits || hitGroup.hits.length == 0) { return; }
 				hitGroup.hits.forEach(function (hit) {
 					if(target.isHitValid(hit)) {
-						target.applyHit(hit);
+						target.applyHit(hit, this._actorBodyPart);
 					}
-				});
-			});
-		});
+				}, this);
+			}, this);
+		}, this);
 		//TODO: replace this
 		//action.applyGlobal();
 	};
@@ -838,6 +902,9 @@
 			}
 		}
 		this.checkGameover();
+		this._actorBodyPartWindow.hide();
+		this._actorBodyPartWindow.deactivate();
+		this._actorWindow.activate();
 		this._actorWindow.refresh();
 		this._itemWindow.refresh();
 	};
@@ -854,6 +921,7 @@
 		this.createStatusWindow();
 		this.createActorWindow();
 		this.createYesNoWindow();
+		this.createActorBodyPartWindow();
 	};
 	
 	Scene_Item.prototype.createCategoryWindow = function() {
@@ -1003,6 +1071,9 @@
 			}
 		}
 		this.checkGameover();
+		this._actorBodyPartWindow.hide();
+		this._actorBodyPartWindow.deactivate();
+		this._actorWindow.activate();
 		this._actorWindow.refresh();
 		this._itemWindow.refresh();
 		this._actorItemWindows.forEach(function (itemWindow) {
@@ -1159,6 +1230,7 @@
 		this.createDescriptionWindow();
 		this.createItemWindow();
 		this.createActorWindow();
+		this.createActorBodyPartWindow();
 		this.refreshActor();
 	};
 	

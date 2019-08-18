@@ -1044,8 +1044,22 @@
 		if(!actionInfo || !actionInfo.action) { return false; }
 		var action = actionInfo.action;
 		
-		if(!actionInfo.sourceEquip || !actionInfo.sourceEquipSlotId) {
-			return this.skills().some(function(skill) { return skill.tbsStats.action && skill.tbsStats.action === action; });
+		if(!actionInfo.sourceEquip || actionInfo.sourceEquipSlotId == undefined || actionInfo.sourceEquipSlotId < 0) {
+			var isItemAction = this._items.some(function (battlerItem) {
+				if(battlerItem.id <= 0 || battlerItem.type == undefined) { return false; }
+				var item = undefined;
+				if(battlerItem.type == "item") {
+					item = $dataItems[battlerItem.id];
+				} else if(battlerItem.type == "weapon") {
+					item = $dataWeapons[battlerItem.id];
+				} else if(battlerItem.type == "armor") {
+					item = $dataArmors[battlerItem.id];
+				}
+				return item.tbsStats.actions && item.tbsStats.actions.some(function (itemAction) {
+					return itemAction == action;
+				});
+			});
+			return isItemAction || this.skills().some(function(skill) { return skill.tbsStats.action && skill.tbsStats.action === action; });
 		} else {
 			var equips = this.equips();
 			return equips.length > actionInfo.sourceEquipSlotId && equips[actionInfo.sourceEquipSlotId] === actionInfo.sourceEquip;
@@ -1061,7 +1075,7 @@
 	};
 	
 	Game_BattlerBase.prototype.isHitValid = function(hit) {
-		if(hit.aoe === undefined || hit.aoe < 1 || !hit.heal || hit.heal.damage === undefined || hit.heal.damage <= 0) { return false; }
+		if(!hit.heal || hit.heal.damage === undefined || hit.heal.damage <= 0) { return false; }
 			
 		return this.getDamage("head") > 0 ||
 			this.getDamage("torso") > 0 ||
@@ -1071,15 +1085,19 @@
 			this.getDamage("rightLeg") > 0;
 	};
 	
-	Game_BattlerBase.prototype.applyHit = function(hit) {
-		if(hit.aoe === undefined || hit.aoe < 1 || !hit.heal || hit.heal.damage === undefined || hit.heal.damage <= 0) { return; }
+	Game_BattlerBase.prototype.applyHit = function(hit, bodyPart) {
+		if(!hit.heal || hit.heal.damage === undefined || hit.heal.damage <= 0) { return; }
 		
-		this.adjustDamage("head", -hit.heal.damage);
-		this.adjustDamage("torso", -hit.heal.damage);
-		this.adjustDamage("leftArm", -hit.heal.damage);
-		this.adjustDamage("rightArm", -hit.heal.damage);
-		this.adjustDamage("leftLeg", -hit.heal.damage);
-		this.adjustDamage("rightLeg", -hit.heal.damage);
+		if(bodyPart === "undefined") {
+			this.adjustDamage("head", -hit.heal.damage);
+			this.adjustDamage("torso", -hit.heal.damage);
+			this.adjustDamage("leftArm", -hit.heal.damage);
+			this.adjustDamage("rightArm", -hit.heal.damage);
+			this.adjustDamage("leftLeg", -hit.heal.damage);
+			this.adjustDamage("rightLeg", -hit.heal.damage);
+		} else {
+			this.adjustDamage(bodyPart, -hit.heal.damage);
+		}
 	};
 	
 	//battler

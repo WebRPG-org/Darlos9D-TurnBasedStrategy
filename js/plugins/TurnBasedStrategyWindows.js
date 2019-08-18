@@ -769,6 +769,40 @@ Window_YesNoConfirm.prototype.refresh = function() {
 };
 
 //-----------------------------------------------------------------------------
+// Window_ActorBodyPart
+//
+// The window for selecting a target's body part in the party menus
+
+function Window_ActorBodyPart() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_ActorBodyPart.prototype = Object.create(Window_Command.prototype);
+Window_ActorBodyPart.prototype.constructor = Window_ActorBodyPart;
+
+Window_ActorBodyPart.prototype.initialize = function(x, y) {
+    Window_Command.prototype.initialize.call(this, x, y);
+};
+
+Window_ActorBodyPart.prototype.windowWidth = function() {
+	var textWidth = 14 * 9;
+    return textWidth + this.standardPadding()*2 + this.textPadding()*2;
+};
+
+Window_ActorBodyPart.prototype.numVisibleRows = function() {
+	return 6;
+};
+
+Window_ActorBodyPart.prototype.makeCommandList = function() {
+	this.addCommand("Head", 'targetPart', true, 1);
+	this.addCommand("Torso", 'targetPart', true, 2);
+	this.addCommand("Right Arm", 'targetPart', true, 3);
+	this.addCommand("Left Arm", 'targetPart', true, 4);
+	this.addCommand("Right Leg", 'targetPart', true, 5);
+	this.addCommand("Left Leg", 'targetPart', true, 6);
+};
+
+//-----------------------------------------------------------------------------
 // Window_SkillCharacterInfo
 //
 // The window for displaying some character info on the skill screen
@@ -3021,6 +3055,10 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		this.drawActorSimpleStatus(actor, x, y, width);
 	};
 	
+	Window_MenuStatus.prototype.selectLast = function() {
+		this.select(0);
+	};
+	
 	//menu actor
 	Window_MenuActor.prototype.initialize = function() {
 		Window_MenuStatus.prototype.initialize.call(this, 0, 0);
@@ -3029,6 +3067,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	};
 	
 	Window_MenuActor.prototype.processOk = function() {
+        this.updateInputData();
 		if(this._displayMode) { return; }
 		
 		if (!this.cursorAll()) {
@@ -3048,7 +3087,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	Window_MenuActor.prototype.selectForActionInfo = function(actionInfo) {
 		var actor = $gameParty.menuActor();
 		this.setCursorFixed(false);
-        this.selectLast();
+        this.select(0);
 		//TODO: use the action to figure out which actor to select. I guess.
 	};
 	
