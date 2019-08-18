@@ -243,6 +243,13 @@
 					}
 				}
 			}
+			if($gameMap.tbsTurnMode() === "selectActionTarget" && $gameMap.getShouldOpenActionWindow()) {
+				this._tbsActionWindow.refreshWindowContents();
+				this._tbsActionWindow.show();
+				this._tbsActionWindow.open();
+				this._tbsActionWindow.activate();
+				$gameMap.clearShouldOpenActionWindow();
+			}
 			this.updateBreadcrumbs();
 		} else {
 			this._tbsActorWindow.close();
@@ -522,11 +529,14 @@
 		}
 		this._tbsActionTypeWindow.deactivate();
 		this._tbsActionTypeWindow.close();
+		$gameMap.setTbsSelectedActionType(undefined);
 		SoundManager.playCancel();
 	};
 	
 	Scene_Map.prototype.commandAction = function() {
-		this._tbsActionTypeWindow.shouldOpenActionWindow(true);
+		if(!$gameMap.isWaitingOnQueuedActions()) {
+			this._tbsActionTypeWindow.shouldOpenActionWindow(true);
+		}
 		this._tbsActionTypeWindow.close();
 		this._tbsActionTypeWindow.deactivate();
 		$gameMap.setTbsTurnMode("selectActionTarget");

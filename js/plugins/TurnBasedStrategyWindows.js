@@ -1555,7 +1555,6 @@ Window_TbsAction.prototype.initialize = function(x, y) {
     Window_Selectable.prototype.initialize.call(this, x, y, this.windowWidth(), this.windowHeight());
 	this._stypeId = 0;
 	this._actionTextColor = [];
-    this.refreshWindowContents();
 };
 
 Window_TbsAction.prototype.windowWidth = function() {
@@ -1587,28 +1586,24 @@ Window_TbsAction.prototype.numVisibleRows = function() {
 Window_TbsAction.prototype.setActionTypeWindow = function(actionTypeWindow) {
 	if (this._actionTypeWindow !== actionTypeWindow) {
 		this._actionTypeWindow = actionTypeWindow;
-		this.refreshWindowContents();
 	}
 };
 
 Window_TbsAction.prototype.setTargetWindow = function(targetWindow) {
 	if (this._targetWindow !== targetWindow) {
 		this._targetWindow = targetWindow;
-		this.refreshWindowContents();
 	}
 };
 
 Window_TbsAction.prototype.setActionInfoWindow = function(actionInfoWindow) {
 	if (this._actionInfoWindow !== actionInfoWindow) {
 		this._actionInfoWindow = actionInfoWindow;
-		this.refreshWindowContents();
 	}
 };
 
 Window_TbsAction.prototype.setTbsActor = function(tbsActor) {
     if (this._tbsActor !== tbsActor) {
         this._tbsActor = tbsActor;
-        this.refreshWindowContents();
 		if(this._targetWindow) {
 			this._targetWindow.setActionIndex(-1);
 		}
@@ -1618,7 +1613,6 @@ Window_TbsAction.prototype.setTbsActor = function(tbsActor) {
 Window_TbsAction.prototype.setStypeId = function(stypeId) {
     if (this._stypeId !== stypeId) {
         this._stypeId = stypeId;
-        this.refreshWindowContents();
         this.resetScroll();
 		if(this._targetWindow) {
 			this._targetWindow.setActionIndex(-1);
@@ -1691,9 +1685,6 @@ Window_TbsAction.prototype.makeItemList = function() {
 	if(this.index() >= this._actionInfos.length) {
 		this.select(Math.max(0, this._actionInfos.length - 1));
 	}
-	
-	this.move(this.x, this.y, this.windowWidth(), this.windowHeight());
-	this.createContents();
 };
 
 Window_TbsAction.prototype.maxItems = function() {
@@ -1818,11 +1809,11 @@ Window_TbsAction.prototype.updateClose = function() {
 
 Window_TbsAction.prototype.refreshWindowContents = function(dontSelectFirst) {
 	this.refresh(dontSelectFirst);
-	this.move(this.x, this.y, this.windowWidth(), this.windowHeight());
 };
 
 Window_TbsAction.prototype.refresh = function(dontSelectFirst) {
     this.makeItemList();
+	this.move(this.x, this.y, this.windowWidth(), this.windowHeight());
     this.createContents();
 	if(!dontSelectFirst) {
 		this.selectFirstEnabledItem();
