@@ -756,7 +756,8 @@
 	};
 
 	Scene_Battle.prototype.createTbsLeftActorNameWindow = function() {
-		var wx = this._tbsLeftActorStatusWindow.width + this._tbsLeftActorStressWindow.width - this._tbsLeftActorStressWindow.standardPadding();
+		var wx = this._tbsLeftActorStatusWindow.width + this._tbsLeftActorStressWindow.width
+			- this._tbsLeftActorStressWindow.standardPadding() - Window_TbsTargetName.prototype.standardPadding();
 		var wy = Graphics.boxHeight - Window_TbsTargetName.prototype.windowHeight();
 		this._tbsLeftActorNameWindow = new Window_TbsTargetName(wx, wy);
 		this.addWindow(this._tbsLeftActorNameWindow);
@@ -764,7 +765,8 @@
 
 	Scene_Battle.prototype.createTbsRightActorNameWindow = function() {
 		var wx = Graphics.boxWidth - this._tbsRightActorStatusWindow.width - Window_TbsTargetName.prototype.windowWidth()
-			- this._tbsRightActorStressWindow.width + this._tbsRightActorStressWindow.standardPadding();
+			- this._tbsRightActorStressWindow.width + this._tbsRightActorStressWindow.standardPadding()
+			+ Window_TbsTargetName.prototype.standardPadding();
 		var wy = this._tbsRightActorStatusWindow.y;
 		this._tbsRightActorNameWindow = new Window_TbsTargetName(wx, wy);
 		this.addWindow(this._tbsRightActorNameWindow);

@@ -1035,8 +1035,12 @@ Window_TbsActorStatus.prototype.initialize = function(x, y) {
 	this._actorStressWindow = undefined;
 };
 
+Window_TbsActorStatus.prototype.lineHeight = function() {
+    return 29;
+};
+
 Window_TbsActorStatus.prototype.windowWidth = function() {
-	return this.standardPadding()*2 + this.textPadding()*2 + 14*22;
+	return this.standardPadding()*2 + 14*22;
 };
 
 Window_TbsActorStatus.prototype.windowHeight = function() {
@@ -1072,7 +1076,7 @@ Window_TbsActorStatus.prototype.refresh = function() {
     this.contents.clear();
     if (this._tbsActor) {
 		//this.drawActorStress(this._tbsActor.battler, this.textPadding(), 0);
-        this.drawActorDamage(this._tbsActor.battler, this.textPadding(), 0);
+        this.drawActorDamage(this._tbsActor.battler, 0, 0);
         //this.drawActorBuffs(this._tbsActor.battler, 14*22, 0);
     }
 	//this.drawLine(this.lineHeight(), 0, this.contentsWidth() - this.lineHeight());
@@ -1189,8 +1193,12 @@ Window_TbsActorStress.prototype.initialize = function(x, y) {
     this._tbsActor = null;
 };
 
+Window_TbsActorStress.prototype.lineHeight = function() {
+    return 29;
+};
+
 Window_TbsActorStress.prototype.windowWidth = function() {
-	return this.standardPadding()*2 + this.textPadding()*2 + 14*2;
+	return this.standardPadding()*2 + 14*2;
 };
 
 Window_TbsActorStress.prototype.windowHeight = function() {
@@ -1206,17 +1214,17 @@ Window_TbsActorStress.prototype.setTbsActor = function(tbsActor) {
 Window_TbsActorStress.prototype.refresh = function() {
     this.contents.clear();
     if (this._tbsActor) {
-		this.drawActorStress(this._tbsActor.battler, this.textPadding(), 0);
+		this.drawActorStress(this._tbsActor.battler, 0, 0);
     }
 };
 
 Window_TbsActorStress.prototype.drawActorStress = function(battler, x, y) {
-	var lineHeight = this.lineHeight() - 5;
+	var lineHeight = this.lineHeight();
 	this.changeTextColor(this.systemColor());
 	this.drawText("S", x, y, 14);
-	this.drawText("t", x, y+lineHeight, 14);
-	this.drawText("_", x+14+this.textPadding()/2, y-this.lineHeight()+7, 14);
-	this.drawText("_", x+14+this.textPadding()/2, y+this.lineHeight()*4, 14);
+	this.drawText("t", x, y+this.lineHeight(), 14);
+	//this.drawText("_", x+14, y-this.lineHeight()+7, 14);
+	//this.drawText("_", x+14, y+this.lineHeight()*4, 14);
 	if(battler.stress() >= 100) {
 		this.changeTextColor(this.deathColor());
 	} else {
@@ -1225,32 +1233,32 @@ Window_TbsActorStress.prototype.drawActorStress = function(battler, x, y) {
 	var numStress = battler.stress();
 	var numHeight = 2;
 	if(numStress >= 100) {
-		this.drawText(1, x, y+lineHeight*numHeight, 14);
+		this.drawText(1, x, y+this.lineHeight()*numHeight, 14);
 		numStress -= 100;
 		numHeight++;
 		if(numStress <= 0) {
-			this.drawText(0, x, y+lineHeight*numHeight, 14);
+			this.drawText(0, x, y+this.lineHeight()*numHeight, 14);
 			numHeight++;
 		}
 	}
 	if(numStress >= 10) {
-		this.drawText(Math.floor(numStress/10), x, y+lineHeight*numHeight, 14);
+		this.drawText(Math.floor(numStress/10), x, y+this.lineHeight()*numHeight, 14);
 		numStress -= 10 * Math.floor(numStress/10);
 		numHeight++;
 	}
-	this.drawText(numStress, x, y+lineHeight*numHeight, 14);
+	this.drawText(numStress, x, y+this.lineHeight()*numHeight, 14);
 	var pips = (battler.stress() / 100) * 5;
-	var pipsBaseY = y + 6;
+	var pipsBaseY = y;
 	if(pips - Math.floor(pips) > 0) {
 		var pipHeight = lineHeight * (pips - Math.floor(pips));
 		var pipY = lineHeight - pipHeight;
-		this.drawText("|", x+14, pipsBaseY+lineHeight*(4-Math.floor(pips))+pipY, 14);
-		this.drawText("|", x+14+this.textPadding(), pipsBaseY+lineHeight*(4-Math.floor(pips))+pipY, 14);
+		this.drawText("|", x+14-this.textPadding()/2, pipsBaseY+lineHeight*(4-Math.floor(pips))+pipY, 14);
+		this.drawText("|", x+14+this.textPadding()/2, pipsBaseY+lineHeight*(4-Math.floor(pips))+pipY, 14);
 	}
 	var i;
 	for(i = 0; i < Math.floor(pips); i++) {
-		this.drawText("|", x+14, pipsBaseY+lineHeight*(4-i), 14);
-		this.drawText("|", x+14+this.textPadding(), pipsBaseY+lineHeight*(4-i), 14);
+		this.drawText("|", x+14-this.textPadding()/2, pipsBaseY+lineHeight*(4-i), 14);
+		this.drawText("|", x+14+this.textPadding()/2, pipsBaseY+lineHeight*(4-i), 14);
 	}
 	this.resetTextColor();
 };
@@ -2293,7 +2301,7 @@ Window_TbsTargetName.prototype.initialize = function(x, y) {
 
 Window_TbsTargetName.prototype.windowWidth = function() {
 	if(this._tbsActor) {
-		return this.standardPadding() * 2 + this._tbsActor.battler.displayName().length * 14 + this.textPadding() * 2;
+		return this.standardPadding() * 2 + this._tbsActor.battler.displayName().length * 14;
 	} else {
 		return 300;
 	}
@@ -2337,7 +2345,7 @@ Window_TbsTargetName.prototype.drawTargetNameText = function() {
 		if(battler.isDown()) {
 			this.changeTextColor(this.deathColor());
 		}
-		this.drawText(battler.displayName(), this.textPadding(), 0);
+		this.drawText(battler.displayName(), 0, 0);
 		this.resetTextColor();
 		this.changePaintOpacity(true);
 	}
