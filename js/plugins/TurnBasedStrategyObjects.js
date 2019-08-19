@@ -2754,7 +2754,8 @@
 				reachedTiles.push(tile);
 				return;
 			}
-			if(!that.isTrajectoryObstructed(x, y, tile.x, tile.y, boundingTiles, ignoreStartPosition, true)) {
+			var distance = that.actualDistance(x, y, tile.x, tile.y);
+			if(distance < 1.5 || !that.isTrajectoryObstructed(x, y, tile.x, tile.y, boundingTiles, ignoreStartPosition, true)) {
 				reachedTiles.push(tile);
 			}
 		});
