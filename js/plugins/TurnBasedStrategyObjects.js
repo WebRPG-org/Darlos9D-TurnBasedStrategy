@@ -96,8 +96,8 @@
 		}
 	};
 	
-	Game_Temp.prototype.startTbsBattle = function(resetCameraAfterBattle) {
-		$gameMap.setTbsBattleMode(true, resetCameraAfterBattle);
+	Game_Temp.prototype.startTbsBattle = function(resetCameraAfterBattle, cursorRegions) {
+		$gameMap.setTbsBattleMode(true, resetCameraAfterBattle, cursorRegions);
 		this.clearTbsForces();
 	};
 	
@@ -250,8 +250,8 @@
 		$gameTemp.setTbsForceAllyForce(forceId, allyForceId);
 	};
 	
-	Game_System.prototype.startTbsBattle = function(resetCameraAfterBattle) {
-		$gameTemp.startTbsBattle(resetCameraAfterBattle);
+	Game_System.prototype.startTbsBattle = function(resetCameraAfterBattle, cursorRegions) {
+		$gameTemp.startTbsBattle(resetCameraAfterBattle, cursorRegions);
 	};
 	
 	Game_System.prototype.clearTbsForces = function() {
@@ -388,6 +388,7 @@
 		this._cameraFocusDirection = undefined;
 		this._cameraFocusResetToPlayer = undefined;
 		this._resetCameraAfterBattle = undefined;
+		this._tbsCursorRegions = [];
 		this._mapBgm = undefined;
 	};
 	
@@ -529,7 +530,7 @@
 		}
 	};
 	
-	Game_Map.prototype.setTbsBattleMode = function(modeOn, resetCameraAfterBattle) {
+	Game_Map.prototype.setTbsBattleMode = function(modeOn, resetCameraAfterBattle, cursorRegions) {
 		var pendingTbsForces = $gameTemp.pendingTbsForces();
 		if(this._tbsBattleMode !== modeOn && (!modeOn ||
 			(modeOn && pendingTbsForces && pendingTbsForces.length >= 2))) {
@@ -543,7 +544,12 @@
 			$gamePlayer.setTbsBattleMode(modeOn);
 			this._tbsBattleModeJustChanged = true;
 			this._resetCameraAfterBattle = resetCameraAfterBattle;
+			this._tbsCursorRegions = cursorRegions ? cursorRegions : [];
 		}
+	};
+	
+	Game_Map.prototype.tbsCursorRegions = function() {
+		return this._tbsCursorRegions;
 	};
 	
 	Game_Map.prototype.tbsBattleMode = function() {
@@ -728,7 +734,7 @@
 	Game_Map.prototype.isEventRunning = function() {
 		return this._interpreter.isRunning() || this.isAnyEventStarting() ||
 			(this._cameraFocusX !== undefined && this._cameraFocusY !== undefined &&
-			this._displayX !== this._cameraFocusX && this._displayY !== this._cameraFocusY);
+			(this._displayX !== this._cameraFocusX || this._displayY !== this._cameraFocusY));
 	};
 	
 	Game_Map.prototype.update = function(sceneActive) {
@@ -2431,6 +2437,7 @@
 	};
 	
 	Game_Map.prototype.checkMoveTile = function(x, y, remainingRange, moveTiles, boundingCircle) {
+		if(this.tbsCursorRegions().length > 0 && this.tbsCursorRegions().indexOf(this.regionId(x, y)) < 0) { return; }
 		var existingMoveTile = this.getExistingTbsTile(x, y, moveTiles);
 		if(!existingMoveTile) {
 			var newTile = {};
@@ -3000,9 +3007,7 @@
 					return returnArray;;
 				}
 			}
-			var cFocus = $gameMap.getCameraFocus();
-			if(cFocus.x !== undefined && cFocus.y !== undefined && (centerX < cFocus.x || centerY < cFocus.y
-				|| centerX >= cFocus.x + Math.floor(this.screenTileX()) || centerY >= cFocus.y + Math.floor(this.screenTileY())))
+			if(centerX < 0 || centerY < 0 || centerX >= this.width || centerY >= this.height)
 			{
 				return returnArray;	
 			}
@@ -3013,7 +3018,6 @@
 			returnArray.push(tile);
 			return returnArray;
 		}
-		var cFocus = $gameMap.getCameraFocus();
 		var targetX = centerX - Math.ceil(radius);
 		for(; targetX <= centerX + Math.ceil(radius); targetX++) {
 			var targetY = centerY - Math.ceil(radius);
@@ -3032,8 +3036,7 @@
 							continue;
 						}
 					}
-					if(cFocus.x !== undefined && cFocus.y !== undefined && (targetX < cFocus.x || targetY < cFocus.y
-						|| targetX >= cFocus.x + Math.floor(this.screenTileX()) || targetY >= cFocus.y + Math.floor(this.screenTileY())))
+					if(targetX < 0 || targetY < 0 || targetX >= this.width || targetY >= this.height)
 					{
 						continue;	
 					}
@@ -3269,8 +3272,7 @@
 			var direction = this.getInputDirection();
 			if (direction > 0) {
 				$gameTemp.clearDestination();
-				var cFocus = $gameMap.getCameraFocus();
-				if(this._tbsBattleMode && (this._cursorMoveField.length > 0 || (cFocus.x !== undefined && cFocus.y !== undefined))) {
+				if(this._tbsBattleMode) {
 					if(this._tbsMovingCharacter) {
 						this._tbsMovingCharacter.setDirection(direction);
 					}
@@ -3323,21 +3325,11 @@
 					return true;
 				}
 			}
-		} else {
-			var cFocus = $gameMap.getCameraFocus();
-			if(cFocus.x !== undefined && cFocus.y !== undefined) {
-				if(x >= cFocus.x && y >= cFocus.y && x < cFocus.x + Math.floor($gameMap.screenTileX())
-					&& y < cFocus.y + Math.floor($gameMap.screenTileY()))
-				{
-					return true;
-				} else {
-					return false;
-				}
-			} else {
-				return true;
-			}
+			return false;
+		} else if($gameMap.tbsCursorRegions().length > 0) {
+			return $gameMap.tbsCursorRegions().indexOf($gameMap.regionId(x, y)) >= 0;
 		}
-		return false;
+		return x >= 0 && y >= 0 && x < $gameMap.width && y < $gameMap.height;
 	};
 	
 	Game_Player.prototype.reserveTransfer = function(mapId, x, y, d, fadeType) {
