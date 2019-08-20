@@ -1491,21 +1491,25 @@
 	
 	Game_Enemy.prototype.equips = function() {
 		var returnEquips = [];
+		var i;
+		for(i = 0; i < 13; i++) {
+			returnEquips[i] = undefined;
+		}
 		var equipment = this.enemy().tbsStats.equipment;
 		if(!equipment) { return returnEquips; }
-		if($dataWeapons[equipment.mainHand]) { returnEquips.push($dataWeapons[equipment.mainHand]); }
-		if($dataWeapons[equipment.offhand]) { returnEquips.push($dataWeapons[equipment.offhand]); }
-		if($dataArmors[equipment.accessoryOne]) { returnEquips.push($dataArmors[equipment.accessoryOne]); }
-		if($dataArmors[equipment.accessoryTwo]) { returnEquips.push($dataArmors[equipment.accessoryTwo]); }
-		if($dataArmors[equipment.accessoryThree]) { returnEquips.push($dataArmors[equipment.accessoryThree]); }
-		if($dataArmors[equipment.accessoryFour]) { returnEquips.push($dataArmors[equipment.accessoryFour]); }
-		if($dataArmors[equipment.accessoryFive]) { returnEquips.push($dataArmors[equipment.accessoryFive]); }
-		if($dataItems[equipment.itemOne]) { returnEquips.push($dataItems[equipment.itemOne]); }
-		if($dataItems[equipment.itemTwo]) { returnEquips.push($dataItems[equipment.itemTwo]); }
-		if($dataItems[equipment.itemThree]) { returnEquips.push($dataItems[equipment.itemThree]); }
-		if($dataItems[equipment.itemFour]) { returnEquips.push($dataItems[equipment.itemFour]); }
-		if($dataItems[equipment.itemFive]) { returnEquips.push($dataItems[equipment.itemFive]); }
-		if($dataItems[equipment.itemSix]) { returnEquips.push($dataItems[equipment.itemSix]); }
+		if($dataWeapons[equipment.mainHand]) { returnEquips[0] = $dataWeapons[equipment.mainHand]; }
+		if($dataWeapons[equipment.offhand]) { returnEquips[1] = $dataWeapons[equipment.offhand]; }
+		if($dataArmors[equipment.accessoryOne]) { returnEquips[2] = $dataArmors[equipment.accessoryOne]; }
+		if($dataArmors[equipment.accessoryTwo]) { returnEquips[3] = $dataArmors[equipment.accessoryTwo]; }
+		if($dataArmors[equipment.accessoryThree]) { returnEquips[4] = $dataArmors[equipment.accessoryThree]; }
+		if($dataArmors[equipment.accessoryFour]) { returnEquips[5] = $dataArmors[equipment.accessoryFour]; }
+		if($dataArmors[equipment.accessoryFive]) { returnEquips[6] = $dataArmors[equipment.accessoryFive]; }
+		if($dataItems[equipment.itemOne]) { returnEquips[7] = $dataItems[equipment.itemOne]; }
+		if($dataItems[equipment.itemTwo]) { returnEquips[8] = $dataItems[equipment.itemTwo]; }
+		if($dataItems[equipment.itemThree]) { returnEquips[9] = $dataItems[equipment.itemThree]; }
+		if($dataItems[equipment.itemFour]) { returnEquips[10] = $dataItems[equipment.itemFour]; }
+		if($dataItems[equipment.itemFive]) { returnEquips[11] = $dataItems[equipment.itemFive]; }
+		if($dataItems[equipment.itemSix]) { returnEquips[12] = $dataItems[equipment.itemSix]; }
 		
 		return returnEquips;
 	};

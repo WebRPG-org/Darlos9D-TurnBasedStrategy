@@ -2414,10 +2414,10 @@ Window_TbsTargetPart.prototype.numVisibleRows = function() {
 Window_TbsTargetPart.prototype.makeCommandList = function() {
 	this.addCommand("Head", 'targetPart', true, 1);
 	this.addCommand("Torso", 'targetPart', true, 2);
-	this.addCommand("Left Arm", 'targetPart', true, 3);
-	this.addCommand("Right Arm", 'targetPart', true, 4);
-	this.addCommand("Left Leg", 'targetPart', true, 5);
-	this.addCommand("Right Leg", 'targetPart', true, 6);
+	this.addCommand("Right Arm", 'targetPart', true, 3);
+	this.addCommand("Left Arm", 'targetPart', true, 4);
+	this.addCommand("Right Leg", 'targetPart', true, 5);
+	this.addCommand("Left Leg", 'targetPart', true, 6);
 };
 
 Window_TbsTargetPart.prototype.refreshWindowContents = function() {
@@ -2452,16 +2452,16 @@ Window_TbsTargetPart.prototype.update = function() {
 			part = "torso";
 			break;
 		case 3:
-			part = "leftArm";
-			break;
-		case 4:
 			part = "rightArm";
 			break;
+		case 4:
+			part = "leftArm";
+			break;
 		case 5:
-			part = "leftLeg";
+			part = "rightLeg";
 			break;
 		case 6:
-			part = "rightLeg";
+			part = "leftLeg";
 			break;
 	}
 	$gameMap.setTbsActionTargetPart(part);

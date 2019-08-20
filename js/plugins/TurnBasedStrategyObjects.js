@@ -388,6 +388,7 @@
 		this._cameraFocusDirection = undefined;
 		this._cameraFocusResetToPlayer = undefined;
 		this._resetCameraAfterBattle = undefined;
+		this._perceptionMultiplier = 10;
 		this._tbsCursorRegions = [];
 		this._mapBgm = undefined;
 	};
@@ -694,7 +695,7 @@
 			force.actors.push(actor);
 			
 			if(actor.canActThisRound) {
-				var perceptionRoll = BattleManager.rollForRanks(actor.battler.totalSkill("perception") * 20, actor.battler.stress());
+				var perceptionRoll = BattleManager.rollForRanks(actor.battler.totalSkill("perception") * that._perceptionMultiplier, actor.battler.stress());
 				if(force.perceptionRoll === undefined || force.perceptionRoll < perceptionRoll) {
 					force.perceptionRoll = perceptionRoll;
 				}
@@ -1526,7 +1527,7 @@
 					battler.tickTbsBuffs();
 					
 					if(this._tbsForces[i].actors[j].canActThisRound) {
-						var perceptionRoll = BattleManager.rollForRanks(battler.totalSkill("perception") * 20, battler.stress());
+						var perceptionRoll = BattleManager.rollForRanks(battler.totalSkill("perception") * this._perceptionMultiplier, battler.stress());
 						if(this._tbsForces[i].perceptionRoll === undefined || this._tbsForces[i].perceptionRoll < perceptionRoll) {
 							this._tbsForces[i].perceptionRoll = perceptionRoll;
 						}
@@ -1564,24 +1565,24 @@
 				while(newA == newB) {
 					a.actors.forEach(function (actor) {
 						if(!actor.canActThisRound) { return; }
-						var perceptionRoll = BattleManager.rollForRanks(actor.battler.totalSkill("perception") * 20, actor.battler.stress());
+						var perceptionRoll = BattleManager.rollForRanks(actor.battler.totalSkill("perception") * this._perceptionMultiplier, actor.battler.stress());
 						if(newA == undefined || newA < perceptionRoll) {
 							newA = perceptionRoll;
 						}
-					});
+					}, this);
 					b.actors.forEach(function (actor) {
 						if(!actor.canActThisRound) { return; }
-						var perceptionRoll = BattleManager.rollForRanks(actor.battler.totalSkill("perception") * 20, actor.battler.stress());
+						var perceptionRoll = BattleManager.rollForRanks(actor.battler.totalSkill("perception") * this._perceptionMultiplier, actor.battler.stress());
 						if(newB == undefined || newB < perceptionRoll) {
 							newB = perceptionRoll;
 						}
-					});
+					}, this);
 				}
 				return newB - newA;
 			} else {
 				return b.perceptionRoll - a.perceptionRoll;
 			}
-		});
+		}, this);
 		var newPerception = 0;
 		sortForces.forEach(function (force) {
 			force.perceptionRoll = newPerception;
