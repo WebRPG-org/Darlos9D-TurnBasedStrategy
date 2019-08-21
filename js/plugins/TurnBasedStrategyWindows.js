@@ -4587,9 +4587,9 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 		this.drawSkillLevel("Ranged", "rangedAcc", x, y2);
 		y2 += this.lineHeight();
 		this.resetTextColor();
-		this.drawText("Defense", x, y2, 250);
+		this.drawText("Evasion", x, y2, 250);
 		y2 += this.lineHeight();
-		this.drawSkillLevel("Evasion", "physEvade", x, y2);
+		this.drawSkillLevel("Defense", "physEvade", x, y2);
 		y2 += this.lineHeight();
 		this.drawSkillLevel("Balance", "tripEvade", x, y2);
 		y2 += this.lineHeight();

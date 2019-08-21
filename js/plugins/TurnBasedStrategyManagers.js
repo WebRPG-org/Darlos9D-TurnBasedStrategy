@@ -160,7 +160,7 @@ BattleManager.initMembers = function() {
 	this._actionTimer = 0;
 	this._hitMissDelay = [];
 	this._showCastAnimation = true;
-	this._equipmentBaseToughness = 8;
+	this._equipmentBaseToughness = 4;
 	this._accMult = 10;
 	this._evaMult = 10;
 	this._accEvaSkillMult = 1;
@@ -910,7 +910,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 			var subjectStress = subject.stress();
 			var targetStress = target.stress();
 			
-			var accBonus = hit.accuracyBonus === undefined ? 0 : hit.accuracyBonus;
+			var accBonus = (hit.accuracyBonus === undefined ? 0 : hit.accuracyBonus) * this._accMult;
 			var accSkill = 0;
 			if(!hit.ignoreUserAccuracy) {
 				switch(hit.rangeType) {
@@ -927,7 +927,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						break;
 				}
 			}
-			var acc = (accBonus + accSkill * this._accEvaSkillMult) * this._accMult;
+			var acc = accSkill * this._accEvaSkillMult * this._accMult;
 			
 			var hitDamage = this.getCompleteDamage(subject, actionInfo, hit);
 			hitDamage.blunt *= this._damageMult;
@@ -995,7 +995,6 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						hitResult.dodged = false;
 						hitResult.hit[this._tbsTargetPart] = true;
 					} else {
-						var bodyPartAccRoll = this.rollForRanks(acc, subjectStress);
 						var targetingMobility = this._tbsTargetPart === "mobility";
 						var defendingWithLegs = target.limbsType() === "winged" && target.isFlying();
 						var leftDefendingLimbProt = defendingWithLegs ? targetLeftLegProt : targetLeftArmProt;
@@ -1087,7 +1086,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						
 						var eva = (target.totalSkill("physEvade") * this._accEvaSkillMult) * this._evaMult;
 						if(isSolid) {
-							hitResult = this.calculateBodyPartHit(targetStress, bodyPartAccRoll, eva,
+							hitResult = this.calculateBodyPartHit(subjectStress, targetStress, acc, accBonus, eva,
 								criticalPartProt.defense.solid,
 								vitalPartProt.defense.solid,
 								firstLimbProt.defense.solid,
@@ -1104,7 +1103,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 								useFirstHeld,
 								useSecondHeld);
 						} else if (isFluid) {
-							hitResult = this.calculateBodyPartHit(targetStress, bodyPartAccRoll, eva,
+							hitResult = this.calculateBodyPartHit(subjectStress, targetStress, acc, accBonus, eva,
 								criticalPartProt.defense.fluid,
 								vitalPartProt.defense.fluid,
 								firstLimbProt.defense.fluid,
@@ -1126,9 +1125,8 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						hitResult.hit.mind = true;
 					}
 				} else if(isMental) {
-					var bodyPartAccRoll = this.rollForRanks(acc, subjectStress);
 					var eva = (target.totalSkill("mentalEvade") * this._accEvaSkillMult) * this._evaMult;
-					hitResult = this.calculateMentalHit(targetStress, bodyPartAccRoll, eva,
+					hitResult = this.calculateMentalHit(subjectStress, targetStress, acc, accBonus, eva,
 						targetMentalProt.defense,
 						target.isDown());
 				}
@@ -1142,11 +1140,12 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						results.hit.head = true;
 						var damageResult = this.resolvePhysicalDamage(
 							hitDamage, 
-							acc, 
+							acc,
+							accBonus,
 							eva,
 							tripEva,
 							targetHeadProt, 
-							target.toughness(), 
+							target.toughness()/2, 
 							subjectStress,
 							targetStress,
 							target.isDown(),
@@ -1191,6 +1190,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						var damageResult = this.resolvePhysicalDamage(
 							hitDamage, 
 							acc, 
+							accBonus,
 							eva,
 							tripEva,
 							targetTorsoProt, 
@@ -1234,6 +1234,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						var damageResult = this.resolvePhysicalDamage(
 							hitDamage, 
 							acc, 
+							accBonus,
 							eva,
 							tripEva,
 							targetLeftArmProt, 
@@ -1281,6 +1282,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						var damageResult = this.resolvePhysicalDamage(
 							hitDamage, 
 							acc, 
+							accBonus,
 							eva,
 							tripEva,
 							targetRightArmProt, 
@@ -1328,6 +1330,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						var damageResult = this.resolvePhysicalDamage(
 							hitDamage, 
 							acc, 
+							accBonus,
 							eva,
 							tripEva,
 							targetLeftLegProt, 
@@ -1357,6 +1360,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						var damageResult = this.resolvePhysicalDamage(
 							hitDamage, 
 							acc, 
+							accBonus,
 							eva,
 							tripEva,
 							targetRightLegProt, 
@@ -1386,6 +1390,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						var damageResult = this.resolvePhysicalDamage(
 							hitDamage, 
 							acc, 
+							accBonus,
 							eva,
 							tripEva,
 							targetLeftHeldProt, 
@@ -1454,6 +1459,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 						var damageResult = this.resolvePhysicalDamage(
 							hitDamage, 
 							acc, 
+							accBonus,
 							eva,
 							tripEva,
 							targetRightHeldProt, 
@@ -1524,6 +1530,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 					var damageResult = this.resolveMentalDamage(
 						hitDamage, 
 						acc, 
+						accBonus,
 						eva, 
 						targetMentalProt, 
 						target.mentalToughness(), 
@@ -1940,7 +1947,7 @@ BattleManager.getCompleteDamage = function(subject, actionInfo, hit) {
 	return completeDamage;
 };
 
-BattleManager.calculateBodyPartHit = function(stress, accRoll, dodgeEva, criticalDef, vitalDef,
+BattleManager.calculateBodyPartHit = function(subjectStress, targetStress, acc, accBonus, dodgeEva, criticalDef, vitalDef,
 		firstLimbDef, secondLimbDef, firstHeldDef, secondHeldDef, leftLimbFirst, leftHeldFirst, targetingMobility, leftMobilityFirst,
 		defendingWithLegs, isDown, targetingType, useFirstHeld, useSecondHeld)
 {
@@ -1956,107 +1963,168 @@ BattleManager.calculateBodyPartHit = function(stress, accRoll, dodgeEva, critica
 	results.hit.leftLeg = false;
 	results.hit.rightLeg = false;
 	results.hit.mind = false;
-	var criticalEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : stress);
-	var vitalEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : stress);
-	var firstLimbEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : stress, 0.5);
-	var secondLimbEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : stress, 0.5);
-	var firstHeldEvaRoll = useFirstHeld ? this.rollForRanks(dodgeEva, isDown ? 100 : stress, firstHeldDef/100) : 0;
-	var secondHeldEvaRoll = useSecondHeld ? this.rollForRanks(dodgeEva, isDown ? 100 : stress, secondHeldDef/100) : 0;
-	if((targetingType === "vitalOnly" && accRoll > vitalEvaRoll + criticalEvaRoll)
-		|| (targetingType === "limbsAndVital" && accRoll > firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll + criticalEvaRoll)
-		|| (targetingType === undefined && accRoll > firstHeldEvaRoll + secondHeldEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll + criticalEvaRoll))
-	{
-		if(targetingMobility) {
-			if(leftMobilityFirst) {
-				if(defendingWithLegs) {
-					results.hit.rightArm = true;
+	
+	var vitalAccRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+	var vitalEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress);
+	if(vitalAccRoll <= vitalEvaRoll) {
+		results.dodged = true;
+		return results;
+	}
+	
+	var willHitCritical = false;
+	var criticalAccRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+	var criticalEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress, targetingMobility ? 1 : 2);
+	if(criticalAccRoll > criticalEvaRoll) {
+		willHitCritical = true;
+	}
+	
+	if(targetingType === "vitalOnly") {
+		if(willHitCritical) {
+			if(targetingMobility) {
+				if(leftMobilityFirst) {
+					if(defendingWithLegs) {
+						results.hit.leftArm = true;
+					} else {
+						results.hit.leftLeg = true;
+					}
 				} else {
-					results.hit.rightLeg = true;
+					if(defendingWithLegs) {
+						results.hit.rightArm = true;
+					} else {
+						results.hit.rightLeg = true;
+					}
 				}
 			} else {
+				results.hit.head = true;
+			}
+		} else {
+			if(targetingMobility) {
+				if(leftMobilityFirst) {
+					if(defendingWithLegs) {
+						results.hit.rightArm = true;
+					} else {
+						results.hit.rightLeg = true;
+					}
+				} else {
+					if(defendingWithLegs) {
+						results.hit.leftArm = true;
+					} else {
+						results.hit.leftLeg = true;
+					}
+				}
+			} else {
+				results.hit.torso = true;
+			}
+		}
+		return results;
+	}
+	
+	if(targetingType !== "limbsAndVital") {
+		if(useFirstHeld) {
+			var firstHeldAccRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+			var firstHeldEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress, firstHeldDef/100);
+			if(firstHeldAccRoll <= firstHeldEvaRoll) {
+				if(leftHeldFirst) {
+					results.hit.leftHeld = true;
+				} else {
+					results.hit.rightHeld = true;
+				}
+				return results;
+			}
+		}
+		
+		if(useSecondHeld) {
+			var secondHeldAccRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+			var secondHeldEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress, secondHeldDef/100);
+			if(firstHeldAccRoll <= firstHeldEvaRoll) {
+				if(leftHeldFirst) {
+					results.hit.rightHeld = true;
+				} else {
+					results.hit.leftHeld = true;
+				}
+				return results;
+			}
+		}
+	}
+	
+	var firstLimbAccRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+	var firstLimbEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress);
+	if(firstLimbAccRoll <= firstLimbEvaRoll) {
+		if(leftLimbFirst) {
+			if(defendingWithLegs) {
+				results.hit.leftLeg = true;
+			} else {
+				results.hit.leftArm = true;
+			}
+		} else {
+			if(defendingWithLegs) {
+				results.hit.rightLeg = true;
+			} else {
+				results.hit.rightArm = true;
+			}
+		}
+	}
+	
+	var secondLimbAccRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+	var secondLimbEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress);
+	if(secondLimbAccRoll <= secondLimbEvaRoll) {
+		if(leftLimbFirst) {
+			if(defendingWithLegs) {
+				results.hit.rightLeg = true;
+			} else {
+				results.hit.rightArm = true;
+			}
+		} else {
+			if(defendingWithLegs) {
+				results.hit.leftLeg = true;
+			} else {
+				results.hit.leftArm = true;
+			}
+		}
+	}
+	
+	if(willHitCritical) {
+		if(targetingMobility) {
+			if(leftMobilityFirst) {
 				if(defendingWithLegs) {
 					results.hit.leftArm = true;
 				} else {
 					results.hit.leftLeg = true;
+				}
+			} else {
+				if(defendingWithLegs) {
+					results.hit.rightArm = true;
+				} else {
+					results.hit.rightLeg = true;
 				}
 			}
 		} else {
 			results.hit.head = true;
 		}
-	} else if((targetingType === "vitalOnly" && accRoll > vitalEvaRoll)
-		|| (targetingType === "limbsAndVital" && accRoll > firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll)
-		|| (targetingType === undefined && accRoll > firstHeldEvaRoll + secondHeldEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll + vitalEvaRoll))
-	{
+	} else {
 		if(targetingMobility) {
 			if(leftMobilityFirst) {
-				if(defendingWithLegs) {
-					results.hit.leftArm = true;
-				} else {
-					results.hit.leftLeg = true;
-				}
-			} else {
 				if(defendingWithLegs) {
 					results.hit.rightArm = true;
 				} else {
 					results.hit.rightLeg = true;
 				}
+			} else {
+				if(defendingWithLegs) {
+					results.hit.leftArm = true;
+				} else {
+					results.hit.leftLeg = true;
+				}
 			}
 		} else {
 			results.hit.torso = true;
 		}
-	} else if(targetingType !== "vitalOnly"
-		&& ((targetingType === "limbsAndVital" && accRoll > firstLimbEvaRoll + secondLimbEvaRoll)
-		|| (targetingType === undefined && accRoll > firstHeldEvaRoll + secondHeldEvaRoll + firstLimbEvaRoll + secondLimbEvaRoll)))
-	{
-		if(leftLimbFirst) {
-			if(defendingWithLegs) {
-				results.hit.rightLeg = true;
-			} else {
-				results.hit.rightArm = true;
-			}
-		} else {
-			if(defendingWithLegs) {
-				results.hit.leftLeg = true;
-			} else {
-				results.hit.leftArm = true;
-			}
-		}
-	} else if(targetingType !== "vitalOnly"
-		&& ((targetingType === "limbsAndVital" && accRoll > firstLimbEvaRoll)
-		|| (targetingType === undefined && accRoll > firstHeldEvaRoll + secondHeldEvaRoll + firstLimbEvaRoll)))
-	{
-		if(leftLimbFirst) {
-			if(defendingWithLegs) {
-				results.hit.leftLeg = true;
-			} else {
-				results.hit.leftArm = true;
-			}
-		} else {
-			if(defendingWithLegs) {
-				results.hit.rightLeg = true;
-			} else {
-				results.hit.rightArm = true;
-			}
-		}
-	} else if(useSecondHeld && targetingType === undefined && accRoll > firstHeldEvaRoll + secondHeldEvaRoll) {
-		if(leftHeldFirst) {
-			results.hit.rightHeld = true;
-		} else {
-			results.hit.leftHeld = true;
-		}
-	} else if(useFirstHeld && targetingType === undefined && accRoll > firstHeldEvaRoll) {
-		if(leftHeldFirst) {
-			results.hit.leftHeld = true;
-		} else {
-			results.hit.rightHeld = true;
-		}
-	} else {
-		results.dodged = true;
 	}
+	
 	return results;
 };
 
-BattleManager.calculateMentalHit = function(stress, accRoll, dodgeEva, mentalDef, isDown) {
+BattleManager.calculateMentalHit = function(subjectStress, targetStress, acc, accBonus, dodgeEva, mentalDef, isDown) {
 	var results = {};
 	results.dodged = false;
 	results.hit = {};
@@ -2067,8 +2135,9 @@ BattleManager.calculateMentalHit = function(stress, accRoll, dodgeEva, mentalDef
 	results.hit.leftLeg = false;
 	results.hit.rightLeg = false;
 	results.hit.mind = false;
-	var mindEvaRoll = this.rollForRanks(mentalDef + dodgeEva, isDown ? 100 : stress);
-	if (accRoll > mindEvaRoll) {
+	var mindAccRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+	var mindEvaRoll = this.rollForRanks(mentalDef + dodgeEva, isDown ? 100 : targetStress);
+	if (mindAccRoll > mindEvaRoll) {
 		results.hit.mind = true;
 	} else {
 		results.dodged = true;
@@ -2076,12 +2145,14 @@ BattleManager.calculateMentalHit = function(stress, accRoll, dodgeEva, mentalDef
 	return results;
 };
 
-BattleManager.resolvePhysicalDamage = function(hitDamage, acc, eva, tripEva, partProt, tough, subjectStress, targetStress, isDown, extraStress, fullCoverage) {
+BattleManager.resolvePhysicalDamage = function(hitDamage, acc, accBonus, eva, tripEva, partProt, tough,
+	subjectStress, targetStress, isDown, extraStress, fullCoverage)
+{
 	var solidDef = fullCoverage ? Math.max(100, partProt.defense.solid) : partProt.defense.solid;
 	var fluidDef = fullCoverage ? Math.max(100, partProt.defense.fluid) : partProt.defense.fluid;
-	var accBypassRoll = this.rollForRanks(acc, subjectStress);
-	var solidBypassRoll = this.rollForRanks(eva + solidDef, isDown ? 100 : targetStress);
-	var fluidBypassRoll = this.rollForRanks(eva + fluidDef, isDown ? 100 : targetStress);
+	var accBypassRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+	var solidBypassRoll = this.rollForRanks(eva, isDown ? 100 : targetStress, solidDef/100);
+	var fluidBypassRoll = this.rollForRanks(eva, isDown ? 100 : targetStress, fluidDef/100);
 	var solidBypassScale = solidBypassRoll <= 0 ? (accBypassRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accBypassRoll / solidBypassRoll));
 	var fluidBypassScale = fluidBypassRoll <= 0 ? (accBypassRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accBypassRoll / fluidBypassRoll));
 	
@@ -2092,10 +2163,10 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, acc, eva, tripEva, par
 	var solidStilettoBypass = solidBypassScale > (solidCoverage / 100) * 1.49;
 	var fluidBypass = fluidBypassScale > (fluidCoverage / 100) * 1.66;
 	
-	var accDamRoll = this.rollForRanks(acc, subjectStress);
-	var solidEvaRoll = this.rollForRanks(eva + solidDef, isDown ? 100 : targetStress);
+	var accDamRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+	var solidEvaRoll = this.rollForRanks(eva, isDown ? 100 : targetStress, solidDef/100);
 	var solidDamScale = solidEvaRoll <= 0 ? (accDamRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accDamRoll / solidEvaRoll));
-	var fluidEvaRoll = this.rollForRanks(eva + fluidDef, isDown ? 100 : targetStress);
+	var fluidEvaRoll = this.rollForRanks(eva, isDown ? 100 : targetStress, fluidDef/100);
 	var fluidDamScale = fluidEvaRoll <= 0 ? (accDamRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accDamRoll / fluidEvaRoll));
 	var tripEvaRoll = this.rollForRanks(tripEva, isDown ? 100 : targetStress);
 	var tripDamScale = tripEvaRoll <= 0 ? (accDamRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accDamRoll / tripEvaRoll));
@@ -2195,16 +2266,16 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, acc, eva, tripEva, par
 	return returnObj;
 };
 
-BattleManager.resolveMentalDamage = function(hitDamage, acc, eva, partProt, tough, subjectStress, targetStress, isDown) {
-	var accBypassRoll = this.rollForRanks(acc, subjectStress);
-	var bypassRoll = this.rollForRanks(eva + partProt.defense, isDown ? 100 : targetStress);
+BattleManager.resolveMentalDamage = function(hitDamage, acc, accBonus, eva, partProt, tough, subjectStress, targetStress, isDown) {
+	var accBypassRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+	var bypassRoll = this.rollForRanks(eva, isDown ? 100 : targetStress, partProt.defense/100);
 	var bypassScale = bypassRoll <= 0 ? (accBypassRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accBypassRoll / bypassRoll));
 	
 	var coverage = Math.min(100, partProt.defense);
 	var bypass = bypassScale > (Math.min(100, coverage) / 100) * 1.66;
 	
-	var accDamRoll = this.rollForRanks(acc, subjectStress);
-	var evaRoll = this.rollForRanks(eva, isDown ? 100 : targetStress);
+	var accDamRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+	var evaRoll = this.rollForRanks(eva, isDown ? 100 : targetStress, partProt.defense/100);
 	var damScale = evaRoll <= 0 ? (accDamRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accDamRoll / evaRoll));
 	
 	var finalPow = Math.max(0, damScale * hitDamage.mental - (bypass ? tough : partProt.armor + tough));

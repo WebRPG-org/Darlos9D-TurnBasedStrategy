@@ -31,6 +31,7 @@
 		this._touchCount = 0;
 		this._oldBreadcrumbs = [];
 		this._tbsBattleJustStarted = true;
+		this._tbsBattleFadeSpeed = 12;
 		SoundManager.loadTbsBattleStartSound();
 		SoundManager.loadWindowOpenCloseSound();
 		SoundManager.loadDeflectionSound();
@@ -645,7 +646,7 @@
 		if (this._encounterEffectDuration > 0) {
 			this._encounterEffectDuration = 0;
 			//BattleManager.playBattleBgm();
-			this.startFadeOut(this.fadeSpeed());
+			this.startFadeOut(this._tbsBattleFadeSpeed);
 		}
 	};
 	
@@ -677,12 +678,42 @@
 		
 	};
 	
+	Scene_Map.prototype.start = function() {
+		Scene_Base.prototype.start.call(this);
+		SceneManager.clearStack();
+		if (this._transfer) {
+			this.fadeInForTransfer();
+			this._mapNameWindow.open();
+			$gameMap.autoplay();
+		} else if (this.needsFadeIn()) {
+			this.startFadeIn($gameMap.tbsBattleMode() ? this._tbsBattleFadeSpeed : this.fadeSpeed(), false);
+		}
+		this.menuCalling = false;
+	};
+	
 	//battle
+	Scene_Battle.prototype.initialize = function() {
+		Scene_Base.prototype.initialize.call(this);
+		this._tbsBattleFadeSpeed = 12;
+	};
+	
 	Scene_Battle.prototype.start = function() {
 		Scene_Base.prototype.start.call(this);
-		this.startFadeIn(this.fadeSpeed(), false);
+		this.startFadeIn(this._tbsBattleFadeSpeed, false);
 		//BattleManager.playBattleBgm();
 		BattleManager.startBattle();
+	};
+	
+	Scene_Battle.prototype.stop = function() {
+		Scene_Base.prototype.stop.call(this);
+		if (this.needsSlowFadeOut()) {
+			this.startFadeOut(this.slowFadeSpeed(), false);
+		} else {
+			this.startFadeOut(this._tbsBattleFadeSpeed, false);
+		}
+		this._statusWindow.close();
+		this._partyCommandWindow.close();
+		this._actorCommandWindow.close();
 	};
 	
 	Scene_Battle.prototype.createDisplayObjects = function() {
