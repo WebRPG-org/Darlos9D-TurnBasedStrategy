@@ -2166,9 +2166,9 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, acc, accBonus, eva, tr
 {
 	var solidDef = fullCoverage ? Math.max(100, partProt.defense.solid) : partProt.defense.solid;
 	var fluidDef = fullCoverage ? Math.max(100, partProt.defense.fluid) : partProt.defense.fluid;
-	var accBypassRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
-	var solidBypassRoll = this.rollForRanks(eva, isDown ? 100 : targetStress, solidDef/100);
-	var fluidBypassRoll = this.rollForRanks(eva, isDown ? 100 : targetStress, fluidDef/100);
+	var accBypassRoll = this.rollForRanks(acc, subjectStress);
+	var solidBypassRoll = this.rollForRanks(eva, isDown ? 100 : targetStress);
+	var fluidBypassRoll = this.rollForRanks(eva, isDown ? 100 : targetStress);
 	var solidBypassScale = solidBypassRoll <= 0 ? (accBypassRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accBypassRoll / solidBypassRoll));
 	var fluidBypassScale = fluidBypassRoll <= 0 ? (accBypassRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accBypassRoll / fluidBypassRoll));
 	
@@ -2179,10 +2179,10 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, acc, accBonus, eva, tr
 	var solidStilettoBypass = solidBypassScale > (solidCoverage / 100) * 1.49;
 	var fluidBypass = fluidBypassScale > (fluidCoverage / 100) * 1.66;
 	
-	var accDamRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
-	var solidEvaRoll = this.rollForRanks(eva, isDown ? 100 : targetStress, solidDef/100);
+	var accDamRoll = this.rollForRanks(acc, subjectStress);
+	var solidEvaRoll = this.rollForRanks(eva, isDown ? 100 : targetStress);
 	var solidDamScale = solidEvaRoll <= 0 ? (accDamRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accDamRoll / solidEvaRoll));
-	var fluidEvaRoll = this.rollForRanks(eva, isDown ? 100 : targetStress, fluidDef/100);
+	var fluidEvaRoll = this.rollForRanks(eva, isDown ? 100 : targetStress);
 	var fluidDamScale = fluidEvaRoll <= 0 ? (accDamRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accDamRoll / fluidEvaRoll));
 	var tripEvaRoll = this.rollForRanks(tripEva, isDown ? 100 : targetStress);
 	var tripDamScale = tripEvaRoll <= 0 ? (accDamRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accDamRoll / tripEvaRoll));
@@ -2216,14 +2216,14 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, acc, accBonus, eva, tr
 	finalCutDamage += finalStilettoDamage;
 	
 	var finalBulletPow = Math.max(0, solidDamScale * hitDamage.bullet - (solidThrustBypass ? tough : partProt.armor.bullet + tough));
-	bluntPow += Math.max(0, solidDamScale * hitDamage.bullet - finalBulletPow);
-	var finalBulletDamage = Math.max(0, Math.ceil(finalBulletPow / tough - 1)) / 2;
+	bluntPow += Math.max(0, solidDamScale * hitDamage.bullet - finalBulletPow) * 1.5;
+	var finalBulletDamage = Math.min(50, Math.max(0, Math.ceil(finalBulletPow / tough - 1)));
 	returnObj.critical = finalBulletDamage > 0 && solidThrustBypass ? true : returnObj.critical;
-	returnObj.remainingPower.bullet = finalBulletPow > tough * 100 ? finalBulletPow - tough * 100 : 0;
-	var bulletBluntPow = finalBulletPow > 0 ? finalBulletPow * Math.max(0, 1 - returnObj.remainingPower.bullet / finalBulletPow) : 0;
+	returnObj.remainingPower.bullet = finalBulletPow > tough * 50 ? finalBulletPow - tough * 50 : 0;
+	var bulletBluntPow = finalBulletPow > 0 ? finalBulletPow * Math.max(0, 1 - returnObj.remainingPower.bullet / finalBulletPow) * 1.5 : 0;
 	
 	var numPellets = 7;
-	var buckshotPow = Math.floor(hitDamage.buckshot / numPellets);
+	var buckshotPow = hitDamage.buckshot / numPellets;
 	var finalBuckshotPow = 0;
 	var finalBuckshotDamage = 0;
 	returnObj.remainingPower.buckshot = 0;
@@ -2233,21 +2233,21 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, acc, accBonus, eva, tr
 			var pelletDamScale = solidDamScale;
 			var pelletBypass = solidThrustBypass;
 			if(i > 0) {
-				var accBypassRollPellet = this.rollForRanks(acc, subjectStress, accBonus/100);
-				var solidBypassRollPellet = this.rollForRanks(eva, isDown ? 100 : targetStress, solidDef/100);
+				var accBypassRollPellet = this.rollForRanks(acc, subjectStress);
+				var solidBypassRollPellet = this.rollForRanks(eva, isDown ? 100 : targetStress);
 				var solidBypassScalePellet = solidBypassRollPellet <= 0 ? (accBypassRollPellet <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accBypassRollPellet / solidBypassRollPellet));
 				pelletBypass = solidBypassScalePellet > (solidCoverage / 100) * 1.66;
 				
-				var accDamRollPellet = this.rollForRanks(acc, subjectStress, accBonus/100);
-				var solidEvaRollPellet = this.rollForRanks(eva, isDown ? 100 : targetStress, solidDef/100);
+				var accDamRollPellet = this.rollForRanks(acc, subjectStress);
+				var solidEvaRollPellet = this.rollForRanks(eva, isDown ? 100 : targetStress);
 				pelletDamScale = solidEvaRollPellet <= 0 ? (accDamRollPellet <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accDamRollPellet / solidEvaRollPellet));
 			}
 			var finalPelletPow = Math.max(0, pelletDamScale * buckshotPow - (pelletBypass ? tough : partProt.armor.bullet + tough));
-			bluntPow += Math.max(0, pelletDamScale * buckshotPow - finalPelletPow);
-			var finalPelletDamage = Math.max(0, Math.ceil(finalPelletPow / tough - 1)) / 2;
+			bluntPow += Math.max(0, pelletDamScale * buckshotPow - finalPelletPow) * 1.5;
+			var finalPelletDamage = Math.min(50, Math.max(0, Math.ceil(finalPelletPow / tough - 1)));
 			returnObj.critical = finalPelletDamage > 0 && pelletBypass ? true : returnObj.critical;
-			var remainingPelletPower = finalPelletPow > tough * 100 ? finalPelletPow - tough * 100 : 0;
-			bulletBluntPow += finalPelletPow > 0 ? finalPelletPow * Math.max(0, 1 - remainingPelletPower / finalPelletPow) : 0;
+			var remainingPelletPower = finalPelletPow > tough * 50 ? finalPelletPow - tough * 50 : 0;
+			bulletBluntPow += finalPelletPow > 0 ? finalPelletPow * Math.max(0, 1 - remainingPelletPower / finalPelletPow) * 1.5 : 0;
 			finalBuckshotPow += finalPelletPow;
 			finalBuckshotDamage += finalPelletDamage;
 			returnObj.remainingPower.buckshot += remainingPelletPower;
@@ -2316,15 +2316,15 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, acc, accBonus, eva, tr
 };
 
 BattleManager.resolveMentalDamage = function(hitDamage, acc, accBonus, eva, partProt, tough, subjectStress, targetStress, isDown) {
-	var accBypassRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
-	var bypassRoll = this.rollForRanks(eva, isDown ? 100 : targetStress, partProt.defense/100);
+	var accBypassRoll = this.rollForRanks(acc, subjectStress);
+	var bypassRoll = this.rollForRanks(eva, isDown ? 100 : targetStress);
 	var bypassScale = bypassRoll <= 0 ? (accBypassRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accBypassRoll / bypassRoll));
 	
 	var coverage = Math.min(100, partProt.defense);
 	var bypass = bypassScale > (Math.min(100, coverage) / 100) * 1.66;
 	
-	var accDamRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
-	var evaRoll = this.rollForRanks(eva, isDown ? 100 : targetStress, partProt.defense/100);
+	var accDamRoll = this.rollForRanks(acc, subjectStress);
+	var evaRoll = this.rollForRanks(eva, isDown ? 100 : targetStress);
 	var damScale = evaRoll <= 0 ? (accDamRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accDamRoll / evaRoll));
 	
 	var finalPow = Math.max(0, damScale * hitDamage.mental - (bypass ? tough : partProt.armor + tough));
