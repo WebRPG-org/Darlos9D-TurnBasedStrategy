@@ -1723,7 +1723,7 @@ BattleManager.conductMath = function(target, damageResult, startingPart) {
 		case "head":
 			conductResults = this.conductMath(target, damageResult, "torso");
 			conductResults.damage.torso += Math.max(0, Math.ceil(lightningPow / tough - 1));
-			conductResults.stress.torso += this._baseHitStress * 2 + Math.floor(conductResults.damage.torso / this._damageStressDivisor);
+			conductResults.stress.torso += this._baseHitStress + Math.floor(conductResults.damage.torso / this._damageStressDivisor);
 			break;
 		case "torso":
 			var random = Math.random();
@@ -1747,14 +1747,15 @@ BattleManager.conductMath = function(target, damageResult, startingPart) {
 				}
 			} else {
 				var extraStress = target.limbsType() === "winged" && target.isFlying() ? 0 : this._baseHitStress;
+				var doubleStress = target.limbsType() === "winged" && target.isFlying() ? 1 : 2;
 				if(random >= 0.5) {
 					conductResults = this.conductMath(target, damageResult, "leftLeg");
 					conductResults.damage.leftLeg += Math.max(0, Math.ceil(lightningPow / tough - 1));
-					conductResults.stress.leftLeg += this._baseHitStress + extraStress + Math.floor(conductResults.damage.leftLeg / this._damageStressDivisor);
+					conductResults.stress.leftLeg += this._baseHitStress + extraStress + Math.floor(conductResults.damage.leftLeg / this._damageStressDivisor * doubleStress);
 				} else {
 					conductResults = this.conductMath(target, damageResult, "rightLeg");
 					conductResults.damage.rightLeg += Math.max(0, Math.ceil(lightningPow / tough - 1));
-					conductResults.stress.rightLeg += this._baseHitStress + extraStress + Math.floor(conductResults.damage.rightLeg / this._damageStressDivisor);
+					conductResults.stress.rightLeg += this._baseHitStress + extraStress + Math.floor(conductResults.damage.rightLeg / this._damageStressDivisor * doubleStress);
 				}
 			}
 			break;
@@ -1978,17 +1979,16 @@ BattleManager.calculateBodyPartHit = function(subjectStress, targetStress, acc, 
 	results.hit.rightLeg = false;
 	results.hit.mind = false;
 	
-	var vitalAccRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+	var hitMissAccRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
 	var vitalEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress);
-	if(vitalAccRoll <= vitalEvaRoll) {
+	if(hitMissAccRoll <= vitalEvaRoll) {
 		results.dodged = true;
 		return results;
 	}
 	
 	var willHitCritical = false;
-	var criticalAccRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
 	var criticalEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress, targetingMobility ? 1 : 2);
-	if(criticalAccRoll > criticalEvaRoll) {
+	if(hitMissAccRoll > vitalEvaRoll + criticalEvaRoll) {
 		willHitCritical = true;
 	}
 	
@@ -2035,7 +2035,7 @@ BattleManager.calculateBodyPartHit = function(subjectStress, targetStress, acc, 
 	
 	if(targetingType !== "limbsAndVital") {
 		if(useFirstHeld) {
-			var firstHeldAccRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+			var firstHeldAccRoll = this.rollForRanks(acc, subjectStress);
 			var firstHeldEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress, firstHeldDef/100);
 			if(firstHeldAccRoll <= firstHeldEvaRoll) {
 				if(leftHeldFirst) {
@@ -2048,7 +2048,7 @@ BattleManager.calculateBodyPartHit = function(subjectStress, targetStress, acc, 
 		}
 		
 		if(useSecondHeld) {
-			var secondHeldAccRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+			var secondHeldAccRoll = this.rollForRanks(acc, subjectStress);
 			var secondHeldEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress, secondHeldDef/100);
 			if(firstHeldAccRoll <= firstHeldEvaRoll) {
 				if(leftHeldFirst) {
@@ -2061,7 +2061,7 @@ BattleManager.calculateBodyPartHit = function(subjectStress, targetStress, acc, 
 		}
 	}
 	
-	var firstLimbAccRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+	var firstLimbAccRoll = this.rollForRanks(acc, subjectStress);
 	var firstLimbEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress);
 	if(firstLimbAccRoll <= firstLimbEvaRoll) {
 		if(leftLimbFirst) {
@@ -2080,7 +2080,7 @@ BattleManager.calculateBodyPartHit = function(subjectStress, targetStress, acc, 
 		return results;
 	}
 	
-	var secondLimbAccRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+	var secondLimbAccRoll = this.rollForRanks(acc, subjectStress);
 	var secondLimbEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress);
 	if(secondLimbAccRoll <= secondLimbEvaRoll) {
 		if(leftLimbFirst) {
@@ -2307,7 +2307,7 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, acc, accBonus, eva, tr
 	returnObj.damage = Math.min(100, finalBluntDamage + finalCutDamage
 		+ finalBulletDamage + finalBuckshotDamage + finalFireDamage + finalIceDamage + finalCorrosionDamage);
 	
-	stressInflicted += returnObj.damage / this._damageStressDivisor;
+	stressInflicted += returnObj.damage / this._damageStressDivisor * (extraStress ? 2 : 1);
 	stressInflicted += Math.max(0, Math.ceil((tripDamScale * hitDamage.trip) / tough - 1));
 	
 	returnObj.stress = Math.floor(extraStress && stressInflicted > 0 ? stressInflicted + this._baseHitStress : stressInflicted);
@@ -2334,7 +2334,7 @@ BattleManager.resolveMentalDamage = function(hitDamage, acc, accBonus, eva, part
 	var finalDamage = Math.min(100, Math.max(0, Math.ceil(finalPow / tough - 1)));
 	returnObj.critical = finalDamage > 0 && bypass;
 	
-	stress += finalDamage / this._damageStressDivisor;
+	stress += finalDamage / this._damageStressDivisor * (extraStress ? 2 : 1);
 	
 	var returnObj = {};
 	returnObj.stress = Math.floor(stress > 0 ? stress + this._baseHitStress : stress);
