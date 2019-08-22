@@ -2983,6 +2983,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 						damageLineOffset += this.drawDamageForType(hitDamage.thrust, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("thrust"));
 						damageLineOffset += this.drawDamageForType(hitDamage.stiletto, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("stiletto"));
 						damageLineOffset += this.drawDamageForType(hitDamage.bullet, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("bullet"));
+						damageLineOffset += this.drawDamageForType(hitDamage.buckshot, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("buckshot"));
 						damageLineOffset += this.drawDamageForType(hitDamage.fire, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("fire"));
 						damageLineOffset += this.drawDamageForType(hitDamage.ice, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("ice"));
 						damageLineOffset += this.drawDamageForType(hitDamage.corrosion, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("corrosion"));
@@ -3110,7 +3111,8 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 			case "keen":            return 120; break;
 			case "thrust":        	return 107; break;
 			case "stiletto":        return  96; break;
-			case "bullet":         	return 104; break;
+			case "bullet":         	return 116; break;
+			case "buckshot":        return 115; break;
 			case "fire":           	return  64; break;
 			case "ice":            	return  65; break;
 			case "corrosion":      	return   2; break;

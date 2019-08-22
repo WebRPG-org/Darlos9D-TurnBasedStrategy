@@ -1560,9 +1560,11 @@
 		});
 		sortForces.sort(function (a, b) {
 			if(a.perceptionRoll == b.perceptionRoll) {
-				var newA = undefined;
-				var newB = undefined;
+				var newA = a.perceptionRoll;
+				var newB = b.perceptionRoll;
 				while(newA == newB) {
+					newA = undefined;
+					newB = undefined;
 					a.actors.forEach(function (actor) {
 						if(!actor.canActThisRound) { return; }
 						var perceptionRoll = BattleManager.rollForRanks(actor.battler.totalSkill("perception") * this._perceptionMultiplier, actor.battler.stress());

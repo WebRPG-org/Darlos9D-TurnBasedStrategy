@@ -8,6 +8,6 @@ null,
 {"id":6,"expanded":false,"name":"MansionCave","order":7,"parentId":7,"scrollX":2749,"scrollY":2279},
 {"id":7,"expanded":true,"name":"TestWorld","order":1,"parentId":0,"scrollX":819,"scrollY":461},
 {"id":8,"expanded":true,"name":"DemoWorld","order":8,"parentId":0,"scrollX":819,"scrollY":461},
-{"id":9,"expanded":true,"name":"Warehouse","order":9,"parentId":8,"scrollX":811,"scrollY":453},
+{"id":9,"expanded":true,"name":"Warehouse","order":9,"parentId":8,"scrollX":811,"scrollY":945},
 {"id":10,"expanded":false,"name":"WarehouseInside","order":10,"parentId":9,"scrollX":811,"scrollY":453}
 ]
