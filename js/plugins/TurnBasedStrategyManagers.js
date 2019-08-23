@@ -1986,8 +1986,8 @@ BattleManager.calculateBodyPartHit = function(subjectStress, targetStress, acc, 
 	var vitalEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress);
 	if(vitalAccRoll <= vitalEvaRoll) {
 		results.dodged = true;
-		if(vitalAccRoll > vitalEvaRoll / 2) {
-			results.stress = Math.floor(this._baseHitStress * (vitalAccRoll - vitalEvaRoll / 2) / (vitalEvaRoll / 2));
+		if(vitalAccRoll > vitalEvaRoll * 0.4) {
+			results.stress = Math.floor(this._baseHitStress * ((vitalAccRoll - vitalEvaRoll*0.4) / (vitalEvaRoll*0.6)));
 		}
 		return results;
 	}
@@ -2350,7 +2350,7 @@ BattleManager.resolveMentalDamage = function(hitDamage, acc, accBonus, eva, part
 BattleManager.rollForRanks = function(ranks, stress, scalar) {
 	scalar = scalar === undefined ? 1 : scalar;
 	var adjustStress = Math.max(0, Math.min(100, stress));
-	var adjustedRanks = Math.max(0, ranks * (1 - ((adjustStress / 100) * 0.8)));
+	var adjustedRanks = Math.max(0, ranks * (1 - ((adjustStress / 100) * 0.6)));
 	adjustedRanks = Math.max(0, Math.floor(adjustedRanks * scalar));
 	return this.rollDoubleDice(adjustedRanks + 30);
 };
