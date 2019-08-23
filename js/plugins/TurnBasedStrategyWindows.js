@@ -4884,6 +4884,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	Window_BattleLog.prototype.displayResultsValues = function(subject, target, results) {
 		if (results.dodged) {
 			this.displayDodge(target);
+			this.displayStress(target, results);
 		} else {
 			this.displayPartsDamage(subject, target, results);
 			this.displayStress(target, results);

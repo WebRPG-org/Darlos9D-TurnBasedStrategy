@@ -264,8 +264,12 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 	Sprite_Battler.prototype.setupDamagePopup = function() {
 		if (this._battler.isDamagePopupRequested()) {
 			var results = this._battler.getTbsResults();
+			var totalStress = results.stress.head + results.stress.torso + results.stress.leftArm
+				+ results.stress.rightArm + results.stress.leftLeg + results.stress.rightLeg
+				+ results.stress.leftHeld + results.stress.rightHeld + results.stress.other - results.heal.stress;
 			if(results.dodged) {
 				this.setupSingleDamagePopup(false, 0, "dodged");
+				this.setupSingleDamagePopup(totalStress != 0, totalStress, "stress", false, 90, -60);
 			} else {
 				var leftArmHit = results.hit.leftArm;
 				var leftArmDamage = results.damage.leftArm - results.heal.leftArm;
@@ -301,9 +305,6 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 					"physicalDamage", results.critical.rightLeg, 45, 60);
 				this.setupSingleDamagePopup(results.hit.mind, results.damage.mind - results.heal.mind,
 					"mentalDamage", results.critical.mind, -90, -60);
-				var totalStress = results.stress.head + results.stress.torso + results.stress.leftArm
-					+ results.stress.rightArm + results.stress.leftLeg + results.stress.rightLeg
-					+ results.stress.leftHeld + results.stress.rightHeld - results.heal.stress;
 				this.setupSingleDamagePopup(totalStress != 0, totalStress, "stress", false, 90, -60);
 			}
 			this._battler.clearDamagePopup();

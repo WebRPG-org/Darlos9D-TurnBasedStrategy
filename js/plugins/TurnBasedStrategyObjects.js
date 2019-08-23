@@ -1504,24 +1504,24 @@
 					this._tbsForces[i].actors[j].canActThisRound = !battler.isDown();
 					this._tbsForces[i].actors[j].movedThisRound = false;
 					
-					var damageStress = battler.getDamage("head") / this._damageStressDivisor * 2
-						+ battler.getDamage("mind") / this._damageStressDivisor * 2
-						+ battler.getDamage("torso") / this._damageStressDivisor;
+					var damageStress = battler.getDamage("head") / this._damageStressDivisor / 2
+						+ battler.getDamage("mind") / this._damageStressDivisor / 2
+						+ battler.getDamage("torso") / this._damageStressDivisor / 4;
 					if(battler.limbsType() === "winged" && battler.isFlying()) {
-						damageStress += battler.getDamage("leftLeg") / this._damageStressDivisor
-							+ battler.getDamage("rightLeg") / this._damageStressDivisor
-							+ battler.getDamage("leftArm") / this._damageStressDivisor * 2
-							+ battler.getDamage("rightArm") / this._damageStressDivisor * 2;
+						damageStress += battler.getDamage("leftLeg") / this._damageStressDivisor / 4
+							+ battler.getDamage("rightLeg") / this._damageStressDivisor / 4
+							+ battler.getDamage("leftArm") / this._damageStressDivisor / 2
+							+ battler.getDamage("rightArm") / this._damageStressDivisor / 2;
 					} else if(battler.limbsType() === "quadrupedal") {
-						damageStress += battler.getDamage("leftLeg") / this._damageStressDivisor
-							+ battler.getDamage("rightLeg") / this._damageStressDivisor
-							+ battler.getDamage("leftArm") / this._damageStressDivisor
-							+ battler.getDamage("rightArm") / this._damageStressDivisor;
+						damageStress += battler.getDamage("leftLeg") / this._damageStressDivisor / 4
+							+ battler.getDamage("rightLeg") / this._damageStressDivisor / 4
+							+ battler.getDamage("leftArm") / this._damageStressDivisor / 4
+							+ battler.getDamage("rightArm") / this._damageStressDivisor / 4;
 					} else {
-						damageStress += battler.getDamage("leftLeg") / this._damageStressDivisor * 2
-							+ battler.getDamage("rightLeg") / this._damageStressDivisor * 2
-							+ battler.getDamage("leftArm") / this._damageStressDivisor
-							+ battler.getDamage("rightArm") / this._damageStressDivisor;
+						damageStress += battler.getDamage("leftLeg") / this._damageStressDivisor / 2
+							+ battler.getDamage("rightLeg") / this._damageStressDivisor / 2
+							+ battler.getDamage("leftArm") / this._damageStressDivisor / 4
+							+ battler.getDamage("rightArm") / this._damageStressDivisor / 4;
 					}
 					battler.adjustStress(Math.floor(damageStress-battler.stressRecovery()));
 					battler.applyStressCost();
