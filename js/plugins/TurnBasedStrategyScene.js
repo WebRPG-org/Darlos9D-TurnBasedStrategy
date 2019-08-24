@@ -177,7 +177,7 @@
 						$gameMap.setBreadcrumbStage("actor");
 					} else if($gameMap.tbsTurnMode() === "manualTarget") {
 						this._tbsTargetNameWindow.close();
-						var selectedTarget = $gameMap.getTbsActorAtPosition($gameMap.getTbsActionTargetLocationX(), $gameMap.getTbsActionTargetLocationY());
+						var selectedTarget = $gameMap.getTbsActorAtPosition($gamePlayer.x, $gamePlayer.y);
 						var actionInfo = $gameMap.getTbsSelectedActionInfo();
 						if(selectedTarget && (actionInfo.canTargetBodyPart || (actionInfo.canTargetDownedBodyPart && selectedTarget.battler.isDown()))) {
 							this._tbsTargetPartWindow.refreshWindowContents();

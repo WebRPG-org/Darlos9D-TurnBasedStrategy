@@ -661,6 +661,7 @@
 				actor.battler = new Game_Enemy(pendingActor.id);
 				actor.memberPosition = -1;
 			}
+			if(!actor.battler) { return; }
 			if(pendingActor.label !== undefined) {
 				if(pendingActor.labelType === "replace") {
 					actor.battler.setDisplayName(pendingActor.label);
