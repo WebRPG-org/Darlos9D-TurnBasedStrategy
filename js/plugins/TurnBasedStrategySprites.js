@@ -212,6 +212,20 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 		}
 	};
 	
+	Sprite_Base.prototype.startAnimation = function(animation, mirror, delay, variance) {
+		var sprite = new Sprite_Animation();
+		var varianceX = 0;
+		var varianceY = 0;
+		if(variance !== undefined) {
+			var angle = Math.random() * Math.PI;
+			varianceX = Math.cos(angle) * variance;
+			varianceY = Math.sin(angle) * variance;
+		}
+		sprite.setup(this._effectTarget, animation, mirror, delay, varianceX, varianceY);
+		this.parent.addChild(sprite);
+		this._animationSprites.push(sprite);
+	};
+	
 	//sprite battler
 	Sprite_Battler.prototype.setupAnimation = function() {
 		if(this._battler.isOngoingAnimationEndRequested()) {
@@ -223,7 +237,7 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 			var animation = $dataAnimations[data.animationId];
 			var mirror = data.mirror;
 			var delay = animation.position === 3 ? 0 : data.delay;
-			this.startAnimation(animation, mirror, delay);
+			this.startAnimation(animation, mirror, delay, data.variance);
 			for (var i = 0; i < this._animationSprites.length; i++) {
 				var sprite = this._animationSprites[i];
 				sprite.visible = this._battler.isSpriteVisible();
@@ -377,12 +391,72 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 	};
 	
 	//sprite animation
+	Sprite_Animation.prototype.initMembers = function() {
+		this._target = null;
+		this._animation = null;
+		this._mirror = false;
+		this._delay = 0;
+		this._rate = 4;
+		this._duration = 0;
+		this._flashColor = [0, 0, 0, 0];
+		this._flashDuration = 0;
+		this._screenFlashDuration = 0;
+		this._hidingDuration = 0;
+		this._bitmap1 = null;
+		this._bitmap2 = null;
+		this._cellSprites = [];
+		this._screenFlashSprite = null;
+		this._duplicated = false;
+		this._varianceX = 0;
+		this._varianceY = 0;
+		this.z = 8;
+	};
+
+	Sprite_Animation.prototype.setup = function(target, animation, mirror, delay, varianceX, varianceY) {
+		this._target = target;
+		this._animation = animation;
+		this._mirror = mirror;
+		this._delay = delay;
+		this._varianceX = varianceX === undefined ? 0 : varianceX;
+		this._varianceY = varianceY === undefined ? 0 : varianceY;
+		if (this._animation) {
+			this.remove();
+			this.setupRate();
+			this.setupDuration();
+			this.loadBitmaps();
+			this.createSprites();
+		}
+	};
+	
 	Sprite_Animation.prototype.getRate = function() {
 		return this._rate;
 	};
 	
 	Sprite_Animation.prototype.stop = function() {
 		this._duration = 0;
+	};
+	
+	Sprite_Animation.prototype.updatePosition = function() {
+		if (this._animation.position === 3) {
+			this.x = this.parent.width / 2;
+			this.y = this.parent.height / 2;
+		} else {
+			var parent = this._target.parent;
+			var grandparent = parent ? parent.parent : null;
+			this.x = this._target.x;
+			this.y = this._target.y;
+			if (this.parent === grandparent) {
+				this.x += parent.x;
+				this.y += parent.y;
+			}
+			if (this._animation.position === 0) {
+				this.y -= this._target.height;
+			} else if (this._animation.position === 1) {
+				this.y -= this._target.height / 2;
+			}
+		}
+		this.x += this._varianceX;
+		this.y += this._varianceY;
 	};
 	
 	//sprite damage

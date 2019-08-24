@@ -889,6 +889,7 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 	results.shouldPassTurn = true;
 	results.initialAnimationIds = [];
 	results.animationIds = [];
+	results.animationVariances = [];
 	results.ongoingAnimationIds = [];
 	results.skipTarget = true;
 	var hitDodged = true;
@@ -897,784 +898,799 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 		return results;
 	}
 	for(i = 0; i < hitGroup.hits.length; i++) {
-		if(battlersByHit[i].indexOf(target) === -1) { continue; }
-		var hit = hitGroup.hits[i];
-		if((hit.rangeType === "followUp" && this._nonFollowupsAllDodged[hitGroupIndex])
-			|| (hit.randomTarget && Math.random() < 0.5))
-		{
-			continue;
+		var multipleHits = 1;
+		if(hitGroup.hits[i].multipleHits !== undefined) {
+			multipleHits = hitGroup.hits[i].multipleHits;
 		}
-		results.skipTarget = false;
-		var damage = hit.damage;
-		if(damage) {
-			var subjectStress = subject.stress();
-			var targetStress = target.stress();
-			
-			var accBonus = (hit.accuracyBonus === undefined ? 0 : hit.accuracyBonus) * this._accMult;
-			var accSkill = 0;
-			if(!hit.ignoreUserAccuracy) {
-				switch(hit.rangeType) {
-					case "melee":
-						accSkill = subject.totalSkill("meleeAcc");
-						break;
-					case "thrown":
-					case "fired":
-					case "followUp":
-						accSkill = subject.totalSkill("rangedAcc");
-						break;
-					case "mental":
-						accSkill = subject.totalSkill("mentalAcc");
-						break;
-				}
+		while(multipleHits > 0) {
+			multipleHits--;
+			if(battlersByHit[i].indexOf(target) === -1) { continue; }
+			var hit = hitGroup.hits[i];
+			if((hit.rangeType === "followUp" && this._nonFollowupsAllDodged[hitGroupIndex])
+				|| (hit.randomTarget && Math.random() < 0.5))
+			{
+				continue;
 			}
-			var acc = accSkill * this._accEvaSkillMult * this._accMult;
-			
-			var hitDamage = this.getCompleteDamage(subject, actionInfo, hit);
-			hitDamage.blunt *= this._damageMult;
-			hitDamage.cut *= this._damageMult;
-			hitDamage.keen *= this._damageMult;
-			hitDamage.thrust *= this._damageMult;
-			hitDamage.stiletto *= this._damageMult;
-			hitDamage.bullet *= this._damageMult;
-			hitDamage.buckshot *= this._damageMult;
-			hitDamage.lightning *= this._damageMult;
-			hitDamage.trip *= this._damageMult;
-			hitDamage.fire *= this._damageMult;
-			hitDamage.ice *= this._damageMult;
-			hitDamage.corrosion *= this._damageMult;
-			hitDamage.psychic *= this._damageMult;
-			
-			var isSolid = hitDamage.blunt > 0
-				|| hitDamage.cut > 0
-				|| hitDamage.keen > 0
-				|| hitDamage.thrust > 0
-				|| hitDamage.stiletto > 0
-				|| hitDamage.bullet > 0
-				|| hitDamage.buckshot > 0
-				|| hitDamage.lightning > 0
-				|| hitDamage.trip > 0;
-			
-			var isFluid = hitDamage.fire > 0
-				|| hitDamage.ice > 0
-				|| hitDamage.corrosion > 0;
-			
-			var isMental = hitDamage.psychic > 0;
-			
-			var hitResult = {};
-			hitResult.dodged = true;
-			hitResult.hit = {};
-			hitResult.hit.leftHeld = false;
-			hitResult.hit.rightHeld = false;
-			hitResult.hit.head = false;
-			hitResult.hit.torso = false;
-			hitResult.hit.leftArm = false;
-			hitResult.hit.rightArm = false;
-			hitResult.hit.leftLeg = false;
-			hitResult.hit.rightLeg = false;
-			hitResult.hit.mind = false;
-			hitResult.evaResultBeat = 0;
-			hitResult.evaResultUnder = 0;
-			hitResult.beatBy = 0;
-			if(hit.aoe !== undefined && hit.aoe > 0) {
-				if(isSolid || isFluid) {
-					hitResult.dodged = false;
-					hitResult.hit.leftHeld = true;
-					hitResult.hit.rightHeld = true;
-					hitResult.hit.head = true;
-					hitResult.hit.torso = true;
-					hitResult.hit.leftArm = true;
-					hitResult.hit.rightArm = true;
-					hitResult.hit.leftLeg = true;
-					hitResult.hit.rightLeg = true;
+			results.skipTarget = false;
+			var variance = 0;
+			var damage = hit.damage;
+			if(damage) {
+				var subjectStress = subject.stress();
+				var targetStress = target.stress();
+				
+				var accBonus = (hit.accuracyBonus === undefined ? 0 : hit.accuracyBonus) * this._accMult;
+				if(hit.accuracyVariance !== undefined) {
+					var accuracyVariance = hit.accuracyVariance * this._accMult;
+					varianceResult = Math.floor(Math.random() * (accuracyVariance * 2 + 1));
+					accBonus = Math.max(0, varianceResult + (accBonus - accuracyVariance));
+					variance = varianceResult - accuracyVariance;
 				}
-				if(isMental) {
-					hitResult.dodged = false;
-					hitResult.hit.mind = true;
-				}
-			} else {
-				if(isSolid || isFluid) {
-					if(targetingType === undefined && this._tbsTargetPart != undefined && this._tbsTargetPart != "mobility" && this._tbsTargetPart != "vital") {
-						hitResult.dodged = false;
-						hitResult.hit[this._tbsTargetPart] = true;
-					} else {
-						var targetingMobility = this._tbsTargetPart === "mobility";
-						var defendingWithLegs = target.limbsType() === "winged" && target.isFlying();
-						var leftDefendingLimbProt = defendingWithLegs ? targetLeftLegProt : targetLeftArmProt;
-						var rightDefendingLimbProt = defendingWithLegs ? targetRightLegProt : targetRightArmProt;
-						var leftDefendingHeldProt = targetLeftHeldProt;
-						var rightDefendingHeldProt = targetRightHeldProt;
-						var leftLimbDamagePotential = this.getPartDamagePotential(hitDamage, leftDefendingLimbProt, target.toughness());
-						var rightLimbDamagePotential = this.getPartDamagePotential(hitDamage, rightDefendingLimbProt, target.toughness());
-						var leftHeldDamagePotential = this.getPartDamagePotential(hitDamage, leftDefendingHeldProt, target.toughness(), true);
-						var rightHeldDamagePotential = this.getPartDamagePotential(hitDamage, rightDefendingHeldProt, target.toughness(), true);
-						
-						var leftLimbFirst = false;
-						if(leftLimbDamagePotential < rightLimbDamagePotential) {
-							leftLimbFirst = true;
-						} else if (leftLimbDamagePotential === rightLimbDamagePotential) {
-							if(Math.random() >= 0.5) {
-								leftLimbFirst = false;
-							} else {
-								leftLimbFirst = true;
-							}
-						}
-						var firstLimbProt = leftDefendingLimbProt;
-						var secondLimbProt = rightDefendingLimbProt;
-						if(!leftLimbFirst) {
-							firstLimbProt = rightDefendingLimbProt;
-							secondLimbProt = leftDefendingLimbProt;
-						}
-						
-						var leftHeldFirst = false;
-						var useFirstHeld = false;
-						var useSecondHeld = false;
-						if(target.equips()[0] && target.equips()[1]) {
-							useFirstHeld = true;
-							useSecondHeld = true;
-							if(leftHeldDamagePotential < rightHeldDamagePotential) {
-								leftHeldFirst = true;
-							} else if (leftHeldDamagePotential === rightHeldDamagePotential) {
-								if(Math.random() >= 0.5) {
-									leftHeldFirst = false;
-								} else {
-									leftHeldFirst = true;
-								}
-							}
-						} else if(target.equips()[0]) {
-							if(target.handedness() === "left") {
-								leftHeldFirst = true;
-							}
-							useFirstHeld = true;
-						} else if(target.equips()[1]) {
-							if(target.handedness() === "right") {
-								leftHeldFirst = true;
-								useFirstHeld = true;
-							}
-							useFirstHeld = true;
-						}
-						
-						
-						var firstHeldProt = leftDefendingHeldProt;
-						var secondHeldProt = rightDefendingHeldProt;
-						if(!leftHeldFirst) {
-							firstHeldProt = rightDefendingHeldProt;
-							secondHeldProt = leftDefendingHeldProt;
-						}
-						
-						var criticalPartProt = targetHeadProt;
-						var vitalPartProt = targetTorsoProt;
-						var leftMobilityFirst = false;
-						if(targetingMobility) {
-							var leftMobilityLimbProt = defendingWithLegs ? targetLeftArmProt : targetLeftLegProt;
-							var rightMobilityLimbProt = defendingWithLegs ? targetRightArmProt : targetRightLegProt ;
-							var leftMobilityDamagePotential = this.getPartDamagePotential(hitDamage, leftMobilityLimbProt, target.toughness());
-							var rightMobilityDamagePotential = this.getPartDamagePotential(hitDamage, rightMobilityLimbProt, target.toughness());
-							if(leftMobilityDamagePotential < rightMobilityDamagePotential) {
-								leftMobilityFirst = true;
-							} else if (leftMobilityDamagePotential === rightMobilityDamagePotential) {
-								if(Math.random() >= 0.5) {
-									leftMobilityFirst = false;
-								} else {
-									leftMobilityFirst = true;
-								}
-							}
-							vitalPartProt = leftMobilityLimbProt;
-							criticalPartProt = rightMobilityLimbProt;
-							if(!leftMobilityFirst) {
-								vitalPartProt = rightMobilityLimbProt;
-								criticalPartProt = leftMobilityLimbProt;
-							}
-						}
-						
-						var eva = (target.totalSkill("physEvade") * this._accEvaSkillMult) * this._evaMult;
-						if(isSolid) {
-							hitResult = this.calculateBodyPartHit(subjectStress, targetStress, acc, accBonus, eva,
-								criticalPartProt.defense.solid,
-								vitalPartProt.defense.solid,
-								firstLimbProt.defense.solid,
-								secondLimbProt.defense.solid,
-								firstHeldProt.defense.solid,
-								secondHeldProt.defense.solid,
-								leftLimbFirst,
-								leftHeldFirst,
-								targetingMobility,
-								leftMobilityFirst,
-								defendingWithLegs,
-								target.isDown(),
-								targetingType,
-								useFirstHeld,
-								useSecondHeld);
-						} else if (isFluid) {
-							hitResult = this.calculateBodyPartHit(subjectStress, targetStress, acc, accBonus, eva,
-								criticalPartProt.defense.fluid,
-								vitalPartProt.defense.fluid,
-								firstLimbProt.defense.fluid,
-								secondLimbProt.defense.fluid,
-								firstHeldProt.defense.fluid,
-								secondHeldProt.defense.fluid,
-								leftLimbFirst,
-								leftHeldFirst,
-								targetingMobility,
-								leftMobilityFirst,
-								defendingWithLegs,
-								target.isDown(),
-								targetingType,
-								useFirstHeld,
-								useSecondHeld);
-						}
+				var accSkill = 0;
+				if(!hit.ignoreUserAccuracy) {
+					switch(hit.rangeType) {
+						case "melee":
+							accSkill = subject.totalSkill("meleeAcc");
+							break;
+						case "thrown":
+						case "fired":
+						case "followUp":
+							accSkill = subject.totalSkill("rangedAcc");
+							break;
+						case "mental":
+							accSkill = subject.totalSkill("mentalAcc");
+							break;
 					}
-					if(isMental && !hitResult.dodged) {
+				}
+				var acc = accSkill * this._accEvaSkillMult * this._accMult;
+				
+				var hitDamage = this.getCompleteDamage(subject, actionInfo, hit);
+				hitDamage.blunt *= this._damageMult;
+				hitDamage.cut *= this._damageMult;
+				hitDamage.keen *= this._damageMult;
+				hitDamage.thrust *= this._damageMult;
+				hitDamage.stiletto *= this._damageMult;
+				hitDamage.bullet *= this._damageMult;
+				hitDamage.buckshot *= this._damageMult;
+				hitDamage.lightning *= this._damageMult;
+				hitDamage.trip *= this._damageMult;
+				hitDamage.fire *= this._damageMult;
+				hitDamage.ice *= this._damageMult;
+				hitDamage.corrosion *= this._damageMult;
+				hitDamage.psychic *= this._damageMult;
+				
+				var isSolid = hitDamage.blunt > 0
+					|| hitDamage.cut > 0
+					|| hitDamage.keen > 0
+					|| hitDamage.thrust > 0
+					|| hitDamage.stiletto > 0
+					|| hitDamage.bullet > 0
+					|| hitDamage.buckshot > 0
+					|| hitDamage.lightning > 0
+					|| hitDamage.trip > 0;
+				
+				var isFluid = hitDamage.fire > 0
+					|| hitDamage.ice > 0
+					|| hitDamage.corrosion > 0;
+				
+				var isMental = hitDamage.psychic > 0;
+				
+				var hitResult = {};
+				hitResult.dodged = true;
+				hitResult.hit = {};
+				hitResult.hit.leftHeld = false;
+				hitResult.hit.rightHeld = false;
+				hitResult.hit.head = false;
+				hitResult.hit.torso = false;
+				hitResult.hit.leftArm = false;
+				hitResult.hit.rightArm = false;
+				hitResult.hit.leftLeg = false;
+				hitResult.hit.rightLeg = false;
+				hitResult.hit.mind = false;
+				hitResult.evaResultBeat = 0;
+				hitResult.evaResultUnder = 0;
+				hitResult.beatBy = 0;
+				if(hit.aoe !== undefined && hit.aoe > 0) {
+					if(isSolid || isFluid) {
+						hitResult.dodged = false;
+						hitResult.hit.leftHeld = true;
+						hitResult.hit.rightHeld = true;
+						hitResult.hit.head = true;
+						hitResult.hit.torso = true;
+						hitResult.hit.leftArm = true;
+						hitResult.hit.rightArm = true;
+						hitResult.hit.leftLeg = true;
+						hitResult.hit.rightLeg = true;
+					}
+					if(isMental) {
+						hitResult.dodged = false;
 						hitResult.hit.mind = true;
 					}
-				} else if(isMental) {
-					var eva = (target.totalSkill("mentalEvade") * this._accEvaSkillMult) * this._evaMult;
-					hitResult = this.calculateMentalHit(subjectStress, targetStress, acc, accBonus, eva,
-						targetMentalProt.defense,
-						target.isDown());
-				}
-			}
-			if(hitResult.dodged) {
-				results.stress.other = hitResult.stress;
-			} else {
-				if(hitResult.hit.head || hitResult.hit.torso || hitResult.hit.leftArm || hitResult.hit.rightArm
-					|| hitResult.hit.leftLeg || hitResult.hit.rightLeg || hitResult.hit.leftHeld || hitResult.hit.rightHeld) {
-					var eva = (target.totalSkill("physEvade") * this._accEvaSkillMult) * this._evaMult;
-					var tripEva = (target.totalSkill("tripEvade") * this._accEvaSkillMult) * this._evaMult;
-					if(hitResult.hit.head) {
-						results.hit.head = true;
-						var damageResult = this.resolvePhysicalDamage(
-							hitDamage, 
-							acc,
-							accBonus,
-							eva,
-							tripEva,
-							targetHeadProt, 
-							target.toughness()/2, 
-							subjectStress,
-							targetStress,
-							target.isDown(),
-							true);
-						results.stress.head += damageResult.stress;
-						results.damage.head += damageResult.damage;
-						results.critical.head = damageResult.critical ? true : results.critical.head;
-						if(damageResult.stress > 0 || damageResult.damage > 0) {
-							results.shouldPassTurn = false;
+				} else {
+					if(isSolid || isFluid) {
+						if(targetingType === undefined && this._tbsTargetPart != undefined && this._tbsTargetPart != "mobility" && this._tbsTargetPart != "vital") {
+							hitResult.dodged = false;
+							hitResult.hit[this._tbsTargetPart] = true;
+						} else {
+							var targetingMobility = this._tbsTargetPart === "mobility";
+							var defendingWithLegs = target.limbsType() === "winged" && target.isFlying();
+							var leftDefendingLimbProt = defendingWithLegs ? targetLeftLegProt : targetLeftArmProt;
+							var rightDefendingLimbProt = defendingWithLegs ? targetRightLegProt : targetRightArmProt;
+							var leftDefendingHeldProt = targetLeftHeldProt;
+							var rightDefendingHeldProt = targetRightHeldProt;
+							var leftLimbDamagePotential = this.getPartDamagePotential(hitDamage, leftDefendingLimbProt, target.toughness());
+							var rightLimbDamagePotential = this.getPartDamagePotential(hitDamage, rightDefendingLimbProt, target.toughness());
+							var leftHeldDamagePotential = this.getPartDamagePotential(hitDamage, leftDefendingHeldProt, target.toughness(), true);
+							var rightHeldDamagePotential = this.getPartDamagePotential(hitDamage, rightDefendingHeldProt, target.toughness(), true);
+							
+							var leftLimbFirst = false;
+							if(leftLimbDamagePotential < rightLimbDamagePotential) {
+								leftLimbFirst = true;
+							} else if (leftLimbDamagePotential === rightLimbDamagePotential) {
+								if(Math.random() >= 0.5) {
+									leftLimbFirst = false;
+								} else {
+									leftLimbFirst = true;
+								}
+							}
+							var firstLimbProt = leftDefendingLimbProt;
+							var secondLimbProt = rightDefendingLimbProt;
+							if(!leftLimbFirst) {
+								firstLimbProt = rightDefendingLimbProt;
+								secondLimbProt = leftDefendingLimbProt;
+							}
+							
+							var leftHeldFirst = false;
+							var useFirstHeld = false;
+							var useSecondHeld = false;
+							if(target.equips()[0] && target.equips()[1]) {
+								useFirstHeld = true;
+								useSecondHeld = true;
+								if(leftHeldDamagePotential < rightHeldDamagePotential) {
+									leftHeldFirst = true;
+								} else if (leftHeldDamagePotential === rightHeldDamagePotential) {
+									if(Math.random() >= 0.5) {
+										leftHeldFirst = false;
+									} else {
+										leftHeldFirst = true;
+									}
+								}
+							} else if(target.equips()[0]) {
+								if(target.handedness() === "left") {
+									leftHeldFirst = true;
+								}
+								useFirstHeld = true;
+							} else if(target.equips()[1]) {
+								if(target.handedness() === "right") {
+									leftHeldFirst = true;
+									useFirstHeld = true;
+								}
+								useFirstHeld = true;
+							}
+							
+							
+							var firstHeldProt = leftDefendingHeldProt;
+							var secondHeldProt = rightDefendingHeldProt;
+							if(!leftHeldFirst) {
+								firstHeldProt = rightDefendingHeldProt;
+								secondHeldProt = leftDefendingHeldProt;
+							}
+							
+							var criticalPartProt = targetHeadProt;
+							var vitalPartProt = targetTorsoProt;
+							var leftMobilityFirst = false;
+							if(targetingMobility) {
+								var leftMobilityLimbProt = defendingWithLegs ? targetLeftArmProt : targetLeftLegProt;
+								var rightMobilityLimbProt = defendingWithLegs ? targetRightArmProt : targetRightLegProt ;
+								var leftMobilityDamagePotential = this.getPartDamagePotential(hitDamage, leftMobilityLimbProt, target.toughness());
+								var rightMobilityDamagePotential = this.getPartDamagePotential(hitDamage, rightMobilityLimbProt, target.toughness());
+								if(leftMobilityDamagePotential < rightMobilityDamagePotential) {
+									leftMobilityFirst = true;
+								} else if (leftMobilityDamagePotential === rightMobilityDamagePotential) {
+									if(Math.random() >= 0.5) {
+										leftMobilityFirst = false;
+									} else {
+										leftMobilityFirst = true;
+									}
+								}
+								vitalPartProt = leftMobilityLimbProt;
+								criticalPartProt = rightMobilityLimbProt;
+								if(!leftMobilityFirst) {
+									vitalPartProt = rightMobilityLimbProt;
+									criticalPartProt = leftMobilityLimbProt;
+								}
+							}
+							
+							var eva = (target.totalSkill("physEvade") * this._accEvaSkillMult) * this._evaMult;
+							if(isSolid) {
+								hitResult = this.calculateBodyPartHit(subjectStress, targetStress, acc, accBonus, eva,
+									criticalPartProt.defense.solid,
+									vitalPartProt.defense.solid,
+									firstLimbProt.defense.solid,
+									secondLimbProt.defense.solid,
+									firstHeldProt.defense.solid,
+									secondHeldProt.defense.solid,
+									leftLimbFirst,
+									leftHeldFirst,
+									targetingMobility,
+									leftMobilityFirst,
+									defendingWithLegs,
+									target.isDown(),
+									targetingType,
+									useFirstHeld,
+									useSecondHeld);
+							} else if (isFluid) {
+								hitResult = this.calculateBodyPartHit(subjectStress, targetStress, acc, accBonus, eva,
+									criticalPartProt.defense.fluid,
+									vitalPartProt.defense.fluid,
+									firstLimbProt.defense.fluid,
+									secondLimbProt.defense.fluid,
+									firstHeldProt.defense.fluid,
+									secondHeldProt.defense.fluid,
+									leftLimbFirst,
+									leftHeldFirst,
+									targetingMobility,
+									leftMobilityFirst,
+									defendingWithLegs,
+									target.isDown(),
+									targetingType,
+									useFirstHeld,
+									useSecondHeld);
+							}
 						}
-						if(damageResult.shouldConduct) {
-							var conductResults = this.conductMath(target, damageResult, "head");
-							results.stress.torso += conductResults.stress.torso;
-							results.stress.leftArm += conductResults.stress.leftArm;
-							results.stress.rightArm += conductResults.stress.rightArm;
-							results.stress.leftLeg += conductResults.stress.leftLeg;
-							results.stress.rightLeg += conductResults.stress.rightLeg;
-							results.damage.torso += conductResults.damage.torso;
-							results.damage.leftArm += conductResults.damage.leftArm;
-							results.damage.rightArm += conductResults.damage.rightArm;
-							results.damage.leftLeg += conductResults.damage.leftLeg;
-							results.damage.rightLeg += conductResults.damage.rightLeg;
-							results.hit.torso = conductResults.damage.torso > 0 ? true : results.hit.torso;
-							results.hit.leftArm = conductResults.damage.leftArm > 0 ? true : results.hit.leftArm;
-							results.hit.rightArm = conductResults.damage.rightArm > 0 ? true : results.hit.rightArm;
-							results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
-							results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
-							results.critical.torso = conductResults.damage.torso > 0 && damageResult.critical
-								? true : results.critical.torso;
-							results.critical.leftArm = conductResults.damage.leftArm > 0 && damageResult.critical
-								? true : results.critical.leftArm;
-							results.critical.rightArm = conductResults.damage.rightArm > 0 && damageResult.critical
-								? true : results.critical.rightArm;
-							results.critical.leftLeg = conductResults.damage.leftLeg > 0 && damageResult.critical
-								? true : results.critical.leftLeg;
-							results.critical.rightLeg = conductResults.damage.rightLeg > 0 && damageResult.critical
-								? true : results.critical.rightLeg;
+						if(isMental && !hitResult.dodged) {
+							hitResult.hit.mind = true;
 						}
-					}
-					if(hitResult.hit.torso) {
-						results.hit.torso = true;
-						var damageResult = this.resolvePhysicalDamage(
-							hitDamage, 
-							acc, 
-							accBonus,
-							eva,
-							tripEva,
-							targetTorsoProt, 
-							target.toughness(), 
-							subjectStress,
-							targetStress,
-							target.isDown(),
-							false);
-						results.stress.torso += damageResult.stress;
-						results.damage.torso += damageResult.damage;
-						results.critical.torso = damageResult.critical ? true : results.critical.torso;
-						if(damageResult.stress > 0 || damageResult.damage > 0) {
-							results.shouldPassTurn = false;
-						}
-						if(damageResult.shouldConduct) {
-							var conductResults = this.conductMath(target, damageResult, "torso");
-							results.stress.leftArm += conductResults.stress.leftArm;
-							results.stress.rightArm += conductResults.stress.rightArm;
-							results.stress.leftLeg += conductResults.stress.leftLeg;
-							results.stress.rightLeg += conductResults.stress.rightLeg;
-							results.damage.leftArm += conductResults.damage.leftArm;
-							results.damage.rightArm += conductResults.damage.rightArm;
-							results.damage.leftLeg += conductResults.damage.leftLeg;
-							results.damage.rightLeg += conductResults.damage.rightLeg;
-							results.hit.leftArm = conductResults.damage.leftArm > 0 ? true : results.hit.leftArm;
-							results.hit.rightArm = conductResults.damage.rightArm > 0 ? true : results.hit.rightArm;
-							results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
-							results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
-							results.critical.leftArm = conductResults.damage.leftArm > 0 && damageResult.critical
-								? true : results.critical.leftArm;
-							results.critical.rightArm = conductResults.damage.rightArm > 0 && damageResult.critical
-								? true : results.critical.rightArm;
-							results.critical.leftLeg = conductResults.damage.leftLeg > 0 && damageResult.critical
-								? true : results.critical.leftLeg;
-							results.critical.rightLeg = conductResults.damage.rightLeg > 0 && damageResult.critical
-								? true : results.critical.rightLeg;
-						}
-					}
-					if(hitResult.hit.leftArm) {
-						results.hit.leftArm = true;
-						var damageResult = this.resolvePhysicalDamage(
-							hitDamage, 
-							acc, 
-							accBonus,
-							eva,
-							tripEva,
-							targetLeftArmProt, 
-							target.toughness(), 
-							subjectStress,
-							targetStress,
-							target.isDown(),
-							target.limbsType() === "winged" && target.isFlying());
-						results.stress.leftArm += damageResult.stress;
-						results.damage.leftArm += damageResult.damage;
-						results.critical.leftArm = damageResult.critical ? true : results.critical.leftArm;
-						if(damageResult.stress > 0 || damageResult.damage > 0) {
-							results.shouldPassTurn = false;
-						}
-						if(target.limbsType() !== "winged" || !target.isFlying() && results.shouldCleave) {
-							var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult, "vitalOnly");
-							results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
-							results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
-							results.stress.torso += cleaveResults.stress.torso;
-							results.stress.head += cleaveResults.stress.head;
-							results.damage.torso += cleaveResults.damage.torso;
-							results.damage.head += cleaveResults.damage.head;
-						}
-						if(damageResult.shouldConduct) {
-							var conductResults = this.conductMath(target, damageResult, "leftArm");
-							results.stress.torso += conductResults.stress.torso;
-							results.stress.leftLeg += conductResults.stress.leftLeg;
-							results.stress.rightLeg += conductResults.stress.rightLeg;
-							results.damage.torso += conductResults.damage.torso;
-							results.damage.leftLeg += conductResults.damage.leftLeg;
-							results.damage.rightLeg += conductResults.damage.rightLeg;
-							results.hit.torso = conductResults.damage.torso > 0 ? true : results.hit.torso;
-							results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
-							results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
-							results.critical.torso = conductResults.damage.torso > 0 && damageResult.critical
-								? true : results.critical.torso;
-							results.critical.leftLeg = conductResults.damage.leftLeg > 0 && damageResult.critical
-								? true : results.critical.leftLeg;
-							results.critical.rightLeg = conductResults.damage.rightLeg > 0 && damageResult.critical
-								? true : results.critical.rightLeg;
-						}
-					}
-					if(hitResult.hit.rightArm) {
-						results.hit.rightArm = true;
-						var damageResult = this.resolvePhysicalDamage(
-							hitDamage, 
-							acc, 
-							accBonus,
-							eva,
-							tripEva,
-							targetRightArmProt, 
-							target.toughness(), 
-							subjectStress,
-							targetStress,
-							target.isDown(),
-							target.limbsType() === "winged" && target.isFlying());
-						results.stress.rightArm += damageResult.stress;
-						results.damage.rightArm += damageResult.damage;
-						results.critical.rightArm = damageResult.critical ? true : results.critical.rightArm;
-						if(damageResult.stress > 0 || damageResult.damage > 0) {
-							results.shouldPassTurn = false;
-						}
-						if(target.limbsType() !== "winged" || !target.isFlying() && results.shouldCleave) {
-							var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult, "vitalOnly");
-							results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
-							results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
-							results.stress.torso += cleaveResults.stress.torso;
-							results.stress.head += cleaveResults.stress.head;
-							results.damage.torso += cleaveResults.damage.torso;
-							results.damage.head += cleaveResults.damage.head;
-						}
-						if(damageResult.shouldConduct) {
-							var conductResults = this.conductMath(target, damageResult, "rightArm");
-							results.stress.torso += conductResults.stress.torso;
-							results.stress.leftLeg += conductResults.stress.leftLeg;
-							results.stress.rightLeg += conductResults.stress.rightLeg;
-							results.damage.torso += conductResults.damage.torso;
-							results.damage.leftLeg += conductResults.damage.leftLeg;
-							results.damage.rightLeg += conductResults.damage.rightLeg;
-							results.hit.torso = conductResults.damage.torso > 0 ? true : results.hit.torso;
-							results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
-							results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
-							results.critical.torso = conductResults.damage.torso > 0 && damageResult.critical
-								? true : results.critical.torso;
-							results.critical.leftLeg = conductResults.damage.leftLeg > 0 && damageResult.critical
-								? true : results.critical.leftLeg;
-							results.critical.rightLeg = conductResults.damage.rightLeg > 0 && damageResult.critical
-								? true : results.critical.rightLeg;
-						}
-					}
-					if(hitResult.hit.leftLeg) {
-						results.hit.leftLeg = true;
-						var damageResult = this.resolvePhysicalDamage(
-							hitDamage, 
-							acc, 
-							accBonus,
-							eva,
-							tripEva,
-							targetLeftLegProt, 
-							target.toughness(), 
-							subjectStress,
-							targetStress,
-							target.isDown(),
-							target.limbsType() !== "quadrupedal" && (target.limbsType() !== "winged" || !target.isFlying()));
-						results.stress.leftLeg += damageResult.stress;
-						results.damage.leftLeg += damageResult.damage;
-						results.critical.leftLeg = damageResult.critical ? true : results.critical.leftLeg;
-						if(damageResult.stress > 0 || damageResult.damage > 0) {
-							results.shouldPassTurn = false;
-						}
-						if(target.limbsType() === "winged" && target.isFlying() && results.shouldCleave) {
-							var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult, "vitalOnly");
-							results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
-							results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
-							results.stress.torso += cleaveResults.stress.torso;
-							results.stress.head += cleaveResults.stress.head;
-							results.damage.torso += cleaveResults.damage.torso;
-							results.damage.head += cleaveResults.damage.head;
-						}
-					}
-					if(hitResult.hit.rightLeg) {
-						results.hit.rightLeg = true;
-						var damageResult = this.resolvePhysicalDamage(
-							hitDamage, 
-							acc, 
-							accBonus,
-							eva,
-							tripEva,
-							targetRightLegProt, 
-							target.toughness(), 
-							subjectStress,
-							targetStress,
-							target.isDown(),
-							target.limbsType() !== "quadrupedal" && (target.limbsType() !== "winged" || !target.isFlying()));
-						results.stress.rightLeg += damageResult.stress;
-						results.damage.rightLeg += damageResult.damage;
-						results.critical.rightLeg = damageResult.critical ? true : results.critical.rightLeg;
-						if(damageResult.stress > 0 || damageResult.damage > 0) {
-							results.shouldPassTurn = false;
-						}
-						if(target.limbsType() === "winged" && target.isFlying() && results.shouldCleave) {
-							var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult, "vitalOnly");
-							results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
-							results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
-							results.stress.torso += cleaveResults.stress.torso;
-							results.stress.head += cleaveResults.stress.head;
-							results.damage.torso += cleaveResults.damage.torso;
-							results.damage.head += cleaveResults.damage.head;
-						}
-					}
-					if(hitResult.hit.leftHeld) {
-						results.hit.leftHeld = true;
-						var damageResult = this.resolvePhysicalDamage(
-							hitDamage, 
-							acc, 
-							accBonus,
-							eva,
-							tripEva,
-							targetLeftHeldProt, 
-							this._equipmentBaseToughness, 
-							subjectStress,
-							targetStress,
-							target.isDown(),
-							false,
-							true);
-						results.stress.leftHeld += damageResult.stress;
-						if(damageResult.stress > 0 || damageResult.damage > 0) {
-							results.shouldPassTurn = false;
-						}
-						if(results.shouldCleave) {
-							var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult, "limbsAndVital");
-							results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
-							results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
-							results.hit.leftArm = cleaveResults.hit.leftArm ? true : results.hit.leftArm;
-							results.hit.rightArm = cleaveResults.hit.rightArm ? true : results.hit.rightArm;
-							results.hit.leftLeg = cleaveResults.hit.leftLeg ? true : results.hit.leftLeg;
-							results.hit.rightLeg = cleaveResults.hit.rightLeg ? true : results.hit.rightLeg;
-							results.stress.torso += cleaveResults.stress.torso;
-							results.stress.head += cleaveResults.stress.head;
-							results.stress.leftArm += cleaveResults.stress.leftArm;
-							results.stress.rightArm += cleaveResults.stress.rightArm;
-							results.stress.leftLeg += cleaveResults.stress.leftLeg;
-							results.stress.rightLeg += cleaveResults.stress.rightLeg;
-							results.damage.torso += cleaveResults.damage.torso;
-							results.damage.head += cleaveResults.damage.head;
-							results.damage.leftArm += cleaveResults.damage.leftArm;
-							results.damage.rightArm += cleaveResults.damage.rightArm;
-							results.damage.leftLeg += cleaveResults.damage.leftLeg;
-							results.damage.rightLeg += cleaveResults.damage.rightLeg;
-						}
-						if(damageResult.shouldConduct) {
-							var conductResults = this.conductMath(target, damageResult, "leftHeld");
-							results.stress.torso += conductResults.stress.torso;
-							results.stress.leftArm += conductResults.stress.leftArm;
-							results.stress.rightArm += conductResults.stress.rightArm;
-							results.stress.leftLeg += conductResults.stress.leftLeg;
-							results.stress.rightLeg += conductResults.stress.rightLeg;
-							results.damage.torso += conductResults.damage.torso;
-							results.damage.leftArm += conductResults.damage.leftArm;
-							results.damage.rightArm += conductResults.damage.rightArm;
-							results.damage.leftLeg += conductResults.damage.leftLeg;
-							results.damage.rightLeg += conductResults.damage.rightLeg;
-							results.hit.torso = conductResults.damage.torso > 0 ? true : results.hit.torso;
-							results.hit.leftArm = conductResults.damage.leftArm > 0 ? true : results.hit.leftArm;
-							results.hit.rightArm = conductResults.damage.rightArm > 0 ? true : results.hit.rightArm;
-							results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
-							results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
-							results.critical.torso = conductResults.damage.torso > 0 && damageResult.critical
-								? true : results.critical.torso;
-							results.critical.leftArm = conductResults.damage.leftArm > 0 && damageResult.critical
-								? true : results.critical.leftArm;
-							results.critical.rightArm = conductResults.damage.rightArm > 0 && damageResult.critical
-								? true : results.critical.rightArm;
-							results.critical.leftLeg = conductResults.damage.leftLeg > 0 && damageResult.critical
-								? true : results.critical.leftLeg;
-							results.critical.rightLeg = conductResults.damage.rightLeg > 0 && damageResult.critical
-								? true : results.critical.rightLeg;
-						}
-					}
-					if(hitResult.hit.rightHeld) {
-						results.hit.rightHeld = true;
-						var damageResult = this.resolvePhysicalDamage(
-							hitDamage, 
-							acc, 
-							accBonus,
-							eva,
-							tripEva,
-							targetRightHeldProt, 
-							this._equipmentBaseToughness, 
-							subjectStress,
-							targetStress,
-							target.isDown(),
-							false,
-							true);
-						results.stress.rightHeld += damageResult.stress;
-						if(damageResult.stress > 0 || damageResult.damage > 0) {
-							results.shouldPassTurn = false;
-						}
-						if(results.shouldCleave) {
-							var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult, "limbsAndVital");
-							results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
-							results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
-							results.hit.leftArm = cleaveResults.hit.leftArm ? true : results.hit.leftArm;
-							results.hit.rightArm = cleaveResults.hit.rightArm ? true : results.hit.rightArm;
-							results.hit.leftLeg = cleaveResults.hit.leftLeg ? true : results.hit.leftLeg;
-							results.hit.rightLeg = cleaveResults.hit.rightLeg ? true : results.hit.rightLeg;
-							results.stress.torso += cleaveResults.stress.torso;
-							results.stress.head += cleaveResults.stress.head;
-							results.stress.leftArm += cleaveResults.stress.leftArm;
-							results.stress.rightArm += cleaveResults.stress.rightArm;
-							results.stress.leftLeg += cleaveResults.stress.leftLeg;
-							results.stress.rightLeg += cleaveResults.stress.rightLeg;
-							results.damage.torso += cleaveResults.damage.torso;
-							results.damage.head += cleaveResults.damage.head;
-							results.damage.leftArm += cleaveResults.damage.leftArm;
-							results.damage.rightArm += cleaveResults.damage.rightArm;
-							results.damage.leftLeg += cleaveResults.damage.leftLeg;
-							results.damage.rightLeg += cleaveResults.damage.rightLeg;
-						}
-						if(damageResult.shouldConduct) {
-							this.conductMath(target, damageResult, "rightHeld");
-							results.stress.torso += conductResults.stress.torso;
-							results.stress.leftArm += conductResults.stress.leftArm;
-							results.stress.rightArm += conductResults.stress.rightArm;
-							results.stress.leftLeg += conductResults.stress.leftLeg;
-							results.stress.rightLeg += conductResults.stress.rightLeg;
-							results.damage.torso += conductResults.damage.torso;
-							results.damage.leftArm += conductResults.damage.leftArm;
-							results.damage.rightArm += conductResults.damage.rightArm;
-							results.damage.leftLeg += conductResults.damage.leftLeg;
-							results.damage.rightLeg += conductResults.damage.rightLeg;
-							results.hit.torso = conductResults.damage.torso > 0 ? true : results.hit.torso;
-							results.hit.leftArm = conductResults.damage.leftArm > 0 ? true : results.hit.leftArm;
-							results.hit.rightArm = conductResults.damage.rightArm > 0 ? true : results.hit.rightArm;
-							results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
-							results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
-							results.critical.torso = conductResults.damage.torso > 0 && damageResult.critical
-								? true : results.critical.torso;
-							results.critical.leftArm = conductResults.damage.leftArm > 0 && damageResult.critical
-								? true : results.critical.leftArm;
-							results.critical.rightArm = conductResults.damage.rightArm > 0 && damageResult.critical
-								? true : results.critical.rightArm;
-							results.critical.leftLeg = conductResults.damage.leftLeg > 0 && damageResult.critical
-								? true : results.critical.leftLeg;
-							results.critical.rightLeg = conductResults.damage.rightLeg > 0 && damageResult.critical
-								? true : results.critical.rightLeg;
-						}
+					} else if(isMental) {
+						var eva = (target.totalSkill("mentalEvade") * this._accEvaSkillMult) * this._evaMult;
+						hitResult = this.calculateMentalHit(subjectStress, targetStress, acc, accBonus, eva,
+							targetMentalProt.defense,
+							target.isDown());
 					}
 				}
-				if(hitResult.hit.mind) {
-					results.hit.mind = true;
-					var eva = (target.totalSkill("mentalEvade") * this._accEvaSkillMult) * this._evaMult;
-					var damageResult = this.resolveMentalDamage(
-						hitDamage, 
-						acc, 
-						accBonus,
-						eva, 
-						targetMentalProt, 
-						target.mentalToughness(), 
-						subjectStress,
-						targetStress,
-						target.isDown());
-					results.stress.mind += damageResult.stress;
-					results.damage.mind += damageResult.damage;
-					results.critical.mind = damageResult.critical ? true : results.critical.mind;
-					if(damageResult.stress > 0 || damageResult.damage > 0) {
-						results.shouldPassTurn = false;
+				if(hitResult.dodged) {
+					results.stress.other = hitResult.stress;
+				} else {
+					if(hitResult.hit.head || hitResult.hit.torso || hitResult.hit.leftArm || hitResult.hit.rightArm
+						|| hitResult.hit.leftLeg || hitResult.hit.rightLeg || hitResult.hit.leftHeld || hitResult.hit.rightHeld) {
+						var eva = (target.totalSkill("physEvade") * this._accEvaSkillMult) * this._evaMult;
+						var tripEva = (target.totalSkill("tripEvade") * this._accEvaSkillMult) * this._evaMult;
+						if(hitResult.hit.head) {
+							results.hit.head = true;
+							var damageResult = this.resolvePhysicalDamage(
+								hitDamage, 
+								acc,
+								accBonus,
+								eva,
+								tripEva,
+								targetHeadProt, 
+								target.toughness()/2, 
+								subjectStress,
+								targetStress,
+								target.isDown(),
+								true);
+							results.stress.head += damageResult.stress;
+							results.damage.head += damageResult.damage;
+							results.critical.head = damageResult.critical ? true : results.critical.head;
+							if(damageResult.stress > 0 || damageResult.damage > 0) {
+								results.shouldPassTurn = false;
+							}
+							if(damageResult.shouldConduct) {
+								var conductResults = this.conductMath(target, damageResult, "head");
+								results.stress.torso += conductResults.stress.torso;
+								results.stress.leftArm += conductResults.stress.leftArm;
+								results.stress.rightArm += conductResults.stress.rightArm;
+								results.stress.leftLeg += conductResults.stress.leftLeg;
+								results.stress.rightLeg += conductResults.stress.rightLeg;
+								results.damage.torso += conductResults.damage.torso;
+								results.damage.leftArm += conductResults.damage.leftArm;
+								results.damage.rightArm += conductResults.damage.rightArm;
+								results.damage.leftLeg += conductResults.damage.leftLeg;
+								results.damage.rightLeg += conductResults.damage.rightLeg;
+								results.hit.torso = conductResults.damage.torso > 0 ? true : results.hit.torso;
+								results.hit.leftArm = conductResults.damage.leftArm > 0 ? true : results.hit.leftArm;
+								results.hit.rightArm = conductResults.damage.rightArm > 0 ? true : results.hit.rightArm;
+								results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
+								results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
+								results.critical.torso = conductResults.damage.torso > 0 && damageResult.critical
+									? true : results.critical.torso;
+								results.critical.leftArm = conductResults.damage.leftArm > 0 && damageResult.critical
+									? true : results.critical.leftArm;
+								results.critical.rightArm = conductResults.damage.rightArm > 0 && damageResult.critical
+									? true : results.critical.rightArm;
+								results.critical.leftLeg = conductResults.damage.leftLeg > 0 && damageResult.critical
+									? true : results.critical.leftLeg;
+								results.critical.rightLeg = conductResults.damage.rightLeg > 0 && damageResult.critical
+									? true : results.critical.rightLeg;
+							}
+						}
+						if(hitResult.hit.torso) {
+							results.hit.torso = true;
+							var damageResult = this.resolvePhysicalDamage(
+								hitDamage, 
+								acc, 
+								accBonus,
+								eva,
+								tripEva,
+								targetTorsoProt, 
+								target.toughness(), 
+								subjectStress,
+								targetStress,
+								target.isDown(),
+								false);
+							results.stress.torso += damageResult.stress;
+							results.damage.torso += damageResult.damage;
+							results.critical.torso = damageResult.critical ? true : results.critical.torso;
+							if(damageResult.stress > 0 || damageResult.damage > 0) {
+								results.shouldPassTurn = false;
+							}
+							if(damageResult.shouldConduct) {
+								var conductResults = this.conductMath(target, damageResult, "torso");
+								results.stress.leftArm += conductResults.stress.leftArm;
+								results.stress.rightArm += conductResults.stress.rightArm;
+								results.stress.leftLeg += conductResults.stress.leftLeg;
+								results.stress.rightLeg += conductResults.stress.rightLeg;
+								results.damage.leftArm += conductResults.damage.leftArm;
+								results.damage.rightArm += conductResults.damage.rightArm;
+								results.damage.leftLeg += conductResults.damage.leftLeg;
+								results.damage.rightLeg += conductResults.damage.rightLeg;
+								results.hit.leftArm = conductResults.damage.leftArm > 0 ? true : results.hit.leftArm;
+								results.hit.rightArm = conductResults.damage.rightArm > 0 ? true : results.hit.rightArm;
+								results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
+								results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
+								results.critical.leftArm = conductResults.damage.leftArm > 0 && damageResult.critical
+									? true : results.critical.leftArm;
+								results.critical.rightArm = conductResults.damage.rightArm > 0 && damageResult.critical
+									? true : results.critical.rightArm;
+								results.critical.leftLeg = conductResults.damage.leftLeg > 0 && damageResult.critical
+									? true : results.critical.leftLeg;
+								results.critical.rightLeg = conductResults.damage.rightLeg > 0 && damageResult.critical
+									? true : results.critical.rightLeg;
+							}
+						}
+						if(hitResult.hit.leftArm) {
+							results.hit.leftArm = true;
+							var damageResult = this.resolvePhysicalDamage(
+								hitDamage, 
+								acc, 
+								accBonus,
+								eva,
+								tripEva,
+								targetLeftArmProt, 
+								target.toughness(), 
+								subjectStress,
+								targetStress,
+								target.isDown(),
+								target.limbsType() === "winged" && target.isFlying());
+							results.stress.leftArm += damageResult.stress;
+							results.damage.leftArm += damageResult.damage;
+							results.critical.leftArm = damageResult.critical ? true : results.critical.leftArm;
+							if(damageResult.stress > 0 || damageResult.damage > 0) {
+								results.shouldPassTurn = false;
+							}
+							if(target.limbsType() !== "winged" || !target.isFlying() && results.shouldCleave) {
+								var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult, "vitalOnly");
+								results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
+								results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
+								results.stress.torso += cleaveResults.stress.torso;
+								results.stress.head += cleaveResults.stress.head;
+								results.damage.torso += cleaveResults.damage.torso;
+								results.damage.head += cleaveResults.damage.head;
+							}
+							if(damageResult.shouldConduct) {
+								var conductResults = this.conductMath(target, damageResult, "leftArm");
+								results.stress.torso += conductResults.stress.torso;
+								results.stress.leftLeg += conductResults.stress.leftLeg;
+								results.stress.rightLeg += conductResults.stress.rightLeg;
+								results.damage.torso += conductResults.damage.torso;
+								results.damage.leftLeg += conductResults.damage.leftLeg;
+								results.damage.rightLeg += conductResults.damage.rightLeg;
+								results.hit.torso = conductResults.damage.torso > 0 ? true : results.hit.torso;
+								results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
+								results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
+								results.critical.torso = conductResults.damage.torso > 0 && damageResult.critical
+									? true : results.critical.torso;
+								results.critical.leftLeg = conductResults.damage.leftLeg > 0 && damageResult.critical
+									? true : results.critical.leftLeg;
+								results.critical.rightLeg = conductResults.damage.rightLeg > 0 && damageResult.critical
+									? true : results.critical.rightLeg;
+							}
+						}
+						if(hitResult.hit.rightArm) {
+							results.hit.rightArm = true;
+							var damageResult = this.resolvePhysicalDamage(
+								hitDamage, 
+								acc, 
+								accBonus,
+								eva,
+								tripEva,
+								targetRightArmProt, 
+								target.toughness(), 
+								subjectStress,
+								targetStress,
+								target.isDown(),
+								target.limbsType() === "winged" && target.isFlying());
+							results.stress.rightArm += damageResult.stress;
+							results.damage.rightArm += damageResult.damage;
+							results.critical.rightArm = damageResult.critical ? true : results.critical.rightArm;
+							if(damageResult.stress > 0 || damageResult.damage > 0) {
+								results.shouldPassTurn = false;
+							}
+							if(target.limbsType() !== "winged" || !target.isFlying() && results.shouldCleave) {
+								var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult, "vitalOnly");
+								results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
+								results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
+								results.stress.torso += cleaveResults.stress.torso;
+								results.stress.head += cleaveResults.stress.head;
+								results.damage.torso += cleaveResults.damage.torso;
+								results.damage.head += cleaveResults.damage.head;
+							}
+							if(damageResult.shouldConduct) {
+								var conductResults = this.conductMath(target, damageResult, "rightArm");
+								results.stress.torso += conductResults.stress.torso;
+								results.stress.leftLeg += conductResults.stress.leftLeg;
+								results.stress.rightLeg += conductResults.stress.rightLeg;
+								results.damage.torso += conductResults.damage.torso;
+								results.damage.leftLeg += conductResults.damage.leftLeg;
+								results.damage.rightLeg += conductResults.damage.rightLeg;
+								results.hit.torso = conductResults.damage.torso > 0 ? true : results.hit.torso;
+								results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
+								results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
+								results.critical.torso = conductResults.damage.torso > 0 && damageResult.critical
+									? true : results.critical.torso;
+								results.critical.leftLeg = conductResults.damage.leftLeg > 0 && damageResult.critical
+									? true : results.critical.leftLeg;
+								results.critical.rightLeg = conductResults.damage.rightLeg > 0 && damageResult.critical
+									? true : results.critical.rightLeg;
+							}
+						}
+						if(hitResult.hit.leftLeg) {
+							results.hit.leftLeg = true;
+							var damageResult = this.resolvePhysicalDamage(
+								hitDamage, 
+								acc, 
+								accBonus,
+								eva,
+								tripEva,
+								targetLeftLegProt, 
+								target.toughness(), 
+								subjectStress,
+								targetStress,
+								target.isDown(),
+								target.limbsType() !== "quadrupedal" && (target.limbsType() !== "winged" || !target.isFlying()));
+							results.stress.leftLeg += damageResult.stress;
+							results.damage.leftLeg += damageResult.damage;
+							results.critical.leftLeg = damageResult.critical ? true : results.critical.leftLeg;
+							if(damageResult.stress > 0 || damageResult.damage > 0) {
+								results.shouldPassTurn = false;
+							}
+							if(target.limbsType() === "winged" && target.isFlying() && results.shouldCleave) {
+								var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult, "vitalOnly");
+								results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
+								results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
+								results.stress.torso += cleaveResults.stress.torso;
+								results.stress.head += cleaveResults.stress.head;
+								results.damage.torso += cleaveResults.damage.torso;
+								results.damage.head += cleaveResults.damage.head;
+							}
+						}
+						if(hitResult.hit.rightLeg) {
+							results.hit.rightLeg = true;
+							var damageResult = this.resolvePhysicalDamage(
+								hitDamage, 
+								acc, 
+								accBonus,
+								eva,
+								tripEva,
+								targetRightLegProt, 
+								target.toughness(), 
+								subjectStress,
+								targetStress,
+								target.isDown(),
+								target.limbsType() !== "quadrupedal" && (target.limbsType() !== "winged" || !target.isFlying()));
+							results.stress.rightLeg += damageResult.stress;
+							results.damage.rightLeg += damageResult.damage;
+							results.critical.rightLeg = damageResult.critical ? true : results.critical.rightLeg;
+							if(damageResult.stress > 0 || damageResult.damage > 0) {
+								results.shouldPassTurn = false;
+							}
+							if(target.limbsType() === "winged" && target.isFlying() && results.shouldCleave) {
+								var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult, "vitalOnly");
+								results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
+								results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
+								results.stress.torso += cleaveResults.stress.torso;
+								results.stress.head += cleaveResults.stress.head;
+								results.damage.torso += cleaveResults.damage.torso;
+								results.damage.head += cleaveResults.damage.head;
+							}
+						}
+						if(hitResult.hit.leftHeld) {
+							results.hit.leftHeld = true;
+							var damageResult = this.resolvePhysicalDamage(
+								hitDamage, 
+								acc, 
+								accBonus,
+								eva,
+								tripEva,
+								targetLeftHeldProt, 
+								this._equipmentBaseToughness, 
+								subjectStress,
+								targetStress,
+								target.isDown(),
+								false,
+								true);
+							results.stress.leftHeld += damageResult.stress;
+							if(damageResult.stress > 0 || damageResult.damage > 0) {
+								results.shouldPassTurn = false;
+							}
+							if(results.shouldCleave) {
+								var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult, "limbsAndVital");
+								results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
+								results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
+								results.hit.leftArm = cleaveResults.hit.leftArm ? true : results.hit.leftArm;
+								results.hit.rightArm = cleaveResults.hit.rightArm ? true : results.hit.rightArm;
+								results.hit.leftLeg = cleaveResults.hit.leftLeg ? true : results.hit.leftLeg;
+								results.hit.rightLeg = cleaveResults.hit.rightLeg ? true : results.hit.rightLeg;
+								results.stress.torso += cleaveResults.stress.torso;
+								results.stress.head += cleaveResults.stress.head;
+								results.stress.leftArm += cleaveResults.stress.leftArm;
+								results.stress.rightArm += cleaveResults.stress.rightArm;
+								results.stress.leftLeg += cleaveResults.stress.leftLeg;
+								results.stress.rightLeg += cleaveResults.stress.rightLeg;
+								results.damage.torso += cleaveResults.damage.torso;
+								results.damage.head += cleaveResults.damage.head;
+								results.damage.leftArm += cleaveResults.damage.leftArm;
+								results.damage.rightArm += cleaveResults.damage.rightArm;
+								results.damage.leftLeg += cleaveResults.damage.leftLeg;
+								results.damage.rightLeg += cleaveResults.damage.rightLeg;
+							}
+							if(damageResult.shouldConduct) {
+								var conductResults = this.conductMath(target, damageResult, "leftHeld");
+								results.stress.torso += conductResults.stress.torso;
+								results.stress.leftArm += conductResults.stress.leftArm;
+								results.stress.rightArm += conductResults.stress.rightArm;
+								results.stress.leftLeg += conductResults.stress.leftLeg;
+								results.stress.rightLeg += conductResults.stress.rightLeg;
+								results.damage.torso += conductResults.damage.torso;
+								results.damage.leftArm += conductResults.damage.leftArm;
+								results.damage.rightArm += conductResults.damage.rightArm;
+								results.damage.leftLeg += conductResults.damage.leftLeg;
+								results.damage.rightLeg += conductResults.damage.rightLeg;
+								results.hit.torso = conductResults.damage.torso > 0 ? true : results.hit.torso;
+								results.hit.leftArm = conductResults.damage.leftArm > 0 ? true : results.hit.leftArm;
+								results.hit.rightArm = conductResults.damage.rightArm > 0 ? true : results.hit.rightArm;
+								results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
+								results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
+								results.critical.torso = conductResults.damage.torso > 0 && damageResult.critical
+									? true : results.critical.torso;
+								results.critical.leftArm = conductResults.damage.leftArm > 0 && damageResult.critical
+									? true : results.critical.leftArm;
+								results.critical.rightArm = conductResults.damage.rightArm > 0 && damageResult.critical
+									? true : results.critical.rightArm;
+								results.critical.leftLeg = conductResults.damage.leftLeg > 0 && damageResult.critical
+									? true : results.critical.leftLeg;
+								results.critical.rightLeg = conductResults.damage.rightLeg > 0 && damageResult.critical
+									? true : results.critical.rightLeg;
+							}
+						}
+						if(hitResult.hit.rightHeld) {
+							results.hit.rightHeld = true;
+							var damageResult = this.resolvePhysicalDamage(
+								hitDamage, 
+								acc, 
+								accBonus,
+								eva,
+								tripEva,
+								targetRightHeldProt, 
+								this._equipmentBaseToughness, 
+								subjectStress,
+								targetStress,
+								target.isDown(),
+								false,
+								true);
+							results.stress.rightHeld += damageResult.stress;
+							if(damageResult.stress > 0 || damageResult.damage > 0) {
+								results.shouldPassTurn = false;
+							}
+							if(results.shouldCleave) {
+								var cleaveResults = this.cleaveMath(subject, actionInfo, hit, target, targetsByHit, hitGroupIndex, damageResult, "limbsAndVital");
+								results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
+								results.hit.head = cleaveResults.hit.head ? true : results.hit.head;
+								results.hit.leftArm = cleaveResults.hit.leftArm ? true : results.hit.leftArm;
+								results.hit.rightArm = cleaveResults.hit.rightArm ? true : results.hit.rightArm;
+								results.hit.leftLeg = cleaveResults.hit.leftLeg ? true : results.hit.leftLeg;
+								results.hit.rightLeg = cleaveResults.hit.rightLeg ? true : results.hit.rightLeg;
+								results.stress.torso += cleaveResults.stress.torso;
+								results.stress.head += cleaveResults.stress.head;
+								results.stress.leftArm += cleaveResults.stress.leftArm;
+								results.stress.rightArm += cleaveResults.stress.rightArm;
+								results.stress.leftLeg += cleaveResults.stress.leftLeg;
+								results.stress.rightLeg += cleaveResults.stress.rightLeg;
+								results.damage.torso += cleaveResults.damage.torso;
+								results.damage.head += cleaveResults.damage.head;
+								results.damage.leftArm += cleaveResults.damage.leftArm;
+								results.damage.rightArm += cleaveResults.damage.rightArm;
+								results.damage.leftLeg += cleaveResults.damage.leftLeg;
+								results.damage.rightLeg += cleaveResults.damage.rightLeg;
+							}
+							if(damageResult.shouldConduct) {
+								this.conductMath(target, damageResult, "rightHeld");
+								results.stress.torso += conductResults.stress.torso;
+								results.stress.leftArm += conductResults.stress.leftArm;
+								results.stress.rightArm += conductResults.stress.rightArm;
+								results.stress.leftLeg += conductResults.stress.leftLeg;
+								results.stress.rightLeg += conductResults.stress.rightLeg;
+								results.damage.torso += conductResults.damage.torso;
+								results.damage.leftArm += conductResults.damage.leftArm;
+								results.damage.rightArm += conductResults.damage.rightArm;
+								results.damage.leftLeg += conductResults.damage.leftLeg;
+								results.damage.rightLeg += conductResults.damage.rightLeg;
+								results.hit.torso = conductResults.damage.torso > 0 ? true : results.hit.torso;
+								results.hit.leftArm = conductResults.damage.leftArm > 0 ? true : results.hit.leftArm;
+								results.hit.rightArm = conductResults.damage.rightArm > 0 ? true : results.hit.rightArm;
+								results.hit.leftLeg = conductResults.damage.leftLeg > 0 ? true : results.hit.leftLeg;
+								results.hit.rightLeg = conductResults.damage.rightLeg > 0 ? true : results.hit.rightLeg;
+								results.critical.torso = conductResults.damage.torso > 0 && damageResult.critical
+									? true : results.critical.torso;
+								results.critical.leftArm = conductResults.damage.leftArm > 0 && damageResult.critical
+									? true : results.critical.leftArm;
+								results.critical.rightArm = conductResults.damage.rightArm > 0 && damageResult.critical
+									? true : results.critical.rightArm;
+								results.critical.leftLeg = conductResults.damage.leftLeg > 0 && damageResult.critical
+									? true : results.critical.leftLeg;
+								results.critical.rightLeg = conductResults.damage.rightLeg > 0 && damageResult.critical
+									? true : results.critical.rightLeg;
+							}
+						}
 					}
-				}
-				hitDodged = false;
-				results.dodged = false;
-				results.stress.other += hitDamage.stress;
-			}
-		}
-		var heal = hit.heal;
-		if(heal) {
-			hitDodged = false;
-			results.dodged = false;
-			results.shouldPassTurn = false;
-			if(heal.stress !== undefined) {
-				results.heal.stress += heal.stress ;
-			}
-			if(heal.damage !== undefined) {
-				if((hit.aoe === undefined || hit.aoe <= 0) && this._tbsTargetPart != undefined) {
-					results.heal[this._tbsTargetPart] = heal.damage;
-					results.stress.other = Math.floor(Math.min(target.getDamage(this._tbsTargetPart), heal.damage) / this._damageStressDivisor);
-				} else if(hit.aoe !== undefined && hit.aoe >= 1) {
-					results.heal.head += heal.damage;
-					results.heal.torso += heal.damage;
-					results.heal.leftArm += heal.damage;
-					results.heal.rightArm += heal.damage;
-					results.heal.leftLeg += heal.damage;
-					results.heal.rightLeg += heal.damage;
-					results.hit.head = true;
-					results.hit.torso = true;
-					results.hit.leftArm = true;
-					results.hit.rightArm = true;
-					results.hit.leftLeg = true;
-					results.hit.rightLeg = true;
-					var stressFromHealing = Math.min(target.getDamage("head"), heal.damage) / this._damageStressDivisor;
-					stressFromHealing += Math.min(target.getDamage("torso"), heal.damage) / this._damageStressDivisor;
-					stressFromHealing += Math.min(target.getDamage("leftArm"), heal.damage) / this._damageStressDivisor;
-					stressFromHealing += Math.min(target.getDamage("rightArm"), heal.damage) / this._damageStressDivisor;
-					stressFromHealing += Math.min(target.getDamage("leftLeg"), heal.damage) / this._damageStressDivisor;
-					stressFromHealing += Math.min(target.getDamage("rightLeg"), heal.damage) / this._damageStressDivisor;
-					results.stress.other += Math.floor(stressFromHealing);
+					if(hitResult.hit.mind) {
+						results.hit.mind = true;
+						var eva = (target.totalSkill("mentalEvade") * this._accEvaSkillMult) * this._evaMult;
+						var damageResult = this.resolveMentalDamage(
+							hitDamage, 
+							acc, 
+							accBonus,
+							eva, 
+							targetMentalProt, 
+							target.mentalToughness(), 
+							subjectStress,
+							targetStress,
+							target.isDown());
+						results.stress.mind += damageResult.stress;
+						results.damage.mind += damageResult.damage;
+						results.critical.mind = damageResult.critical ? true : results.critical.mind;
+						if(damageResult.stress > 0 || damageResult.damage > 0) {
+							results.shouldPassTurn = false;
+						}
+					}
+					hitDodged = false;
+					results.dodged = false;
+					results.stress.other += hitDamage.stress;
 				}
 			}
-		}
-		var buffs = hit.buffs;
-		if(buffs) {
-			buffs.forEach(function (buff) {
+			var heal = hit.heal;
+			if(heal) {
 				hitDodged = false;
 				results.dodged = false;
 				results.shouldPassTurn = false;
-				var newBuff = {};
-				newBuff.duration = buff.duration === undefined ? 1 : buff.duration;
-				newBuff.iconId = buff.iconId === undefined ? 0 : buff.iconId;
-				newBuff.protection = {};
-				newBuff.protection.mind = {};
-				newBuff.protection.mind.defense = 0;
-				newBuff.protection.fullBody = {};
-				newBuff.protection.fullBody.defense = {};
-				newBuff.protection.fullBody.defense.solid = 0;
-				newBuff.protection.fullBody.defense.fluid = 0;
-				newBuff.protection.head = {};
-				newBuff.protection.head.defense = {};
-				newBuff.protection.head.defense.solid = 0;
-				newBuff.protection.head.defense.fluid = 0;
-				newBuff.protection.torso = {};
-				newBuff.protection.torso.defense = {};
-				newBuff.protection.torso.defense.solid = 0;
-				newBuff.protection.torso.defense.fluid = 0;
-				newBuff.protection.leftArm = {};
-				newBuff.protection.leftArm.defense = {};
-				newBuff.protection.leftArm.defense.solid = 0;
-				newBuff.protection.leftArm.defense.fluid = 0;
-				newBuff.protection.rightArm = {};
-				newBuff.protection.rightArm.defense = {};
-				newBuff.protection.rightArm.defense.solid = 0;
-				newBuff.protection.rightArm.defense.fluid = 0;
-				newBuff.protection.leftLeg = {};
-				newBuff.protection.leftLeg.defense = {};
-				newBuff.protection.leftLeg.defense.solid = 0;
-				newBuff.protection.leftLeg.defense.fluid = 0;
-				newBuff.protection.rightLeg = {};
-				newBuff.protection.rightLeg.defense = {};
-				newBuff.protection.rightLeg.defense.solid = 0;
-				newBuff.protection.rightLeg.defense.fluid = 0;
-				if(buff.protection) {
-					var protection = buff.protection;
-					if(protection.fullBody) {
-						var fullBody = protection.fullBody;
-						if(fullBody.defense) {
-							var defense = fullBody.defense;
-							newBuff.protection.fullBody.defense.solid = defense.solid === undefined ? 0 : defense.solid;
-							newBuff.protection.fullBody.defense.fluid = defense.fluid === undefined ? 0 : defense.fluid;
+				if(heal.stress !== undefined) {
+					results.heal.stress += heal.stress ;
+				}
+				if(heal.damage !== undefined) {
+					if((hit.aoe === undefined || hit.aoe <= 0) && this._tbsTargetPart != undefined) {
+						results.heal[this._tbsTargetPart] = heal.damage;
+						results.stress.other = Math.floor(Math.min(target.getDamage(this._tbsTargetPart), heal.damage) / this._damageStressDivisor);
+					} else if(hit.aoe !== undefined && hit.aoe >= 1) {
+						results.heal.head += heal.damage;
+						results.heal.torso += heal.damage;
+						results.heal.leftArm += heal.damage;
+						results.heal.rightArm += heal.damage;
+						results.heal.leftLeg += heal.damage;
+						results.heal.rightLeg += heal.damage;
+						results.hit.head = true;
+						results.hit.torso = true;
+						results.hit.leftArm = true;
+						results.hit.rightArm = true;
+						results.hit.leftLeg = true;
+						results.hit.rightLeg = true;
+						var stressFromHealing = Math.min(target.getDamage("head"), heal.damage) / this._damageStressDivisor;
+						stressFromHealing += Math.min(target.getDamage("torso"), heal.damage) / this._damageStressDivisor;
+						stressFromHealing += Math.min(target.getDamage("leftArm"), heal.damage) / this._damageStressDivisor;
+						stressFromHealing += Math.min(target.getDamage("rightArm"), heal.damage) / this._damageStressDivisor;
+						stressFromHealing += Math.min(target.getDamage("leftLeg"), heal.damage) / this._damageStressDivisor;
+						stressFromHealing += Math.min(target.getDamage("rightLeg"), heal.damage) / this._damageStressDivisor;
+						results.stress.other += Math.floor(stressFromHealing);
+					}
+				}
+			}
+			var buffs = hit.buffs;
+			if(buffs) {
+				buffs.forEach(function (buff) {
+					hitDodged = false;
+					results.dodged = false;
+					results.shouldPassTurn = false;
+					var newBuff = {};
+					newBuff.duration = buff.duration === undefined ? 1 : buff.duration;
+					newBuff.iconId = buff.iconId === undefined ? 0 : buff.iconId;
+					newBuff.protection = {};
+					newBuff.protection.mind = {};
+					newBuff.protection.mind.defense = 0;
+					newBuff.protection.fullBody = {};
+					newBuff.protection.fullBody.defense = {};
+					newBuff.protection.fullBody.defense.solid = 0;
+					newBuff.protection.fullBody.defense.fluid = 0;
+					newBuff.protection.head = {};
+					newBuff.protection.head.defense = {};
+					newBuff.protection.head.defense.solid = 0;
+					newBuff.protection.head.defense.fluid = 0;
+					newBuff.protection.torso = {};
+					newBuff.protection.torso.defense = {};
+					newBuff.protection.torso.defense.solid = 0;
+					newBuff.protection.torso.defense.fluid = 0;
+					newBuff.protection.leftArm = {};
+					newBuff.protection.leftArm.defense = {};
+					newBuff.protection.leftArm.defense.solid = 0;
+					newBuff.protection.leftArm.defense.fluid = 0;
+					newBuff.protection.rightArm = {};
+					newBuff.protection.rightArm.defense = {};
+					newBuff.protection.rightArm.defense.solid = 0;
+					newBuff.protection.rightArm.defense.fluid = 0;
+					newBuff.protection.leftLeg = {};
+					newBuff.protection.leftLeg.defense = {};
+					newBuff.protection.leftLeg.defense.solid = 0;
+					newBuff.protection.leftLeg.defense.fluid = 0;
+					newBuff.protection.rightLeg = {};
+					newBuff.protection.rightLeg.defense = {};
+					newBuff.protection.rightLeg.defense.solid = 0;
+					newBuff.protection.rightLeg.defense.fluid = 0;
+					if(buff.protection) {
+						var protection = buff.protection;
+						if(protection.fullBody) {
+							var fullBody = protection.fullBody;
+							if(fullBody.defense) {
+								var defense = fullBody.defense;
+								newBuff.protection.fullBody.defense.solid = defense.solid === undefined ? 0 : defense.solid;
+								newBuff.protection.fullBody.defense.fluid = defense.fluid === undefined ? 0 : defense.fluid;
+							}
+						}
+						if(protection.mental) {
+							var mental = protection.mental;
+							newBuff.protection.mind.defense = mental.defense === undefined ? 0 : mental.defense;
 						}
 					}
-					if(protection.mental) {
-						var mental = protection.mental;
-						newBuff.protection.mind.defense = mental.defense === undefined ? 0 : mental.defense;
+					newBuff.core = {};
+					newBuff.core.physEvade = 0;
+					newBuff.core.tripEvade = 0;
+					newBuff.core.mentalEvade = 0;
+					if(buff.core) {
+						newBuff.core.physEvade = buff.core.physEvade === undefined ? 0 : buff.core.physEvade;
+						newBuff.core.tripEvade = buff.core.tripEvade === undefined ? 0 : buff.core.tripEvade;
+						newBuff.core.mentalEvade = buff.core.mentalEvade === undefined ? 0 : buff.core.mentalEvade;
 					}
+					results.buffs.push(newBuff);
+				});
+			}
+			if(hit.initialAnimationId !== undefined && hit.initialAnimationId > 0) {
+				results.initialAnimationIds.push(hit.initialAnimationId);
+			}
+			if(hitDodged) {
+				if(hit.missAnimationId !== undefined && hit.missAnimationId > 0) {
+					results.animationIds.push(hit.missAnimationId);
 				}
-				newBuff.core = {};
-				newBuff.core.physEvade = 0;
-				newBuff.core.tripEvade = 0;
-				newBuff.core.mentalEvade = 0;
-				if(buff.core) {
-					newBuff.core.physEvade = buff.core.physEvade === undefined ? 0 : buff.core.physEvade;
-					newBuff.core.tripEvade = buff.core.tripEvade === undefined ? 0 : buff.core.tripEvade;
-					newBuff.core.mentalEvade = buff.core.mentalEvade === undefined ? 0 : buff.core.mentalEvade;
+				if(hit.ongoingMissAnimationId !== undefined && hit.ongoingMissAnimationId > 0) {
+					results.ongoingAnimationIds.push(hit.ongoingMissAnimationId);
 				}
-				results.buffs.push(newBuff);
-			});
-		}
-		if(hit.initialAnimationId !== undefined && hit.initialAnimationId > 0) {
-			results.initialAnimationIds.push(hit.initialAnimationId);
-		}
-		if(hitDodged) {
-			if(hit.missAnimationId !== undefined && hit.missAnimationId > 0) {
-				results.animationIds.push(hit.missAnimationId);
+			} else {
+				if(hit.animationId !== undefined && hit.animationId > 0) {
+					results.animationIds.push(hit.animationId);
+					results.animationVariances.push(variance);
+				}
+				if(hit.ongoingAnimationId !== undefined && hit.ongoingAnimationId > 0) {
+					results.ongoingAnimationIds.push(hit.ongoingAnimationId);
+				}
 			}
-			if(hit.ongoingMissAnimationId !== undefined && hit.ongoingMissAnimationId > 0) {
-				results.ongoingAnimationIds.push(hit.ongoingMissAnimationId);
+			if(!hitDodged) {
+				this._nonFollowupsAllDodged[hitGroupIndex] = false;
 			}
-		} else {
-			if(hit.animationId !== undefined && hit.animationId > 0) {
-				results.animationIds.push(hit.animationId);
-			}
-			if(hit.ongoingAnimationId !== undefined && hit.ongoingAnimationId > 0) {
-				results.ongoingAnimationIds.push(hit.ongoingAnimationId);
-			}
-		}
-		if(!hitDodged) {
-			this._nonFollowupsAllDodged[hitGroupIndex] = false;
 		}
 	}
 	return results;

@@ -2973,26 +2973,30 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 					this.drawText("-", nameOffset + 78, lineHeight, 100, 'right');
 					this.drawText("-", nameOffset + 124, lineHeight, 100, 'right');
 				} else {
+					var multipleHits = 1;
+					if(hits[i].multipleHits !== undefined) {
+						multipleHits = hits[i].multipleHits;
+					}
 					if(damage) {
 						var hitDamage = BattleManager.getCompleteDamage(actor, actionInfo, hits[i]);
 						
-						damageLineOffset += this.drawDamageForType(hitDamage.trip, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("trip"));
-						damageLineOffset += this.drawDamageForType(hitDamage.blunt, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("blunt"));
-						damageLineOffset += this.drawDamageForType(hitDamage.cut, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("cut"));
-						damageLineOffset += this.drawDamageForType(hitDamage.keen, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("keen"));
-						damageLineOffset += this.drawDamageForType(hitDamage.thrust, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("thrust"));
-						damageLineOffset += this.drawDamageForType(hitDamage.stiletto, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("stiletto"));
-						damageLineOffset += this.drawDamageForType(hitDamage.bullet, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("bullet"));
-						damageLineOffset += this.drawDamageForType(hitDamage.buckshot, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("buckshot"));
-						damageLineOffset += this.drawDamageForType(hitDamage.fire, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("fire"));
-						damageLineOffset += this.drawDamageForType(hitDamage.ice, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("ice"));
-						damageLineOffset += this.drawDamageForType(hitDamage.corrosion, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("corrosion"));
-						damageLineOffset += this.drawDamageForType(hitDamage.lightning, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("conducted"));
-						//damageLineOffset += this.drawDamage(hitDamage.psychic, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("psychic")) ? 1 : 0;
+						damageLineOffset += this.drawDamageForType(hitDamage.trip*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("trip"));
+						damageLineOffset += this.drawDamageForType(hitDamage.blunt*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("blunt"));
+						damageLineOffset += this.drawDamageForType(hitDamage.cut*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("cut"));
+						damageLineOffset += this.drawDamageForType(hitDamage.keen*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("keen"));
+						damageLineOffset += this.drawDamageForType(hitDamage.thrust*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("thrust"));
+						damageLineOffset += this.drawDamageForType(hitDamage.stiletto*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("stiletto"));
+						damageLineOffset += this.drawDamageForType(hitDamage.bullet*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("bullet"));
+						damageLineOffset += this.drawDamageForType(hitDamage.buckshot*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("buckshot"));
+						damageLineOffset += this.drawDamageForType(hitDamage.fire*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("fire"));
+						damageLineOffset += this.drawDamageForType(hitDamage.ice*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("ice"));
+						damageLineOffset += this.drawDamageForType(hitDamage.corrosion*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("corrosion"));
+						damageLineOffset += this.drawDamageForType(hitDamage.lightning*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("conducted"));
+						//damageLineOffset += this.drawDamage(hitDamage.psychic*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("psychic")) ? 1 : 0;
 					}
 					if(heal) {
-						damageLineOffset += this.drawHeal(heal.stress, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("healStress")) ? 1 : 0;
-						damageLineOffset += this.drawHeal(heal.damage, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("healBody")) ? 1 : 0;
+						damageLineOffset += this.drawHeal(heal.stress*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("healStress")) ? 1 : 0;
+						damageLineOffset += this.drawHeal(heal.damage*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("healBody")) ? 1 : 0;
 					}
 					if(buffs) {
 						var j;
@@ -3002,19 +3006,19 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 								var fullBody = prot.fullBody;
 								if(fullBody && fullBody.defense) {
 									var defense = fullBody.defense;
-									damageLineOffset += this.drawHeal(defense.solid, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("solidDefense")) ? 1 : 0;
-									damageLineOffset += this.drawHeal(defense.fluid, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("fluidDefense")) ? 1 : 0;
+									damageLineOffset += this.drawHeal(defense.solid*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("solidDefense")) ? 1 : 0;
+									damageLineOffset += this.drawHeal(defense.fluid*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("fluidDefense")) ? 1 : 0;
 								}
 								var mental = prot.mental;
 								if(mental) {
-									//damageLineOffset += this.drawHeal(mental.defense, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("mentalDefense")) ? 1 : 0;
+									//damageLineOffset += this.drawHeal(mental.defense*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("mentalDefense")) ? 1 : 0;
 								}
 							}
 							var core = buffs[j].core;
 							if(core) {
-								damageLineOffset += this.drawHeal(core.physEvade, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("solidDefense")) ? 1 : 0;
-								damageLineOffset += this.drawHeal(core.tripEvade, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("tripEvade")) ? 1 : 0;
-								//damageLineOffset += this.drawHeal(core.mentalEvade, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("mentalDefense")) ? 1 : 0;
+								damageLineOffset += this.drawHeal(core.physEvade*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("solidDefense")) ? 1 : 0;
+								damageLineOffset += this.drawHeal(core.tripEvade*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("tripEvade")) ? 1 : 0;
+								//damageLineOffset += this.drawHeal(core.mentalEvade*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("mentalDefense")) ? 1 : 0;
 							}
 						}
 					}
@@ -3111,7 +3115,7 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 			case "keen":            return 120; break;
 			case "thrust":        	return 107; break;
 			case "stiletto":        return  96; break;
-			case "bullet":         	return 116; break;
+			case "bullet":         	return 115; break;
 			case "buckshot":        return 115; break;
 			case "fire":           	return  64; break;
 			case "ice":            	return  65; break;
@@ -4708,14 +4712,16 @@ Window_TbsNoTarget.prototype.windowHeight = function() {
 	
 	Window_BattleLog.prototype.showHitMissAnimations = function(subject, target, results) {
 		if(results.animationIds.length > 0) {
-			results.animationIds.forEach(function (animationId) {
+			var i;
+			for(i = 0; i < results.animationIds.length; i++) {
+				var animationId = results.animationIds[i];
 				if(animationId !== undefined && animationId > 0) {
 					var animation = $dataAnimations[animationId];
 					if (animation) {
-						target.startAnimation(animationId, subject.isEnemy(), 0);
+						target.startAnimation(animationId, subject.isEnemy(), 0, results.animationVariances[i]);
 					}
 				}
-			});
+			}
 		}
 		if(results.ongoingAnimationIds.length > 0) {
 			results.ongoingAnimationIds.forEach(function (animationId) {

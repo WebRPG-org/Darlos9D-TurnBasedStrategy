@@ -1200,6 +1200,11 @@
 		this.setActionState('done');
 	};
 	
+	Game_Battler.prototype.startAnimation = function(animationId, mirror, delay, variance) {
+		var data = { animationId: animationId, mirror: mirror, delay: delay, variance: variance };
+		this._animations.push(data);
+	};
+	
 	Game_Battler.prototype.clearAnimations = function() {
 		this._animations = [];
 		this._ongoingAnimations = [];
@@ -1440,8 +1445,8 @@
 		}
 	};
 	
-	Game_Actor.prototype.startAnimation = function(animationId, mirror, delay) {
-		Game_Battler.prototype.startAnimation.call(this, animationId, mirror, delay);
+	Game_Actor.prototype.startAnimation = function(animationId, mirror, delay, variance) {
+		Game_Battler.prototype.startAnimation.call(this, animationId, mirror, delay, variance);
 	};
 	
 	//enemy
