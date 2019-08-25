@@ -1186,14 +1186,7 @@
 	Game_Map.prototype.isCursorInActionField = function() {
 		var actionTiles = this._tbsActionsTiles[this._tbsSelectedActionIndex];
 		if(!actionTiles) { return false; }
-		var i;
-		for(i = 0; i < actionTiles.length; i++) {
-			var actionTile = actionTiles[i];
-			if(!!this.getExistingTbsTile($gamePlayer.x, $gamePlayer.y, actionTile.tiles)) {
-				return true;
-			}
-		}
-		return false;
+		return this.getExistingTbsTile($gamePlayer.x, $gamePlayer.y, actionTiles);
 	};
 	
 	Game_Map.prototype.setTbsSelectedActionType = function(type) {
@@ -1248,6 +1241,18 @@
 	
 	Game_Map.prototype.getTbsActionTargetPart = function() {
 		return this._tbsActionTargetPart;
+	};
+	
+	Game_Map.prototype.getRangedDistance = function() {
+		if(this._tbsSelectedActor !== undefined && this._tbsSelectedAction !== undefined
+			&& this._tbsActionTargetLocationX !== undefined && this._tbsActionTargetLocationY !== undefined)
+		{
+			var actorChara = this._tbsSelectedActor.chara;
+			var distance = this.actualDistance(actorChara.x, actorChara.y,
+				this._tbsActionTargetLocationX, this._tbsActionTargetLocationY);
+			return Math.max(0, distance - this._tbsSelectedActor.battler.baseRange()/2);
+		}
+		return 0;
 	};
 	
 	Game_Map.prototype.setShouldPassTurn = function(should) {
@@ -1742,8 +1747,7 @@
 			var actionRange = actionAtPosition.actionRange;
 			var actionTiles = actionAtPosition.actionTiles;
 			this._tbsPassageType = actionRange.type;
-			this.checkActionTiles(actionAtPosition.x, actionAtPosition.y, actionRange, actionTiles, true);
-			processArea -= Math.PI * Math.pow(actionRange.baseRange + actionRange.range, 2);
+			processArea -= this.checkActionTiles(actionAtPosition.x, actionAtPosition.y, actionRange, actionTiles, true);
 			if(this._tbsQueuedActionsAtPositions.length == 0) {
 				break;
 			}
@@ -1751,7 +1755,7 @@
 	};
 	
 	Game_Map.prototype.processQueuedActions = function() {
-		var processArea = 1500;
+		var processArea = 500;
 		if(!this._tbsSelectedActor || !this._tbsQueuedActions || this._tbsQueuedActions.length === 0) {
 			this.processQueuedActionsAtPositions(processArea);
 			return;
@@ -1763,9 +1767,11 @@
 			var actionRange = this.getLargestActionRange(action);
 			var actionTiles = [];
 			this._tbsPassageType = actionRange.type;
-			this.checkActionTiles(chara.x, chara.y, actionRange, actionTiles);
+			processArea -= this.checkActionTiles(chara.x, chara.y, actionRange, actionTiles);
+			actionTiles.forEach(function (tile) {
+				tile.centerMovePosition = true;
+			});
 			this._tbsActionsTiles[this._tbsActionsTiles.length] = actionTiles;
-			processArea -= Math.PI * Math.pow(actionRange.baseRange + actionRange.range, 2);
 			if(this._tbsQueuedActions.length == 0) {
 				this.processQueuedActionsAtPositions(processArea);
 				break;
@@ -2153,21 +2159,10 @@
 		if($gameTemp.isFreeToMakeRangeTiles()) {
 			var actionTiles = this._tbsActionsTiles[this._tbsSelectedActionIndex];
 			if(!actionTiles) { return; }
-			var chara = this._tbsSelectedActor.chara;
-			var centerActionTile = this.getExistingTbsTile(chara.x, chara.y, actionTiles);
-			if(centerActionTile) {
-				centerActionTile.tiles.forEach(function (tile) {
-					$gameTemp.addTbsRangeTile(tile.x, tile.y,
-						actionTiles.length === 1 ? 'white' : 'red');
-				});
-			}
 			var that = this;
-			actionTiles.forEach(function (actionTile) {
-				if(actionTile.x === chara.x && actionTile.y === chara.y) { return; }
-				actionTile.tiles.forEach(function (tile) {
-					if(that.getExistingTbsTile(tile.x, tile.y, $gameTemp.tbsRangeTilesToAdd())) { return; }
-					$gameTemp.addTbsRangeTile(tile.x, tile.y, 'white');
-				});
+			actionTiles.forEach(function (tile) {
+				if(that.getExistingTbsTile(tile.x, tile.y, $gameTemp.tbsRangeTilesToAdd())) { return; }
+				$gameTemp.addTbsRangeTile(tile.x, tile.y, tile.centerMovePosition ? 'red' : 'white');
 			});
 		}
 	};
@@ -2230,30 +2225,44 @@
 	
 	Game_Map.prototype.isTargetInRangeFromPosition = function(x, y) {
 		if(!this._tbsSelectedActor || !this._tbsSelectedAction || this._tbsActionTargetLocationX === -1) { return false; }
-		var actionTile = this.getExistingTbsTile(x, y, this._tbsActionsTiles[this._tbsSelectedActionIndex]);
-		if(!actionTile) { return false; }
-		return !!this.getExistingTbsTile(this._tbsActionTargetLocationX, this._tbsActionTargetLocationY, actionTile.tiles);
+		if(x == this._tbsActionTargetLocationX && y == this._tbsActionTargetLocationY) { return true; }
+		var distance = this.actualDistance(x, y, this._tbsActionTargetLocationX, this._tbsActionTargetLocationY);
+		var actionRange = this.getLargestActionRange(this._tbsSelectedAction);
+		if(distance > (actionRange.ignoreUserRange ? 0 : actionRange.baseRange) + actionRange.range) { return false; }
+		var boundingCircle = this.getBoundingCircleArray(this._tbsActionTargetLocationX, this._tbsActionTargetLocationY, distance);
+		return !this.isTrajectoryObstructed(x, y, this._tbsActionTargetLocationX, this._tbsActionTargetLocationY, boundingCircle, true);
 	};
 	
 	Game_Map.prototype.calculateMoveDestinationForAction = function() {
 		if(!this._tbsSelectedActor || !this._tbsSelectedAction || this._tbsActionTargetLocationX === -1) { return; }
-		var closest = {};
-		closest.x = -1;
-		closest.y = -1;
-		var closestDistance = -1;
+		var closestX = -1;
+		var closestY = -1;
 		var chara = this._tbsSelectedActor.chara;
-		var that = this;
-		this._tbsActionsTiles[this._tbsSelectedActionIndex].forEach(function (actionTile) {
-			if(!that.isTargetInRangeFromPosition(actionTile.x, actionTile.y)
-				|| that.getTbsActorAtPosition(actionTile.x, actionTile.y)) { return; }
-			var distance = that.actualDistance(chara.x, chara.y, actionTile.x, actionTile.y);
-			if(closestDistance === -1 || distance < closestDistance) {
-				closestDistance = distance;
-				closest.x = actionTile.x;
-				closest.y = actionTile.y;
+		var checkedTiles = [];
+		var destinationFound = false;
+		while(!destinationFound) {
+			var closestDistance = -1;
+			this._tbsMoveTiles.forEach(function (moveTile) {
+				if(this.getExistingTbsTile(moveTile.x, moveTile.y, checkedTiles)) { return; }
+				var distance = this.actualDistance(moveTile.x, moveTile.y, chara.x, chara.y);
+				if(closestDistance < 0 || distance < closestDistance) {
+					closestDistance = distance;
+					closestX = moveTile.x;
+					closestY = moveTile.y;
+				}
+			}, this);
+			if(!this.getTbsActorAtPosition(closestX, closestY)
+				&& this.isTargetInRangeFromPosition(closestX, closestY))
+			{
+				destinationFound = true;
+			} else {
+				var invalidTile = {};
+				invalidTile.x = closestX;
+				invalidTile.y = closestY;
+				checkedTiles.push(invalidTile);
 			}
-		});
-		this.setTbsActionMoveDestination(closest.x, closest.y);
+		}
+		this.setTbsActionMoveDestination(closestX, closestY);
 	};
 	
 	Game_Map.prototype.actualDistance = function(x1, y1, x2, y2) {
@@ -2289,7 +2298,8 @@
 				tbsTargets.forEach(function (tbsTarget) {
 					var index = 0;
 					that._tbsSelectedActionInfo.action.hitGroups.forEach(function (hitGroup) {
-						var results = BattleManager.combatMath(that._tbsSelectedActor.battler, that._tbsSelectedActionInfo, hitGroup, tbsTarget.battler, tbsTargetsByHit, index);
+						var rangedDistance = that.getRangedDistance();
+						var results = BattleManager.combatMath(that._tbsSelectedActor.battler, that._tbsSelectedActionInfo, hitGroup, tbsTarget.battler, tbsTargetsByHit, index, undefined, rangedDistance);
 						if(!results.skipTarget) {
 							BattleManager.applyActionResults(results, tbsTarget.battler);
 						}
@@ -2654,23 +2664,15 @@
 		var force = this._tbsForces[this._tbsSelectedActor.forceId];
 		var actionTiles = this._tbsActionsTiles[actionIndex];
 		if(!actionTiles) { return alliesAndEnemies; }
-		var checkedTiles = [];
 		var that = this;
-		actionTiles.forEach(function (actionTile) {
-			actionTile.tiles.forEach(function (tile) {
-				if(that.getExistingTbsTile(tile.x, tile.y, checkedTiles)) { return; }
-				var checkedTile = {};
-				checkedTile.x = tile.x;
-				checkedTile.y = tile.y;
-				checkedTiles.push(checkedTile);
-				var tbsActor = that.getTbsActorAtPosition(tile.x, tile.y);
-				if(!tbsActor) { return; }
-				if(force.enemyForceIds.indexOf(tbsActor.forceId) >= 0) {
-					that.insertOrderedByForce(tbsActor, enemies);
-				} else {
-					that.insertOrderedByForce(tbsActor, allies);
-				}
-			});
+		actionTiles.forEach(function (tile) {
+			var tbsActor = that.getTbsActorAtPosition(tile.x, tile.y);
+			if(!tbsActor) { return; }
+			if(force.enemyForceIds.indexOf(tbsActor.forceId) >= 0) {
+				that.insertOrderedByForce(tbsActor, enemies);
+			} else {
+				that.insertOrderedByForce(tbsActor, allies);
+			}
 		});
 		return alliesAndEnemies;
 	};
@@ -2734,16 +2736,14 @@
 	};
 	
 	Game_Map.prototype.checkActionTiles = function(x, y, actionRange, actionTiles, treatAsMovedThisRound) {
-		var centerPosition = {};
-		centerPosition.x = x;
-		centerPosition.y = y;
-		centerPosition.tiles = [];
 		var baseRange = actionRange.ignoreUserRange ? 0 : actionRange.baseRange;
 		var boundingRadius = Math.ceil(actionRange.range + baseRange);
 		var centerBoundingCircle = this.getBoundingCircleArray(x, y, boundingRadius, actionTiles);
 		var that = this;
-		centerPosition.tiles = this.getReachedActionTiles(x, y, centerBoundingCircle, centerBoundingCircle);
-		actionTiles.push(centerPosition);
+		var reachedTiles = this.getReachedActionTiles(x, y, centerBoundingCircle, centerBoundingCircle, actionTiles);
+		reachedTiles.forEach(function (reachedTile) {
+			actionTiles.push(reachedTile);
+		});
 		if(!treatAsMovedThisRound && !this._tbsSelectedActor.movedThisRound) {
 			this._tbsMoveTiles.forEach(function (moveTile) {
 				if(!that.getTbsActorAtPosition(moveTile.x, moveTile.y)) {
@@ -2756,26 +2756,23 @@
 				}
 			});
 		}
+		return reachedTiles.length;
 	};
 	
-	Game_Map.prototype.getReachedActionTiles = function(x, y, actionTilesToCheck, boundingTiles, ignoreStartPosition) {
+	Game_Map.prototype.getReachedActionTiles = function(x, y, actionTilesToCheck, boundingTiles, existingTiles) {
 		var reachedTiles = [];
 		var that = this;
 		actionTilesToCheck.forEach(function (tile) {
-			if(ignoreStartPosition && x === tile.x && y === tile.y) {
-				reachedTiles.push(tile);
-				return;
-			}
+			if(that.getExistingTbsTile(tile.x, tile.y, existingTiles)) { return; }
 			var distance = that.actualDistance(x, y, tile.x, tile.y);
-			if(distance < 1.5 || !that.isTrajectoryObstructed(x, y, tile.x, tile.y, boundingTiles, ignoreStartPosition, true)) {
+			if(distance < 1.5 || !that.isTrajectoryObstructed(x, y, tile.x, tile.y, boundingTiles, true)) {
 				reachedTiles.push(tile);
 			}
 		});
 		return reachedTiles;
 	};
 	
-	Game_Map.prototype.isTrajectoryObstructed = function(startX, startY, endX, endY, existingTiles, ignoreStartPosition, ignoreEndpoints) {
-		if(ignoreStartPosition === undefined) { ignoreStartPosition = true; }
+	Game_Map.prototype.isTrajectoryObstructed = function(startX, startY, endX, endY, existingTiles, ignoreEndpoints) {
 		x0 = startX + 0.5;
 		y0 = startY + 0.5;
 		x1 = endX + 0.5;
@@ -2813,7 +2810,7 @@
 		var boxY;
 		for(boxX = xStart; boxX <= xStart + xDiff; boxX++) {
 			for(boxY = yStart; boxY <= yStart + yDiff; boxY++) {
-				if((ignoreStartPosition && startX === boxX && startY === boxY) || (ignoreEndpoints && endX === boxX && endY === boxY)
+				if((startX === boxX && startY === boxY) || (ignoreEndpoints && endX === boxX && endY === boxY)
 					|| this.getExistingTbsTile(boxX, boxY, existingTiles).passability[10-d]
 					|| !this.liangBarskyClipper(x0, y0, x1, y1, boxX, boxY, boxX + 1, boxY + 1)) { continue; }
 				return true;
@@ -3001,12 +2998,7 @@
 		var returnArray = [];
 		if(radius < 1) {
 			if(actionTiles) {
-				var existing = undefined;
-				var i;
-				for(i = 0; i < actionTiles.length; i++) {
-					existing = this.getExistingTbsTile(centerX, centerY, actionTiles[i].tiles);
-					if(existing) { break; }
-				}
+				var existing = this.getExistingTbsTile(centerX, centerY, actionTiles);
 				if(existing) {
 					returnArray.push(existing);
 					return returnArray;;
@@ -3030,12 +3022,7 @@
 				var distance = this.actualDistance(centerX, centerY, targetX, targetY);
 				if(distance <= radius) {
 					if(actionTiles) {
-						var existing = undefined;
-						var i;
-						for(i = 0; i < actionTiles.length; i++) {
-							existing = this.getExistingTbsTile(targetX, targetY, actionTiles[i].tiles);
-							if(existing) { break; }
-						}
+						var existing = this.getExistingTbsTile(targetX, targetY, actionTiles);
 						if(existing) {
 							returnArray.push(existing);
 							continue;

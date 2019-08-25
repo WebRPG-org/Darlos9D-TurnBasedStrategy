@@ -97,11 +97,11 @@
 						this._tbsNoTargetWindow.show();
 						this._tbsNoTargetWindow.open();
 					}
+				} else {
+					this._tbsNoTargetWindow.close();
 				}
 				this.updateBreadcrumbs();
 				return;
-			} else {
-				this._tbsNoTargetWindow.close();
 			}
 			if($gameMap.checkTbsTurnJustStarted()) {
 				this._tbsActorWindow.show();
@@ -664,8 +664,9 @@
 			var targetX = $gameMap.getTbsActionTargetLocationX();
 			var targetY = $gameMap.getTbsActionTargetLocationY();
 			var targetPart = $gameMap.getTbsActionTargetPart();
+			var rangedDistance = $gameMap.getRangedDistance();
 			if(targets && targets.length > 0) {
-				BattleManager.setup(actors, actionInfo, targetX, targetY, targets, targetsByHit, targetPart);
+				BattleManager.setup(actors, actionInfo, targetX, targetY, targets, targetsByHit, targetPart, rangedDistance);
 				BattleManager.onEncounter();
 				SceneManager.push(Scene_Battle);
 			} else {
