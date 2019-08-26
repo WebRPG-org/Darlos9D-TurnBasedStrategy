@@ -380,7 +380,6 @@
 		this._tbsActionMoveDestinationX = -1;
 		this._tbsActionMoveDestinationY = -1;
 		this._tbsActionTargetPart = undefined;
-		this._tbsPassageType = "move";
 		this._tbsBreadcrumbs = [];
 		this._tbsInActionBattleScene = false;
 		this._cameraFocusX = undefined;
@@ -391,6 +390,7 @@
 		this._perceptionMultiplier = 10;
 		this._tbsCursorRegions = [];
 		this._mapBgm = undefined;
+		this._tileRuns = [];
 	};
 	
 	Game_Map.prototype.getShouldOpenActionWindow = function() {
@@ -534,18 +534,17 @@
 	Game_Map.prototype.setTbsBattleMode = function(modeOn, resetCameraAfterBattle, cursorRegions) {
 		var pendingTbsForces = $gameTemp.pendingTbsForces();
 		if(this._tbsBattleMode !== modeOn && (!modeOn ||
-			(modeOn && pendingTbsForces && pendingTbsForces.length >= 2))) {
+			(modeOn && pendingTbsForces && pendingTbsForces.length >= 2)))
+		{
 			this._tbsBattleMode = modeOn;
 			if(modeOn) {
+				this._resetCameraAfterBattle = resetCameraAfterBattle;
+				this._tbsCursorRegions = cursorRegions ? cursorRegions : [];
 				this._tbsForces = this.createTbsForces(pendingTbsForces);
-				this._tbsCurrentTurnForce = 0;
 				this.setTbsTurnMode("setup");
-				this.spawnTbsCharacters();
 			}
 			$gamePlayer.setTbsBattleMode(modeOn);
 			this._tbsBattleModeJustChanged = true;
-			this._resetCameraAfterBattle = resetCameraAfterBattle;
-			this._tbsCursorRegions = cursorRegions ? cursorRegions : [];
 		}
 	};
 	
@@ -1270,7 +1269,10 @@
 			$gamePlayer.clearMovingCharacter();
 			switch(this._tbsTurnMode) {
 			case "setup":
+				this._tbsCurrentTurnForce = 0;
+				this.spawnTbsCharacters();
 				this.saveBgmAndBgs();
+				this._tileRuns = this.getTileRuns();
 				//$gameTemp.setShouldClearTbsDamageSprites(true);
 				break;
 			case "selectActorActionType":
@@ -1361,13 +1363,11 @@
 					var chara = this._tbsSelectedActor.chara;
 					this.setTbsManualMoveStart(chara.x, chara.y);
 				}
-				this._tbsPassageType = "move";
 				$gamePlayer.setTbsShowCursor(true);
 				this._tbsManualMoveStarted = true;
 				break;
 			case "cancelMove":
 				//$gameTemp.setShouldClearTbsDamageSprites(true);
-				this._tbsPassageType = "move";
 				$gamePlayer.setTbsFollowingCharacter(true);
 				break;
 			case "selectActionTarget":
@@ -1391,7 +1391,6 @@
 				break;
 			case "executeAction":
 				//$gameTemp.setShouldClearTbsDamageSprites(true);
-				this._tbsPassageType = "move";
 				$gamePlayer.setTbsShowCursor(true);
 				this._tbsSelectedActor.canActThisRound = false;
 				if(prevMode === "manualTarget") {
@@ -1739,15 +1738,14 @@
 		}
 	};
 	
-	Game_Map.prototype.processQueuedActionsAtPositions = function(processArea) {
-		if(processArea <= 0 || !this._tbsQueuedActionsAtPositions || this._tbsQueuedActionsAtPositions.length === 0) { return; }
+	Game_Map.prototype.processQueuedActionsAtPositions = function(collisionCheckLimit) {
+		if(collisionCheckLimit <= 0 || !this._tbsQueuedActionsAtPositions || this._tbsQueuedActionsAtPositions.length === 0) { return; }
 		var i;
-		while(processArea > 0) {
+		while(collisionCheckLimit > 0) {
 			var actionAtPosition = this._tbsQueuedActionsAtPositions.pop();
 			var actionRange = actionAtPosition.actionRange;
 			var actionTiles = actionAtPosition.actionTiles;
-			this._tbsPassageType = actionRange.type;
-			processArea -= this.checkActionTiles(actionAtPosition.x, actionAtPosition.y, actionRange, actionTiles, true);
+			collisionCheckLimit -= this.checkActionTiles(actionAtPosition.x, actionAtPosition.y, actionRange, actionTiles, true);
 			if(this._tbsQueuedActionsAtPositions.length == 0) {
 				break;
 			}
@@ -1755,25 +1753,24 @@
 	};
 	
 	Game_Map.prototype.processQueuedActions = function() {
-		var processArea = 500;
+		var collisionCheckLimit = 1;
 		if(!this._tbsSelectedActor || !this._tbsQueuedActions || this._tbsQueuedActions.length === 0) {
-			this.processQueuedActionsAtPositions(processArea);
+			this.processQueuedActionsAtPositions(collisionCheckLimit);
 			return;
 		}
-		while(processArea > 0) {
+		while(collisionCheckLimit > 0) {
 			var actionInfo = this._tbsQueuedActions.pop();
 			var chara = this._tbsSelectedActor.chara;
 			var action = actionInfo.action;
 			var actionRange = this.getLargestActionRange(action);
 			var actionTiles = [];
-			this._tbsPassageType = actionRange.type;
-			processArea -= this.checkActionTiles(chara.x, chara.y, actionRange, actionTiles);
+			collisionCheckLimit -= this.checkActionTiles(chara.x, chara.y, actionRange, actionTiles);
 			actionTiles.forEach(function (tile) {
 				tile.centerMovePosition = true;
 			});
 			this._tbsActionsTiles[this._tbsActionsTiles.length] = actionTiles;
 			if(this._tbsQueuedActions.length == 0) {
-				this.processQueuedActionsAtPositions(processArea);
+				this.processQueuedActionsAtPositions(collisionCheckLimit);
 				break;
 			}
 		}
@@ -2229,8 +2226,7 @@
 		var distance = this.actualDistance(x, y, this._tbsActionTargetLocationX, this._tbsActionTargetLocationY);
 		var actionRange = this.getLargestActionRange(this._tbsSelectedAction);
 		if(distance > (actionRange.ignoreUserRange ? 0 : actionRange.baseRange) + actionRange.range) { return false; }
-		var boundingCircle = this.getBoundingCircleArray(this._tbsActionTargetLocationX, this._tbsActionTargetLocationY, distance);
-		return !this.isTrajectoryObstructed(x, y, this._tbsActionTargetLocationX, this._tbsActionTargetLocationY, boundingCircle, true);
+		return !this.isTrajectoryObstructed(x, y, this._tbsActionTargetLocationX, this._tbsActionTargetLocationY, actionRange.type);
 	};
 	
 	Game_Map.prototype.calculateMoveDestinationForAction = function() {
@@ -2429,7 +2425,6 @@
 	};
 	
 	Game_Map.prototype.generateTbsMoveField = function() {
-		this._tbsPassageType = "move";
 		var tbsActor = this._tbsSelectedActor;
 		this._tbsMoveTiles = [];
 		if(!tbsActor || !tbsActor.canActThisRound || tbsActor.movedThisRound) { return; }
@@ -2448,10 +2443,11 @@
 		var moveRange = battlerMoveRange / 2;
 		var boundingRadius = Math.ceil(moveRange);
 		var boundingCircle = this.getBoundingCircleArray(tbsActor.chara.x, tbsActor.chara.y, boundingRadius);
-		this.checkMoveTile(tbsActor.chara.x, tbsActor.chara.y, moveRange, this._tbsMoveTiles, boundingCircle);
+		var moveType = (tbsActor.battler.limbsType() === "winged" && tbsActor.battler.isFlying()) ? "fly" : "walk";
+		this.checkMoveTile(tbsActor.chara.x, tbsActor.chara.y, moveRange, this._tbsMoveTiles, boundingCircle, moveType);
 	};
 	
-	Game_Map.prototype.checkMoveTile = function(x, y, remainingRange, moveTiles, boundingCircle) {
+	Game_Map.prototype.checkMoveTile = function(x, y, remainingRange, moveTiles, boundingCircle, moveType) {
 		if(this.tbsCursorRegions().length > 0 && this.tbsCursorRegions().indexOf(this.regionId(x, y)) < 0) { return; }
 		var existingMoveTile = this.getExistingTbsTile(x, y, moveTiles);
 		if(!existingMoveTile) {
@@ -2479,7 +2475,7 @@
 		});
 		subCircle.forEach(function (tile) {
 			if(x === tile.x && y === tile.y) { return; }
-			if(!that.isTrajectoryObstructed(x, y, tile.x, tile.y, subCircle)) {
+			if(!that.isTrajectoryObstructed(x, y, tile.x, tile.y, moveType)) {
 				potentialTiles.push(tile);
 			}
 		});
@@ -2710,6 +2706,7 @@
 			action.hitGroups.forEach(function (hitGroup) {
 				if(hitGroup.hits && hitGroup.hits.length > 0) {
 					hitGroup.hits.forEach(function (hit) {
+						if(hit.rangeType && hit.rangeType === "followUp") { return; }
 						var hitRange = hit.range !== undefined ? hit.range : 0;
 						if(!rangeFound || hitRange > largestActionRange.range) {
 							rangeFound = true;
@@ -2739,9 +2736,12 @@
 		var baseRange = actionRange.ignoreUserRange ? 0 : actionRange.baseRange;
 		var boundingRadius = Math.ceil(actionRange.range + baseRange);
 		var centerBoundingCircle = this.getBoundingCircleArray(x, y, boundingRadius, actionTiles);
+		
 		var that = this;
-		var reachedTiles = this.getReachedActionTiles(x, y, centerBoundingCircle, centerBoundingCircle, actionTiles);
+		var reachedTiles = this.getReachedActionTiles(x, y, centerBoundingCircle, actionTiles, actionRange.type);
+		var collisionChecks = 0;
 		reachedTiles.forEach(function (reachedTile) {
+			collisionChecks += reachedTile.collisionChecks === undefined ? 0 : reachedTile.collisionChecks;
 			actionTiles.push(reachedTile);
 		});
 		if(!treatAsMovedThisRound && !this._tbsSelectedActor.movedThisRound) {
@@ -2756,32 +2756,24 @@
 				}
 			});
 		}
-		return reachedTiles.length;
+		return collisionChecks;
 	};
 	
-	Game_Map.prototype.getReachedActionTiles = function(x, y, actionTilesToCheck, boundingTiles, existingTiles) {
+	Game_Map.prototype.getReachedActionTiles = function(x, y, actionTilesToCheck, existingTiles, passageType) {
 		var reachedTiles = [];
 		var that = this;
 		actionTilesToCheck.forEach(function (tile) {
 			if(that.getExistingTbsTile(tile.x, tile.y, existingTiles)) { return; }
 			var distance = that.actualDistance(x, y, tile.x, tile.y);
-			if(distance < 1.5 || !that.isTrajectoryObstructed(x, y, tile.x, tile.y, boundingTiles, true)) {
+			if(distance < 1.5 || !that.isTrajectoryObstructed(x, y, tile.x, tile.y, passageType, tile)) {
 				reachedTiles.push(tile);
 			}
 		});
 		return reachedTiles;
 	};
 	
-	Game_Map.prototype.isTrajectoryObstructed = function(startX, startY, endX, endY, existingTiles, ignoreEndpoints) {
-		x0 = startX + 0.5;
-		y0 = startY + 0.5;
-		x1 = endX + 0.5;
-		y1 = endY + 0.5;
-		var xDiff = Math.abs(startX - endX);
-		var yDiff = Math.abs(startY - endY);
-		var xStart = endX < startX ? endX : startX;
-		var yStart = endY < startY ? endY : startY;
-		var d = 0;
+	Game_Map.prototype.isTrajectoryObstructed = function(startX, startY, endX, endY, passageType, checkingTile) {
+		var d = 5;
 		if(endX > startX) {
 			if(endY > startY) {
 				d = 3;
@@ -2805,18 +2797,58 @@
 				d = 8;
 			}
 		}
-		var obstructed = false;
-		var boxX;
-		var boxY;
-		for(boxX = xStart; boxX <= xStart + xDiff; boxX++) {
-			for(boxY = yStart; boxY <= yStart + yDiff; boxY++) {
-				if((startX === boxX && startY === boxY) || (ignoreEndpoints && endX === boxX && endY === boxY)
-					|| this.getExistingTbsTile(boxX, boxY, existingTiles).passability[10-d]
-					|| !this.liangBarskyClipper(x0, y0, x1, y1, boxX, boxY, boxX + 1, boxY + 1)) { continue; }
-				return true;
+		
+		if(d == 5) { return false; }
+		
+		var x0 = startX + 0.5;
+		var y0 = startY + 0.5;
+		var x1 = endX + 0.5;
+		var y1 = endY + 0.5;
+		
+		var blockedByTerrain = false;
+		var tileRuns = this._tileRuns;
+		for(i = 0; i < tileRuns.length; i++) {
+			var firstTile = tileRuns[i][0];
+			if(firstTile.passability[10-d][passageType]) { continue; }
+			var lastTile = tileRuns[i][tileRuns[i].length-1];
+			if(checkingTile) {
+				checkingTile.collisionChecks = checkingTile.collisionChecks === undefined
+					? 1 : checkingTile.collisionChecks + 1;
+			}
+			if(this.cohenSutherlandLineClipAndDraw(x0, y0, x1, y1, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1)) {
+				blockedByTerrain = true;
+				break;
 			}
 		}
-		return false;
+		
+		if(!blockedByTerrain) {
+			var actorAtStart = !!this.getTbsActorAtPosition(startX, startY);
+			var actorAtEnd = !!this.getTbsActorAtPosition(endX, endY);
+			var i;
+			for(i = 0; i < this._tbsForces.length; i++) {
+				for(j = 0; j < this._tbsForces[i].actors.length; j++) {
+					var chara = this._tbsForces[i].actors[j].chara;
+					if((actorAtStart && startX == chara.x && startY == chara.y)
+						|| (actorAtEnd && passageType !== "walk" && passageType !== "fly" && endX == chara.x && endY == chara.y)
+						|| (this._tbsForces[i].actors[j].battler.isDown())
+						|| (this._tbsSelectedActor && (passageType === "walk" || passageType === "fly")
+							&& (this._tbsSelectedActor.forceId == i
+								|| this._tbsForces[i].allyForceIds.indexOf(this._tbsSelectedActor.forceId) >= 0)))
+					{
+						continue;
+					}
+					if(checkingTile) {
+						checkingTile.collisionChecks = checkingTile.collisionChecks === undefined
+							? 1 : checkingTile.collisionChecks + 1;
+					}
+					if(this.cohenSutherlandLineClipAndDraw(x0, y0, x1, y1, chara.x, chara.y, chara.x+1, chara.y+1)) {
+						return true;
+					}
+				}
+			}
+		}
+		
+		return blockedByTerrain;
 	};
 	
 	// Cohen–Sutherland clipping algorithm clips a line from
@@ -2913,85 +2945,139 @@
 
 		return code;
 	};
-
-	Game_Map.prototype.liangBarskyClipper = function(x1, y1, x2, y2, xmin, ymin, xmax, ymax) {
-		// defining variables
-		var p1 = -(x2 - x1);
-		var p2 = -p1;
-		var p3 = -(y2 - y1);
-		var p4 = -p3;
-
-		var q1 = x1 - xmin;
-		var q2 = xmax - x1;
-		var q3 = y1 - ymin;
-		var q4 = ymax - y1;
-
-		var posarr = [];
-		var negarr = [];
-		var posind = 1;
-		var negind = 1;
-		posarr[0] = 1;
-		negarr[0] = 0;
-
-		if ((p1 == 0 && q1 < 0) || (p3 == 0 && q3 < 0)) {
-			return false; // Line is parallel to clipping window!
-		}
-		if (p1 != 0) {
-			var r1 = q1 / p1;
-			var r2 = q2 / p2;
-			if (p1 < 0) {
-				negarr[negind++] = r1; // for negative p1, add it to negative array
-				posarr[posind++] = r2; // and add p2 to positive array
-			} else {
-				negarr[negind++] = r2;
-				posarr[posind++] = r1;
-			}
-		}
-		if (p3 != 0) {
-			var r3 = q3 / p3;
-			var r4 = q4 / p4;
-			if (p3 < 0) {
-				negarr[negind++] = r3;
-				posarr[posind++] = r4;
-			} else {
-				negarr[negind++] = r4;
-				posarr[posind++] = r3;
-			}
-		}
-
-		var rn1, rn2;
-		rn1 = this.maxi(negarr, negind); // maximum of negative array
-		rn2 = this.mini(posarr, posind); // minimum of positive array
-
-		if (rn1 > rn2)  { // reject
-			return false; // Line is outside the clipping window!
-		}
+	
+	Game_Map.prototype.getTileRuns = function() {
+		var startX = 0;
+		var startY = 0;
+		var endX = this.width()-1;
+		var endY = this.height()-1;
 		
-		return true;
+		var xDiff = Math.abs(startX - endX);
+		var yDiff = Math.abs(startY - endY);
+		var xStart = endX < startX ? endX : startX;
+		var yStart = endY < startY ? endY : startY;
+		var boxX;
+		var boxY;
+		var tileRuns = [];
+		var curRun = [];
+		for(boxY = yStart; boxY <= yStart + yDiff; boxY++) {
+			for(boxX = xStart; boxX <= xStart + xDiff; boxX++) {
+				if(this._tbsCursorRegions.indexOf(this.regionId(boxX, boxY)) < 0) {
+					if(curRun.length > 0) {
+						tileRuns.push(curRun);
+						curRun = [];
+					}
+					continue;
+				}
+				var tile = {};
+				tile.x = boxX;
+				tile.y = boxY;
+				tile.passability = this.getTbsTilePassability(tile.x, tile.y);
+				if(this.isTileFullyPassable(tile)) {
+					if(curRun.length > 0) {
+						tileRuns.push(curRun);
+						curRun = [];
+					}
+				} else {
+					if(curRun.length > 0 && !this.compareTilePassability(tile, curRun[curRun.length-1])) {
+						tileRuns.push(curRun);
+						curRun = [];
+					}
+					curRun.push(tile);
+				}
+			}
+			if(curRun.length > 0) {
+				tileRuns.push(curRun);
+				curRun = [];
+			}
+		}
+		return tileRuns;
 	};
 	
-	// this function gives the maximum
-	Game_Map.prototype.maxi = function(arr, n) {
-		var m = 0;
-		var i;
-		for (i = 0; i < n; ++i) {
-			if (m < arr[i]) {
-				m = arr[i];
-			}
-		}
-		return m;
+	Game_Map.prototype.isTileFullyPassable = function(tile) {
+		return tile.passability[1].walk
+			&& tile.passability[1].fly
+			&& tile.passability[1].melee
+			&& tile.passability[1].thrown
+			&& tile.passability[1].fired
+			&& tile.passability[2].walk
+			&& tile.passability[2].fly
+			&& tile.passability[2].melee
+			&& tile.passability[2].thrown
+			&& tile.passability[2].fired
+			&& tile.passability[3].walk
+			&& tile.passability[3].fly
+			&& tile.passability[3].melee
+			&& tile.passability[3].thrown
+			&& tile.passability[3].fired
+			&& tile.passability[4].walk
+			&& tile.passability[4].fly
+			&& tile.passability[4].melee
+			&& tile.passability[4].thrown
+			&& tile.passability[4].fired
+			&& tile.passability[6].walk
+			&& tile.passability[6].fly
+			&& tile.passability[6].melee
+			&& tile.passability[6].thrown
+			&& tile.passability[6].fired
+			&& tile.passability[7].walk
+			&& tile.passability[7].fly
+			&& tile.passability[7].melee
+			&& tile.passability[7].thrown
+			&& tile.passability[7].fired
+			&& tile.passability[8].walk
+			&& tile.passability[8].fly
+			&& tile.passability[8].melee
+			&& tile.passability[8].thrown
+			&& tile.passability[8].fired
+			&& tile.passability[9].walk
+			&& tile.passability[9].fly
+			&& tile.passability[9].melee
+			&& tile.passability[9].thrown
+			&& tile.passability[9].fired;
 	};
-
-	// this function gives the minimum
-	Game_Map.prototype.mini = function(arr, n) {
-		var m = 1;
-		var i;
-		for (i = 0; i < n; ++i) {
-			if (m > arr[i]) {
-				m = arr[i];
-			}
-		}
-		return m;
+	
+	Game_Map.prototype.compareTilePassability = function(tileOne, tileTwo) {
+		return tileOne.passability[1].walk		== tileTwo.passability[1].walk
+			&& tileOne.passability[1].fly		== tileTwo.passability[1].fly
+			&& tileOne.passability[1].melee		== tileTwo.passability[1].melee
+			&& tileOne.passability[1].thrown	== tileTwo.passability[1].thrown
+			&& tileOne.passability[1].fired		== tileTwo.passability[1].fired
+			&& tileOne.passability[2].walk		== tileTwo.passability[2].walk
+			&& tileOne.passability[2].fly		== tileTwo.passability[2].fly
+			&& tileOne.passability[2].melee		== tileTwo.passability[2].melee
+			&& tileOne.passability[2].thrown	== tileTwo.passability[2].thrown
+			&& tileOne.passability[2].fired		== tileTwo.passability[2].fired
+			&& tileOne.passability[3].walk		== tileTwo.passability[3].walk
+			&& tileOne.passability[3].fly		== tileTwo.passability[3].fly
+			&& tileOne.passability[3].melee		== tileTwo.passability[3].melee
+			&& tileOne.passability[3].thrown	== tileTwo.passability[3].thrown
+			&& tileOne.passability[3].fired		== tileTwo.passability[3].fired
+			&& tileOne.passability[4].walk		== tileTwo.passability[4].walk
+			&& tileOne.passability[4].fly		== tileTwo.passability[4].fly
+			&& tileOne.passability[4].melee		== tileTwo.passability[4].melee
+			&& tileOne.passability[4].thrown	== tileTwo.passability[4].thrown
+			&& tileOne.passability[4].fired		== tileTwo.passability[4].fired
+			&& tileOne.passability[6].walk		== tileTwo.passability[6].walk
+			&& tileOne.passability[6].fly		== tileTwo.passability[6].fly
+			&& tileOne.passability[6].melee		== tileTwo.passability[6].melee
+			&& tileOne.passability[6].thrown	== tileTwo.passability[6].thrown
+			&& tileOne.passability[6].fired		== tileTwo.passability[6].fired
+			&& tileOne.passability[7].walk		== tileTwo.passability[7].walk
+			&& tileOne.passability[7].fly		== tileTwo.passability[7].fly
+			&& tileOne.passability[7].melee		== tileTwo.passability[7].melee
+			&& tileOne.passability[7].thrown	== tileTwo.passability[7].thrown
+			&& tileOne.passability[7].fired		== tileTwo.passability[7].fired
+			&& tileOne.passability[8].walk		== tileTwo.passability[8].walk
+			&& tileOne.passability[8].fly		== tileTwo.passability[8].fly
+			&& tileOne.passability[8].melee		== tileTwo.passability[8].melee
+			&& tileOne.passability[8].thrown	== tileTwo.passability[8].thrown
+			&& tileOne.passability[8].fired		== tileTwo.passability[8].fired
+			&& tileOne.passability[9].walk		== tileTwo.passability[9].walk
+			&& tileOne.passability[9].fly		== tileTwo.passability[9].fly
+			&& tileOne.passability[9].melee		== tileTwo.passability[9].melee
+			&& tileOne.passability[9].thrown	== tileTwo.passability[9].thrown
+			&& tileOne.passability[9].fired		== tileTwo.passability[9].fired;
 	};
 	
 	Game_Map.prototype.getBoundingCircleArray = function(centerX, centerY, radius, actionTiles) {
@@ -3011,7 +3097,6 @@
 			var tile = {};
 			tile.x = centerX;
 			tile.y = centerY;
-			tile.passability = this.getTbsTilePassability(tile.x, tile.y);
 			returnArray.push(tile);
 			return returnArray;
 		}
@@ -3035,7 +3120,6 @@
 					var tile = {};
 					tile.x = targetX;
 					tile.y = targetY;
-					tile.passability = this.getTbsTilePassability(tile.x, tile.y);
 					returnArray.push(tile);
 				}
 			}
@@ -3045,19 +3129,62 @@
 	
 	Game_Map.prototype.getTbsTilePassability = function(x, y) {
 		var passability = [];
-		passability[8] = this.isPassable(x, y, 8, this);
-		passability[2] = this.isPassable(x, y, 2, this);
-		passability[4] = this.isPassable(x, y, 4, this);
-		passability[6] = this.isPassable(x, y, 6, this);
-		passability[7] = passability[4] && passability[8];
-		passability[9] = passability[6] && passability[8];
-		passability[1] = passability[4] && passability[2];
-		passability[3] = passability[6] && passability[2];
+		
+		passability[8] = {};
+		passability[8].walk		= this.isPassable(x, y, 8, "walk");
+		passability[8].fly		= this.isPassable(x, y, 8, "fly");
+		passability[8].melee 	= this.isPassable(x, y, 8, "melee");
+		passability[8].thrown 	= this.isPassable(x, y, 8, "thrown");
+		passability[8].fired 	= this.isPassable(x, y, 8, "fired");
+		passability[2] = {};
+		passability[2].walk		= this.isPassable(x, y, 2, "walk");
+		passability[2].fly		= this.isPassable(x, y, 2, "fly");
+		passability[2].melee 	= this.isPassable(x, y, 2, "melee");
+		passability[2].thrown 	= this.isPassable(x, y, 2, "thrown");
+		passability[2].fired 	= this.isPassable(x, y, 2, "fired");
+		passability[4] = {};
+		passability[4].walk		= this.isPassable(x, y, 4, "walk");
+		passability[4].fly		= this.isPassable(x, y, 4, "fly");
+		passability[4].melee 	= this.isPassable(x, y, 4, "melee");
+		passability[4].thrown 	= this.isPassable(x, y, 4, "thrown");
+		passability[4].fired 	= this.isPassable(x, y, 4, "fired");
+		passability[6] = {};
+		passability[6].walk		= this.isPassable(x, y, 6, "walk");
+		passability[6].fly		= this.isPassable(x, y, 6, "fly");
+		passability[6].melee 	= this.isPassable(x, y, 6, "melee");
+		passability[6].thrown 	= this.isPassable(x, y, 6, "thrown");
+		passability[6].fired 	= this.isPassable(x, y, 6, "fired");
+		
+		passability[7] = {};
+		passability[7].walk 	= passability[4].walk 	&& passability[8].walk;
+		passability[7].fly 		= passability[4].fly 	&& passability[8].fly;
+		passability[7].melee 	= passability[4].melee 	&& passability[8].melee;
+		passability[7].thrown 	= passability[4].thrown	&& passability[8].thrown;
+		passability[7].fired 	= passability[4].fired 	&& passability[8].fired;
+		passability[9] = {};
+		passability[9].walk 	= passability[6].walk 	&& passability[8].walk;
+		passability[9].fly 		= passability[6].fly 	&& passability[8].fly;
+		passability[9].melee 	= passability[6].melee 	&& passability[8].melee;
+		passability[9].thrown 	= passability[6].thrown	&& passability[8].thrown;
+		passability[9].fired 	= passability[6].fired 	&& passability[8].fired;
+		passability[1] = {};
+		passability[1].walk 	= passability[4].walk 	&& passability[2].walk;
+		passability[1].fly 		= passability[4].fly 	&& passability[2].fly;
+		passability[1].melee 	= passability[4].melee 	&& passability[2].melee;
+		passability[1].thrown 	= passability[4].thrown	&& passability[2].thrown;
+		passability[1].fired 	= passability[4].fired 	&& passability[2].fired;
+		passability[3] = {};
+		passability[3].walk 	= passability[6].walk 	&& passability[2].walk;
+		passability[3].fly 		= passability[6].fly 	&& passability[2].fly;
+		passability[3].melee 	= passability[6].melee 	&& passability[2].melee;
+		passability[3].thrown 	= passability[6].thrown	&& passability[2].thrown;
+		passability[3].fired 	= passability[6].fired 	&& passability[2].fired;
+		
 		return passability;
 	};
 	
-	Game_Map.prototype.isPassable = function(x, y, d, caller) {
-		if(this._tbsBattleMode && ((this._tbsSelectedActor && this._tbsSelectedActor.chara === caller) || $gameMap === caller)) {
+	Game_Map.prototype.isPassable = function(x, y, d, passageType) {
+		if(this._tbsBattleMode) {
 			var events = $gameMap.eventsXyNt(x, y);
 			if(events.some(function(event) {
 				return event.isNormalPriority();
@@ -3067,17 +3194,11 @@
 				return false; // vehicle in the way
 			}
 			
-			var tbsActor = this.getTbsActorAtPosition(x, y);
-			if(tbsActor && !tbsActor.battler.isDown() && (this._tbsPassageType !== "move" || (this._tbsSelectedActor
-				&& this._tbsForces[this._tbsSelectedActor.forceId].enemyForceIds.indexOf(tbsActor.forceId) >= 0))) {
-				return false; //actor in way
-			}
 			var terrainTag = this.terrainTag(x, y);
-			if(this._tbsPassageType === "move" && this._tbsSelectedActor
-				&& this._tbsSelectedActor.battler.isFlying() && (terrainTag === 1 || terrainTag === 2)) {
+			if(passageType === "fly" && (terrainTag == 1 || terrainTag == 2)) {
 				return true;
 			}
-			if((this._tbsPassageType === "melee" || this._tbsPassageType === "thrown" || this._tbsPassageType === "fired")
+			if((passageType === "melee" || passageType === "thrown" || passageType === "fired")
 				&& terrainTag === 1) {
 				return true
 			}
