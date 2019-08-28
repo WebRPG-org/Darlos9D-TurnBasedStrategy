@@ -1753,7 +1753,7 @@
 	};
 	
 	Game_Map.prototype.processQueuedActions = function() {
-		var collisionCheckLimit = 1;
+		var collisionCheckLimit = 500;
 		if(!this._tbsSelectedActor || !this._tbsQueuedActions || this._tbsQueuedActions.length === 0) {
 			this.processQueuedActionsAtPositions(collisionCheckLimit);
 			return;
@@ -2442,13 +2442,11 @@
 		var battlerMoveRange = Math.max(2, tbsActor.battler.moveRange() * ((moveDenom - moveDamage) / moveDenom));
 		var moveRange = battlerMoveRange / 2;
 		var boundingRadius = Math.ceil(moveRange);
-		var boundingCircle = this.getBoundingCircleArray(tbsActor.chara.x, tbsActor.chara.y, boundingRadius);
 		var moveType = (tbsActor.battler.limbsType() === "winged" && tbsActor.battler.isFlying()) ? "fly" : "walk";
-		this.checkMoveTile(tbsActor.chara.x, tbsActor.chara.y, moveRange, this._tbsMoveTiles, boundingCircle, moveType);
+		this.checkMoveTile(tbsActor.chara.x, tbsActor.chara.y, moveRange, this._tbsMoveTiles, moveType);
 	};
 	
-	Game_Map.prototype.checkMoveTile = function(x, y, remainingRange, moveTiles, boundingCircle, moveType) {
-		if(this.tbsCursorRegions().length > 0 && this.tbsCursorRegions().indexOf(this.regionId(x, y)) < 0) { return; }
+	Game_Map.prototype.checkMoveTile = function(x, y, remainingRange, moveTiles, moveType) {
 		var existingMoveTile = this.getExistingTbsTile(x, y, moveTiles);
 		if(!existingMoveTile) {
 			var newTile = {};
@@ -2464,21 +2462,24 @@
 			}
 		}
 		if(remainingRange < 1) { return; }
+		
 		var potentialTiles = [];
-		var that = this;
-		var subCircle = [];
-		boundingCircle.forEach(function (tile) {
-			var distance = that.actualDistance(x, y, tile.x, tile.y);
-			if(distance <= remainingRange) {
-				subCircle.push(tile);
+		var curY = y-remainingRange;
+		for(; curY <= y+remainingRange; curY++){
+			var curX = x-remainingRange;
+			for(; curX <= x+remainingRange; curX++){
+				if(this.tbsCursorRegions().length > 0 && this.tbsCursorRegions().indexOf(this.regionId(curX, curY)) < 0) { continue; }
+				if((curX == x && curY == y) || curX < 0 || curY < 0 || curX >= this.width || curY >= this.height) { continue; }
+				var distance = this.actualDistance(x, y, curX, curY);
+				if(distance > remainingRange) { continue; }
+				if(!this.isTrajectoryObstructed(x, y, curX, curY, moveType)) {
+					var tile = {};
+					tile.x = curX;
+					tile.y = curY;
+					potentialTiles.push(tile);
+				}
 			}
-		});
-		subCircle.forEach(function (tile) {
-			if(x === tile.x && y === tile.y) { return; }
-			if(!that.isTrajectoryObstructed(x, y, tile.x, tile.y, moveType)) {
-				potentialTiles.push(tile);
-			}
-		});
+		}
 		
 		var reachedTiles = [];
 		this.findReachableMoveTiles(x-1, y, potentialTiles, reachedTiles);
@@ -2487,9 +2488,9 @@
 		this.findReachableMoveTiles(x, y+1, potentialTiles, reachedTiles);
 		
 		reachedTiles.forEach(function (tile) {
-			var distance = that.actualDistance(x, y, tile.x, tile.y);
-			that.checkMoveTile(tile.x, tile.y, remainingRange - distance, moveTiles, boundingCircle);
-		});
+			var distance = this.actualDistance(x, y, tile.x, tile.y);
+			this.checkMoveTile(tile.x, tile.y, remainingRange - distance, moveTiles, moveType);
+		}, this);
 	};
 	
 	Game_Map.prototype.findReachableMoveTiles = function(x, y, potentialTiles, reachedTiles) {
@@ -2735,10 +2736,9 @@
 	Game_Map.prototype.checkActionTiles = function(x, y, actionRange, actionTiles, treatAsMovedThisRound) {
 		var baseRange = actionRange.ignoreUserRange ? 0 : actionRange.baseRange;
 		var boundingRadius = Math.ceil(actionRange.range + baseRange);
-		var centerBoundingCircle = this.getBoundingCircleArray(x, y, boundingRadius, actionTiles);
 		
 		var that = this;
-		var reachedTiles = this.getReachedActionTiles(x, y, centerBoundingCircle, actionTiles, actionRange.type);
+		var reachedTiles = this.getReachedActionTiles(x, y, boundingRadius, actionTiles, actionRange.type);
 		var collisionChecks = 0;
 		reachedTiles.forEach(function (reachedTile) {
 			collisionChecks += reachedTile.collisionChecks === undefined ? 0 : reachedTile.collisionChecks;
@@ -2759,16 +2759,24 @@
 		return collisionChecks;
 	};
 	
-	Game_Map.prototype.getReachedActionTiles = function(x, y, actionTilesToCheck, existingTiles, passageType) {
+	Game_Map.prototype.getReachedActionTiles = function(x, y, radius, existingTiles, passageType) {
 		var reachedTiles = [];
-		var that = this;
-		actionTilesToCheck.forEach(function (tile) {
-			if(that.getExistingTbsTile(tile.x, tile.y, existingTiles)) { return; }
-			var distance = that.actualDistance(x, y, tile.x, tile.y);
-			if(distance < 1.5 || !that.isTrajectoryObstructed(x, y, tile.x, tile.y, passageType, tile)) {
-				reachedTiles.push(tile);
+		var curY = y-radius;
+		for(; curY <= y+radius; curY++){
+			var curX = x-radius;
+			for(; curX <= x+radius; curX++){
+				if(this.tbsCursorRegions().length > 0 && this.tbsCursorRegions().indexOf(this.regionId(curX, curY)) < 0) { continue; }
+				if(curX < 0 || curY < 0 || curX >= this.width || curY >= this.height) { continue; }
+				var distance = this.actualDistance(x, y, curX, curY);
+				if(distance > radius || this.getExistingTbsTile(curX, curY, existingTiles)) { continue; }
+				var tile = {};
+				tile.x = curX;
+				tile.y = curY;
+				if(distance < 1.5 || !this.isTrajectoryObstructed(x, y, curX, curY, passageType, tile)) {
+					reachedTiles.push(tile);
+				}
 			}
-		});
+		}
 		return reachedTiles;
 	};
 	
@@ -3078,53 +3086,6 @@
 			&& tileOne.passability[9].melee		== tileTwo.passability[9].melee
 			&& tileOne.passability[9].thrown	== tileTwo.passability[9].thrown
 			&& tileOne.passability[9].fired		== tileTwo.passability[9].fired;
-	};
-	
-	Game_Map.prototype.getBoundingCircleArray = function(centerX, centerY, radius, actionTiles) {
-		var returnArray = [];
-		if(radius < 1) {
-			if(actionTiles) {
-				var existing = this.getExistingTbsTile(centerX, centerY, actionTiles);
-				if(existing) {
-					returnArray.push(existing);
-					return returnArray;;
-				}
-			}
-			if(centerX < 0 || centerY < 0 || centerX >= this.width || centerY >= this.height)
-			{
-				return returnArray;	
-			}
-			var tile = {};
-			tile.x = centerX;
-			tile.y = centerY;
-			returnArray.push(tile);
-			return returnArray;
-		}
-		var targetX = centerX - Math.ceil(radius);
-		for(; targetX <= centerX + Math.ceil(radius); targetX++) {
-			var targetY = centerY - Math.ceil(radius);
-			for(; targetY <= centerY + Math.ceil(radius); targetY++) {
-				var distance = this.actualDistance(centerX, centerY, targetX, targetY);
-				if(distance <= radius) {
-					if(actionTiles) {
-						var existing = this.getExistingTbsTile(targetX, targetY, actionTiles);
-						if(existing) {
-							returnArray.push(existing);
-							continue;
-						}
-					}
-					if(targetX < 0 || targetY < 0 || targetX >= this.width || targetY >= this.height)
-					{
-						continue;	
-					}
-					var tile = {};
-					tile.x = targetX;
-					tile.y = targetY;
-					returnArray.push(tile);
-				}
-			}
-		}
-		return returnArray;
 	};
 	
 	Game_Map.prototype.getTbsTilePassability = function(x, y) {
