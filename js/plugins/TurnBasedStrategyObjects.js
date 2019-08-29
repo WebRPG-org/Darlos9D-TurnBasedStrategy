@@ -1311,6 +1311,8 @@
 					this._dummyTarget.memberPosition = -1;
 					this._dummyTarget.canActThisRound = false;
 					this._damageStressDivisor = 2.5;
+					this._queuedActionLoops = 0;
+					this._queuedActionLimit = 500000;
 					var chara = new Game_Character();
 					chara.setStepAnime(false);
 					chara.setTbsBattleMode(true);
@@ -1738,14 +1740,15 @@
 		}
 	};
 	
-	Game_Map.prototype.processQueuedActionsAtPositions = function(collisionCheckLimit) {
-		if(collisionCheckLimit <= 0 || !this._tbsQueuedActionsAtPositions || this._tbsQueuedActionsAtPositions.length === 0) { return; }
+	Game_Map.prototype.processQueuedActionsAtPositions = function() {
+		if(this._queuedActionLoops >= this._queuedActionLimit || !this._tbsQueuedActionsAtPositions || this._tbsQueuedActionsAtPositions.length === 0) { return; }
 		var i;
-		while(collisionCheckLimit > 0) {
+		while(this._queuedActionLoops < this._queuedActionLimit) {
 			var actionAtPosition = this._tbsQueuedActionsAtPositions.pop();
 			var actionRange = actionAtPosition.actionRange;
 			var actionTiles = actionAtPosition.actionTiles;
-			collisionCheckLimit -= this.checkActionTiles(actionAtPosition.x, actionAtPosition.y, actionRange, actionTiles, true);
+			this._queuedActionLoops++;
+			this.checkActionTiles(actionAtPosition.x, actionAtPosition.y, actionRange, actionTiles, true);
 			if(this._tbsQueuedActionsAtPositions.length == 0) {
 				break;
 			}
@@ -1753,24 +1756,22 @@
 	};
 	
 	Game_Map.prototype.processQueuedActions = function() {
-		var collisionCheckLimit = 500;
+		this._queuedActionLoops = 0;
 		if(!this._tbsSelectedActor || !this._tbsQueuedActions || this._tbsQueuedActions.length === 0) {
-			this.processQueuedActionsAtPositions(collisionCheckLimit);
+			this.processQueuedActionsAtPositions();
 			return;
 		}
-		while(collisionCheckLimit > 0) {
+		while(this._queuedActionLoops < this._queuedActionLimit) {
 			var actionInfo = this._tbsQueuedActions.pop();
 			var chara = this._tbsSelectedActor.chara;
 			var action = actionInfo.action;
 			var actionRange = this.getLargestActionRange(action);
 			var actionTiles = [];
-			collisionCheckLimit -= this.checkActionTiles(chara.x, chara.y, actionRange, actionTiles);
-			actionTiles.forEach(function (tile) {
-				tile.centerMovePosition = true;
-			});
+			this._queuedActionLoops++;
+			this.checkActionTiles(chara.x, chara.y, actionRange, actionTiles);
 			this._tbsActionsTiles[this._tbsActionsTiles.length] = actionTiles;
 			if(this._tbsQueuedActions.length == 0) {
-				this.processQueuedActionsAtPositions(collisionCheckLimit);
+				this.processQueuedActionsAtPositions();
 				break;
 			}
 		}
@@ -2509,6 +2510,7 @@
 		var existingTile = undefined;
 		var i;
 		for(i = 0; i < tiles.length; i++) {
+			this._queuedActionLoops++;
 			var tile = tiles[i];
 			if(tile.x === x && tile.y === y) {
 				existingTile = tiles[i];
@@ -2525,6 +2527,7 @@
 			var force = this._tbsForces[i];
 			var j;
 			for(j = 0; j < force.actors.length; j++) {
+				this._queuedActionLoops++;
 				var actor = force.actors[j];
 				if(forManualMove && actor === this._tbsSelectedActor) { continue; }
 				if(actor.chara.x === x && actor.chara.y === y) {
@@ -2736,16 +2739,11 @@
 	Game_Map.prototype.checkActionTiles = function(x, y, actionRange, actionTiles, treatAsMovedThisRound) {
 		var baseRange = actionRange.ignoreUserRange ? 0 : actionRange.baseRange;
 		var boundingRadius = Math.ceil(actionRange.range + baseRange);
-		
 		var that = this;
-		var reachedTiles = this.getReachedActionTiles(x, y, boundingRadius, actionTiles, actionRange.type);
-		var collisionChecks = 0;
-		reachedTiles.forEach(function (reachedTile) {
-			collisionChecks += reachedTile.collisionChecks === undefined ? 0 : reachedTile.collisionChecks;
-			actionTiles.push(reachedTile);
-		});
+		this.getReachedActionTiles(x, y, boundingRadius, actionTiles, actionRange.type, !treatAsMovedThisRound);
 		if(!treatAsMovedThisRound && !this._tbsSelectedActor.movedThisRound) {
 			this._tbsMoveTiles.forEach(function (moveTile) {
+				this._queuedActionLoops++;
 				if(!that.getTbsActorAtPosition(moveTile.x, moveTile.y)) {
 					var actionAtPosition = {};
 					actionAtPosition.x = moveTile.x;
@@ -2756,31 +2754,30 @@
 				}
 			});
 		}
-		return collisionChecks;
 	};
 	
-	Game_Map.prototype.getReachedActionTiles = function(x, y, radius, existingTiles, passageType) {
-		var reachedTiles = [];
+	Game_Map.prototype.getReachedActionTiles = function(x, y, radius, actionTiles, passageType, centerMoveTile) {
 		var curY = y-radius;
 		for(; curY <= y+radius; curY++){
 			var curX = x-radius;
 			for(; curX <= x+radius; curX++){
+				this._queuedActionLoops++;
 				if(this.tbsCursorRegions().length > 0 && this.tbsCursorRegions().indexOf(this.regionId(curX, curY)) < 0) { continue; }
 				if(curX < 0 || curY < 0 || curX >= this.width || curY >= this.height) { continue; }
 				var distance = this.actualDistance(x, y, curX, curY);
-				if(distance > radius || this.getExistingTbsTile(curX, curY, existingTiles)) { continue; }
+				if(distance > radius || this.getExistingTbsTile(curX, curY, actionTiles)) { continue; }
 				var tile = {};
 				tile.x = curX;
 				tile.y = curY;
+				tile.centerMovePosition = centerMoveTile;
 				if(distance < 1.5 || !this.isTrajectoryObstructed(x, y, curX, curY, passageType, tile)) {
-					reachedTiles.push(tile);
+					actionTiles.push(tile);
 				}
 			}
 		}
-		return reachedTiles;
 	};
 	
-	Game_Map.prototype.isTrajectoryObstructed = function(startX, startY, endX, endY, passageType, checkingTile) {
+	Game_Map.prototype.isTrajectoryObstructed = function(startX, startY, endX, endY, passageType) {
 		var d = 5;
 		if(endX > startX) {
 			if(endY > startY) {
@@ -2816,13 +2813,10 @@
 		var blockedByTerrain = false;
 		var tileRuns = this._tileRuns;
 		for(i = 0; i < tileRuns.length; i++) {
+			this._queuedActionLoops++;
 			var firstTile = tileRuns[i][0];
 			if(firstTile.passability[10-d][passageType]) { continue; }
 			var lastTile = tileRuns[i][tileRuns[i].length-1];
-			if(checkingTile) {
-				checkingTile.collisionChecks = checkingTile.collisionChecks === undefined
-					? 1 : checkingTile.collisionChecks + 1;
-			}
 			if(this.cohenSutherlandLineClipAndDraw(x0, y0, x1, y1, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1)) {
 				blockedByTerrain = true;
 				break;
@@ -2830,24 +2824,19 @@
 		}
 		
 		if(!blockedByTerrain) {
-			var actorAtStart = !!this.getTbsActorAtPosition(startX, startY);
-			var actorAtEnd = !!this.getTbsActorAtPosition(endX, endY);
 			var i;
 			for(i = 0; i < this._tbsForces.length; i++) {
 				for(j = 0; j < this._tbsForces[i].actors.length; j++) {
+					this._queuedActionLoops++;
 					var chara = this._tbsForces[i].actors[j].chara;
-					if((actorAtStart && startX == chara.x && startY == chara.y)
-						|| (actorAtEnd && passageType !== "walk" && passageType !== "fly" && endX == chara.x && endY == chara.y)
+					if((startX == chara.x && startY == chara.y)
+						|| (passageType !== "walk" && passageType !== "fly" && endX == chara.x && endY == chara.y)
 						|| (this._tbsForces[i].actors[j].battler.isDown())
 						|| (this._tbsSelectedActor && (passageType === "walk" || passageType === "fly")
 							&& (this._tbsSelectedActor.forceId == i
 								|| this._tbsForces[i].allyForceIds.indexOf(this._tbsSelectedActor.forceId) >= 0)))
 					{
 						continue;
-					}
-					if(checkingTile) {
-						checkingTile.collisionChecks = checkingTile.collisionChecks === undefined
-							? 1 : checkingTile.collisionChecks + 1;
 					}
 					if(this.cohenSutherlandLineClipAndDraw(x0, y0, x1, y1, chara.x, chara.y, chara.x+1, chara.y+1)) {
 						return true;
@@ -2875,6 +2864,7 @@
 		var accept = false;
 
 		while (true) {
+			this._queuedActionLoops++;
 			if (!(outcode0 | outcode1)) {
 				// bitwise OR is 0: both points inside window; trivially accept and exit loop
 				accept = true;
@@ -2964,15 +2954,16 @@
 		var yDiff = Math.abs(startY - endY);
 		var xStart = endX < startX ? endX : startX;
 		var yStart = endY < startY ? endY : startY;
-		var boxX;
 		var boxY;
 		var tileRuns = [];
-		var curRun = [];
 		for(boxY = yStart; boxY <= yStart + yDiff; boxY++) {
+			var curRun = [];
+			var rowRuns = [];
+			var boxX;
 			for(boxX = xStart; boxX <= xStart + xDiff; boxX++) {
 				if(this._tbsCursorRegions.indexOf(this.regionId(boxX, boxY)) < 0) {
 					if(curRun.length > 0) {
-						tileRuns.push(curRun);
+						rowRuns.push(curRun);
 						curRun = [];
 					}
 					continue;
@@ -2983,22 +2974,73 @@
 				tile.passability = this.getTbsTilePassability(tile.x, tile.y);
 				if(this.isTileFullyPassable(tile)) {
 					if(curRun.length > 0) {
-						tileRuns.push(curRun);
+						rowRuns.push(curRun);
 						curRun = [];
 					}
 				} else {
 					if(curRun.length > 0 && !this.compareTilePassability(tile, curRun[curRun.length-1])) {
-						tileRuns.push(curRun);
+						rowRuns.push(curRun);
 						curRun = [];
 					}
 					curRun.push(tile);
 				}
 			}
 			if(curRun.length > 0) {
-				tileRuns.push(curRun);
+				rowRuns.push(curRun);
 				curRun = [];
 			}
+			if(tileRuns.length > 0) {
+				var i;
+				for(i = 0; i < rowRuns.length; i++) {
+					var rowRun = rowRuns[i];
+					var verticalFound = false;
+					var j;
+					for(j = 0; j < tileRuns.length; j++) {
+						var tileRun = tileRuns[j];
+						if(tileRun[tileRun.length-1].y+1 == rowRun[0].y && tileRun[0].x == rowRun[0].x
+							&& tileRun[tileRun.length-1].x == rowRun[rowRun.length-1].x)
+						{
+							tileRuns[j] = tileRun.concat(rowRun);
+							verticalFound = true;
+							break;
+						}
+					}
+					if(!verticalFound) {
+						tileRuns.push(rowRun);
+					}
+				}
+			} else {
+				tileRuns = rowRuns;
+			}
 		}
+		/* tileRuns.forEach(function (tileRun) {
+			var outString;
+			var prevY;
+			tileRun.forEach(function (tile) {
+				if(tile.y != prevY) {
+					if(outString) {
+						console.log(outString);
+					}
+					var yString = tile.y + "";
+					if(yString.length == 1) {
+						yString = "  " + yString;
+					} else if(yString.length == 2) {
+						yString = " " + yString;
+					}
+					outString = yString + "::";
+				}
+				var xString = tile.x + "";
+				if(xString.length == 1) {
+					xString = "  " + xString;
+				} else if(xString.length == 2) {
+					xString = " " + xString;
+				}
+				outString = outString + xString + ":";
+				prevY = tile.y;
+			});
+			console.log(outString);
+			console.log("---");
+		}); */
 		return tileRuns;
 	};
 	
