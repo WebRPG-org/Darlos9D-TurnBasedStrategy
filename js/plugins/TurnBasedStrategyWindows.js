@@ -2684,6 +2684,38 @@ Window_TbsNoTarget.prototype.windowWidth = function() {
 Window_TbsNoTarget.prototype.windowHeight = function() {
 	return this.fittingHeight(1);
 };
+
+//-----------------------------------------------------------------------------
+// Window_TbsNextRound
+//
+// The window for informing the player that a new round has started
+
+function Window_TbsNextRound() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_TbsNextRound.prototype = Object.create(Window_Base.prototype);
+Window_TbsNextRound.prototype.constructor = Window_TbsNextRound;
+
+Window_TbsNextRound.prototype.initialize = function() {
+    Window_Base.prototype.initialize.call(this,
+		Graphics.boxWidth - this.windowWidth(),
+		Graphics.boxHeight / 2 - this.windowHeight() / 2,
+		this.windowWidth(), this.windowHeight());
+    this.refresh();
+};
+
+Window_TbsNextRound.prototype.refresh = function() {
+	this.drawText("New round", this.textPadding(), 0);
+};
+
+Window_TbsNextRound.prototype.windowWidth = function() {
+	return 14*9 + this.standardPadding()*2 + this.textPadding()*2;
+};
+
+Window_TbsNextRound.prototype.windowHeight = function() {
+	return this.fittingHeight(1);
+};
  
 (function() {
 	//base

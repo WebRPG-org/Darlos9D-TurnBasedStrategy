@@ -362,6 +362,7 @@
 		this._tbsTurnMode = "";
 		this._tbsCancelMoveJustEnded = false;
 		this._tbsTurnJustStarted = false;
+		this._tbsRoundJustStarted = false;
 		this._tbsCursorFocusX = -1;
 		this._tbsCursorFocusY = -1;
 		this._sqrtOfTwo = Math.sqrt(2);
@@ -577,6 +578,12 @@
 	Game_Map.prototype.checkTbsTurnJustStarted = function() {
 		var returnValue = this._tbsTurnJustStarted;
 		this._tbsTurnJustStarted = false;
+		return returnValue;
+	};
+	
+	Game_Map.prototype.checkTbsRoundJustStarted = function() {
+		var returnValue = this._tbsRoundJustStarted;
+		this._tbsRoundJustStarted = false;
 		return returnValue;
 	};
 	
@@ -1283,6 +1290,7 @@
 				if(prevMode === "setup") {
 					this._tbsCurrentTurnForce = 0;
 					this._tbsTurnJustStarted = true;
+					this._tbsRoundJustStarted = false;
 					this._tbsMoveTiles = [];
 					this._tbsActionsTiles = [];
 					this.setTbsSelectedActor(undefined);
@@ -1544,6 +1552,7 @@
 			}
 			this.resolveEqualPerceptionRolls();
 			this.switchToFirstForce();
+			this._tbsRoundJustStarted = true;
 		}
 		
 		this._tbsMoveTiles = [];
@@ -2442,7 +2451,6 @@
 		}
 		var battlerMoveRange = Math.max(2, tbsActor.battler.moveRange() * ((moveDenom - moveDamage) / moveDenom));
 		var moveRange = battlerMoveRange / 2;
-		var boundingRadius = Math.ceil(moveRange);
 		var moveType = (tbsActor.battler.limbsType() === "winged" && tbsActor.battler.isFlying()) ? "fly" : "walk";
 		this.checkMoveTile(tbsActor.chara.x, tbsActor.chara.y, moveRange, this._tbsMoveTiles, moveType);
 	};
@@ -2465,10 +2473,11 @@
 		if(remainingRange < 1) { return; }
 		
 		var potentialTiles = [];
-		var curY = y-remainingRange;
-		for(; curY <= y+remainingRange; curY++){
-			var curX = x-remainingRange;
-			for(; curX <= x+remainingRange; curX++){
+		var checkRadius = Math.ceil(remainingRange);
+		var curY = y-checkRadius;
+		for(; curY <= y+checkRadius; curY++){
+			var curX = x-checkRadius;
+			for(; curX <= x+checkRadius; curX++){
 				if(this.tbsCursorRegions().length > 0 && this.tbsCursorRegions().indexOf(this.regionId(curX, curY)) < 0) { continue; }
 				if((curX == x && curY == y) || curX < 0 || curY < 0 || curX >= this.width || curY >= this.height) { continue; }
 				var distance = this.actualDistance(x, y, curX, curY);
@@ -2738,9 +2747,8 @@
 	
 	Game_Map.prototype.checkActionTiles = function(x, y, actionRange, actionTiles, treatAsMovedThisRound) {
 		var baseRange = actionRange.ignoreUserRange ? 0 : actionRange.baseRange;
-		var boundingRadius = Math.ceil(actionRange.range + baseRange);
 		var that = this;
-		this.getReachedActionTiles(x, y, boundingRadius, actionTiles, actionRange.type, !treatAsMovedThisRound);
+		this.getReachedActionTiles(x, y, actionRange.range + baseRange, actionTiles, actionRange.type, !treatAsMovedThisRound);
 		if(!treatAsMovedThisRound && !this._tbsSelectedActor.movedThisRound) {
 			this._tbsMoveTiles.forEach(function (moveTile) {
 				this._queuedActionLoops++;
@@ -2757,10 +2765,11 @@
 	};
 	
 	Game_Map.prototype.getReachedActionTiles = function(x, y, radius, actionTiles, passageType, centerMoveTile) {
-		var curY = y-radius;
-		for(; curY <= y+radius; curY++){
-			var curX = x-radius;
-			for(; curX <= x+radius; curX++){
+		var checkRadius = Math.ceil(radius);
+		var curY = y-checkRadius;
+		for(; curY <= y+checkRadius; curY++){
+			var curX = x-checkRadius;
+			for(; curX <= x+checkRadius; curX++){
 				this._queuedActionLoops++;
 				if(this.tbsCursorRegions().length > 0 && this.tbsCursorRegions().indexOf(this.regionId(curX, curY)) < 0) { continue; }
 				if(curX < 0 || curY < 0 || curX >= this.width || curY >= this.height) { continue; }

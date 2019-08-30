@@ -32,6 +32,8 @@
 		this._oldBreadcrumbs = [];
 		this._tbsBattleJustStarted = true;
 		this._tbsBattleFadeSpeed = 12;
+		this._tbsNextRoundWindowTimer = 0;
+		this._tbsNextRoundWindowTime = 30*3;
 		SoundManager.loadTbsBattleStartSound();
 		SoundManager.loadWindowOpenCloseSound();
 		SoundManager.loadDeflectionSound();
@@ -57,7 +59,19 @@
 	
 	Scene_Map.prototype.updateBasedOnTbsBattle = function() {
 		if($gameMap.tbsBattleMode()
-			&& $gameMap.tbsTurnMode() != "victory" && $gameMap.tbsTurnMode() != "gameOver") {
+			&& $gameMap.tbsTurnMode() != "victory" && $gameMap.tbsTurnMode() != "gameOver")
+		{
+			if(this._tbsNextRoundWindowTimer > 0) {
+				this._tbsNextRoundWindowTimer--;
+				if(this._tbsNextRoundWindowTimer <= 0) {
+					this._tbsNextRoundWindow.close();
+				}
+			}
+			if($gameMap.checkTbsRoundJustStarted()) {
+				this._tbsNextRoundWindow.show();
+				this._tbsNextRoundWindow.open();
+				this._tbsNextRoundWindowTimer = this._tbsNextRoundWindowTime;
+			}
 			var force = $gameMap.currentForce();
 			if(!force || !force.isParty || $gameMap.tbsTurnMode() === "actionBattleScene") {
 				this._tbsActorWindow.close();
@@ -288,6 +302,7 @@
 			$gameMap.setBreadcrumbStage("none");
 			this._tbsBattleJustStarted = true;
 			this._tbsNoTargetWindow.close();
+			this._tbsNextRoundWindow.close();
 		}
 	};
 	
@@ -371,6 +386,7 @@
 		this.createTbsTargetPartWindow();
 		this.createTbsBreadcrumbWindows();
 		this.createTbsNoTargetWindow();
+		this.createTbsNextRoundWindow();
 	};
 
 	Scene_Map.prototype.createTbsActorStatusWindow = function() {
@@ -513,6 +529,14 @@
 		this._tbsNoTargetWindow.hide();
 		this._tbsNoTargetWindow.close();
 		this._tbsNoTargetWindow.deactivate();
+	};
+	
+	Scene_Map.prototype.createTbsNextRoundWindow = function() {
+		this._tbsNextRoundWindow = new Window_TbsNextRound();
+		this.addWindow(this._tbsNextRoundWindow);
+		this._tbsNextRoundWindow.hide();
+		this._tbsNextRoundWindow.close();
+		this._tbsNextRoundWindow.deactivate();
 	};
 	
 	Scene_Map.prototype.onActorOk = function() {
