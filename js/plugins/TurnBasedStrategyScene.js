@@ -377,6 +377,7 @@
 		this.createScrollTextWindow();
 		this.createTbsActorStatusWindow();
 		this.createTbsActorStressWindow();
+		this.createTbsActorBuffsWindow();
 		this.createTbsActorWindow();
 		this.createTbsActionTypeWindow();
 		this.createTbsActionInfoWindow();
@@ -407,6 +408,16 @@
 		this._tbsActorStressWindow.hide();
 		this._tbsActorStressWindow.close();
 		this._tbsActorStatusWindow.setActorStressWindow(this._tbsActorStressWindow);
+	};
+
+	Scene_Map.prototype.createTbsActorBuffsWindow = function() {
+		var wx = this._tbsActorStatusWindow.x - Window_TbsActorBuffs.prototype.windowWidth()
+			+ Window_TbsActorBuffs.prototype.standardPadding();
+		this._tbsActorBuffsWindow = new Window_TbsActorBuffs(wx, 0);
+		this.addWindow(this._tbsActorBuffsWindow);
+		this._tbsActorBuffsWindow.hide();
+		this._tbsActorBuffsWindow.close();
+		this._tbsActorStatusWindow.setActorBuffsWindow(this._tbsActorBuffsWindow);
 	};
 
 	Scene_Map.prototype.createTbsActorWindow = function() {
@@ -771,6 +782,8 @@
 		this.createTbsRightActorStatusWindow();
 		this.createTbsLeftActorStressWindow();
 		this.createTbsRightActorStressWindow();
+		this.createTbsLeftActorBuffsWindow();
+		this.createTbsRightActorBuffsWindow();
 		this.createTbsLeftActorNameWindow();
 		this.createTbsRightActorNameWindow();
 	};
@@ -809,6 +822,26 @@
 		this._tbsRightActorStressWindow = new Window_TbsActorStress(wx, wy);
 		this.addWindow(this._tbsRightActorStressWindow);
 		this._tbsRightActorStatusWindow.setActorStressWindow(this._tbsRightActorStressWindow);
+	};
+	
+	Scene_Battle.prototype.createTbsLeftActorBuffsWindow = function() {
+		var wx = this._tbsLeftActorStatusWindow.x + this._tbsLeftActorStatusWindow.width
+			- Window_TbsActorBuffs.prototype.standardPadding();
+		var wy = Graphics.boxHeight - Window_TbsActorBuffs.prototype.windowHeight()
+			- Window_TbsTargetName.prototype.windowHeight()
+			+ Window_TbsActorBuffs.prototype.standardPadding();
+		this._tbsLeftActorBuffsWindow = new Window_TbsActorBuffs(wx, wy);
+		this.addWindow(this._tbsLeftActorBuffsWindow);
+		this._tbsLeftActorStatusWindow.setActorBuffsWindow(this._tbsLeftActorBuffsWindow);
+	};
+	
+	Scene_Battle.prototype.createTbsRightActorBuffsWindow = function() {
+		var wx = this._tbsRightActorStatusWindow.x - Window_TbsActorBuffs.prototype.windowWidth()
+			+ Window_TbsActorBuffs.prototype.standardPadding();
+		var wy = Window_TbsTargetName.prototype.windowHeight() - Window_TbsActorBuffs.prototype.standardPadding();
+		this._tbsRightActorBuffsWindow = new Window_TbsActorBuffs(wx, wy);
+		this.addWindow(this._tbsRightActorBuffsWindow);
+		this._tbsRightActorStatusWindow.setActorBuffsWindow(this._tbsRightActorBuffsWindow);
 	};
 
 	Scene_Battle.prototype.createTbsLeftActorNameWindow = function() {

@@ -1058,10 +1058,17 @@ Window_TbsActorStatus.prototype.setTbsActor = function(tbsActor, forceRefresh) {
 			this._actorStressWindow.setTbsActor(this._tbsActor);
 			this._actorStressWindow.refresh();
 		}
+		if(this._actorBuffsWindow) {
+			this._actorBuffsWindow.setTbsActor(this._tbsActor);
+			this._actorBuffsWindow.refresh();
+		}
     } else if(forceRefresh) {
 		this.refresh();
 		if(this._actorStressWindow) {
 			this._actorStressWindow.refresh();
+		}
+		if(this._actorBuffsWindow) {
+			this._actorBuffsWindow.refresh();
 		}
 	}
 };
@@ -1072,63 +1079,17 @@ Window_TbsActorStatus.prototype.setActorStressWindow = function(stressWindow) {
 	}
 };
 
+Window_TbsActorStatus.prototype.setActorBuffsWindow = function(buffsWindow) {
+	if (this._actorBuffsWindow !== buffsWindow) {
+		this._actorBuffsWindow = buffsWindow;
+	}
+};
+
 Window_TbsActorStatus.prototype.refresh = function() {
     this.contents.clear();
     if (this._tbsActor) {
-		//this.drawActorStress(this._tbsActor.battler, this.textPadding(), 0);
         this.drawActorDamage(this._tbsActor.battler, 0, 0);
-        //this.drawActorBuffs(this._tbsActor.battler, 14*22, 0);
     }
-	//this.drawLine(this.lineHeight(), 0, this.contentsWidth() - this.lineHeight());
-	//this.drawLine(this.lineHeight(), this.lineHeight()*4, this.contentsWidth() - this.lineHeight());
-};
-
-Window_TbsActorStatus.prototype.drawActorStress = function(battler, x, y) {
-	this.changeTextColor(this.systemColor());
-	this.drawText("[                 ]", x+14*5, y, 14*19);
-	this.drawText("St", x, y, 14*2);
-	if(battler.stress() >= 100) {
-		this.changeTextColor(this.deathColor());
-	} else {
-		this.changeTextColor(this.crisisColor());
-	}
-	this.drawText(battler.stress(), x + 14*2, y, 14*3, 'right');
-	var pips = (battler.stress() / 100) * 17;
-	var i;
-	for(i = 0; i < pips; i++) {
-		var width = 14;
-		if(pips - i > 0 && pips - i < 1) {
-			width *= pips - i;
-		}
-		this.drawText("=", x+14*(6+i), y, width);
-	}
-	this.resetTextColor();
-};
-
-Window_TbsActorStatus.prototype.drawActorBuffs = function(battler, x, y) {
-	var iconHeight = Window_Base._iconHeight;
-	var iconSeparation = 4;
-	var buffs = battler.tbsBuffs();
-	var iconRowWidth = 2;
-	var curX = x;
-	var curY = y;
-	var i;
-	for(i = 0; i < buffs.length; i++) {
-		this.drawIcon(buffs[i].iconId, curX, curY);
-		if(i > 0 && i % iconRowWidth == 1) {
-			curX = x;
-			curY = curY + this.lineHeight();
-		} else {
-			curX += iconHeight+iconSeparation;
-		}
-	}
-};
-
-Window_TbsActorStatus.prototype.drawLine = function(x, y, width) {
-	var lineY = y + this.lineHeight() / 2 - 1;
-	this.contents.paintOpacity = 48;
-	this.contents.fillRect(x, lineY, width, 2, this.normalColor());
-	this.contents.paintOpacity = 255;
 };
 
 Window_TbsActorStatus.prototype.setShouldReOpen = function(should) {
@@ -1153,12 +1114,18 @@ Window_TbsActorStatus.prototype.open = function() {
 	if(this._actorStressWindow) {
 		this._actorStressWindow.open();
 	}
+	if(this._actorBuffsWindow) {
+		this._actorBuffsWindow.open();
+	}
 };
 
 Window_TbsActorStatus.prototype.close = function() {
 	Window_Base.prototype.close.call(this);
 	if(this._actorStressWindow) {
 		this._actorStressWindow.close();
+	}
+	if(this._actorBuffsWindow) {
+		this._actorBuffsWindow.close();
 	}
 };
 
@@ -1167,12 +1134,99 @@ Window_TbsActorStatus.prototype.show = function() {
 	if(this._actorStressWindow) {
 		this._actorStressWindow.show();
 	}
+	if(this._actorBuffsWindow) {
+		this._actorBuffsWindow.show();
+	}
 };
 
 Window_TbsActorStatus.prototype.hide = function() {
 	Window_Base.prototype.hide.call(this);
 	if(this._actorStressWindow) {
 		this._actorStressWindow.hide();
+	}
+	if(this._actorBuffsWindow) {
+		this._actorBuffsWindow.hide();
+	}
+};
+
+//-----------------------------------------------------------------------------
+// Window_TbsActorBuffs
+//
+// The window for displaying a tbs actor's buffs/debuffs during a turn based strategy battle
+
+function Window_TbsActorBuffs() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_TbsActorBuffs.prototype = Object.create(Window_Base.prototype);
+Window_TbsActorBuffs.prototype.constructor = Window_TbsActorBuffs;
+
+Window_TbsActorBuffs.prototype.initialize = function(x, y) {
+    Window_Base.prototype.initialize.call(this, x, y, this.windowWidth(), this.windowHeight());
+    this._tbsActor = null;
+};
+
+Window_TbsActorBuffs.prototype.iconSeparation = function() {
+	return 4;
+};
+
+Window_TbsActorBuffs.prototype.iconRowWidth = function() {
+	return 2;
+};
+
+Window_TbsActorBuffs.prototype.iconColumnHeight = function() {
+	return 2;
+};
+
+Window_TbsActorBuffs.prototype.windowWidth = function() {
+	return this.standardPadding()*2
+		+ Window_Base._iconWidth*this.iconRowWidth()
+		+ this.iconSeparation()*(this.iconRowWidth()-1);
+};
+
+Window_TbsActorBuffs.prototype.windowHeight = function() {
+	return this.standardPadding()*2
+		+ Window_Base._iconHeight*this.iconColumnHeight()
+		+ this.iconSeparation()*(this.iconColumnHeight()-1);
+};
+
+Window_TbsActorBuffs.prototype.setTbsActor = function(tbsActor) {
+    if (this._tbsActor !== tbsActor) {
+        this._tbsActor = tbsActor;
+    }
+};
+
+Window_TbsActorBuffs.prototype.update = function() {
+	Window_Base.prototype.update.call(this);
+	if (this._tbsActor && this._tbsActor.battler.tbsBuffs().length > 0) {
+		this.show();
+	} else {
+		this.hide();
+	}
+};
+
+Window_TbsActorBuffs.prototype.refresh = function() {
+    this.contents.clear();
+    if (this._tbsActor) {
+		this.drawActorBuffs(this._tbsActor.battler, 0, 0);
+    }
+};
+
+Window_TbsActorBuffs.prototype.drawActorBuffs = function(battler, x, y) {
+	var iconHeight = Window_Base._iconHeight;
+	var iconWidth = Window_Base._iconWidth;
+	var buffs = battler.tbsBuffs();
+	var curX = x;
+	var curY = y;
+	var i;
+	for(i = 0; i < buffs.length; i++) {
+		this.drawIcon(buffs[i].iconId, curX, curY);
+		if(i > 0 && i % this.iconRowWidth() == 1) {
+			curX = x;
+			curY = curY + iconHeight+this.iconSeparation();
+		} else {
+			curX += iconWidth+this.iconSeparation();
+		}
 	}
 };
 
