@@ -1877,19 +1877,12 @@
 				
 				var shouldRest = false;
 				var defensePriority = 0;
-				var stress = this._tbsSelectedActor.battler.stressModifier();
-				if(stress > 1) {
-					var restChance = 1 - (stress - 1) / 5;
-					if(Math.random() > restChance) {
-						shouldRest = true;
+				var stress = this._tbsSelectedActor.battler.stress();
+				if(stress > 20) {
+					var stressCompare = 1 - ((stress - 20) / 120);
+					if(Math.random() > stressCompare) {
+						defensePriority = 3;
 					}
-				}
-				if (stress >= 5) {
-					defensePriority = 3;
-				} else if(stress >= 3) {
-					defensePriority = 2;
-				} else if(stress >= 1) {
-					defensePriority = 1;
 				}
 				
 				var actionsByPriority = {};
@@ -1900,12 +1893,8 @@
 				for(i = 0; i < actionInfos.length; i++) {
 					var actionInfo = actionInfos[i];
 					var action = actionInfo.action;
-					if((shouldRest && action.name === "Full Defense") || (!shouldRest && action.name === "Rest")) {
-						continue;
-					}
 					var priority = 0;
-					//TODO: actually handle priorities somehow
-					if(action.name === "Full Defense" || action.name === "Rest") {
+					if(action.name === "Rest") {
 						priority = defensePriority;
 					} else if(action.name === "Unarmed Attack" || action.name === "Shove") {
 						priority = 1;
