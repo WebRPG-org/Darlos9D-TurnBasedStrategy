@@ -358,6 +358,7 @@
 		this._tbsBattleMode = false;
 		this._tbsBattleModeJustChanged = false;
 		this._tbsForces = [];
+		this._tbsOrderedForces = [];
 		this._tbsCurrentTurnForce = -1;
 		this._tbsTurnMode = "";
 		this._tbsCancelMoveJustEnded = false;
@@ -637,13 +638,12 @@
 			forceId++;
 			return that.createTbsForce(pendingForce, forceId);
 		});
-		this.resolveEqualPerceptionRolls();
-		this.switchToFirstForce();
 		return tbsForces;
 	};
 	
 	Game_Map.prototype.createTbsForce = function(pendingTbsForce, forceId) {
 		var force = {};
+		force.forceId = forceId;
 		force.isParty = pendingTbsForce.isParty;
 		force.allyForceIds = pendingTbsForce.allyForceIds;
 		force.enemyForceIds = pendingTbsForce.enemyForceIds;
@@ -1281,6 +1281,7 @@
 				this.spawnTbsCharacters();
 				this.saveBgmAndBgs();
 				this._tileRuns = this.getTileRuns();
+				this.determineForceOrder();
 				//$gameTemp.setShouldClearTbsDamageSprites(true);
 				break;
 			case "selectActorActionType":
@@ -1385,6 +1386,10 @@
 				}
 				$gamePlayer.setTbsShowCursor(true);
 				this._tbsManualMoveStarted = true;
+				this._tbsSelectedActorWasMoving = false;
+				this._tbsAoeSprites = [];
+				$gameTemp.setShouldClearTbsAoeSprites(true);
+				this.spawnTbsLOSSprites();
 				break;
 			case "cancelMove":
 				//$gameTemp.setShouldClearTbsDamageSprites(true);
@@ -1566,8 +1571,7 @@
 					}
 				}
 			}
-			this.resolveEqualPerceptionRolls();
-			this.switchToFirstForce();
+			this.determineForceOrder();
 			this._tbsRoundJustStarted = true;
 		}
 		
@@ -1587,77 +1591,32 @@
 		this._tbsTurnJustStarted = true;
 	};
 	
-	Game_Map.prototype.resolveEqualPerceptionRolls = function() {
-		var sortForces = [];
+	Game_Map.prototype.determineForceOrder = function() {
+		this._tbsOrderedForces = [];
 		this._tbsForces.forEach(function (force) {
-			sortForces.push(force);
-		});
-		sortForces.sort(function (a, b) {
-			if(a.perceptionRoll == b.perceptionRoll) {
-				var newA = a.perceptionRoll;
-				var newB = b.perceptionRoll;
-				while(newA == newB) {
-					newA = undefined;
-					newB = undefined;
-					a.actors.forEach(function (actor) {
-						if(!actor.canActThisRound) { return; }
-						var perceptionRoll = BattleManager.rollForRanks(actor.battler.totalSkill("perception") * this._perceptionMultiplier, actor.battler.stress());
-						if(newA == undefined || newA < perceptionRoll) {
-							newA = perceptionRoll;
-						}
-					}, this);
-					b.actors.forEach(function (actor) {
-						if(!actor.canActThisRound) { return; }
-						var perceptionRoll = BattleManager.rollForRanks(actor.battler.totalSkill("perception") * this._perceptionMultiplier, actor.battler.stress());
-						if(newB == undefined || newB < perceptionRoll) {
-							newB = perceptionRoll;
-						}
-					}, this);
-				}
-				return newB - newA;
-			} else {
-				return b.perceptionRoll - a.perceptionRoll;
-			}
+			this._tbsOrderedForces.push(force);
 		}, this);
-		var newPerception = 0;
-		sortForces.forEach(function (force) {
-			force.perceptionRoll = newPerception;
-			newPerception++;
+		this._tbsOrderedForces.sort(function (a, b) {
+			if(a.perceptionRoll == b.perceptionRoll) {
+				return Math.random() >= 0.5 ? 1 : -1;
+			}
+			return b.perceptionRoll - a.perceptionRoll;
 		});
+		this._tbsCurrentTurnForce = this._tbsOrderedForces[0].forceId;
 	};
 	
 	Game_Map.prototype.switchToNextForce = function() {
-		var curPerceptionRoll = this._tbsForces[this._tbsCurrentTurnForce].perceptionRoll;
-		var highestNewPerceptionRoll = undefined;
-		var newForceId = undefined;
-		for(i = 0; i < this._tbsForces.length; i++) {
-			if(this._tbsForces[i].perceptionRoll < curPerceptionRoll
-				&& (highestNewPerceptionRoll == undefined || this._tbsForces[i].perceptionRoll > highestNewPerceptionRoll))
-			{
-				highestNewPerceptionRoll = this._tbsForces[i].perceptionRoll;
-				newForceId = i;
+		var i;
+		for(i = 0; i < this._tbsOrderedForces.length; i++) {
+			if(this._tbsOrderedForces[i].forceId == this._tbsCurrentTurnForce) {
+				break;
 			}
 		}
-		if(highestNewPerceptionRoll == undefined) {
-			this.switchToFirstForce();
+		if(i >= this._tbsOrderedForces.length-1) {
+			this._tbsCurrentTurnForce = this._tbsOrderedForces[0].forceId;
 		} else {
-			this._tbsCurrentTurnForce = newForceId;
+			this._tbsCurrentTurnForce = this._tbsOrderedForces[i+1].forceId;
 		}
-	};
-	
-	Game_Map.prototype.switchToFirstForce = function() {
-		var highestNewPerceptionRoll = undefined;
-		var newForceId = undefined;
-		if(highestNewPerceptionRoll == undefined) {
-			for(i = 0; i < this._tbsForces.length; i++) {
-				if(highestNewPerceptionRoll == undefined || this._tbsForces[i].perceptionRoll > highestNewPerceptionRoll)
-				{
-					highestNewPerceptionRoll = this._tbsForces[i].perceptionRoll;
-					newForceId = i;
-				}
-			}
-		}
-		this._tbsCurrentTurnForce = newForceId;
 	};
 	
 	Game_Map.prototype.isInActionBattleScene = function() {
