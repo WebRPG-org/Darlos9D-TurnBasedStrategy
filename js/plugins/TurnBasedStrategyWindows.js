@@ -1948,7 +1948,8 @@ Window_TbsAction.prototype.selectFirstEnabledItem = function() {
 	var selected = false;
 	var i;
 	for(i = 0; i < this.maxItems(); i++) {
-		if(this.isEnabled(i) && this._actionTextColor[i] === this.normalColor()) {
+		var action = this._actionInfos[this.index()].action;
+		if(this.isEnabled(action) && this._actionTextColor[i] === this.normalColor()) {
 			this.select(i);
 			selected = true;
 			break;
@@ -1964,7 +1965,10 @@ Window_TbsAction.prototype.costWidth = function() {
 };
 
 Window_TbsAction.prototype.isEnabled = function(action) {
-	return true;
+	if(this._tbsActor && action) {
+		return !action.attackAndMove || $gameMap.canReturnFromCurrentPosition();
+	}
+	return false;
 };
 
 Window_TbsAction.prototype.isCurrentItemEnabled = function() {

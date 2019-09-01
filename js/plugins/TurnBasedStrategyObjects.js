@@ -368,6 +368,7 @@
 		this._sqrtOfTwo = Math.sqrt(2);
 		this._shouldOpenActionWindow = false;
 		this._tbsMoveTiles = [];
+		this._tbsAttackAndMoveTiles = [];
 		this._tbsActionsTiles = [];
 		this._tbsSelectedActor = undefined;
 		this._tbsManualMoveStartX = -1;
@@ -1292,6 +1293,7 @@
 					this._tbsTurnJustStarted = true;
 					this._tbsRoundJustStarted = false;
 					this._tbsMoveTiles = [];
+					this._tbsAttackAndMoveTiles = [];
 					this._tbsActionsTiles = [];
 					this.setTbsSelectedActor(undefined);
 					this.clearTbsManualMoveStart();
@@ -1351,7 +1353,7 @@
 					this._tbsSelectedActor.movedThisRound = false;
 					this._tbsCancelMoveJustEnded = true;
 				}
-				if(prevMode === "actionBattleScene" || prevMode === "passTurn") {
+				if(prevMode === "actionBattleScene" || prevMode === "passTurn" || prevMode === "postActionMove") {
 					this.tbsNextTurn();
 				}
 				break;
@@ -1422,8 +1424,13 @@
 					chara.turnTowardLocation(this._tbsActionTargetLocationX, this._tbsActionTargetLocationY);
 				}
 				break;
+			case "postActionMove":
+				$gamePlayer.setTbsShowCursor(true);
+				$gamePlayer.setTbsFollowingCharacter(false);
+				break;
 			case "victory":
 				this._tbsMoveTiles = [];
+				this._tbsAttackAndMoveTiles = [];
 				this._tbsActionsTiles = [];
 				this.setTbsSelectedActor(undefined);
 				this.clearTbsManualMoveStart();
@@ -1455,6 +1462,7 @@
 				break;
 			case "gameOver":
 				this._tbsMoveTiles = [];
+				this._tbsAttackAndMoveTiles = [];
 				this._tbsActionsTiles = [];
 				this.setTbsSelectedActor(undefined);
 				this.clearTbsManualMoveStart();
@@ -1556,6 +1564,7 @@
 		}
 		
 		this._tbsMoveTiles = [];
+		this._tbsAttackAndMoveTiles = [];
 		this._tbsActionsTiles = [];
 		this.setTbsSelectedActor(undefined);
 		this.clearTbsManualMoveStart();
@@ -1739,6 +1748,9 @@
 			case "actionBattleScene":
 				this.updateTbsActionBattleScene();
 				break;
+			case "postActionMove":
+				this.updateTbsPostActionMove();
+				break;
 			case "victory":
 				this.updateTbsVictory();
 				break;
@@ -1757,7 +1769,7 @@
 			var actionRange = actionAtPosition.actionRange;
 			var actionTiles = actionAtPosition.actionTiles;
 			this._queuedActionLoops++;
-			this.checkActionTiles(actionAtPosition.x, actionAtPosition.y, actionRange, actionTiles, true);
+			this.checkActionTiles(actionAtPosition.x, actionAtPosition.y, false, actionRange, actionTiles, true);
 			if(this._tbsQueuedActionsAtPositions.length == 0) {
 				break;
 			}
@@ -1777,7 +1789,7 @@
 			var actionRange = this.getLargestActionRange(action);
 			var actionTiles = [];
 			this._queuedActionLoops++;
-			this.checkActionTiles(chara.x, chara.y, actionRange, actionTiles);
+			this.checkActionTiles(chara.x, chara.y, action.attackAndMove, actionRange, actionTiles);
 			this._tbsActionsTiles[this._tbsActionsTiles.length] = actionTiles;
 			if(this._tbsQueuedActions.length == 0) {
 				this.processQueuedActionsAtPositions();
@@ -2383,6 +2395,39 @@
 			return;
 		}
 		
+		if(this._tbsSelectedAction.attackAndMove && !this._tbsSelectedActor.battler.isDown()) {
+			this.setTbsCursorFocus(this._tbsSelectedActor.chara.x, this._tbsSelectedActor.chara.y);
+			this.setTbsManualMoveStart(this._tbsMoveTiles[0].x, this._tbsMoveTiles[0].y);
+			this.setTbsTurnMode("postActionMove");
+		} else {
+			this.setTbsTurnMode("selectActorActionType");
+		}
+	};
+	
+	Game_Map.prototype.updateTbsPostActionMove = function() {
+		if(this.tbsCursorIsFocusing()) {
+			this.focusTbsCursor();
+			return;
+		}
+		$gamePlayer.setTbsShowCursor(false);
+		$gamePlayer.setTbsFollowingCharacter(true);
+		$gamePlayer.refresh();
+		var chara = this._tbsSelectedActor.chara;
+		if(chara.isMoving()
+			|| chara.x !== this._tbsManualMoveStartX
+			|| chara.y !== this._tbsManualMoveStartY) {
+			if(!chara.isMoving()) {
+				var direction = chara.findDirectionTo(this._tbsManualMoveStartX, this._tbsManualMoveStartY);
+				chara.moveStraight(direction);
+				$gamePlayer.setNextFrameMoveDirection(direction);
+			}
+			return;
+		}
+		$gamePlayer.setTbsShowCursor(true);
+		$gamePlayer.setTbsFollowingCharacter(false);
+		$gamePlayer.refresh();
+		this.clearTbsManualMoveStart();
+		chara.setDirection(2);
 		this.setTbsTurnMode("selectActorActionType");
 	};
 	
@@ -2426,6 +2471,7 @@
 	Game_Map.prototype.generateTbsMoveField = function() {
 		var tbsActor = this._tbsSelectedActor;
 		this._tbsMoveTiles = [];
+		this._tbsAttackAndMoveTiles = [];
 		if(!tbsActor || !tbsActor.canActThisRound || tbsActor.movedThisRound) { return; }
 		var moveDamage = tbsActor.battler.getDamage("torso");
 		var moveDenom = 400;
@@ -2442,6 +2488,11 @@
 		var moveRange = battlerMoveRange / 2;
 		var moveType = (tbsActor.battler.limbsType() === "winged" && tbsActor.battler.isFlying()) ? "fly" : "walk";
 		this.checkMoveTile(tbsActor.chara.x, tbsActor.chara.y, moveRange, this._tbsMoveTiles, moveType);
+		this._tbsMoveTiles.forEach(function (moveTile) {
+			if(moveRange - moveTile.remainingRange <= moveRange/2) {
+				this._tbsAttackAndMoveTiles.push(moveTile);
+			}
+		}, this);
 	};
 	
 	Game_Map.prototype.checkMoveTile = function(x, y, remainingRange, moveTiles, moveType) {
@@ -2536,6 +2587,33 @@
 			if(returnActor) { break; }
 		}
 		return returnActor;
+	};
+	
+	Game_Map.prototype.canReturnFromCurrentPosition = function() {
+		if(!this._tbsSelectedActor || !this._tbsMoveTiles || this._tbsMoveTiles.length <= 0)
+		{
+			return false;
+		}
+		var tbsActor = this._tbsSelectedActor;
+		var moveTile = this.getExistingTbsTile(
+			tbsActor.chara.x,
+			tbsActor.chara.y,
+			this._tbsMoveTiles
+		);
+		var moveDamage = tbsActor.battler.getDamage("torso");
+		var moveDenom = 400;
+		if(tbsActor.battler.limbsType() === "winged" && tbsActor.battler.isFlying()) {
+			moveDamage += tbsActor.battler.getDamage("leftArm") + tbsActor.battler.getDamage("rightArm");
+		} else if(tbsActor.battler.limbsType() === "quadrupedal") {
+			moveDenom = 600;
+			moveDamage += tbsActor.battler.getDamage("leftLeg") + tbsActor.battler.getDamage("rightLeg")
+				+ tbsActor.battler.getDamage("leftArm") + tbsActor.battler.getDamage("rightArm");
+		} else {
+			moveDamage += tbsActor.battler.getDamage("leftLeg") + tbsActor.battler.getDamage("rightLeg");
+		}
+		var battlerMoveRange = Math.max(2, tbsActor.battler.moveRange() * ((moveDenom - moveDamage) / moveDenom));
+		var moveRange = battlerMoveRange / 2;
+		return moveTile.remainingRange >= moveRange/2;
 	};
 	
 	Game_Map.prototype.directionIsDiagonal = function(d) {
@@ -2734,12 +2812,13 @@
 		return members;
 	};
 	
-	Game_Map.prototype.checkActionTiles = function(x, y, actionRange, actionTiles, treatAsMovedThisRound) {
+	Game_Map.prototype.checkActionTiles = function(x, y, attackAndMove, actionRange, actionTiles, treatAsMovedThisRound) {
 		var baseRange = actionRange.ignoreUserRange ? 0 : actionRange.baseRange;
 		var that = this;
 		this.getReachedActionTiles(x, y, actionRange.range + baseRange, actionTiles, actionRange.type, !treatAsMovedThisRound);
 		if(!treatAsMovedThisRound && !this._tbsSelectedActor.movedThisRound) {
-			this._tbsMoveTiles.forEach(function (moveTile) {
+			var moveTiles = attackAndMove ? this._tbsAttackAndMoveTiles : this._tbsMoveTiles;
+			moveTiles.forEach(function (moveTile) {
 				this._queuedActionLoops++;
 				if(!that.getTbsActorAtPosition(moveTile.x, moveTile.y)) {
 					var actionAtPosition = {};
@@ -3352,10 +3431,6 @@
 	
 	Game_Player.prototype.clearMovingCharacter = function() {
 		this._tbsMovingCharacter = undefined;
-	};
-	
-	Game_Player.prototype.tbsShowCursor = function(showCursor) {
-		return this._tbsShowCursor;
 	};
 	
 	Game_Player.prototype.setTbsCanMove = function(canMove) {
