@@ -1312,6 +1312,7 @@
 					this._tbsQueuedActionsAtPositions = [];
 					this._tbsShouldPass = false;
 					this._tbsAoeSprites = [];
+					this._tbsEnemyFadeoutTime = 30;
 					this._dummyTarget = {};
 					this._dummyTarget.startingX = 0;
 					this._dummyTarget.startingY = 0;
@@ -1377,6 +1378,7 @@
 				//$gameTemp.setShouldClearTbsDamageSprites(true);
 				if(this.currentForce().isParty) {
 					$gamePlayer.setCursorMoveField(this._tbsMoveTiles);
+					this.spawnTbsLOSSprites();
 				} else {
 					$gamePlayer.clearCursorMoveField();
 				}
@@ -1389,7 +1391,6 @@
 				this._tbsSelectedActorWasMoving = false;
 				this._tbsAoeSprites = [];
 				$gameTemp.setShouldClearTbsAoeSprites(true);
-				this.spawnTbsLOSSprites();
 				break;
 			case "cancelMove":
 				//$gameTemp.setShouldClearTbsDamageSprites(true);
@@ -1471,7 +1472,8 @@
 					this.clearCameraFocus(true, 5);
 				}
 				this.setTbsCursorFocus(this._tbsLeadCharacter.chara.x, this._tbsLeadCharacter.chara.y);
-				this.focusTbsCursor();
+				this._tbsEnemyPreFadeoutTimer = this._tbsEnemyFadeoutTime;
+				this._tbsEnemyFadeoutTimer = this._tbsEnemyFadeoutTime;
 				break;
 			case "gameOver":
 				this._tbsMoveTiles = [];
@@ -2433,6 +2435,25 @@
 	};
 	
 	Game_Map.prototype.updateTbsVictory = function() {
+		if(this._tbsEnemyPreFadeoutTimer > 0) {
+			this._tbsEnemyPreFadeoutTimer--;
+			if(this._tbsEnemyPreFadeoutTimer <= 0) {
+				SoundManager.playEnemyCollapse();
+			}
+			return;
+		}
+		if(this._tbsEnemyFadeoutTimer > 0) {
+			this._tbsEnemyFadeoutTimer--;
+			this._tbsForces.forEach(function (force) {
+				if(!force.isParty) {
+					force.actors.forEach(function (actor) {
+						if(!actor.battler.isDown()) { return; }
+						actor.chara.setOpacity((this._tbsEnemyFadeoutTimer/this._tbsEnemyFadeoutTime)*255);
+					}, this);
+				}
+			}, this);
+			return;
+		}
 		if(this.tbsCursorIsFocusing()) {
 			this.focusTbsCursor();
 			return;
