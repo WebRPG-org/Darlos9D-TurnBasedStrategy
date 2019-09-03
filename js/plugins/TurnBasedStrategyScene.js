@@ -1579,5 +1579,105 @@
 	Scene_Equip.prototype.prevStatusPage = function() {
 		this._statusWindow.prevStatusPage();
 	};
+	
+	//status
+	Scene_Status.prototype.create = function() {
+		Scene_MenuBase.prototype.create.call(this);
+		this._statusWindow = new Window_Status();
+		
+		this._statusSkillsWindow = new Window_StatusSkills(this._statusWindow.height);
+		this._statusSkillsWindow.setStatusWindow(this._statusWindow);
+		this._statusSkillsWindow.setHandler('ok',   	this.onSkillOk.bind(this));
+		this._statusSkillsWindow.setHandler('cancel',   this.popScene.bind(this));
+		this._statusSkillsWindow.setHandler('pagedown', this.nextActor.bind(this));
+		this._statusSkillsWindow.setHandler('pageup',   this.previousActor.bind(this));
+		
+		this._statusSkillOptionWindow = new Window_StatusSkillOption(
+			Graphics.boxWidth/2,
+			this._statusSkillsWindow.y -
+				(Window_StatusSkillOption.prototype.standardPadding()*2+Window_StatusSkillOption.prototype.lineHeight()*2)
+		);
+		this._statusSkillsWindow.setSkillOptionWindow(this._statusSkillOptionWindow);
+		this._statusSkillOptionWindow.setHandler('upgrade',		this.onSkillOption.bind(this, 'upgrade'));
+		this._statusSkillOptionWindow.setHandler('downgrade',	this.onSkillOption.bind(this, 'downgrade'));
+		this._statusSkillOptionWindow.setHandler('cancel',		this.onSkillOptionCancel.bind(this));
+		this._statusSkillOptionWindow.hide();
+		this._statusSkillOptionWindow.deactivate();
+		
+		this._statusSkillConfirmWindow = new Window_YesNoConfirm(
+			Graphics.boxWidth/2,
+			this._statusSkillOptionWindow.y -
+				(Window_StatusSkillOption.prototype.standardPadding()*2+Window_StatusSkillOption.prototype.lineHeight()*2)
+		);
+		this._statusSkillConfirmWindow.setHandler('yes',    this.onConfirmYes.bind(this));
+		this._statusSkillConfirmWindow.setHandler('no',    this.onConfirmCancel.bind(this));
+		this._statusSkillConfirmWindow.setHandler('cancel',    this.onConfirmCancel.bind(this));
+		this._statusSkillConfirmWindow.setYesText("Confirm");
+		this._statusSkillConfirmWindow.setNoText("Cancel");
+		this._statusSkillConfirmWindow.hide();
+		this._statusSkillConfirmWindow.deactivate();
+		
+		this.addWindow(this._statusWindow);
+		this.addWindow(this._statusSkillsWindow);
+		this.addWindow(this._statusSkillOptionWindow);
+		this.addWindow(this._statusSkillConfirmWindow);
+		this.refreshActor();
+		this._statusSkillsWindow.select(2);
+	};
+	
+	Scene_Status.prototype.refreshActor = function() {
+		var actor = this.actor();
+		this._statusSkillsWindow.setActor(actor);
+	};
+	
+	Scene_Status.prototype.onActorChange = function() {
+		this.refreshActor();
+		this._statusSkillsWindow.activate();
+	};
+	
+	Scene_Status.prototype.onSkillOk = function() {
+		this._statusSkillsWindow.deactivate();
+		this._statusSkillOptionWindow.show();
+		this._statusSkillOptionWindow.activate();
+	};
+	
+	Scene_Status.prototype.onSkillOption = function(option) {
+		this._skillOption = option;
+		this._statusSkillOptionWindow.deactivate();
+		this._statusSkillConfirmWindow.show();
+		this._statusSkillConfirmWindow.activate();
+		this._statusSkillConfirmWindow.select(1);
+	};
+	
+	Scene_Status.prototype.onSkillOptionCancel = function() {
+		this._statusSkillsWindow.activate();
+		this._statusSkillOptionWindow.hide();
+		this._statusSkillOptionWindow.deactivate();
+	};
+	
+	Scene_Status.prototype.onConfirmYes = function() {
+		var actor = this.actor();
+		var skill = this._statusSkillsWindow.currentSkill();
+		if(this._skillOption === "downgrade") {
+			actor.adjustSkillXP(actor.skillDowngradeCost(skill));
+			actor.adjustRespecXP(-actor.skillDowngradeCost(skill));
+			actor.adjustSkillPoints(skill, -1);
+		} else {
+			actor.adjustSkillXP(-actor.skillUpgradeCost(skill));
+			actor.adjustSkillPoints(skill, 1);
+		}
+		this._statusSkillsWindow.refresh();
+		this._statusSkillConfirmWindow.hide();
+		this._statusSkillConfirmWindow.deactivate();
+		this._statusSkillOptionWindow.hide();
+		this._statusSkillOptionWindow.deactivate();
+		this._statusSkillsWindow.activate();
+	};
+	
+	Scene_Status.prototype.onConfirmCancel = function() {
+		this._statusSkillOptionWindow.activate();
+		this._statusSkillConfirmWindow.hide();
+		this._statusSkillConfirmWindow.deactivate();
+	};
 })();
  

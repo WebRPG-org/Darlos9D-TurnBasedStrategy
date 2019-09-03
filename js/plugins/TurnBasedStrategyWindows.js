@@ -558,7 +558,7 @@ Window_ActorItemName.prototype.drawTargetNameText = function() {
 //-----------------------------------------------------------------------------
 // Window_ItemOption
 //
-// The window for selecting a skill type on the skill screen.
+// The window for selecting an option for an item on the item screen
 
 function Window_ItemOption() {
     this.initialize.apply(this, arguments);
@@ -2774,6 +2774,327 @@ Window_TbsNextRound.prototype.windowWidth = function() {
 Window_TbsNextRound.prototype.windowHeight = function() {
 	return this.fittingHeight(1);
 };
+
+//-----------------------------------------------------------------------------
+// Window_StatusSkills
+//
+// The window for displaying character skills on the status screen
+
+function Window_StatusSkills() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_StatusSkills.prototype = Object.create(Window_Selectable.prototype);
+Window_StatusSkills.prototype.constructor = Window_StatusSkills;
+
+Window_StatusSkills.prototype.initialize = function(y) {
+    var width = Graphics.boxWidth;
+    var height = Graphics.boxHeight-y;
+    Window_Selectable.prototype.initialize.call(this, 0, y, width, height);
+	this._activeIndicies = [];
+    this.refresh();
+    this.activate();
+};
+
+Window_StatusSkills.prototype.maxCols = function() {
+	return 2;
+};
+
+Window_StatusSkills.prototype.maxItems = function() {
+    return 18;
+};
+
+Window_StatusSkills.prototype.spacing = function() {
+	return 48;
+};
+
+Window_StatusSkills.prototype.setActor = function(actor) {
+	if(this._optionWindow) {
+		this._optionWindow.setActor(actor);
+	}
+	if(this._statusWindow) {
+		this._statusWindow.setActor(actor);
+	}
+    if (this._actor !== actor) {
+        this._actor = actor;
+        this.refresh();
+    }
+};
+
+Window_StatusSkills.prototype.setSkillOptionWindow = function(optionWindow) {
+    if (this._optionWindow !== optionWindow) {
+        this._optionWindow = optionWindow;
+    }
+};
+
+Window_StatusSkills.prototype.setStatusWindow = function(statusWindow) {
+    if (this._statusWindow !== statusWindow) {
+        this._statusWindow = statusWindow;
+    }
+};
+
+Window_StatusSkills.prototype.update = function() {
+	Window_Selectable.prototype.update.call(this);
+	if(this._optionWindow) {
+		this._optionWindow.setSkill(this.currentSkill());
+	}
+};
+
+Window_StatusSkills.prototype.isCurrentItemEnabled = function() {
+    return this._activeIndicies.indexOf(this.index()) >= 0;
+};
+
+Window_StatusSkills.prototype.currentSkill = function() {
+	if(!this._actor) { return ""; }
+	if(this.index() % 2 == 1) {
+		switch(this.index()) {
+			case 3:
+				return "meleeAcc";
+			case 5:
+				return "rangedAcc";
+			case 9:
+				return "physEvade";
+			case 11:
+				return "tripEvade";
+			case 15:
+				return "manualDex";
+			case 17:
+				return "perception";
+		}
+	} else {
+		var uniqueSkills = this._actor.uniqueSkills();
+		return uniqueSkills[this.index()/2-1];
+	}
+};
+
+Window_StatusSkills.prototype.handleCursorPosition = function() {
+	if(!this._lastDirection) { this._lastDirection = "up"; }
+	while(!this.isCurrentItemEnabled()) {
+		switch(this._lastDirection) {
+			case "down":
+				this.cursorDown(true);
+				break;
+			case "up":
+				this.cursorUp(true);
+				break;
+			case "right":
+				this.cursorRight(true);
+				break;
+			case "left":
+				this.cursorLeft(true);
+				break;
+		}
+	}
+	this._lastDirection = undefined;
+};
+
+Window_StatusSkills.prototype.cursorDown = function(wrap) {
+    var index = this.index();
+    var maxItems = this.maxItems();
+    var maxCols = this.maxCols();
+    if (index < maxItems - maxCols || wrap) {
+        this.select((index + maxCols) % maxItems);
+    }
+	this._lastDirection = "down";
+};
+
+Window_StatusSkills.prototype.cursorUp = function(wrap) {
+    var index = this.index();
+    var maxItems = this.maxItems();
+    var maxCols = this.maxCols();
+    if (index >= maxCols || wrap) {
+        this.select((index - maxCols + maxItems) % maxItems);
+    }
+	this._lastDirection = "up";
+};
+
+Window_StatusSkills.prototype.cursorRight = function(wrap) {
+    var index = this.index();
+    var maxItems = this.maxItems();
+    var maxCols = this.maxCols();
+    if (maxCols >= 2 && (index < maxItems - 1 || wrap)) {
+        this.select((index + 1) % maxItems);
+    }
+	this._lastDirection = "right";
+};
+
+Window_StatusSkills.prototype.cursorLeft = function(wrap) {
+    var index = this.index();
+    var maxItems = this.maxItems();
+    var maxCols = this.maxCols();
+    if (maxCols >= 2 && (index > 0 || wrap)) {
+        this.select((index - 1 + maxItems) % maxItems);
+    }
+	this._lastDirection = "left";
+};
+
+Window_StatusSkills.prototype.processCursorMove = function() {
+    if (this.isCursorMovable()) {
+        var lastIndex = this.index();
+        if (Input.isRepeated('down')) {
+            this.cursorDown(Input.isTriggered('down'));
+        }
+        if (Input.isRepeated('up')) {
+            this.cursorUp(Input.isTriggered('up'));
+        }
+        if (Input.isRepeated('right')) {
+            this.cursorRight(Input.isTriggered('right'));
+        }
+        if (Input.isRepeated('left')) {
+            this.cursorLeft(Input.isTriggered('left'));
+        }
+		this.handleCursorPosition();
+        if (this.index() !== lastIndex) {
+            SoundManager.playCursor();
+        }
+    }
+};
+
+Window_StatusSkills.prototype.refresh = function() {
+	this.contents.clear();
+	this._activeIndicies = [];
+	if (this._actor) {
+		this.drawParametersColumnOne();
+		this.drawParametersColumnTwo();
+		this.handleCursorPosition();
+	}
+	if (this._statusWindow) {
+		this._statusWindow.refresh();
+	}
+	if(this._optionWindow) {
+		this._optionWindow.refresh();
+	}
+};
+
+Window_StatusSkills.prototype.drawParametersColumnOne = function() {
+	var rect = this.itemRect(0);
+	this.resetTextColor();
+	this.drawText("Ability", rect.x, rect.y, rect.width);
+	var uniqueSkills = this._actor.uniqueSkills();
+	var i;
+	for(i = 0; i < uniqueSkills.length; i++)
+	{
+		rect = this.itemRect((i+1)*2);
+		this.drawSkillLevel(this.getDisplayNameForUniqueSkill(uniqueSkills[i]), uniqueSkills[i], rect.x, rect.y, rect.width);
+		this._activeIndicies.push((i+1)*2);
+	}
+};
+
+Window_StatusSkills.prototype.drawParametersColumnTwo = function() {
+	this.resetTextColor();
+	var rect = this.itemRect(1);
+	this.drawText("Accuracy", rect.x, rect.y, rect.width);
+	rect = this.itemRect(3);
+	this.drawSkillLevel("Melee", "meleeAcc", rect.x, rect.y, rect.width);
+	rect = this.itemRect(5);
+	this.drawSkillLevel("Ranged", "rangedAcc", rect.x, rect.y, rect.width);
+	this.resetTextColor();
+	rect = this.itemRect(7);
+	this.drawText("Evasion", rect.x, rect.y, rect.width);
+	rect = this.itemRect(9);
+	this.drawSkillLevel("Defense", "physEvade", rect.x, rect.y, rect.width);
+	rect = this.itemRect(11);
+	this.drawSkillLevel("Balance", "tripEvade", rect.x, rect.y, rect.width);
+	this.resetTextColor();
+	rect = this.itemRect(13);
+	this.drawText("Utility", rect.x, rect.y, rect.width);
+	rect = this.itemRect(15);
+	this.drawSkillLevel("Manual Dexterity", "manualDex", rect.x, rect.y, rect.width);
+	rect = this.itemRect(17);
+	this.drawSkillLevel("Perception", "perception", rect.x, rect.y, rect.width);
+	this._activeIndicies.push(3);
+	this._activeIndicies.push(5);
+	this._activeIndicies.push(9);
+	this._activeIndicies.push(11);
+	this._activeIndicies.push(15);
+	this._activeIndicies.push(17);
+};
+
+Window_StatusSkills.prototype.drawSkillLevel = function(displayName, skill, x, y, width) {
+	this.changeTextColor(this.systemColor());
+	this.drawText(displayName, x, y, width - 14*7);
+	this.resetTextColor();
+	this.drawText(this._actor.totalSkill(skill), x + width - 14*7, y, 14*2, 'right');
+	this.changePaintOpacity(false);
+	this.drawText(":", x + width - 14*5, y, 14, 'right');
+	this.drawText(this._actor.skillUpgradeCost(skill), x + width - 14*4, y, 14*4, 'right');
+	this.changePaintOpacity(true);
+};
+
+//-----------------------------------------------------------------------------
+// Window_StatusSkillOption
+//
+// The window for selecting an option for a skill on the status screen
+
+function Window_StatusSkillOption() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_StatusSkillOption.prototype = Object.create(Window_Command.prototype);
+Window_StatusSkillOption.prototype.constructor = Window_StatusSkillOption;
+
+Window_StatusSkillOption.prototype.initialize = function(x, y) {
+    Window_Command.prototype.initialize.call(this, x, y);
+    this._actor = null;
+	this._skill = null;
+};
+
+Window_StatusSkillOption.prototype.windowWidth = function() {
+    return Graphics.boxWidth - Window_ItemStatus.prototype.windowWidth();
+};
+
+Window_StatusSkillOption.prototype.setActor = function(actor) {
+    if (this._actor !== actor) {
+        this._actor = actor;
+        this.refresh();
+        this.select(0);
+    }
+};
+
+Window_StatusSkillOption.prototype.setSkill = function(skill) {
+    if (this._skill !== skill) {
+        this._skill = skill;
+        this.refresh();
+        this.select(0);
+    }
+};
+
+Window_StatusSkillOption.prototype.numVisibleRows = function() {
+    return 2;
+};
+
+Window_StatusSkillOption.prototype.makeCommandList = function() {
+	var canUpgrade = false;
+	var canDowngrade = false;
+	var upgradeCostText = "----";
+	var downgradeCostText = "----";
+	if(this._actor && this._skill) {
+		var battler = this._actor;
+		canUpgrade = battler.skillPoints(this._skill) < 99 && battler.skillXP() >= battler.skillUpgradeCost(this._skill);
+		canDowngrade = battler.skillPoints(this._skill) > 0 && battler.respecXP() >= battler.skillDowngradeCost(this._skill);
+		upgradeCostText = battler.skillPoints(this._skill) < 99 ? battler.skillUpgradeCost(this._skill)+"" : "----";
+		downgradeCostText = battler.skillPoints(this._skill) > 0 ? battler.skillDowngradeCost(this._skill)+"" : "----";
+		while(upgradeCostText.length < 4) {
+			upgradeCostText = " " + upgradeCostText;
+		}
+		while(downgradeCostText.length < 4) {
+			downgradeCostText = " " + downgradeCostText;
+		}
+	}
+	this.addCommand("Upgrade   - " + upgradeCostText 	+ "SP", 'upgrade', canUpgrade);
+	this.addCommand("Downgrade - " + downgradeCostText	+ "RP", 'downgrade', canDowngrade);
+};
+
+Window_StatusSkillOption.prototype.processOk = function() {
+    if (this.isCurrentItemEnabled()) {
+        this.playOkSound();
+        this.updateInputData();
+        this.deactivate();
+        this.callOkHandler();
+    } else {
+        this.playBuzzerSound();
+    }
+};
  
 (function() {
 	//base
@@ -4604,6 +4925,17 @@ Window_TbsNextRound.prototype.windowHeight = function() {
 	};
 	
 	//status
+	Window_Status.prototype.initialize = function() {
+		var width = Graphics.boxWidth;
+		Window_Selectable.prototype.initialize.call(this, 0, 0, width, this.windowHeight());
+		this.refresh();
+		this.activate();
+	};
+	
+	Window_Status.prototype.windowHeight = function() {
+		return this.standardPadding()*2 + this.lineHeight()*2 + Window_Base._faceHeight;
+	};
+	
 	Window_Status.prototype.refresh = function() {
 		this.contents.clear();
 		if (this._actor) {
@@ -4611,8 +4943,6 @@ Window_TbsNextRound.prototype.windowHeight = function() {
 			this.drawBlock1(lineHeight * 0);
 			this.drawHorzLine(lineHeight * 1);
 			this.drawBlock2(lineHeight * 2);
-			this.drawHorzLine(lineHeight * 6);
-			this.drawBlock3(lineHeight * 6);
 		}
 	};
 	
@@ -4628,11 +4958,6 @@ Window_TbsNextRound.prototype.windowHeight = function() {
 	Window_Status.prototype.drawBlock2 = function(y) {
 		this.drawActorFace(this._actor, 12, y);
 		this.drawBasicInfo(204, y);
-	};
-
-	Window_Status.prototype.drawBlock3 = function(y) {
-		this.drawParametersColumnOne(48, y);
-		this.drawParametersColumnTwo(432, y);
 	};
 	
 	Window_Status.prototype.drawHorzLine = function(y) {
@@ -4657,51 +4982,6 @@ Window_TbsNextRound.prototype.windowHeight = function() {
 		//this.drawActorStress(this._actor, x, y + lineHeight);
 		this.drawActorDamage(this._actor, 432, y);
         //this.drawActorBuffs(this._actor, x+14*24+4, y + lineHeight);
-	};
-	
-	Window_Status.prototype.drawParametersColumnOne = function(x, y) {
-		var y2 = y + this.lineHeight();
-		this.resetTextColor();
-		this.drawText("Ability", x, y2, 250);
-		y2 += this.lineHeight();
-		var uniqueSkills = this._actor.uniqueSkills();
-		var i;
-		for(i = 0; i < uniqueSkills.length; i++)
-		{
-			this.drawSkillLevel(this.getDisplayNameForUniqueSkill(uniqueSkills[i]), uniqueSkills[i], x, y2);
-			y2 += this.lineHeight();
-		}
-	};
-	
-	Window_Status.prototype.drawParametersColumnTwo = function(x, y) {
-		var y2 = y + this.lineHeight();
-		this.resetTextColor();
-		this.drawText("Accuracy", x, y2, 250);
-		y2 += this.lineHeight();
-		this.drawSkillLevel("Melee", "meleeAcc", x, y2);
-		y2 += this.lineHeight();
-		this.drawSkillLevel("Ranged", "rangedAcc", x, y2);
-		y2 += this.lineHeight();
-		this.resetTextColor();
-		this.drawText("Evasion", x, y2, 250);
-		y2 += this.lineHeight();
-		this.drawSkillLevel("Defense", "physEvade", x, y2);
-		y2 += this.lineHeight();
-		this.drawSkillLevel("Balance", "tripEvade", x, y2);
-		y2 += this.lineHeight();
-		this.resetTextColor();
-		this.drawText("Utility", x, y2, 250);
-		y2 += this.lineHeight();
-		this.drawSkillLevel("Manual Dex", "manualDex", x, y2);
-		y2 += this.lineHeight();
-		this.drawSkillLevel("Perception", "perception", x, y2);
-	};
-	
-	Window_Status.prototype.drawSkillLevel = function(displayName, skill, x, y) {
-		this.changeTextColor(this.systemColor());
-		this.drawText(displayName, x, y, 250);
-		this.resetTextColor();
-		this.drawText(this._actor.totalSkill(skill), x + 200, y, 60, 'right');
 	};
 	
 	//BattleLog

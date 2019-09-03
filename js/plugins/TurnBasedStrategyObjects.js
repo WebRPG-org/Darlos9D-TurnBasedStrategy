@@ -311,6 +311,15 @@
 		return $gameTemp.getItemReceiver();
 	};
 	
+	Game_System.prototype.giveSkillPointsToParty = function(amount) {
+		var i;
+		for(i = 0; i < $gameParty.size(); i++) {
+			var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(i));
+			battler.adjustSkillXP(amount);
+			battler.adjustRespecXP(amount);
+		}
+	};
+	
 	//item
 	Game_Item.prototype.actions = function() {
 		if(!this.isWeapon() && !this.isArmor() && !this.isItem()) {

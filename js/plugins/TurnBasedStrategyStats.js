@@ -616,12 +616,21 @@
 		return !this._skillPoints[skill] === undefined ? 0 : this._skillPoints[skill];
 	};
 	
+	Game_BattlerBase.prototype.skillUpgradeCost = function(skill) {
+		return Math.pow(this.skillPoints(skill)+1, 2)*100;
+	};
+	
+	Game_BattlerBase.prototype.skillDowngradeCost = function(skill) {
+		var skillPoints = this.skillPoints(skill);
+		return skillPoints > 0 ? Math.pow(this.skillPoints(skill), 2)*100 : 0;;
+	};
+	
 	Game_BattlerBase.prototype.skillXP = function() {
 		return this._skillXP;
 	};
 	
 	Game_BattlerBase.prototype.adjustSkillXP = function(amount) {
-		this._skillXP = Math.max(0, this._skillXP - amount);
+		this._skillXP = Math.max(0, this._skillXP + amount);
 	};
 	
 	Game_BattlerBase.prototype.respecXP = function() {
@@ -629,7 +638,7 @@
 	};
 	
 	Game_BattlerBase.prototype.adjustRespecXP = function(amount) {
-		this._respecXP = Math.max(0, this._respecXP - amount);
+		this._respecXP = Math.max(0, this._respecXP + amount);
 	};
 	
 	Game_BattlerBase.prototype.isDead = function() {
@@ -1277,7 +1286,8 @@
 	
 	Game_Actor.prototype.checkLearnedSkills = function() {
 		var i;
-		for(i = 0; i < $dataSkills.length; i++) {
+		for(i = 0; i <= $dataSkills.length; i++) {
+			if(!$dataSkills[i]) { continue; }
 			var skillStats = $dataSkills[i].tbsStats;
 			if(skillStats.unlearnable || !skillStats.action || !skillStats.action.skillRequirements) {
 				continue;
