@@ -320,6 +320,10 @@
 		}
 	};
 	
+	Game_System.prototype.addMessageWindow = function(x, y, text, waitOn, duration, closeable) {
+		$gameMap.addMessageWindow(x, y, text, waitOn, duration, closeable);
+	};
+	
 	//item
 	Game_Item.prototype.actions = function() {
 		if(!this.isWeapon() && !this.isArmor() && !this.isItem()) {
@@ -403,6 +407,64 @@
 		this._tbsCursorRegions = [];
 		this._mapBgm = undefined;
 		this._tileRuns = [];
+		this._pendingMessages = [];
+		this._closeableMessageWindowsExist = false;
+		this._waitingOnMessageWindows = false;
+	};
+	
+	Game_Map.prototype.addMessageWindow = function(x, y, text, waitOn, duration, closeable) {
+		if(!text || text.length <= 0) { return; }
+		var message = {};
+		message.x = x;
+		message.y = y;
+		message.text = text;
+		message.waitOn = waitOn;
+		message.duration = duration;
+		message.closeable = closeable;
+		this._pendingMessages.push(message);
+	};
+	
+	Game_Map.prototype.getPendingMessages = function() {
+		var returnArray = [];
+		this._pendingMessages.forEach(function (message) {
+			returnArray.push(message);
+		});
+		this._pendingMessages = [];
+		return returnArray;
+	};
+	
+	Game_Map.prototype.setCloseableMessageWindowsExist = function() {
+		this._closeableMessageWindowsExist = true;
+	};
+	
+	Game_Map.prototype.anyCloseableMessageWindows = function() {
+		return this._closeableMessageWindowsExist;
+	};
+	
+	Game_Map.prototype.clearCloseableMessageWindows = function() {
+		this._closeableMessageWindowsExist = false;
+	};
+	
+	Game_Map.prototype.closeCloseableMessageWindows = function() {
+		this._needToCloseCloseableMessageWindows = true;
+	};
+	
+	Game_Map.prototype.needToCloseCloseableMessageWindows = function() {
+		var returnValue = this._needToCloseCloseableMessageWindows;
+		this._needToCloseCloseableMessageWindows = false;
+		return returnValue;
+	};
+	
+	Game_Map.prototype.setWaitingOnMessageWindows = function() {
+		this._waitingOnMessageWindows = true;;
+	};
+	
+	Game_Map.prototype.waitingOnMessageWindows = function() {
+		return this._waitingOnMessageWindows;
+	};
+	
+	Game_Map.prototype.clearWaitingOnMessageWindows = function() {
+		this._waitingOnMessageWindows = false;
 	};
 	
 	Game_Map.prototype.getShouldOpenActionWindow = function() {
@@ -3565,12 +3627,59 @@
 	Game_Player.prototype.triggerAction = function() {
 		if(this._tbsBattleMode) { return false; }
 		
-		if (this.canMove()) {
+		if (this.canMove() || $gameMap.anyCloseableMessageWindows()) {
 			if (this.triggerButtonAction()) {
 				return true;
 			}
 			if (this.triggerTouchAction()) {
 				return true;
+			}
+		}
+		return false;
+	};
+	
+	Game_Player.prototype.triggerButtonAction = function() {
+		if (Input.isTriggered('ok')) {
+			if($gameMap.anyCloseableMessageWindows()) {
+				$gameMap.closeCloseableMessageWindows();
+				return false;
+			}
+			if (this.getOnOffVehicle()) {
+				return true;
+			}
+			this.checkEventTriggerHere([0]);
+			if ($gameMap.setupStartingEvent()) {
+				return true;
+			}
+			this.checkEventTriggerThere([0,1,2]);
+			if ($gameMap.setupStartingEvent()) {
+				return true;
+			}
+		}
+		return false;
+	};
+
+	Game_Player.prototype.triggerTouchAction = function() {
+		if ($gameTemp.isDestinationValid()){
+			if($gameMap.anyCloseableMessageWindows()) {
+				$gameMap.closeCloseableMessageWindows();
+				return false;
+			}
+			var direction = this.direction();
+			var x1 = this.x;
+			var y1 = this.y;
+			var x2 = $gameMap.roundXWithDirection(x1, direction);
+			var y2 = $gameMap.roundYWithDirection(y1, direction);
+			var x3 = $gameMap.roundXWithDirection(x2, direction);
+			var y3 = $gameMap.roundYWithDirection(y2, direction);
+			var destX = $gameTemp.destinationX();
+			var destY = $gameTemp.destinationY();
+			if (destX === x1 && destY === y1) {
+				return this.triggerTouchActionD1(x1, y1);
+			} else if (destX === x2 && destY === y2) {
+				return this.triggerTouchActionD2(x2, y2);
+			} else if (destX === x3 && destY === y3) {
+				return this.triggerTouchActionD3(x2, y2);
 			}
 		}
 		return false;

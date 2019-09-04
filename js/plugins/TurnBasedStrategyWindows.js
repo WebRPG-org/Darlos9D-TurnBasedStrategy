@@ -13,6 +13,95 @@
  * This plugin does not provide any commands.
  *
  */
+ 
+//-----------------------------------------------------------------------------
+// Window_ConcurrentWindow
+//
+// The window for displaying text in customizable locations and sizes
+
+function Window_ConcurrentWindow() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_ConcurrentWindow.prototype = Object.create(Window_Base.prototype);
+Window_ConcurrentWindow.prototype.constructor = Window_ConcurrentWindow;
+
+Window_ConcurrentWindow.prototype.initialize = function() {
+	this._text = [];
+    Window_Base.prototype.initialize.call(this, 0, 0, this.windowWidth(), this.windowHeight());
+	this._waitOn = false;
+	this._duration = -1;
+	this._closeable = false;
+	this.close();
+	this.hide();
+};
+
+Window_ConcurrentWindow.prototype.windowWidth = function() {
+	var textLength = 0;
+	this._text.forEach(function (textRow) {
+		textLength = textRow.length > textLength ? textRow.length : textLength;
+	});
+	return textLength*14 + this.standardPadding()*2 + this.textPadding()*2;
+};
+
+Window_ConcurrentWindow.prototype.windowHeight = function() {
+	return this.fittingHeight(this._text.length);
+};
+
+Window_ConcurrentWindow.prototype.setupAndShow = function(x, y, text, waitOn, duration, closeable) {
+	if(!text || text.length <= 0) { return; }
+	this._text = text;
+	this._waitOn = waitOn;
+	this._duration = duration === undefined ? -1 : duration;
+	this._closeable = closeable;
+	
+	this.move(x, y, this.windowWidth(), this.windowHeight());
+	this.createContents();
+	if (this.contents) {
+        this.contents.clear();
+		this.resetTextColor();
+		this.changePaintOpacity(true);
+		var i;
+		for(i = 0; i < this._text.length; i++) {
+			var textRow = this._text[i];
+			this.drawText(textRow, this.textPadding(), this.lineHeight()*i, textRow.length*14);
+		}
+    }
+	
+	this.show();
+	this.open();
+};
+
+Window_ConcurrentWindow.prototype.isCountingDown = function() {
+	return this._duration >= 0;
+};
+
+Window_ConcurrentWindow.prototype.countDown = function() {
+	if(this._duration < 0) { return; }
+	this._duration--;
+	if(this._duration <= 0) {
+		this._duration = -1;
+		this.close();
+	}
+};
+
+Window_ConcurrentWindow.prototype.isCloseable = function() {
+	return !this.isCountingDown() || this._closeable;
+};
+
+Window_ConcurrentWindow.prototype.isWaitOn = function() {
+	return this._waitOn;
+};
+
+Window_ConcurrentWindow.prototype.updateClose = function() {
+    if (this._closing) {
+        this.openness -= this.openCloseSpeed();
+        if (this.isClosed()) {
+			this._waitOn = false;
+            this._closing = false;
+        }
+    }
+};
 
 //-----------------------------------------------------------------------------
 // Window_ItemStatusBase

@@ -34,6 +34,7 @@
 		this._tbsBattleFadeSpeed = 12;
 		this._tbsNextRoundWindowTimer = 0;
 		this._tbsNextRoundWindowTime = 30*3;
+		this._messageWindows = [];
 		SoundManager.loadTbsBattleStartSound();
 		SoundManager.loadWindowOpenCloseSound();
 		SoundManager.loadDeflectionSound();
@@ -44,7 +45,17 @@
 		return true;
 	};
 	
+	Scene_Map.prototype.isMenuCalled = function() {
+		var returnVal = Input.isTriggered('menu') || TouchInput.isCancelled();
+		if(returnVal && $gameMap.anyCloseableMessageWindows()) {
+			$gameMap.closeCloseableMessageWindows();
+			return false;
+		}
+		return returnVal;
+	};
+	
 	Scene_Map.prototype.update = function() {
+		this.updateMessageWindows();
 		this.updateBasedOnTbsBattle();
 		this.updateDestination();
 		this.updateMainMultiply();
@@ -55,6 +66,55 @@
 		}
 		this.updateWaitCount();
 		Scene_Base.prototype.update.call(this);
+	};
+	
+	Scene_Map.prototype.updateMessageWindows = function() {
+		var needToClose = $gameMap.needToCloseCloseableMessageWindows();
+		var waitingOn = false;
+		var closeablesRemaining = false;
+		this._messageWindows.forEach(function (curWindow) {
+			if(curWindow.isClosed() || curWindow.isClosing()) {
+				if(curWindow.isWaitOn()) { waitingOn = true; }
+				return;
+			}
+			if(curWindow.isCloseable()) {
+				if(needToClose && curWindow.isOpen()) {
+					curWindow.close();
+				} else {
+					closeablesRemaining = true;
+				}
+			}
+			if(curWindow.isCountingDown()) {
+				curWindow.countDown();
+			}
+		});
+		if(!closeablesRemaining) {
+			$gameMap.clearCloseableMessageWindows();
+		}
+		if(!waitingOn) {
+			$gameMap.clearWaitingOnMessageWindows();
+		}
+		
+		var pendingMessages = $gameMap.getPendingMessages();
+		pendingMessages.forEach(function (message) {
+			this.createNewMessageWindow(message);
+		}, this);
+	};
+	
+	Scene_Map.prototype.createNewMessageWindow = function(message) {
+		if(!message || !message.text || message.text.length <= 0) { return; }
+		var windowToUse;
+		var i;
+		for(i = 0; i < this._messageWindows.length; i++) {
+			if(this._messageWindows[i].isClosed()) {
+				windowToUse = this._messageWindows[i];
+				break;
+			}
+		}
+		if(!windowToUse) { return; }
+		if(message.duration == undefined || message.duration < 0 || message.closeable) { $gameMap.setCloseableMessageWindowsExist(); }
+		if(message.waitOn) { $gameMap.setWaitingOnMessageWindows(); }
+		windowToUse.setupAndShow(message.x , message.y, message.text, message.waitOn, message.duration, message.closeable);
 	};
 	
 	Scene_Map.prototype.updateBasedOnTbsBattle = function() {
@@ -374,6 +434,7 @@
 	
 	Scene_Map.prototype.createAllWindows = function() {
 		this.createMessageWindow();
+		this.createConcurrentMessageWindows();
 		this.createScrollTextWindow();
 		this.createTbsActorStatusWindow();
 		this.createTbsActorStressWindow();
@@ -388,6 +449,15 @@
 		this.createTbsBreadcrumbWindows();
 		this.createTbsNoTargetWindow();
 		this.createTbsNextRoundWindow();
+	};
+	
+	Scene_Map.prototype.createConcurrentMessageWindows = function() {
+		var i;
+		for(i = 0; i < 10; i++) {
+			var concurrentWindow = new Window_ConcurrentWindow();
+			this._messageWindows.push(concurrentWindow);
+			this.addWindow(concurrentWindow);
+		}
 	};
 
 	Scene_Map.prototype.createTbsActorStatusWindow = function() {
