@@ -32,7 +32,6 @@ Window_ConcurrentWindow.prototype.initialize = function() {
 	this._waitOn = false;
 	this._duration = -1;
 	this._closeable = false;
-	this.close();
 	this.hide();
 };
 
@@ -72,6 +71,18 @@ Window_ConcurrentWindow.prototype.setupAndShow = function(x, y, text, waitOn, du
 	this.open();
 };
 
+Window_ConcurrentWindow.prototype.update = function() {
+    Window_Base.prototype.update.call(this);
+	if(this._waitOn && this.isOpen() && this.isCloseable() && this.isTriggered()) {
+		this.close();
+	}
+};
+
+Window_ConcurrentWindow.prototype.isTriggered = function() {
+    return (Input.isRepeated('ok') || Input.isRepeated('cancel') ||
+            TouchInput.isRepeated());
+};
+
 Window_ConcurrentWindow.prototype.isCountingDown = function() {
 	return this._duration >= 0;
 };
@@ -101,6 +112,11 @@ Window_ConcurrentWindow.prototype.updateClose = function() {
             this._closing = false;
         }
     }
+};
+
+Window_ConcurrentWindow.prototype.hide = function() {
+    this.visible = false;
+	this.close();
 };
 
 //-----------------------------------------------------------------------------

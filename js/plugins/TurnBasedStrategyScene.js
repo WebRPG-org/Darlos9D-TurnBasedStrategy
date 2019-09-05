@@ -74,7 +74,6 @@
 		var closeablesRemaining = false;
 		this._messageWindows.forEach(function (curWindow) {
 			if(curWindow.isClosed() || curWindow.isClosing()) {
-				if(curWindow.isWaitOn()) { waitingOn = true; }
 				return;
 			}
 			if(curWindow.isCloseable()) {
@@ -87,6 +86,7 @@
 			if(curWindow.isCountingDown()) {
 				curWindow.countDown();
 			}
+			if(curWindow.isWaitOn()) { waitingOn = true; }
 		});
 		if(!closeablesRemaining) {
 			$gameMap.clearCloseableMessageWindows();

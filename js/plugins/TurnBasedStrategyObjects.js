@@ -33,6 +33,19 @@
 		this._shouldClearTbsDamageSprites = false;
 		this._damageSpritesExist = false;
 		this._itemReceiver = undefined;
+		this._evaluatingInterpreter = undefined;
+	};
+	
+	Game_Temp.prototype.setEvaluatingInterpreter = function(interpreter) {
+		this._evaluatingInterpreter = interpreter;
+	};
+	
+	Game_Temp.prototype.evaluatingInterpreter = function(interpreter) {
+		return this._evaluatingInterpreter;
+	};
+	
+	Game_Temp.prototype.clearEvaluatingInterpreter = function(interpreter) {
+		this._evaluatingInterpreter = undefined;
 	};
 	
 	Game_Temp.prototype.addTbsPartyMember = function(forceId, partyId, startingX, startingY, label, labelType) {
@@ -321,6 +334,10 @@
 	};
 	
 	Game_System.prototype.addMessageWindow = function(x, y, text, waitOn, duration, closeable) {
+		var interpreter = $gameTemp.evaluatingInterpreter();
+		if(interpreter) {
+			interpreter.concurrentMessage();
+		}
 		$gameMap.addMessageWindow(x, y, text, waitOn, duration, closeable);
 	};
 	
@@ -421,6 +438,7 @@
 		message.waitOn = waitOn;
 		message.duration = duration;
 		message.closeable = closeable;
+		if(waitOn) { this.setWaitingOnMessageWindows(); }
 		this._pendingMessages.push(message);
 	};
 	
@@ -3731,6 +3749,63 @@
 		return true;
 	};
 	
-	//event
+	//interpreter
+	Game_Interpreter.prototype.updateWaitMode = function() {
+		var waiting = false;
+		switch (this._waitMode) {
+		case 'message':
+			waiting = $gameMessage.isBusy();
+			break;
+		case 'concurrentMessage':
+			waiting = $gameMap.waitingOnMessageWindows();
+			break;
+		case 'transfer':
+			waiting = $gamePlayer.isTransferring();
+			break;
+		case 'scroll':
+			waiting = $gameMap.isScrolling();
+			break;
+		case 'route':
+			waiting = this._character.isMoveRouteForcing();
+			break;
+		case 'animation':
+			waiting = this._character.isAnimationPlaying();
+			break;
+		case 'balloon':
+			waiting = this._character.isBalloonPlaying();
+			break;
+		case 'gather':
+			waiting = $gamePlayer.areFollowersGathering();
+			break;
+		case 'action':
+			waiting = BattleManager.isActionForced();
+			break;
+		case 'video':
+			waiting = Graphics.isVideoPlaying();
+			break;
+		case 'image':
+			waiting = !ImageManager.isReady();
+			break;
+		}
+		if (!waiting) {
+			this._waitMode = '';
+		}
+		return waiting;
+	};
 	
+	Game_Interpreter.prototype.concurrentMessage = function() {
+		this.setWaitMode('concurrentMessage');
+	};
+	
+	Game_Interpreter.prototype.command355 = function() {
+		var script = this.currentCommand().parameters[0] + '\n';
+		while (this.nextEventCode() === 655) {
+			this._index++;
+			script += this.currentCommand().parameters[0] + '\n';
+		}
+		$gameTemp.setEvaluatingInterpreter(this);
+		eval(script);
+		$gameTemp.clearEvaluatingInterpreter();
+		return true;
+	};
 }) ();
