@@ -336,6 +336,7 @@
 		this._skillPoints.meleeWeapons = 0;
 		this._skillPoints.throwingWeapons = 0;
 		this._skillPoints.rangedWeapons = 0;
+		this._skillPoints.unarmed = 0;
 		this._skillPoints.whiteMagic = 0;
 		this._skillPoints.blackMagic = 0;
 		this._skillPoints.lockpicking = 0;
@@ -778,6 +779,36 @@
 		}
 		
 		return protOne;
+	};
+	
+	Game_BattlerBase.prototype.getAllSkillActionInfos = function() {
+		var actionInfos = [];
+		var skills = this.skills();
+		for(i = 0; i < skills.length; i++) {
+			var actionInfo = {};
+			actionInfo.action = skills[i].tbsStats.action;
+			actionInfo.canTargetBodyPart = false;
+			actionInfo.canTargetDownedBodyPart = false;
+			if(skills[i].tbsStats.action.hitGroups && skills[i].tbsStats.action.hitGroups.length > 0) {
+				skills[i].tbsStats.action.hitGroups.forEach(function (hitGroup) {
+					if(!hitGroup.hits || hitGroup.hits.length == 0) { return; }
+					actionInfo.canTargetBodyPart = hitGroup.hits.some(function (hit) {
+						if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+							return true;
+						}
+						return false;
+					});
+					actionInfo.canTargetDownedBodyPart = hitGroup.hits.some(function (hit) {
+						if(hit.aoe === undefined || hit.aoe <= 0) {
+							return true;
+						}
+						return false;
+					});
+				});
+			}
+			actionInfos.push(actionInfo);
+		}
+		return actionInfos;
 	};
 	
 	Game_BattlerBase.prototype.getAllEquipActionInfos = function() {

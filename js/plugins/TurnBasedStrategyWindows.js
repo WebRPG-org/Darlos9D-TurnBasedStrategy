@@ -2920,6 +2920,10 @@ Window_StatusSkills.prototype.setActor = function(actor) {
 	if(this._statusWindow) {
 		this._statusWindow.setActor(actor);
 	}
+	if(this._skillLearnedWindow && actor) {
+		var actions = actor.getAllSkillActionInfos().map(function (actionInfo) { return actionInfo.action; });
+		this._skillLearnedWindow.setOldActions(actions);
+	}
     if (this._actor !== actor) {
         this._actor = actor;
         this.refresh();
@@ -2935,6 +2939,12 @@ Window_StatusSkills.prototype.setSkillOptionWindow = function(optionWindow) {
 Window_StatusSkills.prototype.setStatusWindow = function(statusWindow) {
     if (this._statusWindow !== statusWindow) {
         this._statusWindow = statusWindow;
+    }
+};
+
+Window_StatusSkills.prototype.setSkillLearnedWindow = function(skillLearnedWindow) {
+    if (this._skillLearnedWindow !== skillLearnedWindow) {
+        this._skillLearnedWindow = skillLearnedWindow;
     }
 };
 
@@ -3056,12 +3066,14 @@ Window_StatusSkills.prototype.processCursorMove = function() {
 };
 
 Window_StatusSkills.prototype.refresh = function() {
-	this.contents.clear();
-	this._activeIndicies = [];
-	if (this._actor) {
-		this.drawParametersColumnOne();
-		this.drawParametersColumnTwo();
-		this.handleCursorPosition();
+	if(this.contents) {
+		this.contents.clear();
+		this._activeIndicies = [];
+		if (this._actor) {
+			this.drawParametersColumnOne();
+			this.drawParametersColumnTwo();
+			this.handleCursorPosition();
+		}
 	}
 	if (this._statusWindow) {
 		this._statusWindow.refresh();
@@ -3199,6 +3211,148 @@ Window_StatusSkillOption.prototype.processOk = function() {
     } else {
         this.playBuzzerSound();
     }
+};
+
+//-----------------------------------------------------------------------------
+// Window_StatusSkillLearned
+//
+// The window for informing the player that a skill has been gained or lost
+
+function Window_StatusSkillLearned() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_StatusSkillLearned.prototype = Object.create(Window_Base.prototype);
+Window_StatusSkillLearned.prototype.constructor = Window_StatusSkillLearned;
+
+Window_StatusSkillLearned.prototype.initialize = function() {
+	this._oldActions = [];
+	this._newActions = [];
+	this._learnedActions = [];
+	this._forgottenActions = [];
+    Window_Base.prototype.initialize.call(this,
+		Graphics.boxWidth / 2 - this.windowWidth() / 2,
+		Graphics.boxHeight / 2 - this.windowHeight() / 2,
+		this.windowWidth(), this.windowHeight());
+};
+
+Window_StatusSkillLearned.prototype.windowWidth = function() {
+	var contentsWidth = 17*14;
+	var characterCount = 0;
+	this._learnedActions.forEach(function (action) {
+		if(characterCount < action.name.length) {
+			characterCount = action.name.length;
+		}
+	});
+	this._forgottenActions.forEach(function (action) {
+		if(characterCount < action.name.length) {
+			characterCount = action.name.length;
+		}
+	});
+	var actionWidth = Window_Base._iconWidth + this.textPadding() + characterCount*14;
+	if(contentsWidth < actionWidth) {
+		contentsWidth = actionWidth;
+	}
+	return this.standardPadding()*2 + this.textPadding()*2 + contentsWidth;
+};
+
+Window_StatusSkillLearned.prototype.windowHeight = function() {
+	var lineCount = 0;
+	if(this._learnedActions.length > 0) {
+		lineCount += this._learnedActions.length + 1;
+	}
+	if(this._forgottenActions.length > 0) {
+		lineCount += this._forgottenActions.length + 1;
+	}
+	return this.fittingHeight(lineCount);
+};
+
+Window_StatusSkillLearned.prototype.setOldActions = function(oldActions) {
+	this._oldActions = oldActions;
+	this._newActions = [];
+};
+
+Window_StatusSkillLearned.prototype.setNewActions = function(newActions) {
+	this._newActions = newActions;
+	this._learnedActions = [];
+	this._forgottenActions = [];
+	this._oldActions.forEach(function (oldAction) {
+		if(!this._newActions.some(function (newAction) {
+			return oldAction.name === newAction.name;
+		})) {
+			this._forgottenActions.push(oldAction);
+		}
+	}, this);
+	this._newActions.forEach(function (newAction) {
+		if(!this._oldActions.some(function (oldAction) {
+			return oldAction.name === newAction.name;
+		})) {
+			this._learnedActions.push(newAction);
+		}
+	}, this);
+};
+
+Window_StatusSkillLearned.prototype.isChangeInActions = function() {
+	return this._learnedActions.length + this._forgottenActions.length > 0;
+};
+
+Window_StatusSkillLearned.prototype.setHandler = function(method) {
+    this._inputHandler = method;
+};
+
+Window_StatusSkillLearned.prototype.isOkTriggered = function() {
+    return Input.isRepeated('ok');
+};
+
+Window_StatusSkillLearned.prototype.isCancelTriggered = function() {
+    return Input.isRepeated('cancel');
+};
+
+Window_StatusSkillLearned.prototype.update = function() {
+	Window_Base.prototype.update.call(this);
+	if(this.isOkTriggered() || this.isCancelTriggered()) {
+		SoundManager.playCancel();
+		Input.update();
+		TouchInput.update();
+        this.deactivate();
+		if(this._inputHandler) {
+			this._inputHandler();
+		}
+	}
+};
+
+Window_StatusSkillLearned.prototype.refresh = function() {
+	this.move(Graphics.boxWidth / 2 - this.windowWidth() / 2,
+		Graphics.boxHeight / 2 - this.windowHeight() / 2,
+		this.windowWidth(), this.windowHeight());
+	this.createContents();
+	if(this.contents) {
+		this.contents.clear();
+		this.resetTextColor();
+		this.changePaintOpacity(true);
+		var iconBoxWidth = Window_Base._iconWidth;
+		var lineOffset = 0;
+		if(this._learnedActions.length > 0) {
+			this.drawText("Skills Learned:", this.textPadding(), lineOffset, 15*14);
+			lineOffset += this.lineHeight();
+			this._learnedActions.forEach(function (learnedAction) {
+				var iconIndex = this.iconIndexForAction(learnedAction);
+				this.drawIcon(iconIndex, this.textPadding(), lineOffset);
+				this.drawText(learnedAction.name, this.textPadding() * 2 + iconBoxWidth, lineOffset, learnedAction.name.length*14);
+				lineOffset += this.lineHeight();
+			}, this);
+		}
+		if(this._forgottenActions.length > 0) {
+			this.drawText("Skills Forgotten:", this.textPadding(), lineOffset, 17*14);
+			lineOffset += this.lineHeight();
+			this._forgottenActions.forEach(function (forgottenAction) {
+				var iconIndex = this.iconIndexForAction(forgottenAction);
+				this.drawIcon(iconIndex, this.textPadding(), lineOffset);
+				this.drawText(forgottenAction.name, this.textPadding() * 2 + iconBoxWidth, lineOffset, forgottenAction.name.length*14);
+				lineOffset += this.lineHeight();
+			}, this);
+		}
+	}
 };
  
 (function() {
@@ -3597,6 +3751,9 @@ Window_StatusSkillOption.prototype.processOk = function() {
 				break;
 			case "rangedWeapons":
 				return "Ranged Wpns";
+				break;
+			case "unarmed":
+				return "Unarmed";
 				break;
 			case "whiteMagic":
 				return "White Magic";

@@ -1687,10 +1687,17 @@
 		this._statusSkillConfirmWindow.hide();
 		this._statusSkillConfirmWindow.deactivate();
 		
+		this._statusSkillLearnedWindow = new Window_StatusSkillLearned();
+		this._statusSkillLearnedWindow.setHandler(this.onLearnedInput.bind(this));
+		this._statusSkillsWindow.setSkillLearnedWindow(this._statusSkillLearnedWindow);
+		this._statusSkillLearnedWindow.hide();
+		this._statusSkillLearnedWindow.deactivate();
+		
 		this.addWindow(this._statusWindow);
 		this.addWindow(this._statusSkillsWindow);
 		this.addWindow(this._statusSkillOptionWindow);
 		this.addWindow(this._statusSkillConfirmWindow);
+		this.addWindow(this._statusSkillLearnedWindow);
 		this.refreshActor();
 		this._statusSkillsWindow.select(2);
 	};
@@ -1741,13 +1748,30 @@
 		this._statusSkillConfirmWindow.deactivate();
 		this._statusSkillOptionWindow.hide();
 		this._statusSkillOptionWindow.deactivate();
-		this._statusSkillsWindow.activate();
+		var actions = actor.getAllSkillActionInfos().map(function (actionInfo) { return actionInfo.action; });
+		this._statusSkillLearnedWindow.setNewActions(actions);
+		if(this._statusSkillLearnedWindow.isChangeInActions()) {
+			this._statusSkillLearnedWindow.refresh();
+			this._statusSkillLearnedWindow.show();
+			this._statusSkillLearnedWindow.activate();
+		} else {
+			this._statusSkillLearnedWindow.setOldActions(actions);
+			this._statusSkillsWindow.activate();
+		}
 	};
 	
 	Scene_Status.prototype.onConfirmCancel = function() {
 		this._statusSkillOptionWindow.activate();
 		this._statusSkillConfirmWindow.hide();
 		this._statusSkillConfirmWindow.deactivate();
+	};
+	
+	Scene_Status.prototype.onLearnedInput = function() {
+		var actor = this.actor();
+		var actions = actor.getAllSkillActionInfos().map(function (actionInfo) { return actionInfo.action; });
+		this._statusSkillLearnedWindow.hide();
+		this._statusSkillLearnedWindow.setOldActions(actions);
+		this._statusSkillsWindow.activate();
 	};
 })();
  
