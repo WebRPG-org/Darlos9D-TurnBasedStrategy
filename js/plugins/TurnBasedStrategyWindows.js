@@ -3129,12 +3129,12 @@ Window_StatusSkills.prototype.drawParametersColumnTwo = function() {
 
 Window_StatusSkills.prototype.drawSkillLevel = function(displayName, skill, x, y, width) {
 	this.changeTextColor(this.systemColor());
-	this.drawText(displayName, x, y, width - 14*7);
+	this.drawText(displayName, this.textPadding() + x, y, width - 14*7);
 	this.resetTextColor();
-	this.drawText(this._actor.totalSkill(skill), x + width - 14*7, y, 14*2, 'right');
+	this.drawText(this._actor.totalSkill(skill), x + width - 14*5 - this.textPadding(), y, 14*2, 'right');
 	this.changePaintOpacity(false);
-	this.drawText(":", x + width - 14*5, y, 14, 'right');
-	this.drawText(this._actor.skillUpgradeCost(skill), x + width - 14*4, y, 14*4, 'right');
+	this.drawText(":", x + width - 14*3 - this.textPadding(), y, 14, 'right');
+	this.drawText(this._actor.skillPoints(skill), x + width - 14*2 - this.textPadding(), y, 14*2, 'right');
 	this.changePaintOpacity(true);
 };
 
@@ -3183,18 +3183,18 @@ Window_StatusSkillOption.prototype.numVisibleRows = function() {
 Window_StatusSkillOption.prototype.makeCommandList = function() {
 	var canUpgrade = false;
 	var canDowngrade = false;
-	var upgradeCostText = "----";
-	var downgradeCostText = "----";
+	var upgradeCostText = "------";
+	var downgradeCostText = "------";
 	if(this._actor && this._skill) {
 		var battler = this._actor;
 		canUpgrade = battler.skillPoints(this._skill) < 99 && battler.skillXP() >= battler.skillUpgradeCost(this._skill);
 		canDowngrade = battler.skillPoints(this._skill) > 0 && battler.respecXP() >= battler.skillDowngradeCost(this._skill);
-		upgradeCostText = battler.skillPoints(this._skill) < 99 ? battler.skillUpgradeCost(this._skill)+"" : "----";
-		downgradeCostText = battler.skillPoints(this._skill) > 0 ? battler.skillDowngradeCost(this._skill)+"" : "----";
-		while(upgradeCostText.length < 4) {
+		upgradeCostText = battler.skillPoints(this._skill) < 99 ? battler.skillUpgradeCost(this._skill)+"" : "------";
+		downgradeCostText = battler.skillPoints(this._skill) > 0 ? battler.skillDowngradeCost(this._skill)+"" : "------";
+		while(upgradeCostText.length < 6) {
 			upgradeCostText = " " + upgradeCostText;
 		}
-		while(downgradeCostText.length < 4) {
+		while(downgradeCostText.length < 6) {
 			downgradeCostText = " " + downgradeCostText;
 		}
 	}
@@ -3310,7 +3310,7 @@ Window_StatusSkillLearned.prototype.isCancelTriggered = function() {
 
 Window_StatusSkillLearned.prototype.update = function() {
 	Window_Base.prototype.update.call(this);
-	if(this.isOkTriggered() || this.isCancelTriggered()) {
+	if(this.active && (this.isOkTriggered() || this.isCancelTriggered())) {
 		SoundManager.playCancel();
 		Input.update();
 		TouchInput.update();

@@ -1770,6 +1770,7 @@
 		var actor = this.actor();
 		var actions = actor.getAllSkillActionInfos().map(function (actionInfo) { return actionInfo.action; });
 		this._statusSkillLearnedWindow.hide();
+		this._statusSkillLearnedWindow.deactivate();
 		this._statusSkillLearnedWindow.setOldActions(actions);
 		this._statusSkillsWindow.activate();
 	};
