@@ -2368,12 +2368,10 @@ BattleManager.resolveMentalDamage = function(hitDamage, acc, accBonus, eva, part
 BattleManager.rollForRanks = function(ranks, stress, scalar) {
 	scalar = scalar === undefined ? 1 : scalar;
 	var adjustedStress = Math.max(0, Math.min(100, stress));
-	var fixedStress = adjustedStress*2;
-	var randomStress = this.rollDoubleDice(adjustedStress);
-	var ranksPenalty = fixedStress + randomStress;
-	var adjustedRanks = ranks * (1 - (ranksPenalty / 400));
+	var ranksPenalty = this.rollDoubleDice(adjustedStress);
+	var adjustedRanks = (ranks+20) * (1 - (ranksPenalty / 200));
 	adjustedRanks = Math.max(0, Math.floor(adjustedRanks * scalar));
-	return this.rollDoubleDice(adjustedRanks + 30);
+	return this.rollDoubleDice(adjustedRanks + 10);
 };
 
 BattleManager.rollDoubleDice = function(sides) {
