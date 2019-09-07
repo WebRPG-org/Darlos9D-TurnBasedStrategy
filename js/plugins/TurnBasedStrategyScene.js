@@ -1657,12 +1657,21 @@
 		Scene_MenuBase.prototype.create.call(this);
 		this._statusWindow = new Window_Status();
 		
+		this._statusCommandWindow = new Window_StatusCommand(this._statusWindow.height);
+		this._statusCommandWindow.setHandler('skills',		this.onSkillCommand.bind(this));
+		this._statusCommandWindow.setHandler('attributes',	this.onAttributesCommand.bind(this));
+		this._statusCommandWindow.setHandler('cancel',   	this.popScene.bind(this));
+		this._statusCommandWindow.show();
+		this._statusCommandWindow.activate();
+		
 		this._statusSkillsWindow = new Window_StatusSkills(this._statusWindow.height);
 		this._statusSkillsWindow.setStatusWindow(this._statusWindow);
 		this._statusSkillsWindow.setHandler('ok',   	this.onSkillOk.bind(this));
-		this._statusSkillsWindow.setHandler('cancel',   this.popScene.bind(this));
+		this._statusSkillsWindow.setHandler('cancel',   this.onSkillCancel.bind(this));
 		this._statusSkillsWindow.setHandler('pagedown', this.nextActor.bind(this));
 		this._statusSkillsWindow.setHandler('pageup',   this.previousActor.bind(this));
+		this._statusSkillsWindow.hide();
+		this._statusSkillsWindow.deactivate();
 		
 		this._statusSkillOptionWindow = new Window_StatusSkillOption(
 			Graphics.boxWidth/2,
@@ -1695,11 +1704,33 @@
 		this._statusSkillLearnedWindow.hide();
 		this._statusSkillLearnedWindow.deactivate();
 		
+		this._statusAttributesListWindow = new Window_StatusAttributesList(
+			this._statusWindow.height,
+			Graphics.boxHeight - this._statusWindow.height
+		);
+		this._statusAttributesListWindow.setHandler('ok',	this.onAttributesOk.bind(this));
+		this._statusAttributesListWindow.setHandler('cancel',	this.onAttributesCancel.bind(this));
+		this._statusAttributesListWindow.hide();
+		this._statusAttributesListWindow.deactivate();
+		
+		this._statusAttributeDescriptionWindow = new Window_StatusAttributeDescription(
+			this._statusAttributesListWindow.width,
+			this._statusWindow.height,
+			Graphics.boxWidth - this._statusAttributesListWindow.width,
+			Graphics.boxHeight - this._statusWindow.height
+		);
+		this._statusAttributesListWindow.setAttributeDescriptionWindow(this._statusAttributeDescriptionWindow);
+		this._statusAttributeDescriptionWindow.hide();
+		this._statusAttributeDescriptionWindow.deactivate();
+		
 		this.addWindow(this._statusWindow);
+		this.addWindow(this._statusCommandWindow);
 		this.addWindow(this._statusSkillsWindow);
 		this.addWindow(this._statusSkillOptionWindow);
 		this.addWindow(this._statusSkillConfirmWindow);
 		this.addWindow(this._statusSkillLearnedWindow);
+		this.addWindow(this._statusAttributesListWindow);
+		this.addWindow(this._statusAttributeDescriptionWindow);
 		this.refreshActor();
 		this._statusSkillsWindow.select(2);
 	};
@@ -1707,6 +1738,7 @@
 	Scene_Status.prototype.refreshActor = function() {
 		var actor = this.actor();
 		this._statusSkillsWindow.setActor(actor);
+		this._statusAttributesListWindow.setActor(actor);
 	};
 	
 	Scene_Status.prototype.onActorChange = function() {
@@ -1714,10 +1746,34 @@
 		this._statusSkillsWindow.activate();
 	};
 	
+	Scene_Status.prototype.onSkillCommand = function() {
+		this._statusSkillsWindow.activate();
+		this._statusSkillsWindow.show();
+		this._statusCommandWindow.deactivate();
+		this._statusCommandWindow.hide();
+		this._statusSkillsWindow.select(2);
+	};
+	
+	Scene_Status.prototype.onAttributesCommand = function() {
+		this._statusCommandWindow.deactivate();
+		this._statusCommandWindow.hide();
+		this._statusAttributesListWindow.show();
+		this._statusAttributesListWindow.activate();
+		this._statusAttributesListWindow.select(0);
+		this._statusAttributeDescriptionWindow.show();
+	};
+	
 	Scene_Status.prototype.onSkillOk = function() {
 		this._statusSkillsWindow.deactivate();
 		this._statusSkillOptionWindow.show();
 		this._statusSkillOptionWindow.activate();
+	};
+	
+	Scene_Status.prototype.onSkillCancel = function() {
+		this._statusSkillsWindow.deactivate();
+		this._statusSkillsWindow.hide();
+		this._statusCommandWindow.activate();
+		this._statusCommandWindow.show();
 	};
 	
 	Scene_Status.prototype.onSkillOption = function(option) {
@@ -1746,18 +1802,22 @@
 			actor.adjustSkillPoints(skill, 1);
 		}
 		this._statusSkillsWindow.refresh();
+		this._statusAttributesListWindow.refresh();
 		this._statusSkillConfirmWindow.hide();
 		this._statusSkillConfirmWindow.deactivate();
 		this._statusSkillOptionWindow.hide();
 		this._statusSkillOptionWindow.deactivate();
 		var actions = actor.getAllSkillActionInfos().map(function (actionInfo) { return actionInfo.action; });
+		var attributes = actor.getAttributes();
 		this._statusSkillLearnedWindow.setNewActions(actions);
-		if(this._statusSkillLearnedWindow.isChangeInActions()) {
+		this._statusSkillLearnedWindow.setNewAttributes(attributes);
+		if(this._statusSkillLearnedWindow.isChangeInActions() || this._statusSkillLearnedWindow.isChangeInAttributes()) {
 			this._statusSkillLearnedWindow.refresh();
 			this._statusSkillLearnedWindow.show();
 			this._statusSkillLearnedWindow.activate();
 		} else {
 			this._statusSkillLearnedWindow.setOldActions(actions);
+			this._statusSkillLearnedWindow.setOldAttributes(attributes);
 			this._statusSkillsWindow.activate();
 		}
 	};
@@ -1771,10 +1831,24 @@
 	Scene_Status.prototype.onLearnedInput = function() {
 		var actor = this.actor();
 		var actions = actor.getAllSkillActionInfos().map(function (actionInfo) { return actionInfo.action; });
+		var attributes = actor.getAttributes();
 		this._statusSkillLearnedWindow.hide();
 		this._statusSkillLearnedWindow.deactivate();
 		this._statusSkillLearnedWindow.setOldActions(actions);
+		this._statusSkillLearnedWindow.setOldAttributes(attributes);
 		this._statusSkillsWindow.activate();
+	};
+	
+	Scene_Status.prototype.onAttributesOk = function() {
+		
+	};
+	
+	Scene_Status.prototype.onAttributesCancel = function() {
+		this._statusCommandWindow.activate();
+		this._statusCommandWindow.show();
+		this._statusAttributesListWindow.hide();
+		this._statusAttributesListWindow.deactivate();
+		this._statusAttributeDescriptionWindow.hide();
 	};
 })();
  

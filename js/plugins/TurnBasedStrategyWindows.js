@@ -2906,6 +2906,36 @@ Window_TbsNextRound.prototype.windowHeight = function() {
 };
 
 //-----------------------------------------------------------------------------
+// Window_StatusCommand
+//
+// The window for selecting a command on the status screen.
+
+function Window_StatusCommand() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_StatusCommand.prototype = Object.create(Window_HorzCommand.prototype);
+Window_StatusCommand.prototype.constructor = Window_StatusCommand;
+
+Window_StatusCommand.prototype.initialize = function(y) {
+    this._windowWidth = Graphics.boxWidth;
+    Window_HorzCommand.prototype.initialize.call(this, 0, y);
+};
+
+Window_StatusCommand.prototype.windowWidth = function() {
+    return this._windowWidth;
+};
+
+Window_StatusCommand.prototype.maxCols = function() {
+    return 2;
+};
+
+Window_StatusCommand.prototype.makeCommandList = function() {
+    this.addCommand("Skills",   'skills');
+    this.addCommand("Attributes", 'attributes');
+};
+
+//-----------------------------------------------------------------------------
 // Window_StatusSkills
 //
 // The window for displaying character skills on the status screen
@@ -3253,8 +3283,12 @@ Window_StatusSkillLearned.prototype.constructor = Window_StatusSkillLearned;
 Window_StatusSkillLearned.prototype.initialize = function() {
 	this._oldActions = [];
 	this._newActions = [];
+	this._oldAttributes = [];
+	this._newAttributes = [];
 	this._learnedActions = [];
 	this._forgottenActions = [];
+	this._gainedAttributes = [];
+	this._lostAttributes = [];
     Window_Base.prototype.initialize.call(this,
 		Graphics.boxWidth / 2 - this.windowWidth() / 2,
 		Graphics.boxHeight / 2 - this.windowHeight() / 2,
@@ -3262,7 +3296,7 @@ Window_StatusSkillLearned.prototype.initialize = function() {
 };
 
 Window_StatusSkillLearned.prototype.windowWidth = function() {
-	var contentsWidth = 17*14;
+	var contentsWidth = 18*14;
 	var characterCount = 0;
 	this._learnedActions.forEach(function (action) {
 		if(characterCount < action.name.length) {
@@ -3278,6 +3312,21 @@ Window_StatusSkillLearned.prototype.windowWidth = function() {
 	if(contentsWidth < actionWidth) {
 		contentsWidth = actionWidth;
 	}
+	characterCount = 0;
+	this._gainedAttributes.forEach(function (attribute) {
+		if(characterCount < attribute.name.length) {
+			characterCount = attribute.name.length;
+		}
+	});
+	this._lostAttributes.forEach(function (attribute) {
+		if(characterCount < attribute.name.length) {
+			characterCount = attribute.name.length;
+		}
+	});
+	var attributeWidth = characterCount*14;
+	if(contentsWidth < attributeWidth) {
+		contentsWidth = attributeWidth;
+	}
 	return this.standardPadding()*2 + this.textPadding()*2 + contentsWidth;
 };
 
@@ -3288,6 +3337,12 @@ Window_StatusSkillLearned.prototype.windowHeight = function() {
 	}
 	if(this._forgottenActions.length > 0) {
 		lineCount += this._forgottenActions.length + 1;
+	}
+	if(this._gainedAttributes.length > 0) {
+		lineCount += this._gainedAttributes.length + 1;
+	}
+	if(this._lostAttributes.length > 0) {
+		lineCount += this._lostAttributes.length + 1;
 	}
 	return this.fittingHeight(lineCount);
 };
@@ -3317,8 +3372,37 @@ Window_StatusSkillLearned.prototype.setNewActions = function(newActions) {
 	}, this);
 };
 
+Window_StatusSkillLearned.prototype.setOldAttributes = function(oldAttributes) {
+	this._oldAttributes = oldAttributes;
+	this._newAttributes = [];
+};
+
+Window_StatusSkillLearned.prototype.setNewAttributes = function(newAttributes) {
+	this._newAttributes = newAttributes;
+	this._gainedAttributes = [];
+	this._lostAttributes = [];
+	this._oldAttributes.forEach(function (oldAttribute) {
+		if(!this._newAttributes.some(function (newAttribute) {
+			return oldAttribute.name === newAttribute.name;
+		})) {
+			this._lostAttributes.push(oldAttribute);
+		}
+	}, this);
+	this._newAttributes.forEach(function (newAttribute) {
+		if(!this._oldAttributes.some(function (oldAttribute) {
+			return oldAttribute.name === newAttribute.name;
+		})) {
+			this._gainedAttributes.push(newAttribute);
+		}
+	}, this);
+};
+
 Window_StatusSkillLearned.prototype.isChangeInActions = function() {
 	return this._learnedActions.length + this._forgottenActions.length > 0;
+};
+
+Window_StatusSkillLearned.prototype.isChangeInAttributes = function() {
+	return this._gainedAttributes.length + this._lostAttributes.length > 0;
 };
 
 Window_StatusSkillLearned.prototype.setHandler = function(method) {
@@ -3353,12 +3437,13 @@ Window_StatusSkillLearned.prototype.refresh = function() {
 	this.createContents();
 	if(this.contents) {
 		this.contents.clear();
-		this.resetTextColor();
-		this.changePaintOpacity(true);
 		var iconBoxWidth = Window_Base._iconWidth;
+		this.changePaintOpacity(true);
 		var lineOffset = 0;
 		if(this._learnedActions.length > 0) {
-			this.drawText("Skills Learned:", this.textPadding(), lineOffset, 15*14);
+			this.changeTextColor(this.systemColor());
+			this.drawText("Learned Actions:", this.textPadding(), lineOffset, 16*14);
+			this.resetTextColor();
 			lineOffset += this.lineHeight();
 			this._learnedActions.forEach(function (learnedAction) {
 				var iconIndex = this.iconIndexForAction(learnedAction);
@@ -3368,7 +3453,9 @@ Window_StatusSkillLearned.prototype.refresh = function() {
 			}, this);
 		}
 		if(this._forgottenActions.length > 0) {
-			this.drawText("Skills Forgotten:", this.textPadding(), lineOffset, 17*14);
+			this.changeTextColor(this.systemColor());
+			this.drawText("Forgotten Actions:", this.textPadding(), lineOffset, 18*14);
+			this.resetTextColor();
 			lineOffset += this.lineHeight();
 			this._forgottenActions.forEach(function (forgottenAction) {
 				var iconIndex = this.iconIndexForAction(forgottenAction);
@@ -3377,6 +3464,145 @@ Window_StatusSkillLearned.prototype.refresh = function() {
 				lineOffset += this.lineHeight();
 			}, this);
 		}
+		if(this._gainedAttributes.length > 0) {
+			this.changeTextColor(this.systemColor());
+			this.drawText("Gained Attributes:", this.textPadding(), lineOffset, 18*14);
+			this.resetTextColor();
+			lineOffset += this.lineHeight();
+			this._gainedAttributes.forEach(function (gainedAttribute) {
+				this.drawText(gainedAttribute.name, this.textPadding(), lineOffset, gainedAttribute.name.length*14);
+				lineOffset += this.lineHeight();
+			}, this);
+		}
+		if(this._lostAttributes.length > 0) {
+			this.changeTextColor(this.systemColor());
+			this.drawText("Lost Attributes:", this.textPadding(), lineOffset, 16*14);
+			this.resetTextColor();
+			lineOffset += this.lineHeight();
+			this._lostAttributes.forEach(function (lostAttribute) {
+				this.drawText(lostAttribute.name, this.textPadding(), lineOffset, lostAttribute.name.length*14);
+				lineOffset += this.lineHeight();
+			}, this);
+		}
+	}
+	this.resetTextColor();
+};
+
+//-----------------------------------------------------------------------------
+// Window_StatusAttributesList
+//
+// The window for selecting an attribute on the status window
+
+function Window_StatusAttributesList() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_StatusAttributesList.prototype = Object.create(Window_Selectable.prototype);
+Window_StatusAttributesList.prototype.constructor = Window_StatusAttributesList;
+
+Window_StatusAttributesList.prototype.initialize = function(y, height) {
+    Window_Selectable.prototype.initialize.call(this, 0, y, this.windowWidth(), height);
+	this._attributes = [];
+};
+
+Window_StatusAttributesList.prototype.windowWidth = function() {
+	return this.standardPadding()*2 + this.textPadding() + 14*20;
+};
+
+Window_StatusAttributesList.prototype.numVisibleRows = function() {
+	return this.maxItems();
+};
+
+Window_StatusAttributesList.prototype.setAttributeDescriptionWindow = function(attributeDescriptionWindow) {
+	if (this._attributeDescriptionWindow !== attributeDescriptionWindow) {
+		this._attributeDescriptionWindow = attributeDescriptionWindow;
+	}
+};
+
+Window_StatusAttributesList.prototype.setActor = function(actor) {
+    if (this._actor !== actor) {
+        this._actor = actor;
+		this.refresh();
+    }
+};
+
+Window_StatusAttributesList.prototype.update = function() {
+    Window_Selectable.prototype.update.call(this);
+	if(this._attributeDescriptionWindow) {
+		var attribute = this.attribute();
+		if(attribute) {
+			this._attributeDescriptionWindow.setDescription(attribute.description);
+		} else {
+			this._attributeDescriptionWindow.setDescription("(No attributes.)");
+		}
+	}
+};
+
+Window_StatusAttributesList.prototype.attribute = function() {
+	return this._attributes[this.index()];
+};
+
+Window_StatusAttributesList.prototype.refresh = function() {
+	this.makeItemList();
+    this.createContents();
+	this.select(0);
+    this.drawAllItems();
+};
+
+Window_StatusAttributesList.prototype.makeItemList = function() {
+	if(!this._actor) { return; }
+	this._attributes = this._actor.getAttributes();
+};
+
+Window_StatusAttributesList.prototype.maxItems = function() {
+	return this._attributes ? this._attributes.length : 1;
+};
+
+Window_StatusAttributesList.prototype.drawItem = function(index) {
+	var attribute = this._attributes[index];
+	var rect = this.itemRect(index);
+	this.drawText(attribute.name, rect.x + this.textPadding(), rect.y, rect.width - this.textPadding()*2);
+};
+
+Window_StatusAttributesList.prototype.processOk = function() {
+    this.playBuzzerSound();
+};
+
+//-----------------------------------------------------------------------------
+// Window_StatusAttributeDescription
+//
+// The window for displaying an attribute description 
+
+function Window_StatusAttributeDescription() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_StatusAttributeDescription.prototype = Object.create(Window_Base.prototype);
+Window_StatusAttributeDescription.prototype.constructor = Window_StatusAttributeDescription;
+
+Window_StatusAttributeDescription.prototype.initialize = function(x, y, width, height) {
+    Window_Base.prototype.initialize.call(this, x, y, width, height);
+    this.refresh();
+    this.activate();
+};
+
+Window_StatusAttributeDescription.prototype.refresh = function() {
+	this.contents.clear();
+	if(this._description) {
+		this.drawAttributeDescription();
+	}
+};
+
+Window_StatusAttributeDescription.prototype.setDescription = function(description) {
+	if (this._description !== description) {
+		this._description = description;
+		this.refresh();
+	}
+};
+
+Window_StatusAttributeDescription.prototype.drawAttributeDescription = function() {
+	if(this._description) {
+		this.drawDescription(this._description);
 	}
 };
  

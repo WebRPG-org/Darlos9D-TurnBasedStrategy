@@ -781,6 +781,10 @@
 		return protOne;
 	};
 	
+	Game_BattlerBase.prototype.getAttributes = function() {
+		return [];
+	};
+	
 	Game_BattlerBase.prototype.getAllSkillActionInfos = function() {
 		var actionInfos = [];
 		var skills = this.skills();
@@ -1375,6 +1379,28 @@
 		return value;
 	};
 	
+	Game_Actor.prototype.getAttributes = function() {
+		var attributes = this.currentClass().tbsStats.attributes;
+		if(!attributes) { return []; }
+		var returnArray = [];
+		attributes.forEach(function (attribute) {
+			if(!attribute.skillRequirements) { returnArray.push(attribute); return; }
+			var addAttribute = true;
+			var i;
+			for(i = 0; i < attribute.skillRequirements.length; i++) {
+				var requirement = attribute.skillRequirements[i];
+				if(requirement.level > this.totalSkill(requirement.skill)) {
+					addAttribute = false;
+					break;
+				}
+			}
+			if(addAttribute) {
+				returnArray.push(attribute);
+			}
+		}, this);
+		return returnArray;
+	};
+	
 	Game_Actor.prototype.tradeItemWithSelf = function(newItem, oldItem, itemIndex) {
 		if (newItem && !this.hasItem(newItem)) {
 			return false;
@@ -1527,6 +1553,28 @@
 	
 	Game_Enemy.prototype.blankDummy = function() {
 		return !!this.enemy().tbsStats.blankDummy;
+	};
+	
+	Game_Enemy.prototype.getAttributes = function() {
+		var attributes = this.enemy().tbsStats.attributes;
+		if(!attributes) { return []; }
+		var returnArray = [];
+		attributes.forEach(function (attribute) {
+			if(!attribute.skillRequirements) { returnArray.push(attribute); return; }
+			var addAttribute = true;
+			var i;
+			for(i = 0; i < attribute.skillRequirements.length; i++) {
+				var requirement = attribute.skillRequirements[i];
+				if(requirement.level > this.totalSkill(requirement.skill)) {
+					addAttribute = false;
+					break;
+				}
+			}
+			if(addAttribute) {
+				returnArray.push(attribute);
+			}
+		}, this);
+		return returnArray;
 	};
 	
 	Game_Enemy.prototype.toughness = function() {
