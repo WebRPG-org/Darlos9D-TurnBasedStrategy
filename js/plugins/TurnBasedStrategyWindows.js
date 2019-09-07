@@ -3503,6 +3503,7 @@ Window_StatusAttributesList.prototype.constructor = Window_StatusAttributesList;
 Window_StatusAttributesList.prototype.initialize = function(y, height) {
     Window_Selectable.prototype.initialize.call(this, 0, y, this.windowWidth(), height);
 	this._attributes = [];
+	this._attributeLevels = [];
 };
 
 Window_StatusAttributesList.prototype.windowWidth = function() {
@@ -3551,7 +3552,24 @@ Window_StatusAttributesList.prototype.refresh = function() {
 
 Window_StatusAttributesList.prototype.makeItemList = function() {
 	if(!this._actor) { return; }
-	this._attributes = this._actor.getAttributes();
+	var attributes = this._actor.getAttributes();
+	this._attributes = [];
+	this._attributeLevels = [];
+	attributes.forEach(function (attribute) {
+		var attributeFound = false;
+		var i;
+		for(i = 0; i < this._attributes.length; i++) {
+			if(this._attributes[i].name === attribute.name) {
+				this._attributeLevels[i]++;
+				attributeFound = true;
+				break;
+			}
+		}
+		if(!attributeFound) {
+			this._attributes.push(attribute);
+			this._attributeLevels.push(1);
+		}
+	}, this);
 };
 
 Window_StatusAttributesList.prototype.maxItems = function() {
@@ -3561,7 +3579,11 @@ Window_StatusAttributesList.prototype.maxItems = function() {
 Window_StatusAttributesList.prototype.drawItem = function(index) {
 	var attribute = this._attributes[index];
 	var rect = this.itemRect(index);
-	this.drawText(attribute.name, rect.x + this.textPadding(), rect.y, rect.width - this.textPadding()*2);
+	var name = attribute.name;
+	if(this._attributeLevels[index] > 1) {
+		name = name + " " + this._attributeLevels[index];
+	}
+	this.drawText(name, rect.x + this.textPadding(), rect.y, rect.width - this.textPadding()*2);
 };
 
 Window_StatusAttributesList.prototype.processOk = function() {
@@ -4067,14 +4089,14 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_Base.prototype.drawDescription = function(description) {
 		if(!description) { return; }
 		
-		var lineWidth = 34;
+		var lineWidth = Math.floor((this.width - this.standardPadding()*2 - this.textPadding()*2) / 14);
 		var descWords = description.split(" ");
 		var i;
 		var descLine = "";
 		var descLineNum = 0;
 		for(i = 0; i < descWords.length ; i++) {
 			if(descLine.length + descWords[i].length + (descLine.length > 0 ? 1 : 0) > lineWidth) {
-				this.drawText(descLine, 0, this.lineHeight() * descLineNum);
+				this.drawText(descLine, this.textPadding(), this.lineHeight() * descLineNum);
 				descLineNum++;
 				descLine = "";
 			}
@@ -4086,7 +4108,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		}
 		
 		if(descLine.length > 0) {
-			this.drawText(descLine, 0, this.lineHeight() * descLineNum);
+			this.drawText(descLine, this.textPadding(), this.lineHeight() * descLineNum);
 		}
 	};
 	

@@ -696,8 +696,27 @@
 		return false;
 	};
 	
+	Game_BattlerBase.prototype.strengthMultiplier = function() {
+		var percent = 0;
+		var attributes = this.getAttributes();
+		attributes.forEach(function (attribute) {
+			if(attribute.strengthPercent !== undefined) {
+				percent += attribute.strengthPercent;
+			}
+		});
+		var multiplier = 1 + percent/100;
+		return multiplier > 0 ? multiplier : 0;
+	};
+	
 	Game_BattlerBase.prototype.toughness = function() {
-		return 4;
+		var toughness = 4;
+		var attributes = this.getAttributes();
+		attributes.forEach(function (attribute) {
+			if(attribute.toughness !== undefined) {
+				toughness += attribute.toughness;
+			}
+		});
+		return toughness >= 1 ? toughness : 1;
 	};
 	
 	Game_BattlerBase.prototype.mentalToughness = function() {
@@ -1575,12 +1594,6 @@
 			}
 		}, this);
 		return returnArray;
-	};
-	
-	Game_Enemy.prototype.toughness = function() {
-		return this.enemy().tbsStats.toughness === undefined 
-			? Game_Battler.prototype.toughness.call(this)
-			: this.enemy().tbsStats.toughness;
 	};
 	
 	Game_Enemy.prototype.equips = function() {

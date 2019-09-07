@@ -945,12 +945,17 @@ BattleManager.combatMath = function(subject, actionInfo, hitGroup, target, targe
 				}
 				var acc = accSkill * this._accEvaSkillMult * this._accMult;
 				
+				var physDamageMult = 1;
+				if(hit.rangeType === "melee" || hit.rangeType === "thrown") {
+					physDamageMult = subject.strengthMultiplier();
+				}
+				
 				var hitDamage = this.getCompleteDamage(subject, actionInfo, hit);
-				hitDamage.blunt *= this._damageMult;
-				hitDamage.cut *= this._damageMult;
-				hitDamage.keen *= this._damageMult;
-				hitDamage.thrust *= this._damageMult;
-				hitDamage.stiletto *= this._damageMult;
+				hitDamage.blunt *= this._damageMult * physDamageMult;
+				hitDamage.cut *= this._damageMult * physDamageMult;
+				hitDamage.keen *= this._damageMult * physDamageMult;
+				hitDamage.thrust *= this._damageMult * physDamageMult;
+				hitDamage.stiletto *= this._damageMult * physDamageMult;
 				hitDamage.bullet *= this._damageMult;
 				hitDamage.buckshot *= this._damageMult;
 				hitDamage.lightning *= this._damageMult;
