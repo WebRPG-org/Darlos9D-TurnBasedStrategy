@@ -29,6 +29,10 @@ Window_ConcurrentWindow.prototype.constructor = Window_ConcurrentWindow;
 Window_ConcurrentWindow.prototype.initialize = function() {
 	this._text = [];
     Window_Base.prototype.initialize.call(this, 0, 0, this.windowWidth(), this.windowHeight());
+	this._absolute = false;
+	this._stayOnScreen = false;
+	this._absoluteX = 0;
+	this._absoluteY = 0;
 	this._waitOn = false;
 	this._duration = -1;
 	this._closeable = false;
@@ -47,14 +51,24 @@ Window_ConcurrentWindow.prototype.windowHeight = function() {
 	return this.fittingHeight(this._text.length);
 };
 
-Window_ConcurrentWindow.prototype.setupAndShow = function(x, y, text, waitOn, duration, closeable) {
+Window_ConcurrentWindow.prototype.setupAndShow = function(absolute, stayOnScreen, x, y, text, waitOn, duration, closeable) {
 	if(!text || text.length <= 0) { return; }
 	this._text = text;
 	this._waitOn = waitOn;
 	this._duration = duration === undefined ? -1 : duration;
 	this._closeable = closeable;
+	this._absolute = absolute;
+	this._stayOnScreen = stayOnScreen;
 	
-	this.move(x, y, this.windowWidth(), this.windowHeight());
+	this.x = x;
+	this.y = y;
+	if(absolute) {
+		this._absoluteX = x;
+		this._absoluteY = y;
+		this.absoluteReposition();
+	}
+	this.move(this.x, this.y, this.windowWidth(), this.windowHeight());
+	
 	this.createContents();
 	if (this.contents) {
         this.contents.clear();
@@ -71,8 +85,19 @@ Window_ConcurrentWindow.prototype.setupAndShow = function(x, y, text, waitOn, du
 	this.open();
 };
 
+Window_ConcurrentWindow.prototype.absoluteReposition = function() {
+	if(!this._absolute) { return; }
+	this.x = $gameMap.mapToCanvasX(this._absoluteX);
+	this.y = $gameMap.mapToCanvasY(this._absoluteY);
+	if(this._stayOnScreen) {
+		this.x = Math.max(0, Math.min(Graphics.boxWidth-this.windowWidth(), this.x));
+		this.y = Math.max(0, Math.min(Graphics.boxHeight-this.windowHeight(), this.y));
+	}
+};
+
 Window_ConcurrentWindow.prototype.update = function() {
     Window_Base.prototype.update.call(this);
+	this.absoluteReposition();
 	if(this._waitOn && this.isOpen() && this.isCloseable() && this.isTriggered()) {
 		this.close();
 	}

@@ -114,7 +114,9 @@
 		if(!windowToUse) { return; }
 		if(message.duration == undefined || message.duration < 0 || message.closeable) { $gameMap.setCloseableMessageWindowsExist(); }
 		if(message.waitOn) { $gameMap.setWaitingOnMessageWindows(); }
-		windowToUse.setupAndShow(message.x , message.y, message.text, message.waitOn, message.duration, message.closeable);
+		var messageX = message.x;
+		var messageY = message.y;
+		windowToUse.setupAndShow(message.absolute, message.stayOnScreen, message.x, message.y, message.text, message.waitOn, message.duration, message.closeable);
 	};
 	
 	Scene_Map.prototype.updateBasedOnTbsBattle = function() {
@@ -453,7 +455,7 @@
 	
 	Scene_Map.prototype.createConcurrentMessageWindows = function() {
 		var i;
-		for(i = 0; i < 10; i++) {
+		for(i = 0; i < 50; i++) {
 			var concurrentWindow = new Window_ConcurrentWindow();
 			this._messageWindows.push(concurrentWindow);
 			this.addWindow(concurrentWindow);

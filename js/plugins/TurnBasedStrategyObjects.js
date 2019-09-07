@@ -338,7 +338,15 @@
 		if(interpreter) {
 			interpreter.concurrentMessage();
 		}
-		$gameMap.addMessageWindow(x, y, text, waitOn, duration, closeable);
+		$gameMap.addMessageWindow(false, false, x, y, text, waitOn, duration, closeable);
+	};
+	
+	Game_System.prototype.addAbsoluteMessageWindow = function(stayOnScreen, x, y, text, waitOn, duration, closeable) {
+		var interpreter = $gameTemp.evaluatingInterpreter();
+		if(interpreter) {
+			interpreter.concurrentMessage();
+		}
+		$gameMap.addMessageWindow(true, stayOnScreen, x, y, text, waitOn, duration, closeable);
 	};
 	
 	//item
@@ -429,9 +437,25 @@
 		this._waitingOnMessageWindows = false;
 	};
 	
-	Game_Map.prototype.addMessageWindow = function(x, y, text, waitOn, duration, closeable) {
+	Game_Map.prototype.mapToCanvasX = function(x) {
+		var tileWidth = this.tileWidth();
+		var originX = this._displayX * tileWidth;
+		var canvasX = (x * tileWidth) - originX;
+		return canvasX;
+	};
+
+	Game_Map.prototype.mapToCanvasY = function(y) {
+		var tileHeight = this.tileHeight();
+		var originY = this._displayY * tileHeight;
+		var canvasY = (y * tileHeight) - originY;
+		return canvasY;
+	};
+	
+	Game_Map.prototype.addMessageWindow = function(absolute, stayOnScreen, x, y, text, waitOn, duration, closeable) {
 		if(!text || text.length <= 0) { return; }
 		var message = {};
+		message.absolute = absolute;
+		message.stayOnScreen = stayOnScreen;
 		message.x = x;
 		message.y = y;
 		message.text = text;
