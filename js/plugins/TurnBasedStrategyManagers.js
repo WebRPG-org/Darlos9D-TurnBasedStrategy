@@ -51,6 +51,24 @@ SoundManager.getStressSound = function() {
 	return stressSound;
 };
 
+SoundManager.getSkillUpgradeSound = function() {
+	var skillUpgradeSound = {};
+	skillUpgradeSound.name = "Decision5";
+	skillUpgradeSound.pan = 0;
+	skillUpgradeSound.pitch = 100;
+	skillUpgradeSound.volume = 90;
+	return skillUpgradeSound;
+};
+
+SoundManager.getSkillDowngradeSound = function() {
+	var skillDowngradeSound = {};
+	skillDowngradeSound.name = "Cancel3";
+	skillDowngradeSound.pan = 0;
+	skillDowngradeSound.pitch = 100;
+	skillDowngradeSound.volume = 90;
+	return skillDowngradeSound;
+};
+
 SoundManager.loadTbsBattleStartSound = function() {
 	if ($dataSystem) {
 		AudioManager.loadStaticSe(this.getTbsBattleStartSound());
@@ -75,6 +93,18 @@ SoundManager.loadStressSound = function() {
 	}
 };
 
+SoundManager.loadSkillUpgradeSound = function() {
+	if ($dataSystem) {
+		AudioManager.loadStaticSe(this.getSkillUpgradeSound());
+	}
+};
+
+SoundManager.loadSkillDowngradeSound = function() {
+	if ($dataSystem) {
+		AudioManager.loadStaticSe(this.getSkillDowngradeSound());
+	}
+};
+
 SoundManager.playTbsBattleStartSound = function() {
 	if ($dataSystem) {
 		AudioManager.playStaticSe(this.getTbsBattleStartSound());
@@ -96,6 +126,18 @@ SoundManager.playDeflectionSound = function() {
 SoundManager.playStressSound = function() {
 	if ($dataSystem) {
 		AudioManager.playStaticSe(this.getStressSound());
+	}
+};
+
+SoundManager.playSkillUpgradeSound = function() {
+	if ($dataSystem) {
+		AudioManager.playStaticSe(this.getSkillUpgradeSound());
+	}
+};
+
+SoundManager.playSkillDowngradeSound = function() {
+	if ($dataSystem) {
+		AudioManager.playStaticSe(this.getSkillDowngradeSound());
 	}
 };
 

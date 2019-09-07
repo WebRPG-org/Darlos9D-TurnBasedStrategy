@@ -1794,10 +1794,12 @@
 		var actor = this.actor();
 		var skill = this._statusSkillsWindow.currentSkill();
 		if(this._skillOption === "downgrade") {
+			SoundManager.playSkillDowngradeSound();
 			actor.adjustSkillXP(actor.skillDowngradeCost(skill));
 			actor.adjustRespecXP(-actor.skillDowngradeCost(skill));
 			actor.adjustSkillPoints(skill, -1);
 		} else {
+			SoundManager.playSkillUpgradeSound();
 			actor.adjustSkillXP(-actor.skillUpgradeCost(skill));
 			actor.adjustSkillPoints(skill, 1);
 		}
