@@ -1661,6 +1661,8 @@
 		this._statusCommandWindow.setHandler('skills',		this.onSkillCommand.bind(this));
 		this._statusCommandWindow.setHandler('attributes',	this.onAttributesCommand.bind(this));
 		this._statusCommandWindow.setHandler('cancel',   	this.popScene.bind(this));
+		this._statusCommandWindow.setHandler('pagedown', this.nextActor.bind(this));
+		this._statusCommandWindow.setHandler('pageup',   this.previousActor.bind(this));
 		this._statusCommandWindow.show();
 		this._statusCommandWindow.activate();
 		
@@ -1710,6 +1712,8 @@
 		);
 		this._statusAttributesListWindow.setHandler('ok',	this.onAttributesOk.bind(this));
 		this._statusAttributesListWindow.setHandler('cancel',	this.onAttributesCancel.bind(this));
+		this._statusAttributesListWindow.setHandler('pagedown', this.nextActor.bind(this));
+		this._statusAttributesListWindow.setHandler('pageup',   this.previousActor.bind(this));
 		this._statusAttributesListWindow.hide();
 		this._statusAttributesListWindow.deactivate();
 		
@@ -1743,7 +1747,6 @@
 	
 	Scene_Status.prototype.onActorChange = function() {
 		this.refreshActor();
-		this._statusSkillsWindow.activate();
 	};
 	
 	Scene_Status.prototype.onSkillCommand = function() {

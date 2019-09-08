@@ -2935,6 +2935,18 @@ Window_StatusCommand.prototype.makeCommandList = function() {
     this.addCommand("Attributes", 'attributes');
 };
 
+Window_StatusCommand.prototype.processPageup = function() {
+    SoundManager.playCursor();
+    this.updateInputData();
+    this.callHandler('pageup');
+};
+
+Window_StatusCommand.prototype.processPagedown = function() {
+    SoundManager.playCursor();
+    this.updateInputData();
+    this.callHandler('pagedown');
+};
+
 //-----------------------------------------------------------------------------
 // Window_StatusSkills
 //
@@ -3147,7 +3159,7 @@ Window_StatusSkills.prototype.drawParametersColumnOne = function() {
 	for(i = 0; i < uniqueSkills.length; i++)
 	{
 		rect = this.itemRect((i+1)*2);
-		this.drawSkillLevel(this.getDisplayNameForUniqueSkill(uniqueSkills[i]), uniqueSkills[i], rect.x, rect.y, rect.width);
+		this.drawSkillLevel(this.getShortDisplayNameForUniqueSkill(uniqueSkills[i]), uniqueSkills[i], rect.x, rect.y, rect.width);
 		this._activeIndicies.push((i+1)*2);
 	}
 };
@@ -3191,6 +3203,18 @@ Window_StatusSkills.prototype.drawSkillLevel = function(displayName, skill, x, y
 	this.drawText(":", x + width - 14*3 - this.textPadding(), y, 14, 'right');
 	this.drawText(this._actor.skillPoints(skill), x + width - 14*2 - this.textPadding(), y, 14*2, 'right');
 	this.changePaintOpacity(true);
+};
+
+Window_StatusSkills.prototype.processPageup = function() {
+    SoundManager.playCursor();
+    this.updateInputData();
+    this.callHandler('pageup');
+};
+
+Window_StatusSkills.prototype.processPagedown = function() {
+    SoundManager.playCursor();
+    this.updateInputData();
+    this.callHandler('pagedown');
 };
 
 //-----------------------------------------------------------------------------
@@ -3590,6 +3614,18 @@ Window_StatusAttributesList.prototype.processOk = function() {
     this.playBuzzerSound();
 };
 
+Window_StatusAttributesList.prototype.processPageup = function() {
+    SoundManager.playCursor();
+    this.updateInputData();
+    this.callHandler('pageup');
+};
+
+Window_StatusAttributesList.prototype.processPagedown = function() {
+    SoundManager.playCursor();
+    this.updateInputData();
+    this.callHandler('pagedown');
+};
+
 //-----------------------------------------------------------------------------
 // Window_StatusAttributeDescription
 //
@@ -3808,7 +3844,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		for(i = 0; i < reqs.length; i++) {
 			var lineHeight = this.lineHeight() * (actionIndex + i + 1 + lineOffset);
 			this.resetTextColor();
-			this.drawText(this.getDisplayNameForUniqueSkill(reqs[i].skill), nameOffset, lineHeight, 400);
+			this.drawText(this.getShortDisplayNameForUniqueSkill(reqs[i].skill), nameOffset, lineHeight, 400);
 			if(actor) {
 				if(reqs[i].level > actor.totalSkill(reqs[i].skill)) {
 					this.changeTextColor(this.deathColor());
@@ -4014,38 +4050,42 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	Window_Base.prototype.getDisplayNameForUniqueSkill = function(skill)
 	{
-		switch(skill)
-		{
-			case "meleeWeapons":
-				return "Melee Wpns";
+		var i;
+		for(i = 0; i < $dataClasses.length; i++) {
+			if(!$dataClasses[i]) { continue; }
+			if($dataClasses[i].name === "UNIVERSAL ATTRIBUTES") {
+				var allUniqeSkills = $dataClasses[i].tbsStats.uniqueSkills;
+				if(!allUniqeSkills) { break; }
+				var j;
+				for(j = 0; j < allUniqeSkills.length; j++) {
+					if(allUniqeSkills[j].name === skill && allUniqeSkills[j].displayName) {
+						return allUniqeSkills[j].displayName;
+					}
+				}
 				break;
-			case "throwingWeapons":
-				return "Thrown Wpns";
+			}
+		}
+		return "UNKNOWN NAME";
+	};
+	
+	Window_Base.prototype.getShortDisplayNameForUniqueSkill = function(skill)
+	{
+		var i;
+		for(i = 0; i < $dataClasses.length; i++) {
+			if(!$dataClasses[i]) { continue; }
+			if($dataClasses[i].name === "UNIVERSAL ATTRIBUTES") {
+				var allUniqeSkills = $dataClasses[i].tbsStats.uniqueSkills;
+				if(!allUniqeSkills) { break; }
+				var j;
+				for(j = 0; j < allUniqeSkills.length; j++) {
+					if(allUniqeSkills[j].name === skill && allUniqeSkills[j].shortDisplayName) {
+						return allUniqeSkills[j].shortDisplayName;
+					}
+				}
 				break;
-			case "rangedWeapons":
-				return "Ranged Wpns";
-				break;
-			case "unarmed":
-				return "Unarmed";
-				break;
-			case "whiteMagic":
-				return "White Magic";
-				break;
-			case "blackMagic":
-				return "Black Magic";
-				break;
-			case "lockpicking":
-				return "Lockpicking";
-				break;
-			case "electronics":
-				return "Electronics";
-				break;
-			case "computers":
-				return "Computers";
-				break;
-			default:
-				return "UNKNOWN NAME";
-		};
+			}
+		}
+		return "UNKNOWN NAME";
 	};
 	
 	Window_Base.prototype.getIconIdFor = function(type) {

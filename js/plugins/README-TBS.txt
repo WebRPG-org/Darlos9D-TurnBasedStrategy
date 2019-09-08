@@ -42,6 +42,14 @@ Classes
 	]
 }
 
+There is a special classs named "UNIVERSAL ATTRIBUTES". This class contains attributes that are attainable by any class that has the requisite skills. It also contains a special uniqueSkills array that is an array of objects instead of an array of strings. These objects are used to define the unique skills that other classes refer to. The object is as follows:
+
+{
+	"name": (string),
+	"displayName": (string),
+	"shortDisplayName": (string)
+}
+
 ----------------------------------------------------
 Skills
 ----------------------------------------------------

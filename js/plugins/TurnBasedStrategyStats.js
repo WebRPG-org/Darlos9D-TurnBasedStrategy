@@ -333,16 +333,6 @@
 		this._skillPoints.manualDex = 0;
 		this._skillPoints.perception = 0;
 		
-		this._skillPoints.meleeWeapons = 0;
-		this._skillPoints.throwingWeapons = 0;
-		this._skillPoints.rangedWeapons = 0;
-		this._skillPoints.unarmed = 0;
-		this._skillPoints.whiteMagic = 0;
-		this._skillPoints.blackMagic = 0;
-		this._skillPoints.lockpicking = 0;
-		this._skillPoints.electronics = 0;
-		this._skillPoints.computers = 0;
-		
 		this._displayName = undefined;
 		this._stressCost = 0;
 		this._skillXP = 0;
@@ -604,17 +594,33 @@
 	};
 	
 	Game_BattlerBase.prototype.setSkillPoints = function(skill, points) {
-		if(this._skillPoints[skill] === undefined) { return; }
-		this._skillPoints[skill] = Math.min(7, Math.max(0, points));
+		if(this._skillPoints[skill] === undefined) { 
+			var skillFound = false;
+			var i;
+			for(i = 0; i < $dataClasses.length; i++) {
+				if(!$dataClasses[i]) { continue; }
+				if($dataClasses[i].name === "UNIVERSAL ATTRIBUTES") {
+					var allUniqeSkills = $dataClasses[i].tbsStats.uniqueSkills;
+					if(allUniqeSkills && allUniqeSkills.some(function (uniqueSkill) { return uniqueSkill.name === skill; })) {
+						skillFound = true;
+					}
+					break;
+				}
+			}
+			if(!skillFound) {
+				return;
+			}
+		}
+		this._skillPoints[skill] = Math.min(99, Math.max(0, points));
 		this.checkLearnedSkills();
 	};
 	
 	Game_BattlerBase.prototype.adjustSkillPoints = function(skill, change) {
-		this.setSkillPoints(skill, (this._skillPoints[skill] === undefined ? 0 : this._skillPoints[skill]) + change);
+		this.setSkillPoints(skill, (this._skillPoints[skill] === undefined ? change : this._skillPoints[skill]) + change);
 	};
 	
 	Game_BattlerBase.prototype.skillPoints = function(skill) {
-		return !this._skillPoints[skill] === undefined ? 0 : this._skillPoints[skill];
+		return this._skillPoints[skill] === undefined ? 0 : this._skillPoints[skill];
 	};
 	
 	Game_BattlerBase.prototype.skillUpgradeCost = function(skill) {
