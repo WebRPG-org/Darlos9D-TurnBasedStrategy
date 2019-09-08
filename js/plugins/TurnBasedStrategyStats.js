@@ -297,6 +297,39 @@
 			case "stun rod":
 				weaponImageId = 24;
 				break;
+			case "user-defined 1":
+				weaponImageId = 25;
+				break;
+			case "user-defined 2":
+				weaponImageId = 26;
+				break;
+			case "user-defined 3":
+				weaponImageId = 27;
+				break;
+			case "user-defined 4":
+				weaponImageId = 28;
+				break;
+			case "user-defined 5":
+				weaponImageId = 29;
+				break;
+			case "user-defined 6":
+				weaponImageId = 30;
+				break;
+		}
+		if(weaponImageId == 0) {
+			var i;
+			for(i = 0; i < $dataClasses.length; i++) {
+				if(!$dataClasses[i] || $dataClasses[i].name !== "UNIVERSAL ATTRIBUTES") { continue; }
+				var images = $dataClasses[i].tbsStats.userDefinedAttackImages;
+				if(!images) { break; }
+				var j;
+				for(j = 0; j < images.length; j++) {
+					if(images[j].imageName.toLowerCase() === imageName.toLowerCase()) {
+						return images[j].imageId;
+					}
+				}
+				break;
+			}
 		}
 		return weaponImageId;
 	};

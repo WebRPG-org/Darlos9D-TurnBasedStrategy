@@ -1236,7 +1236,9 @@
 			centerTarget.chara.setPosition($gamePlayer.x, $gamePlayer.y);
 		}
 		var that = this;
-		hitGroups.forEach(function (hitGroup) {
+		var processedHitGroups = BattleManager.processHitGroups(hitGroups);
+		processedHitGroups.forEach(function (processedHitGroup) {
+			var hitGroup = processedHitGroup.hitGroup;
 			var outGroup = [];
 			targetsByHit.push(outGroup);
 			if(!hitGroup.hits || hitGroup.hits.length == 0) { return; }
@@ -2429,9 +2431,10 @@
 				var that = this;
 				tbsTargets.forEach(function (tbsTarget) {
 					var index = 0;
-					that._tbsSelectedActionInfo.action.hitGroups.forEach(function (hitGroup) {
+					var processedHitGroups = BattleManager.processHitGroups(that._tbsSelectedActionInfo.action.hitGroups);
+					processedHitGroups.forEach(function (processedHitGroup) {
 						var rangedDistance = that.getRangedDistance();
-						var results = BattleManager.combatMath(that._tbsSelectedActor.battler, that._tbsSelectedActionInfo, hitGroup, tbsTarget.battler, tbsTargetsByHit, index, undefined, rangedDistance);
+						var results = BattleManager.combatMath(that._tbsSelectedActor.battler, that._tbsSelectedActionInfo, processedHitGroup, tbsTarget.battler, tbsTargetsByHit, index, undefined, rangedDistance);
 						if(!results.skipTarget) {
 							BattleManager.applyActionResults(results, tbsTarget.battler);
 						}

@@ -50,6 +50,13 @@ There is a special classs named "UNIVERSAL ATTRIBUTES". This class contains attr
 	"shortDisplayName": (string)
 }
 
+"UNIVERSAL ATTRIBUTES" class is also used to define further weapon images for attack animations. Add the "userDefinedAttackImages" object to the class' JSON object, which is an array of objects. The object is defined as follows:
+
+{
+	"imageName": (string),
+	"imageId": (integer)
+}
+
 ----------------------------------------------------
 Skills
 ----------------------------------------------------
@@ -171,6 +178,9 @@ Action
 	"attackAndMove": true/false,
 	"skillRequirements": [(see "Skill Requirement" section)], (THIS IS AN ARRAY OF MORE THAN ONE SKILL REQUIREMENT!!!)
 	"hitGroups": [{
+		"multiple": (integer),
+		"multipleDelay": (integer),
+		"accuracyDegradation": (integer),
 		"delay": (integer),
 		"attackMotion": {
 			"motion": "Thrust"/"Swing"/"Missile",

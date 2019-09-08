@@ -3159,7 +3159,7 @@ Window_StatusSkills.prototype.drawParametersColumnOne = function() {
 	for(i = 0; i < uniqueSkills.length; i++)
 	{
 		rect = this.itemRect((i+1)*2);
-		this.drawSkillLevel(this.getShortDisplayNameForUniqueSkill(uniqueSkills[i]), uniqueSkills[i], rect.x, rect.y, rect.width);
+		this.drawSkillLevel(this.getDisplayNameForUniqueSkill(uniqueSkills[i]), uniqueSkills[i], rect.x, rect.y, rect.width);
 		this._activeIndicies.push((i+1)*2);
 	}
 };
@@ -3923,7 +3923,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 						if(reqLacked) {
 							this.changeTextColor(this.deathColor());
 						}
-						this.drawText(action.name, 0, lineHeight, 160);
+						this.drawText(action.name, 0, lineHeight, 18*14);
 						this.resetTextColor();
 					}
 				} else {
