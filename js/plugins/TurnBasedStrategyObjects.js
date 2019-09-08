@@ -147,6 +147,12 @@
 	};
 	
 	Game_Temp.prototype.addTbsRangeTile = function(x, y, color) {
+		var i;
+		for(i = 0; i < this._tbsRangeTilesToAdd.length; i++) {
+			if(this._tbsRangeTilesToAdd[i].x == x && this._tbsRangeTilesToAdd[i].y == y) {
+				return;
+			}
+		}
 		var tile = {};
 		tile.x = x;
 		tile.y = y;
@@ -2118,6 +2124,9 @@
 	
 	Game_Map.prototype.updateTbsMovementRangeField = function() {
 		if($gameTemp.isFreeToMakeRangeTiles()) {
+			this._tbsAttackAndMoveTiles.forEach(function (tile) {
+				$gameTemp.addTbsRangeTile(tile.x, tile.y, 'yellow');
+			});
 			this._tbsMoveTiles.forEach(function (tile) {
 				$gameTemp.addTbsRangeTile(tile.x, tile.y, 'white');
 			});
@@ -2608,19 +2617,7 @@
 		this._tbsMoveTiles = [];
 		this._tbsAttackAndMoveTiles = [];
 		if(!tbsActor || !tbsActor.canActThisRound || tbsActor.movedThisRound) { return; }
-		var moveDamage = tbsActor.battler.getDamage("torso");
-		var moveDenom = 400;
-		if(tbsActor.battler.limbsType() === "winged" && tbsActor.battler.isFlying()) {
-			moveDamage += tbsActor.battler.getDamage("leftArm") + tbsActor.battler.getDamage("rightArm");
-		} else if(tbsActor.battler.limbsType() === "quadrupedal") {
-			moveDenom = 600;
-			moveDamage += tbsActor.battler.getDamage("leftLeg") + tbsActor.battler.getDamage("rightLeg")
-				+ tbsActor.battler.getDamage("leftArm") + tbsActor.battler.getDamage("rightArm");
-		} else {
-			moveDamage += tbsActor.battler.getDamage("leftLeg") + tbsActor.battler.getDamage("rightLeg");
-		}
-		var battlerMoveRange = Math.max(2, tbsActor.battler.moveRange() * ((moveDenom - moveDamage) / moveDenom));
-		var moveRange = battlerMoveRange / 2;
+		var moveRange = Math.max(1, tbsActor.battler.moveRange() / 2);
 		var moveType = (tbsActor.battler.limbsType() === "winged" && tbsActor.battler.isFlying()) ? "fly" : "walk";
 		this.checkMoveTile(tbsActor.chara.x, tbsActor.chara.y, moveRange, this._tbsMoveTiles, moveType);
 		this._tbsMoveTiles.forEach(function (moveTile) {
@@ -2735,19 +2732,7 @@
 			tbsActor.chara.y,
 			this._tbsMoveTiles
 		);
-		var moveDamage = tbsActor.battler.getDamage("torso");
-		var moveDenom = 400;
-		if(tbsActor.battler.limbsType() === "winged" && tbsActor.battler.isFlying()) {
-			moveDamage += tbsActor.battler.getDamage("leftArm") + tbsActor.battler.getDamage("rightArm");
-		} else if(tbsActor.battler.limbsType() === "quadrupedal") {
-			moveDenom = 600;
-			moveDamage += tbsActor.battler.getDamage("leftLeg") + tbsActor.battler.getDamage("rightLeg")
-				+ tbsActor.battler.getDamage("leftArm") + tbsActor.battler.getDamage("rightArm");
-		} else {
-			moveDamage += tbsActor.battler.getDamage("leftLeg") + tbsActor.battler.getDamage("rightLeg");
-		}
-		var battlerMoveRange = Math.max(2, tbsActor.battler.moveRange() * ((moveDenom - moveDamage) / moveDenom));
-		var moveRange = battlerMoveRange / 2;
+		var moveRange = Math.max(1, tbsActor.battler.moveRange() / 2);
 		return moveTile.remainingRange >= moveRange/2;
 	};
 	

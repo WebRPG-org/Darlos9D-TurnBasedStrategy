@@ -81,6 +81,8 @@ Sprite_TbsRange.prototype.updateAnimation = function() {
 	var color = "#" + colorPart + colorPart + colorPart;
 	if(this._color === 'red') {
 		var color = "#" + colorPart + "0000";
+	} else if(this._color === 'yellow') {
+		var color = '#' + colorPart + colorPart + "00";
 	}
     this.bitmap.fillAll(color);
 };

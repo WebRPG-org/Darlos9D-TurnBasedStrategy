@@ -689,7 +689,19 @@
 	};
 	
 	Game_BattlerBase.prototype.moveRange = function() {
-		return 12;
+		var moveDamage = this.getDamage("torso");
+		var moveDenom = 400;
+		if(this.limbsType() === "winged" && this.isFlying()) {
+			moveDamage += this.getDamage("leftArm") + this.getDamage("rightArm");
+		} else if(this.limbsType() === "quadrupedal") {
+			moveDenom = 600;
+			moveDamage += this.getDamage("leftLeg") + this.getDamage("rightLeg")
+				+ this.getDamage("leftArm") + this.getDamage("rightArm");
+		} else {
+			moveDamage += this.getDamage("leftLeg") + this.getDamage("rightLeg");
+		}
+		var moveRange = Math.max(2, 12 * ((moveDenom - moveDamage) / moveDenom));
+		return moveRange;
 	};
 	
 	Game_BattlerBase.prototype.isFlying = function() {
