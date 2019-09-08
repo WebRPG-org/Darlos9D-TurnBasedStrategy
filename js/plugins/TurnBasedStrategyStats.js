@@ -1412,12 +1412,23 @@
 	
 	Game_Actor.prototype.getAttributes = function() {
 		var attributes = this.currentClass().tbsStats.attributes;
-		if(!attributes) { return []; }
+		if(!attributes) { attributes = []; }
+		var i;
+		for(i = 0; i < $dataClasses.length; i++) {
+			var dataClass = $dataClasses[i];
+			if(!dataClass) { continue; }
+			if(dataClass.name === "UNIVERSAL ATTRIBUTES") {
+				var uniAttributes = dataClass.tbsStats.attributes;
+				if(uniAttributes) {
+					attributes = attributes.concat(uniAttributes);
+				}
+				break;
+			}
+		}
 		var returnArray = [];
 		attributes.forEach(function (attribute) {
 			if(!attribute.skillRequirements) { returnArray.push(attribute); return; }
 			var addAttribute = true;
-			var i;
 			for(i = 0; i < attribute.skillRequirements.length; i++) {
 				var requirement = attribute.skillRequirements[i];
 				if(requirement.level > this.totalSkill(requirement.skill)) {
@@ -1588,12 +1599,23 @@
 	
 	Game_Enemy.prototype.getAttributes = function() {
 		var attributes = this.enemy().tbsStats.attributes;
-		if(!attributes) { return []; }
+		if(!attributes) { attributes = []; }
+		var i;
+		for(i = 0; i < $dataClasses.length; i++) {
+			var dataClass = $dataClasses[i];
+			if(!dataClass) { continue; }
+			if(dataClass.name === "UNIVERSAL ATTRIBUTES") {
+				var uniAttributes = dataClass.tbsStats.attributes;
+				if(uniAttributes) {
+					attributes = attributes.concat(uniAttributes);
+				}
+				break;
+			}
+		}
 		var returnArray = [];
 		attributes.forEach(function (attribute) {
 			if(!attribute.skillRequirements) { returnArray.push(attribute); return; }
 			var addAttribute = true;
-			var i;
 			for(i = 0; i < attribute.skillRequirements.length; i++) {
 				var requirement = attribute.skillRequirements[i];
 				if(requirement.level > this.totalSkill(requirement.skill)) {
