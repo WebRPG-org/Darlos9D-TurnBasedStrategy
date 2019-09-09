@@ -1235,6 +1235,8 @@
 		this._screenY = 0;
 		this._shouldMoveIn = false;
 		this._tbsResults = undefined;
+		this._motionSpeed = [];
+		this._animationWait = [];
 	};
 	
 	Game_Battler.prototype.setTbsResults = function(tbsResults) {
@@ -1305,6 +1307,33 @@
 		//if (!action.isGuard()) {
 			this.setActionState('acting');
 		//}
+	};
+	
+	Game_Battler.prototype.setMotionSpeed = function(motionSpeed) {
+		this._motionSpeed = motionSpeed ? motionSpeed : [];
+	};
+	
+	Game_Battler.prototype.motionSpeed = function() {
+		return this._motionSpeed;
+	};
+	
+	Game_Battler.prototype.setAnimationWait = function(animationWait) {
+		this._animationWait = animationWait ? animationWait : [];
+	};
+	
+	Game_Battler.prototype.animationWait = function() {
+		return this._animationWait;
+	};
+	
+	Game_Battler.prototype.clearMotion = function() {
+		this._motionType = null;
+		this._motionSpeed = [];
+		this._motionRefresh = false;
+	};
+	
+	Game_Battler.prototype.clearWeaponAnimation = function() {
+		this._weaponImageId = 0;
+		this._animationWait = [];
 	};
 
 	Game_Battler.prototype.performAction = function(hitGroup) {
@@ -1537,7 +1566,9 @@
 		//} else if (action.isItem()) {
 		//	this.requestMotion('item');
 		//}
+		this.setMotionSpeed(hitGroup.attackMotion.motionSpeed);
 		this.requestMotion(hitGroup.attackMotion.motion.toLowerCase());
+		this.setAnimationWait(hitGroup.attackMotion.motionSpeed);
 		this.startWeaponAnimation(hitGroup.attackMotion.imageId);
 	};
 

@@ -205,6 +205,7 @@ BattleManager.initMembers = function() {
 	this._actionTimer = 0;
 	this._hitMissDelay = [];
 	this._showCastAnimation = true;
+	this._showAction = true;
 	this._equipmentBaseToughness = 1;
 	this._varianceMult = 1;
 	this._accMult = 10;
@@ -609,7 +610,7 @@ BattleManager.updateAction = function() {
 			if(delay == this._actionTimer) {
 				this._resultsPerGroup[i] = this.combatMath(this._subject.battler, this._tbsActionInfo, processedHitGroup, this._tbsTargets[0].battler, this._tbsTargetsByHit, i, undefined, this._rangedDistance);
 				this._hitMissDelay[i] = this._logWindow.showInitialAnimations(this._subject.battler, processedHitGroup.hitGroup,
-					this._resultsPerGroup[i].initialAnimationIds, this._tbsTargets[0].battler, this._showCastAnimation);
+					this._resultsPerGroup[i].initialAnimationIds, this._tbsTargets[0].battler, this._showCastAnimation, this._showAction);
 				this._showCastAnimation = false;
 			}
 			if(this._actionTimer < delay) {
@@ -648,6 +649,7 @@ BattleManager.updateAction = function() {
 			this._resultsPerGroup = [];
 			this._hitMissDelay = [];
 			this._actionTimer = 0;
+			this._showAction = false;
 		}
     } else {
         this.endAction();

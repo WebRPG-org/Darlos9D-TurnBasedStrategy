@@ -340,6 +340,19 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 	};
 	
 	//sprite actor
+	Sprite_Actor.prototype.initMembers = function() {
+		Sprite_Battler.prototype.initMembers.call(this);
+		this._battlerName = '';
+		this._motion = null;
+		this._motionCount = 0;
+		this._pattern = 0;
+		this._motionSpeed = [];
+		this.createShadowSprite();
+		this.createWeaponSprite();
+		this.createMainSprite();
+		this.createStateSprite();
+	};
+
 	Sprite_Actor.prototype.setBattler = function(battler) {
 		Sprite_Battler.prototype.setBattler.call(this, battler);
 		var changed = (battler !== this._actor);
@@ -359,13 +372,58 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 		}
 	};
 	
-	Sprite_Actor.prototype.startMotion = function(motionType) {
+	Sprite_Actor.prototype.setupMotion = function() {
+		if (this._actor.isMotionRequested()) {
+			this.startMotion(this._actor.motionType(), this._actor.motionSpeed());
+			this._actor.clearMotion();
+		}
+	};
+	
+	Sprite_Actor.prototype.setupWeaponAnimation = function() {
+		if (this._actor.isWeaponAnimationRequested()) {
+			this._weaponSprite.setup(this._actor.weaponImageId(), this._actor.animationWait());
+			this._actor.clearWeaponAnimation();
+		}
+	};
+	
+	Sprite_Actor.prototype.startMotion = function(motionType, motionSpeed) {
 		var newMotion = Sprite_Actor.MOTIONS[motionType];
 		//if (this._motion !== newMotion) {
 			this._motion = newMotion;
 			this._motionCount = 0;
 			this._pattern = 0;
+			this._motionSpeed = motionSpeed ? motionSpeed : [];
 		//}
+	};
+
+	Sprite_Actor.prototype.motionSpeed = function() {
+		var motionSpeed = this._motionSpeed[this._pattern];
+		return motionSpeed === undefined ? 12 : motionSpeed;
+	};
+	
+	//sprite weapon
+	Sprite_Weapon.prototype.initMembers = function() {
+		this._weaponImageId = 0;
+		this._animationCount = 0;
+		this._pattern = 0;
+		this.anchor.x = 0.5;
+		this.anchor.y = 1;
+		this.x = -16;
+		this._animationWait = [];
+	};
+
+	Sprite_Weapon.prototype.setup = function(weaponImageId, animationWait) {
+		this._weaponImageId = weaponImageId;
+		this._animationCount = 0;
+		this._pattern = 0;
+		this._animationWait = animationWait ? animationWait : [];
+		this.loadBitmap();
+		this.updateFrame();
+	};
+	
+	Sprite_Weapon.prototype.animationWait = function() {
+		var animationWait = this._animationWait[this._pattern];
+		return animationWait === undefined ? 12 : animationWait;
 	};
 	
 	//sprite enemy

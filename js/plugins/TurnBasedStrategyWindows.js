@@ -5588,8 +5588,14 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		//subject.performActionEnd();
 	};
 	
-	Window_BattleLog.prototype.showInitialAnimations = function(subject, hitGroup, animationIds, target, showCastAnimation) {
-		this.performAction(subject, hitGroup)
+	Window_BattleLog.prototype.showInitialAnimations = function(subject, hitGroup, animationIds, target, showCastAnimation, showAction) {
+		var baseDelay = this.animationBaseDelay();
+		if(hitGroup && hitGroup.motion && hitGroup.motion.motionSpeed && hitGroup.motion.motionSpeed.length > 0) {
+			baseDelay = Math.max(0, hitGroup.motion.motionSpeed[0] - 4);
+		}
+		if(showAction) {
+			this.performAction(subject, hitGroup);
+		}
 		if(showCastAnimation && hitGroup.attackMotion && hitGroup.attackMotion.castAnimationId !== undefined && hitGroup.attackMotion.castAnimationId > 0) {
 			var animation = $dataAnimations[hitGroup.attackMotion.castAnimationId];
 			if (animation) {
@@ -5599,7 +5605,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		if(hitGroup.attackMotion && hitGroup.attackMotion.delayedCastAnimationId !== undefined && hitGroup.attackMotion.delayedCastAnimationId > 0) {
 			var animation = $dataAnimations[hitGroup.attackMotion.delayedCastAnimationId];
 			if (animation) {
-				subject.startAnimation(hitGroup.attackMotion.delayedCastAnimationId, subject.isEnemy(), this.animationBaseDelay());
+				subject.startAnimation(hitGroup.attackMotion.delayedCastAnimationId, subject.isEnemy(), baseDelay);
 			}
 		}
 		var highestDelay = 0;
@@ -5608,14 +5614,14 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			if(animationId !== undefined && animationId > 0) {
 				var animation = $dataAnimations[animationId];
 				if (animation) {
-					target.startAnimation(animationId, subject.isEnemy(), that.animationBaseDelay());
+					target.startAnimation(animationId, subject.isEnemy(), baseDelay);
 					if(animation.frames.length > highestDelay) {
 						highestDelay = animation.frames.length;
 					}
 				}
 			}
 		});
-		return this.animationBaseDelay() + (highestDelay * 4);
+		return baseDelay + (highestDelay * 4);
 	};
 	
 	Window_BattleLog.prototype.showAnimation = function(subject, targets, animationId) {

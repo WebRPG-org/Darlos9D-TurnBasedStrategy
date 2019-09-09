@@ -199,6 +199,7 @@ Action
 			"ignoreCenter": true/false,
 			"ignoreUserRange": true/false,
 			"accuracyBonus": (integer),
+			"ignoreUserAccuracy": true/false,
 			"multipleHits": (integer),
 			"accuracyVariance": (integer),
 			"usesParts": [
