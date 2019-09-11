@@ -1403,6 +1403,7 @@ Window_TbsActorStress.prototype.refresh = function() {
 };
 
 Window_TbsActorStress.prototype.drawActorStress = function(battler, x, y) {
+	if(battler.blankDummy()) { return; }
 	var lineHeight = this.lineHeight();
 	this.changeTextColor(this.systemColor());
 	this.drawText("S", x, y, 14);
@@ -2533,7 +2534,7 @@ Window_TbsTargetName.prototype.drawTargetNameText = function() {
 		if(battler.isDown()) {
 			this.changeTextColor(this.deathColor());
 		}
-		this.drawText(battler.displayName(), 0, 0);
+		this.drawText(battler.blankDummy() ? "NO TARGET" : battler.displayName(), 0, 0);
 		this.resetTextColor();
 		this.changePaintOpacity(true);
 	}
@@ -3713,6 +3714,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_Base.prototype.drawActorDamage = function(actor, x, y) {
+		if(actor.blankDummy()) { return; }
 		this.drawActorPartDamage(actor, "head"    , x		, y							, "He");
 		this.drawActorPartDamage(actor, "torso"   , x		, y + this.lineHeight()		, "To");
 		this.drawActorLimbDamage(actor, "leftArm" , x		, y + this.lineHeight()*2	, "Ar");
@@ -5580,22 +5582,20 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		//subject.performActionStart(action);
 	};
 
-	Window_BattleLog.prototype.performAction = function(subject, hitGroup) {
-		subject.performAction(hitGroup);
+	Window_BattleLog.prototype.performAction = function(subject, hitGroup, firstTarget) {
+		subject.performAction(hitGroup, firstTarget);
 	};
 
 	Window_BattleLog.prototype.performActionEnd = function(subject) {
 		//subject.performActionEnd();
 	};
 	
-	Window_BattleLog.prototype.showInitialAnimations = function(subject, hitGroup, animationIds, target, showCastAnimation, showAction) {
+	Window_BattleLog.prototype.showInitialAnimations = function(subject, hitGroup, animationIds, target, showCastAnimation, firstTarget) {
 		var baseDelay = this.animationBaseDelay();
 		if(hitGroup && hitGroup.motion && hitGroup.motion.motionSpeed && hitGroup.motion.motionSpeed.length > 0) {
 			baseDelay = Math.max(0, hitGroup.motion.motionSpeed[0] - 4);
 		}
-		if(showAction) {
-			this.performAction(subject, hitGroup);
-		}
+		this.performAction(subject, hitGroup, firstTarget);
 		if(showCastAnimation && hitGroup.attackMotion && hitGroup.attackMotion.castAnimationId !== undefined && hitGroup.attackMotion.castAnimationId > 0) {
 			var animation = $dataAnimations[hitGroup.attackMotion.castAnimationId];
 			if (animation) {
@@ -5661,29 +5661,45 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		}
 	};
 	
-	Window_BattleLog.prototype.showHitMissAnimations = function(subject, target, results) {
-		if(results.animationIds.length > 0) {
-			var i;
-			for(i = 0; i < results.animationIds.length; i++) {
-				var animationId = results.animationIds[i];
-				if(animationId !== undefined && animationId > 0) {
-					var animation = $dataAnimations[animationId];
-					if (animation) {
-						target.startAnimation(animationId, subject.isEnemy(), 0, results.animationVariances[i]);
+	Window_BattleLog.prototype.showHitMissAnimations = function(subject, target, results, firstTarget) {
+		if(firstTarget) {
+			if(results.animationIds.length > 0) {
+				var i;
+				for(i = 0; i < results.animationIds.length; i++) {
+					var animationId = results.animationIds[i];
+					if(animationId !== undefined && animationId > 0) {
+						var animation = $dataAnimations[animationId];
+						if (animation) {
+							target.startAnimation(animationId, subject.isEnemy(), 0, results.animationVariances[i]);
+						}
+					}
+				}
+			}
+			if(results.ongoingAnimationIds.length > 0) {
+				results.ongoingAnimationIds.forEach(function (animationId) {
+					if(animationId !== undefined && animationId > 0) {
+						var animation = $dataAnimations[animationId];
+						if (animation) {
+							target.startOngoingAnimation(animationId, subject.isEnemy(), 0);
+						}
+					}
+				});
+			}
+		} else {
+			if(results.secondaryAnimationIds.length > 0) {
+				var i;
+				for(i = 0; i < results.secondaryAnimationIds.length; i++) {
+					var animationId = results.secondaryAnimationIds[i];
+					if(animationId !== undefined && animationId > 0) {
+						var animation = $dataAnimations[animationId];
+						if (animation) {
+							target.startAnimation(animationId, subject.isEnemy(), 0, results.secondaryAnimationVariances[i]);
+						}
 					}
 				}
 			}
 		}
-		if(results.ongoingAnimationIds.length > 0) {
-			results.ongoingAnimationIds.forEach(function (animationId) {
-				if(animationId !== undefined && animationId > 0) {
-					var animation = $dataAnimations[animationId];
-					if (animation) {
-						target.startOngoingAnimation(animationId, subject.isEnemy(), 0);
-					}
-				}
-			});
-		}
+		if(target.blankDummy()) { return; }
 		target.setTbsResults(results);
 		target.startDamagePopup();
 		if (results.dodged) {

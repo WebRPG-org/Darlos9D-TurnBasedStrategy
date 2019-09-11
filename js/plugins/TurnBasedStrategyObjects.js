@@ -1254,6 +1254,10 @@
 						var y;
 						for(y = centerPointY - checkBoxRange; y <= centerPointY + checkBoxRange; y++) {
 							if(hit.ignoreCenter && x === centerPointX && y === centerPointY) { continue; }
+							if(x === centerPointX && y === centerPointY && targets.indexOf(centerTarget) === -1) {
+								targets.push(centerTarget);
+								continue;
+							}
 							var distance = that.actualDistance(x, y, centerPointX, centerPointY);
 							if(distance <= aoeRange) {
 								var target = that.getTbsActorAtPosition(x, y);
@@ -1264,11 +1268,7 @@
 						}
 					}
 				} else {
-					//var distance = that.actualDistance(that._tbsSelectedActor.chara.x, that._tbsSelectedActor.chara.y,
-					//	$gamePlayer.x, $gamePlayer.y);
-					//if(hit.range >= distance) {
-						targets.push(centerTarget);
-					//}
+					targets.push(centerTarget);
 				}
 				outGroup.push(targets);
 			});

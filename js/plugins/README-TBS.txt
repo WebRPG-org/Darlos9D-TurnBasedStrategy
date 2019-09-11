@@ -186,13 +186,25 @@ Action
 			"motion": "Thrust"/"Swing"/"Missile",
 			"image": (image name),
 			"castAnimation": (animation name),
-			"delayedCastAnimation": (animation name)
+			"delayedCastAnimation": (animation name),
+			"motionSpeed": (array of integers)
+		},
+		"secondaryAttackMotion": {
+			"motion": "Thrust"/"Swing"/"Missile",
+			"image": (image name),
+			"castAnimation": (animation name),
+			"delayedCastAnimation": (animation name),
+			"motionSpeed": (array of integers)
 		},
 		"hits": [{
 			"initialAnimation": (animation name),
 			"missAnimation": (animation name),
 			"animation": (animation name),
+			"ongoingMissAnimation": (animation name),
 			"ongoingAnimation": (animation name),
+			"secondaryInitialAnimation": (animation name),
+			"secondaryMissAnimation": (animation name),
+			"secondaryAnimation": (animation name),
 			"rangeType": "self"/"melee"/"thrown"/"fired"/"mental",
 			"range": (integer),
 			"aoe": (integer),

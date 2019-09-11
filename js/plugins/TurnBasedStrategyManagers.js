@@ -142,7 +142,10 @@ SoundManager.playSkillDowngradeSound = function() {
 };
 
 //Battle
-BattleManager.setup = function(tbsActors, tbsActionInfo, tbsTargetX, tbsTargetY, tbsTargets, tbsTargetsByHit, tbsTargetPart, rangedDistance) {
+BattleManager.setup = function(
+		tbsActors, tbsActionInfo, tbsTargetX, tbsTargetY, tbsTargets,
+		tbsTargetsByHit, tbsTargetPart, rangedDistance
+) {
     this.initMembers();
 	this._tbsActors = tbsActors;
 	this._tbsActionInfo = tbsActionInfo;
@@ -205,7 +208,7 @@ BattleManager.initMembers = function() {
 	this._actionTimer = 0;
 	this._hitMissDelay = [];
 	this._showCastAnimation = true;
-	this._showAction = true;
+	this._firstTarget = true;
 	this._equipmentBaseToughness = 1;
 	this._varianceMult = 1;
 	this._accMult = 10;
@@ -608,9 +611,18 @@ BattleManager.updateAction = function() {
 			var processedHitGroup = this._processedHitGroups[i];
 			var delay = processedHitGroup.delay;
 			if(delay == this._actionTimer) {
-				this._resultsPerGroup[i] = this.combatMath(this._subject.battler, this._tbsActionInfo, processedHitGroup, this._tbsTargets[0].battler, this._tbsTargetsByHit, i, undefined, this._rangedDistance);
-				this._hitMissDelay[i] = this._logWindow.showInitialAnimations(this._subject.battler, processedHitGroup.hitGroup,
-					this._resultsPerGroup[i].initialAnimationIds, this._tbsTargets[0].battler, this._showCastAnimation, this._showAction);
+				this._resultsPerGroup[i] = this.combatMath(
+					this._subject.battler, this._tbsActionInfo, processedHitGroup,
+					this._tbsTargets[0].battler, this._tbsTargetsByHit, i, undefined, this._rangedDistance
+				);
+				this._hitMissDelay[i] = this._logWindow.showInitialAnimations(
+					this._subject.battler,
+					processedHitGroup.hitGroup,
+					this._firstTarget ? this._resultsPerGroup[i].initialAnimationIds : this._resultsPerGroup[i].secondaryInitialAnimationIds,
+					this._tbsTargets[0].battler,
+					this._showCastAnimation,
+					this._firstTarget
+				);
 				this._showCastAnimation = false;
 			}
 			if(this._actionTimer < delay) {
@@ -621,7 +633,12 @@ BattleManager.updateAction = function() {
 			if(this._hitMissDelay[i] !== undefined) {
 				if(this._hitMissDelay[i] <= 0) {
 					this._hitMissDelay[i] = undefined;
-					this._logWindow.showHitMissAnimations(this._subject.battler, this._tbsTargets[0].battler, this._resultsPerGroup[i]);
+					this._logWindow.showHitMissAnimations(
+						this._subject.battler,
+						this._tbsTargets[0].battler,
+						this._resultsPerGroup[i],
+						this._firstTarget
+					);
 					this.applyActionResults(this._resultsPerGroup[i], this._tbsTargets[0].battler);
 					this.refreshLeftActorStatusWindow(true);
 					this.refreshRightActorStatusWindow(true);
@@ -649,7 +666,7 @@ BattleManager.updateAction = function() {
 			this._resultsPerGroup = [];
 			this._hitMissDelay = [];
 			this._actionTimer = 0;
-			this._showAction = false;
+			this._firstTarget = false;
 		}
     } else {
         this.endAction();
@@ -960,16 +977,44 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 	results.revived = false;
 	results.shouldPassTurn = true;
 	results.initialAnimationIds = [];
+	results.secondaryInitialAnimationIds = [];
 	results.animationIds = [];
+	results.secondaryAnimationIds = [];
 	results.animationVariances = [];
+	results.secondaryAnimationVariances = [];
 	results.ongoingAnimationIds = [];
 	results.skipTarget = true;
 	var hitDodged = true;
+	var hitGroup = processedHitGroup.hitGroup;
 	if(target.blankDummy()) {
+		for(i = 0; i < hitGroup.hits.length; i++) {
+			var multipleHits = 1;
+			if(hitGroup.hits[i].multipleHits !== undefined) {
+				multipleHits = hitGroup.hits[i].multipleHits;
+			}
+			while(multipleHits > 0) {
+				multipleHits--;
+				var hit = hitGroup.hits[i];
+				if(hit.initialAnimationId !== undefined && hit.initialAnimationId > 0) {
+					results.initialAnimationIds.push(hit.initialAnimationId);
+				}
+				if(hit.secondaryInitialAnimationId !== undefined && hit.secondaryInitialAnimationId > 0) {
+					results.secondaryInitialAnimationIds.push(hit.secondaryInitialAnimationId);
+				}
+				if(hit.missAnimationId !== undefined && hit.missAnimationId > 0) {
+					results.animationIds.push(hit.missAnimationId);
+				}
+				if(hit.ongoingMissAnimationId !== undefined && hit.ongoingMissAnimationId > 0) {
+					results.ongoingAnimationIds.push(hit.ongoingMissAnimationId);
+				}
+				if(hit.secondaryMissAnimationId !== undefined && hit.secondaryMissAnimationId > 0) {
+					results.secondaryAnimationIds.push(hit.secondaryMissAnimationId);
+				}
+			}
+		}
 		results.shouldPassTurn = false;
 		return results;
 	}
-	var hitGroup = processedHitGroup.hitGroup;
 	for(i = 0; i < hitGroup.hits.length; i++) {
 		var multipleHits = 1;
 		if(hitGroup.hits[i].multipleHits !== undefined) {
@@ -1749,12 +1794,18 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 			if(hit.initialAnimationId !== undefined && hit.initialAnimationId > 0) {
 				results.initialAnimationIds.push(hit.initialAnimationId);
 			}
+			if(hit.secondaryInitialAnimationId !== undefined && hit.secondaryInitialAnimationId > 0) {
+				results.secondaryInitialAnimationIds.push(hit.secondaryInitialAnimationId);
+			}
 			if(hitDodged) {
 				if(hit.missAnimationId !== undefined && hit.missAnimationId > 0) {
 					results.animationIds.push(hit.missAnimationId);
 				}
 				if(hit.ongoingMissAnimationId !== undefined && hit.ongoingMissAnimationId > 0) {
 					results.ongoingAnimationIds.push(hit.ongoingMissAnimationId);
+				}
+				if(hit.secondaryMissAnimationId !== undefined && hit.secondaryMissAnimationId > 0) {
+					results.secondaryAnimationIds.push(hit.secondaryMissAnimationId);
 				}
 			} else {
 				if(hit.animationId !== undefined && hit.animationId > 0) {
@@ -1763,6 +1814,10 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				}
 				if(hit.ongoingAnimationId !== undefined && hit.ongoingAnimationId > 0) {
 					results.ongoingAnimationIds.push(hit.ongoingAnimationId);
+				}
+				if(hit.secondaryAnimationId !== undefined && hit.secondaryAnimationId > 0) {
+					results.secondaryAnimationIds.push(hit.secondaryAnimationId);
+					results.secondaryAnimationVariances.push(variance);
 				}
 			}
 			if(!hitDodged) {

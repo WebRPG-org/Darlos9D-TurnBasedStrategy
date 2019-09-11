@@ -763,16 +763,16 @@
 	
 	Scene_Map.prototype.updateEncounter = function() {
 		if($gameMap.isInActionBattleScene()) {
-			var actors = [];
-			actors.push($gameMap.getTbsSelectedActor());
-			var actionInfo = $gameMap.getTbsSelectedActionInfo();
 			var targets = $gameMap.getTbsActionTargets();
-			var targetsByHit = $gameMap.getTbsActionTargetsByHit();
-			var targetX = $gameMap.getTbsActionTargetLocationX();
-			var targetY = $gameMap.getTbsActionTargetLocationY();
-			var targetPart = $gameMap.getTbsActionTargetPart();
-			var rangedDistance = $gameMap.getRangedDistance();
 			if(targets && targets.length > 0) {
+				var actors = [];
+				actors.push($gameMap.getTbsSelectedActor());
+				var actionInfo = $gameMap.getTbsSelectedActionInfo();
+				var targetsByHit = $gameMap.getTbsActionTargetsByHit();
+				var targetX = $gameMap.getTbsActionTargetLocationX();
+				var targetY = $gameMap.getTbsActionTargetLocationY();
+				var targetPart = $gameMap.getTbsActionTargetPart();
+				var rangedDistance = $gameMap.getRangedDistance();
 				BattleManager.setup(actors, actionInfo, targetX, targetY, targets, targetsByHit, targetPart, rangedDistance);
 				BattleManager.onEncounter();
 				SceneManager.push(Scene_Battle);
