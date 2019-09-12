@@ -1255,7 +1255,7 @@
 						for(y = centerPointY - checkBoxRange; y <= centerPointY + checkBoxRange; y++) {
 							if(hit.ignoreCenter && x === centerPointX && y === centerPointY) { continue; }
 							if(x === centerPointX && y === centerPointY && targets.indexOf(centerTarget) === -1) {
-								targets.push(centerTarget);
+								targets.unshift(centerTarget);
 								continue;
 							}
 							var distance = that.actualDistance(x, y, centerPointX, centerPointY);

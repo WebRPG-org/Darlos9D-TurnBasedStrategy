@@ -2364,7 +2364,6 @@ Window_TbsTarget.prototype.update = function() {
 		}
 		if(this.index() === this.maxItems() - 1)
 		{
-			$gameMap.setTbsActionTargetLocation(-1, -1);
 			return;
 		}
 		$gameMap.setTbsActionTargetLocation(this.actor().chara.x, this.actor().chara.y);
