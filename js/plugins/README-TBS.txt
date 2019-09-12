@@ -93,6 +93,7 @@ Armors
 Enemies
 ----------------------------------------------------
 {
+	"blankDummy": true/false,
 	"characterName": (name of character sprite file),
 	"characterIndex": (index of sprite block in sprite file),
 	"proneName": (name of character sprite file),
@@ -212,6 +213,7 @@ Action
 			"ignoreUserRange": true/false,
 			"accuracyBonus": (integer),
 			"ignoreUserAccuracy": true/false,
+			"ignoreUserStrength": true/false,
 			"multipleHits": (integer),
 			"accuracyVariance": (integer),
 			"usesParts": [

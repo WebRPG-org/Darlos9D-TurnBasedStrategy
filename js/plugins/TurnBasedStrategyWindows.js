@@ -3968,7 +3968,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 						damageLineOffset += this.drawDamageForType(hitDamage.thrust*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("thrust"));
 						damageLineOffset += this.drawDamageForType(hitDamage.stiletto*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("stiletto"));
 						damageLineOffset += this.drawDamageForType(hitDamage.bullet*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("bullet"));
-						damageLineOffset += this.drawDamageForType(hitDamage.buckshot*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("buckshot"));
+						damageLineOffset += this.drawDamageForType(hitDamage.frag*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("frag"));
 						damageLineOffset += this.drawDamageForType(hitDamage.fire*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("fire"));
 						damageLineOffset += this.drawDamageForType(hitDamage.ice*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("ice"));
 						damageLineOffset += this.drawDamageForType(hitDamage.corrosion*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("corrosion"));
@@ -4104,7 +4104,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			case "thrust":        	return 107; break;
 			case "stiletto":        return  96; break;
 			case "bullet":         	return 115; break;
-			case "buckshot":        return 115; break;
+			case "frag":        	return 115; break;
 			case "fire":           	return  64; break;
 			case "ice":            	return  65; break;
 			case "corrosion":      	return   2; break;

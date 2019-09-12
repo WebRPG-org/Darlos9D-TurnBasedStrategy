@@ -1061,7 +1061,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				var acc = accSkill * this._accEvaSkillMult * this._accMult;
 				
 				var physDamageMult = 1;
-				if(hit.rangeType === "melee" || hit.rangeType === "thrown") {
+				if(!hit.ignoreUserStrength && (hit.rangeType === "melee" || hit.rangeType === "thrown")) {
 					physDamageMult = subject.strengthMultiplier();
 				}
 				
@@ -1072,7 +1072,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				hitDamage.thrust *= this._damageMult * physDamageMult;
 				hitDamage.stiletto *= this._damageMult * physDamageMult;
 				hitDamage.bullet *= this._damageMult;
-				hitDamage.buckshot *= this._damageMult;
 				hitDamage.lightning *= this._damageMult;
 				hitDamage.trip *= this._damageMult;
 				hitDamage.fire *= this._damageMult;
@@ -1086,7 +1085,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					|| hitDamage.thrust > 0
 					|| hitDamage.stiletto > 0
 					|| hitDamage.bullet > 0
-					|| hitDamage.buckshot > 0
 					|| hitDamage.lightning > 0
 					|| hitDamage.trip > 0;
 				
@@ -1842,7 +1840,6 @@ BattleManager.cleaveMath = function(subject, actionInfo, hit, accuracyReduction,
 	if(damageResult.remainingPower.thrust > 0) { newHit.damage.thrust = damageResult.remainingPower.thrust; }
 	if(damageResult.remainingPower.stiletto > 0) { newHit.damage.stiletto = damageResult.remainingPower.stiletto; }
 	if(damageResult.remainingPower.bullet > 0) { newHit.damage.bullet = damageResult.remainingPower.bullet; }
-	if(damageResult.remainingPower.buckshot > 0) { newHit.damage.buckshot = damageResult.remainingPower.buckshot; }
 	if(damageResult.remainingPower.fire > 0) { newHit.damage.fire = damageResult.remainingPower.fire; }
 	if(damageResult.remainingPower.ice > 0) { newHit.damage.ice = damageResult.remainingPower.ice; }
 	if(damageResult.remainingPower.corrosion > 0) { newHit.damage.corrosion = damageResult.remainingPower.corrosion; }
@@ -1953,15 +1950,6 @@ BattleManager.getPartDamagePotential = function(damage, partProt, tough, fullCov
 	damagePotential += Math.max(0, 1.5 * damage.fire - (fluidBypass ? tough : partProt.armor.fire + tough));
 	damagePotential += Math.max(0, 1.5 * damage.ice - (fluidBypass ? tough : partProt.armor.ice + tough));
 	damagePotential += Math.max(0, 1.5 * damage.corrosion - (fluidBypass ? tough : partProt.armor.corrosion + tough));
-	
-	var numPellets = 7;
-	var buckshotPow = damage.buckshot / numPellets;
-	if(buckshotPow > 0) {
-		var i;
-		for(i = 0; i < numPellets; i++) {
-			damagePotential += Math.max(0, 1.5 * buckshotPow - (solidThrustBypass ? tough : partProt.armor.buckshot + tough));
-		}
-	}
 	
 	return damagePotential;
 };
@@ -2107,7 +2095,6 @@ BattleManager.getCompleteDamage = function(subject, actionInfo, hit) {
 	completeDamage.thrust = damage.thrust !== undefined ? damage.thrust * damageScale : 0;
 	completeDamage.stiletto = damage.stiletto !== undefined ? damage.stiletto * damageScale : 0;
 	completeDamage.bullet = damage.bullet !== undefined ? damage.bullet * damageScale : 0;
-	completeDamage.buckshot = damage.buckshot !== undefined ? damage.buckshot * damageScale : 0;
 	completeDamage.fire = damage.fire !== undefined ? damage.fire * damageScale : 0;
 	completeDamage.ice = damage.ice !== undefined ? damage.ice * damageScale : 0;
 	completeDamage.lightning = damage.lightning !== undefined ? damage.lightning * damageScale : 0;
@@ -2382,37 +2369,6 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, acc, accBonus, eva, tr
 	returnObj.remainingPower.bullet = finalBulletPow > tough * 50 ? finalBulletPow - tough * 50 : 0;
 	var bulletBluntPow = finalBulletPow > 0 ? finalBulletPow * Math.max(0, 1 - returnObj.remainingPower.bullet / finalBulletPow) * 1.5 : 0;
 	
-	var numPellets = 7;
-	var buckshotPow = hitDamage.buckshot / numPellets;
-	var finalBuckshotPow = 0;
-	var finalBuckshotDamage = 0;
-	returnObj.remainingPower.buckshot = 0;
-	if(buckshotPow > 0) {
-		var i;
-		for(i = 0; i < numPellets; i++) {
-			var pelletDamScale = solidDamScale;
-			var pelletBypass = solidThrustBypass;
-			if(i > 0) {
-				var accBypassRollPellet = this.rollForRanks(acc, subjectStress);
-				var solidBypassRollPellet = this.rollForRanks(eva, isDown ? 100 : targetStress, 2 * (solidDef/100));
-				pelletBypass = solidDef <= 90 && accBypassRollPellet > solidBypassRollPellet;
-				
-				var accDamRollPellet = this.rollForRanks(acc, subjectStress);
-				var solidEvaRollPellet = this.rollForRanks(eva, isDown ? 100 : targetStress);
-				pelletDamScale = solidEvaRollPellet <= 0 ? (accDamRollPellet <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accDamRollPellet / solidEvaRollPellet));
-			}
-			var finalPelletPow = Math.max(0, pelletDamScale * buckshotPow - (pelletBypass ? tough : partProt.armor.bullet + tough));
-			bluntPow += Math.max(0, pelletDamScale * buckshotPow - finalPelletPow) * 1.5;
-			var finalPelletDamage = Math.min(50, Math.max(0, Math.ceil(finalPelletPow / tough - 1)));
-			returnObj.critical = finalPelletDamage > 0 && pelletBypass ? true : returnObj.critical;
-			var remainingPelletPower = finalPelletPow > tough * 50 ? finalPelletPow - tough * 50 : 0;
-			bulletBluntPow += finalPelletPow > 0 ? finalPelletPow * Math.max(0, 1 - remainingPelletPower / finalPelletPow) * 1.5 : 0;
-			finalBuckshotPow += finalPelletPow;
-			finalBuckshotDamage += finalPelletDamage;
-			returnObj.remainingPower.buckshot += remainingPelletPower;
-		}
-	}
-	
 	var finalBluntPow = Math.max(0, solidDamScale * bluntPow - (solidRegularBypass ? tough : partProt.armor.blunt + tough));
 	var finalBluntDamage = Math.max(0, Math.ceil(finalBluntPow / tough - 1));
 	returnObj.critical = finalBluntDamage > 0 && solidRegularBypass ? true : returnObj.critical;
@@ -2443,7 +2399,6 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, acc, accBonus, eva, tr
 		|| finalThrustPow > 0
 		|| finalStilettoPow > 0
 		|| finalBulletPow > 0
-		|| finalBuckshotPow > 0
 		|| finalFirePow > 0
 		|| finalIcePow > 0
 		|| finalCorrosionPow > 0 ? this._baseHitStress * (extraStress ? 2 : 1) : 0;
@@ -2464,7 +2419,7 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, acc, accBonus, eva, tr
 	returnObj.shouldConduct = returnObj.remainingPower.lightning > 0;
 	
 	returnObj.damage = finalBluntDamage + finalCutDamage
-		+ finalBulletDamage + finalBuckshotDamage + finalFireDamage + finalIceDamage + finalCorrosionDamage;
+		+ finalBulletDamage + finalFireDamage + finalIceDamage + finalCorrosionDamage;
 	
 	stressInflicted += returnObj.damage / this._damageStressDivisor * (extraStress ? 2 : 1);
 	stressInflicted += Math.max(0, Math.ceil((tripDamScale * hitDamage.trip) / tough - 1));
