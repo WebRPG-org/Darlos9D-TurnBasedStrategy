@@ -1611,6 +1611,7 @@ Window_TbsActor.prototype.open = function() {
 		this._actorStatusWindow.show();
 		this._actorStatusWindow.open();
 	}
+	this.update();
 };
 
 Window_TbsActor.prototype.close = function() {
@@ -1795,6 +1796,11 @@ Window_TbsActionType.prototype.shouldOpenActionWindow = function(should) {
 
 Window_TbsActionType.prototype.shouldActivateManualMove = function(should) {
 	this._shouldActivateManualMove = should;
+};
+
+Window_TbsActionType.prototype.open = function() {
+	Window_Command.prototype.open.call(this);
+	this.update();
 };
 
 Window_TbsActionType.prototype.updateClose = function() {
@@ -2128,6 +2134,7 @@ Window_TbsAction.prototype.open = function() {
 		this._actionInfoWindow.show();
 		this._actionInfoWindow.open();
 	}
+	this.update();
 };
 
 Window_TbsAction.prototype.close = function() {
@@ -2430,6 +2437,7 @@ Window_TbsTarget.prototype.open = function() {
 		this._actorStatusWindow.show();
 		this._actorStatusWindow.open();
 	}
+	this.update();
 };
 
 Window_TbsTarget.prototype.close = function() {
