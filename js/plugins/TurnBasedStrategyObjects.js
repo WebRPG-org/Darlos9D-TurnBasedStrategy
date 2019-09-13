@@ -339,6 +339,14 @@
 		}
 	};
 	
+	Game_System.prototype.addInfoLogWindow = function(text) {
+		var interpreter = $gameTemp.evaluatingInterpreter();
+		if(interpreter) {
+			interpreter.concurrentMessage();
+		}
+		$gameMap.addInfoLogWindow(text);
+	};
+	
 	Game_System.prototype.addMessageWindow = function(x, y, text, waitOn, duration, closeable) {
 		var interpreter = $gameTemp.evaluatingInterpreter();
 		if(interpreter) {
@@ -457,9 +465,25 @@
 		return canvasY;
 	};
 	
+	Game_Map.prototype.addInfoLogWindow = function(text) {
+		if(!text || text.length <= 0) { return; }
+		var message = {};
+		message.infoLog = true;
+		message.absolute = false;
+		message.stayOnScreen = false;
+		message.x = 10;
+		message.y = 10;
+		message.text = text;
+		message.waitOn = false;
+		message.duration = 180;
+		message.closeable = false;
+		this._pendingMessages.push(message);
+	};
+	
 	Game_Map.prototype.addMessageWindow = function(absolute, stayOnScreen, x, y, text, waitOn, duration, closeable) {
 		if(!text || text.length <= 0) { return; }
 		var message = {};
+		message.infoLog = false;
 		message.absolute = absolute;
 		message.stayOnScreen = stayOnScreen;
 		message.x = x;

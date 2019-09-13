@@ -106,7 +106,7 @@
 		var windowToUse;
 		var i;
 		for(i = 0; i < this._messageWindows.length; i++) {
-			if(this._messageWindows[i].isClosed()) {
+			if(this._messageWindows[i].isClosed() && !this._messageWindows[i].isOpening()) {
 				windowToUse = this._messageWindows[i];
 				break;
 			}
@@ -116,7 +116,21 @@
 		if(message.waitOn) { $gameMap.setWaitingOnMessageWindows(); }
 		var messageX = message.x;
 		var messageY = message.y;
-		windowToUse.setupAndShow(message.absolute, message.stayOnScreen, message.x, message.y, message.text, message.waitOn, message.duration, message.closeable);
+		if(message.infoLog) {
+			var messageX = 10;
+			var messageY = 10;
+		}
+		windowToUse.setupAndShow(message.infoLog, message.absolute, message.stayOnScreen, messageX, messageY, message.text, message.waitOn, message.duration, message.closeable);
+		if(message.infoLog) {
+			var j;
+			for(j = 0; j < this._messageWindows.length; j++) {
+				if(i != j && this._messageWindows[j].isInfoLog() 
+					&& (this._messageWindows[j].isOpen() || this._messageWindows[j].isOpening()))
+				{
+					this._messageWindows[j].y += windowToUse.height;
+				}
+			}
+		}
 	};
 	
 	Scene_Map.prototype.updateBasedOnTbsBattle = function() {

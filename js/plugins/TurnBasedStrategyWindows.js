@@ -29,6 +29,9 @@ Window_ConcurrentWindow.prototype.constructor = Window_ConcurrentWindow;
 Window_ConcurrentWindow.prototype.initialize = function() {
 	this._text = [];
     Window_Base.prototype.initialize.call(this, 0, 0, this.windowWidth(), this.windowHeight());
+	this._curTextLength = 0;
+	this._textLength = 0;
+	this._infoLog = false;
 	this._absolute = false;
 	this._stayOnScreen = false;
 	this._absoluteX = 0;
@@ -36,6 +39,7 @@ Window_ConcurrentWindow.prototype.initialize = function() {
 	this._waitOn = false;
 	this._duration = -1;
 	this._closeable = false;
+	this._textLengthIncrease = 2;
 	this.hide();
 };
 
@@ -51,9 +55,18 @@ Window_ConcurrentWindow.prototype.windowHeight = function() {
 	return this.fittingHeight(this._text.length);
 };
 
-Window_ConcurrentWindow.prototype.setupAndShow = function(absolute, stayOnScreen, x, y, text, waitOn, duration, closeable) {
+Window_ConcurrentWindow.prototype.setupAndShow = function(infoLog, absolute, stayOnScreen, x, y, text, waitOn, duration, closeable) {
 	if(!text || text.length <= 0) { return; }
 	this._text = text;
+	
+	this._textLength = 0;
+	text.forEach(function (textRow) {
+		this._textLength += textRow.length;
+	}, this);
+	
+	this._curTextLength = infoLog ? this._textLength : 0;
+	
+	this._infoLog = infoLog;
 	this._waitOn = waitOn;
 	this._duration = duration === undefined ? -1 : duration;
 	this._closeable = closeable;
@@ -70,19 +83,30 @@ Window_ConcurrentWindow.prototype.setupAndShow = function(absolute, stayOnScreen
 	this.move(this.x, this.y, this.windowWidth(), this.windowHeight());
 	
 	this.createContents();
-	if (this.contents) {
-        this.contents.clear();
-		this.resetTextColor();
-		this.changePaintOpacity(true);
-		var i;
-		for(i = 0; i < this._text.length; i++) {
-			var textRow = this._text[i];
-			this.drawText(textRow, this.textPadding(), this.lineHeight()*i, textRow.length*14);
-		}
-    }
+	this.drawCurrentText();
 	
 	this.show();
 	this.open();
+};
+
+Window_ConcurrentWindow.prototype.drawCurrentText = function() {
+	if (!this.contents) { return; }
+	this.contents.clear();
+	this.resetTextColor();
+	this.changePaintOpacity(true);
+	var charactersDrawn = 0;
+	var i;
+	for(i = 0; i < this._text.length; i++) {
+		var textRow = this._text[i];
+		if(charactersDrawn + textRow.length > this._curTextLength) {
+			textRow = textRow.slice(0, this._curTextLength - charactersDrawn);
+		}
+		this.drawText(textRow, this.textPadding(), this.lineHeight()*i, textRow.length*14);
+		if(charactersDrawn + textRow.length > this._curTextLength) {
+			break;
+		}
+		charactersDrawn += textRow.length;
+	}
 };
 
 Window_ConcurrentWindow.prototype.absoluteReposition = function() {
@@ -101,6 +125,12 @@ Window_ConcurrentWindow.prototype.update = function() {
 	if(this._waitOn && this.isOpen() && this.isCloseable() && this.isTriggered()) {
 		this.close();
 	}
+	if(this.isOpen() && !this.isClosing()) {
+		if(this._curTextLength < this._textLength) {
+			this._curTextLength += this._textLengthIncrease;
+			this.drawCurrentText();
+		}
+	}
 };
 
 Window_ConcurrentWindow.prototype.isTriggered = function() {
@@ -108,12 +138,16 @@ Window_ConcurrentWindow.prototype.isTriggered = function() {
             TouchInput.isRepeated());
 };
 
+Window_ConcurrentWindow.prototype.hasDrawnAllText = function() {
+	return this._curTextLength >= this._textLength;
+};
+
 Window_ConcurrentWindow.prototype.isCountingDown = function() {
 	return this._duration >= 0;
 };
 
 Window_ConcurrentWindow.prototype.countDown = function() {
-	if(this._duration < 0) { return; }
+	if(!this.hasDrawnAllText() || this._duration < 0) { return; }
 	this._duration--;
 	if(this._duration <= 0) {
 		this._duration = -1;
@@ -122,11 +156,15 @@ Window_ConcurrentWindow.prototype.countDown = function() {
 };
 
 Window_ConcurrentWindow.prototype.isCloseable = function() {
-	return !this.isCountingDown() || this._closeable;
+	return this.hasDrawnAllText() && (!this.isCountingDown() || this._closeable);
 };
 
 Window_ConcurrentWindow.prototype.isWaitOn = function() {
 	return this._waitOn;
+};
+
+Window_ConcurrentWindow.prototype.isInfoLog = function() {
+	return this._infoLog;
 };
 
 Window_ConcurrentWindow.prototype.updateClose = function() {
