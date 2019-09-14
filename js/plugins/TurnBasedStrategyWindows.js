@@ -151,7 +151,8 @@ Window_ConcurrentWindow.prototype.update = function() {
 					soundEffect.name = this._soundEffect.name;
 					soundEffect.pan = this._soundEffect.pan;
 					soundEffect.volume = this._soundEffect.volume;
-					soundEffect.pitch = Math.max(25, Math.min(400, this._soundEffect.pitch)) - 1 + Math.floor(Math.random() * 3);
+					soundEffect.pitch = this._soundEffect.pitch === undefined ?
+						100 : Math.max(25, Math.min(400, this._soundEffect.pitch)) - 1 + Math.floor(Math.random() * 3);
 					AudioManager.playSe(soundEffect);
 					this._soundTimer = this._soundTime;
 				}

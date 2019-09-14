@@ -2132,9 +2132,8 @@ BattleManager.calculateBodyPartHit = function(subjectStress, targetStress, acc, 
 	}
 	
 	var willHitCritical = false;
-	var criticalAccRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
 	var criticalEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress, targetingMobility ? 1 : 2);
-	if(criticalAccRoll > criticalEvaRoll) {
+	if(vitalAccRoll > vitalEvaRoll + criticalEvaRoll) {
 		willHitCritical = true;
 	}
 	
@@ -2179,11 +2178,12 @@ BattleManager.calculateBodyPartHit = function(subjectStress, targetStress, acc, 
 		return results;
 	}
 	
+	var limbBypassRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+	
 	if(targetingType !== "limbsAndVital") {
 		if(useFirstHeld) {
-			var firstHeldAccRoll = this.rollForRanks(acc, subjectStress);
 			var firstHeldEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress, firstHeldDef/100);
-			if(firstHeldAccRoll <= firstHeldEvaRoll) {
+			if(limbBypassRoll <= firstHeldEvaRoll) {
 				if(leftHeldFirst) {
 					results.hit.leftHeld = true;
 				} else {
@@ -2191,10 +2191,10 @@ BattleManager.calculateBodyPartHit = function(subjectStress, targetStress, acc, 
 				}
 				return results;
 			}
-		} else if(useSecondHeld) {
-			var secondHeldAccRoll = this.rollForRanks(acc, subjectStress);
+		}
+		if(useSecondHeld) {
 			var secondHeldEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress, secondHeldDef/100);
-			if(firstHeldAccRoll <= firstHeldEvaRoll) {
+			if(limbBypassRoll <= secondHeldEvaRoll) {
 				if(leftHeldFirst) {
 					results.hit.rightHeld = true;
 				} else {
@@ -2205,9 +2205,8 @@ BattleManager.calculateBodyPartHit = function(subjectStress, targetStress, acc, 
 		}
 	}
 	
-	var firstLimbAccRoll = this.rollForRanks(acc, subjectStress);
 	var firstLimbEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress);
-	if(firstLimbAccRoll <= firstLimbEvaRoll) {
+	if(limbBypassRoll <= firstLimbEvaRoll) {
 		if(leftLimbFirst) {
 			if(defendingWithLegs) {
 				results.hit.leftLeg = true;
@@ -2224,25 +2223,22 @@ BattleManager.calculateBodyPartHit = function(subjectStress, targetStress, acc, 
 		return results;
 	}
 	
-	if(targetingType !== "limbsAndVital" && !useFirstHeld && !useSecondHeld) {
-		var secondLimbAccRoll = this.rollForRanks(acc, subjectStress);
-		var secondLimbEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress);
-		if(secondLimbAccRoll <= secondLimbEvaRoll) {
-			if(leftLimbFirst) {
-				if(defendingWithLegs) {
-					results.hit.rightLeg = true;
-				} else {
-					results.hit.rightArm = true;
-				}
+	var secondLimbEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress);
+	if(limbBypassRoll <= secondLimbEvaRoll) {
+		if(leftLimbFirst) {
+			if(defendingWithLegs) {
+				results.hit.rightLeg = true;
 			} else {
-				if(defendingWithLegs) {
-					results.hit.leftLeg = true;
-				} else {
-					results.hit.leftArm = true;
-				}
+				results.hit.rightArm = true;
 			}
-			return results;
+		} else {
+			if(defendingWithLegs) {
+				results.hit.leftLeg = true;
+			} else {
+				results.hit.leftArm = true;
+			}
 		}
+		return results;
 	}
 	
 	if(willHitCritical) {

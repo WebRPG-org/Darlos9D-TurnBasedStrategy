@@ -475,7 +475,7 @@
 		message.y = 10;
 		message.text = text;
 		message.waitOn = false;
-		message.duration = 180;
+		message.duration = 60*4;
 		message.closeable = false;
 		this._pendingMessages.push(message);
 	};
