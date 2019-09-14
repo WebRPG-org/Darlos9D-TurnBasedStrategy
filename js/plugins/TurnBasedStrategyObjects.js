@@ -347,20 +347,20 @@
 		$gameMap.addInfoLogWindow(text);
 	};
 	
-	Game_System.prototype.addMessageWindow = function(x, y, text, waitOn, duration, closeable) {
+	Game_System.prototype.addMessageWindow = function(x, y, text, soundEffect, dontWaitOn, duration, closeable) {
 		var interpreter = $gameTemp.evaluatingInterpreter();
 		if(interpreter) {
 			interpreter.concurrentMessage();
 		}
-		$gameMap.addMessageWindow(false, false, x, y, text, waitOn, duration, closeable);
+		$gameMap.addMessageWindow(false, false, x, y, text, soundEffect, dontWaitOn, duration, closeable);
 	};
 	
-	Game_System.prototype.addAbsoluteMessageWindow = function(stayOnScreen, x, y, text, waitOn, duration, closeable) {
+	Game_System.prototype.addAbsoluteMessageWindow = function(stayOnScreen, x, y, text, soundEffect, dontWaitOn, duration, closeable) {
 		var interpreter = $gameTemp.evaluatingInterpreter();
 		if(interpreter) {
 			interpreter.concurrentMessage();
 		}
-		$gameMap.addMessageWindow(true, stayOnScreen, x, y, text, waitOn, duration, closeable);
+		$gameMap.addMessageWindow(true, stayOnScreen, x, y, text, soundEffect, dontWaitOn, duration, closeable);
 	};
 	
 	//item
@@ -480,7 +480,7 @@
 		this._pendingMessages.push(message);
 	};
 	
-	Game_Map.prototype.addMessageWindow = function(absolute, stayOnScreen, x, y, text, waitOn, duration, closeable) {
+	Game_Map.prototype.addMessageWindow = function(absolute, stayOnScreen, x, y, text, soundEffect, dontWaitOn, duration, closeable) {
 		if(!text || text.length <= 0) { return; }
 		var message = {};
 		message.infoLog = false;
@@ -489,10 +489,11 @@
 		message.x = x;
 		message.y = y;
 		message.text = text;
-		message.waitOn = waitOn;
+		message.soundEffect = soundEffect;
+		message.waitOn = !dontWaitOn;
 		message.duration = duration;
 		message.closeable = closeable;
-		if(waitOn) { this.setWaitingOnMessageWindows(); }
+		if(!dontWaitOn) { this.setWaitingOnMessageWindows(); }
 		this._pendingMessages.push(message);
 	};
 	

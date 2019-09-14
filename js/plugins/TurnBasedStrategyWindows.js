@@ -40,6 +40,8 @@ Window_ConcurrentWindow.prototype.initialize = function() {
 	this._duration = -1;
 	this._closeable = false;
 	this._textLengthIncrease = 2;
+	this._soundTime = 3;
+	this._soundTimer = 0;
 	this.hide();
 };
 
@@ -55,11 +57,23 @@ Window_ConcurrentWindow.prototype.windowHeight = function() {
 	return this.fittingHeight(this._text.length);
 };
 
-Window_ConcurrentWindow.prototype.setupAndShow = function(infoLog, absolute, stayOnScreen, x, y, text, waitOn, duration, closeable) {
+Window_ConcurrentWindow.prototype.setupAndShow = function(
+	infoLog,
+	absolute,
+	stayOnScreen,
+	x,
+	y,
+	text,
+	soundEffect,
+	waitOn,
+	duration,
+	closeable
+) {
 	if(!text || text.length <= 0) { return; }
 	this._text = text;
 	
 	this._textLength = 0;
+	this._soundTimer = 0;
 	text.forEach(function (textRow) {
 		this._textLength += textRow.length;
 	}, this);
@@ -67,6 +81,7 @@ Window_ConcurrentWindow.prototype.setupAndShow = function(infoLog, absolute, sta
 	this._curTextLength = infoLog ? this._textLength : 0;
 	
 	this._infoLog = infoLog;
+	this._soundEffect = soundEffect;
 	this._waitOn = waitOn;
 	this._duration = duration === undefined ? -1 : duration;
 	this._closeable = closeable;
@@ -129,6 +144,18 @@ Window_ConcurrentWindow.prototype.update = function() {
 		if(this._curTextLength < this._textLength) {
 			this._curTextLength += this._textLengthIncrease;
 			this.drawCurrentText();
+			if(this._soundEffect) {
+				this._soundTimer--;
+				if(this._soundTimer <= 0) {
+					var soundEffect = {};
+					soundEffect.name = this._soundEffect.name;
+					soundEffect.pan = this._soundEffect.pan;
+					soundEffect.volume = this._soundEffect.volume;
+					soundEffect.pitch = Math.max(25, Math.min(400, this._soundEffect.pitch)) - 1 + Math.floor(Math.random() * 3);
+					AudioManager.playSe(soundEffect);
+					this._soundTimer = this._soundTime;
+				}
+			}
 		}
 	}
 };

@@ -120,7 +120,18 @@
 			var messageX = 10;
 			var messageY = 10;
 		}
-		windowToUse.setupAndShow(message.infoLog, message.absolute, message.stayOnScreen, messageX, messageY, message.text, message.waitOn, message.duration, message.closeable);
+		windowToUse.setupAndShow(
+			message.infoLog,
+			message.absolute,
+			message.stayOnScreen,
+			messageX,
+			messageY,
+			message.text,
+			message.soundEffect,
+			message.waitOn,
+			message.duration,
+			message.closeable
+		);
 		if(message.infoLog) {
 			var j;
 			for(j = 0; j < this._messageWindows.length; j++) {
