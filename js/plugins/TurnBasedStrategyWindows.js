@@ -88,11 +88,11 @@ Window_ConcurrentWindow.prototype.setupAndShow = function(
 	this._absolute = absolute;
 	this._stayOnScreen = stayOnScreen;
 	
-	this.x = x;
-	this.y = y;
+	this.x = infoLog ? Math.floor(x) : Math.floor(x - this.windowWidth() / 2);
+	this.y = infoLog ? Math.floor(y) : Math.floor(y - this.windowHeight() / 2);
 	if(absolute) {
-		this._absoluteX = x;
-		this._absoluteY = y;
+		this._absoluteX = this.x;
+		this._absoluteY = this.y;
 		this.absoluteReposition();
 	}
 	this.move(this.x, this.y, this.windowWidth(), this.windowHeight());
