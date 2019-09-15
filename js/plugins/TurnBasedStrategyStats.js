@@ -479,7 +479,7 @@
 	};
 
 	Game_BattlerBase.prototype.maxItems = function() {
-		return 6;
+		return 8;
 	};
 	
 	Game_BattlerBase.prototype.tradeItemWithSelf = function() {
@@ -702,7 +702,7 @@
 	};
 	
 	Game_BattlerBase.prototype.adjustSkillPoints = function(skill, change) {
-		this.setSkillPoints(skill, (this._skillPoints[skill] === undefined ? change : this._skillPoints[skill]) + change);
+		this.setSkillPoints(skill, (this._skillPoints[skill] === undefined ? change : this._skillPoints[skill] + change));
 	};
 	
 	Game_BattlerBase.prototype.skillPoints = function(skill) {
@@ -771,7 +771,7 @@
 	Game_BattlerBase.prototype.getSkillBuff = function(skill) {
 		var total = 0;
 		this._tbsBuffs.forEach(function (buff) {
-			total += buff.core === undefined ? 0 : buff.core[skill];
+			total += (buff.core === undefined || buff.core[skill] === undefined) ? 0 : buff.core[skill];
 		});
 		return total;
 	};
