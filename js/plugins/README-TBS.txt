@@ -300,6 +300,8 @@ $gameSystem.startTbsBattle(
 
 Starts a turn based strategy battle. Only use after setting everything up as desired with the various battle setup scripts. resetCameraAfterBattle, if set to true when starting a battle after using setCameraFocus() will clear that focus immediately after battle victory, refocusing the camera to the player character. cursorRegions is an array of integers, indicating encounter region tiles on the map. When defined, all battle movement, action ranges, and cursor movement will be contained within the tiles indicated by the regions. It is recommended that these regions be set up so that individual battles take place within a rectangular area.
 
+This function and the ensuing battle will NOT hold up event processing, so it should probably be the last thing to happen in an event.
+
 -----------------------------------------------------
 $gameSystem.clearTbsForces();
 
@@ -344,6 +346,8 @@ $gameSystem.giveArmorToParty(
 
 Gives an item/weapon/armor to the first member of the party with available space, or nobody if nobody has space.
 
+Keep in mind that the Stash and Key Items utilize the default party inventory, so simply use regular inventory management event commands to manage those.
+
 -----------------------------------------------------
 $gameSystem.getItemReceiver();
 
@@ -382,7 +386,7 @@ soundEffect:
 {
 	name, (string, name of a sound effect loaded by rpg maker)
 	pan, (integer, -100 to 100, baseline 0)
-	pitch, (integer, 50 to 200, baseline 100)
+	pitch, (integer, 25 to 400, baseline 100)
 	volume (integer, 0 to 100, baseline 90)
 }
 
