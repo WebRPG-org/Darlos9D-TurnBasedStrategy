@@ -3310,7 +3310,7 @@ Window_StatusSkillOption.prototype.initialize = function(x, y) {
 };
 
 Window_StatusSkillOption.prototype.windowWidth = function() {
-    return Graphics.boxWidth - Window_ItemStatus.prototype.windowWidth();
+    return this.standardPadding()*2 + this.textPadding()*2 + 14*20;
 };
 
 Window_StatusSkillOption.prototype.setActor = function(actor) {
