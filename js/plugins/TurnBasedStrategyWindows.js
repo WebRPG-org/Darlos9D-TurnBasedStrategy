@@ -807,7 +807,9 @@ Window_ItemOption.prototype.numVisibleRows = function() {
 		if(this._actor) {
 			rows += 2;
 		} else {
-			rows += $gameParty.size();
+			if(!DataManager.isItem(this._item) || this._item.itypeId === 1) {
+				rows += $gameParty.size();
+			}
 		}
 	}
     return rows;
@@ -821,12 +823,18 @@ Window_ItemOption.prototype.makeCommandList = function() {
 			this.addCommand("Use", 'use', canUse);
 			this.addCommand("Stash", 'stash', $gameSystem.isSaveEnabled());
 		} else {
-			$gameParty.members().forEach(function(member) {
-				var enabled = member.totalItemCount() < member.maxItems();
-				this.addCommand("Give " + member.displayName(), 'give', enabled);
-			}, this);
+			if(!DataManager.isItem(this._item) || this._item.itypeId === 1) {
+				$gameParty.members().forEach(function(member) {
+					var enabled = member.totalItemCount() < member.maxItems();
+					this.addCommand("Give " + member.displayName(), 'give', enabled);
+				}, this);
+			}
 		}
-		this.addCommand("Discard", 'discard', !DataManager.isItem(this._item) || this._item.itypeId !== 2);
+		if(DataManager.isItem(this._item) && this._item.itypeId === 2) {
+			this.addCommand("Done", 'cancel');
+		} else {
+			this.addCommand("Discard", 'discard');
+		}
     }
 };
 
@@ -4458,7 +4466,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_ItemCategory.prototype.maxCols = function() {
-		return 2;
+		return 3;
 	};
 	
 	Window_ItemCategory.prototype.setActorItemWindows = function(itemWindows) {
@@ -4490,6 +4498,16 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 					itemWindow.hide();
 				});
 				if(this._itemWindow) {
+					this._itemWindow.setCategory('stash');
+					this._itemWindow.show();
+				}
+				break;
+			case 2:
+				this._actorItemWindows.forEach(function (itemWindow) {
+					itemWindow.hide();
+				});
+				if(this._itemWindow) {
+					this._itemWindow.setCategory('keyItems');
 					this._itemWindow.show();
 				}
 				break;
@@ -4499,6 +4517,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_ItemCategory.prototype.makeCommandList = function() {
 		this.addCommand("Party",    'organize');
 		this.addCommand("Stash", 'stash', $gameSystem.isSaveEnabled());
+		this.addCommand("Key Items",    'keyItems');
 	};
 	
 	//item list
@@ -4558,17 +4577,6 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		return this.isEnabled(this.item());
 	};
 	
-	Window_ItemList.prototype.includes = function(item) {
-		switch (this._category) {
-		case 'organize':
-			return !DataManager.isItem(item) || item.itypeId !== 2;
-		case 'stash':
-			return DataManager.isItem(item) && item.itypeId === 2;
-		default:
-			return false;
-		}
-	};
-	
 	Window_ItemList.prototype.needsNumber = function() {
 		return !this._actor;
 	};
@@ -4592,7 +4600,13 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 				this._data.push(item);
 			}, this);
 		} else {
-			this._data = $gameParty.allItems();
+			$gameParty.allItems().forEach(function(item) {
+				if((this._category === "stash" && ((DataManager.isItem(item) && item.itypeId === 1) || DataManager.isWeapon(item) || DataManager.isArmor(item)))
+					|| (this._category === "keyItems" && DataManager.isItem(item) && item.itypeId === 2))
+				{
+					this._data.push(item);
+				}
+			}, this);
 		}
 	};
 	
@@ -4632,7 +4646,11 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 				} else {
 					this._statusWindow.setActionsItem(this.item());
 					if(DataManager.isItem(this.item())) {
-						this._statusWindow.showActions();
+						if(this.item().itypeId === 1) {
+							this._statusWindow.showActions();
+						} else {
+							this._statusWindow.showDescription();
+						}
 					} else if(DataManager.isWeapon(this.item())) {
 						this._statusWindow.showActions();
 					} else if(DataManager.isArmor(this.item())) {
@@ -4941,7 +4959,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 					this.playOkSound();
 					this.refresh();
 				}
-			} else if (this._category === "stash") {
+			} else if (this._category === "stash" || this._category === "keyItems") {
 				if(this.item()) {
 					this.playOkSound();
 					this.deactivate();

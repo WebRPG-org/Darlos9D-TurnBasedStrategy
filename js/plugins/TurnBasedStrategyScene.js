@@ -1315,7 +1315,7 @@
 					itemWindow.deselect();
 				}
 			});
-		} else if (this._categoryWindow.index() == 1){
+		} else if (this._categoryWindow.index() == 1 || this._categoryWindow.index() == 2){
 			this._itemWindow.activate();
 			this._itemWindow.select(0);
 		}
@@ -1338,6 +1338,8 @@
 			itemWindow.deselect();
 			itemWindow.refresh();
 		});
+		this._itemOptionsWindow.setItem(undefined);
+		this._itemOptionsWindow.setActor(undefined);
 		this._categoryWindow.activate();
 	};
 
@@ -1350,6 +1352,8 @@
 	};
 
 	Scene_Item.prototype.onItemCancel = function() {
+		this._itemOptionsWindow.setItem(undefined);
+		this._itemOptionsWindow.setActor(undefined);
 		this._itemWindow.deselect();
 		this._categoryWindow.activate();
 	};
