@@ -4516,7 +4516,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_ItemList.prototype.windowHeight = function() {
-		return this.fittingHeight(3);
+		return this.fittingHeight(Math.floor(Game_BattlerBase.prototype.maxItems()/2));
 	};
 	
 	Window_ItemList.prototype.maxItems = function() {

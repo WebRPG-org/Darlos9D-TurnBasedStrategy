@@ -363,6 +363,34 @@
 		$gameMap.addMessageWindow(true, stayOnScreen, x, y, text, soundEffect, dontWaitOn, duration, closeable);
 	};
 	
+	Game_System.prototype.skillLevelCheck = function(skillName, skillLevel) {
+		var i;
+		for(i = 0; i < $gameParty.size(); i++) {
+			var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(i));
+			if(battler.totalSkill(skillName) >= skillLevel) {
+				return true;
+			}
+		}
+		return false;
+	};
+	
+	Game_System.prototype.skillCheck = function(successSkill, difficulty, abilitySkill, abilitySkillLevel) {
+		var userFound = false;
+		var highestLevel = 0;
+		var i;
+		for(i = 0; i < $gameParty.size(); i++) {
+			var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(i));
+			if(abilitySkill !== undefined 
+				&& abilitySkillLevel !== undefined
+				&& battler.totalSkill(abilitySkill) < abilitySkillLevel) { continue; }
+			userFound = true;
+			if(battler.totalSkill(successSkill) > highestLevel) {
+				highestLevel = battler.totalSkill(successSkill);
+			}
+		}
+		return userFound ? BattleManager.rollForRanks(highestLevel*10, 0) > difficulty*10+30 : false;
+	};
+	
 	//item
 	Game_Item.prototype.actions = function() {
 		if(!this.isWeapon() && !this.isArmor() && !this.isItem()) {

@@ -400,4 +400,22 @@ $gameSystem.addAbsoluteMessageWindow(
 
 Add a special message window to the screen, centered on the given map location, with a size based on the text. stayOnScreen will keep the message window at the edge of the screen, if the map location is currently offscreen. text is an array of strings, where each string in the array represents a new line in the message window. soundEffect is an object, defined above, that tells what sound effect to play every time the text advances. waitOn determines whether or not the event processing will wait for the window to close before proceeding, and if false the event processing will continue after opening the window. duration, if set to zero or higher, will automatically close the window after that number of frames. Normally, if duration is not set or is less than zero, the window will be closed when the player presses ok or cancel buttons. With a valid duration, player input will no longer close the window. If you wish for the player to still be able to manually close the window even with a valid duration, set closeable to true.
 
-Multiple windows can be opened concurrently, if multiple are called upon with waitOn set to false.
+Multiple windows can be opened concurrently, if multiple are called upon with dontWaitOn set to true.
+
+------------------------------------------------------
+$gameSystem.skillLevelCheck(
+	skillName,
+	skillLevel
+);
+
+Checks to see if any party member has the given skill, at the given level. skillName is the name of a skill, and skillLevel is the level at least one party member has to have the skill at.
+
+------------------------------------------------------
+$gameSystem.skillCheck(
+	successSkill,
+	difficulty,
+	abilitySkill,
+	abilitySkillLevel
+);
+
+Performs a skill check, against the given difficulty, using the party member who has the highest level in the given skill. successSkill is the name of a skill. difficulty is an integer, providing about a 50/50 chance of success against a skill of an equivalent level. abilitySkill and abilitySkillLevel are optional, and similar to the parameters of skillLevelCheck(). Any party member who does not meet the ability skill level check is excluded from the search for the highest successSkill level.
