@@ -2399,14 +2399,27 @@
 		if(chara.isMoving()) { return; }
 		if(this._tbsActionMoveDestinationX === -1 && !this.isTargetInRangeFromPosition(chara.x, chara.y)) {
 			this.calculateMoveDestinationForAction();
+			this.setTbsCursorFocus(chara.x, chara.y);
+			return;
 		}
 		if(this._tbsActionMoveDestinationX !== -1
 			&& (this._tbsActionMoveDestinationX !== chara.x || this._tbsActionMoveDestinationY !== chara.y)) {
+			$gamePlayer.setTbsFollowingCharacter(true);
+			$gamePlayer.setTbsShowCursor(false);
+			$gamePlayer.refresh();
 			var direction = chara.findDirectionTo(this._tbsActionMoveDestinationX, this._tbsActionMoveDestinationY);
 			chara.moveStraight(direction);
+			$gamePlayer.setNextFrameMoveDirection(direction);
 			return;
 		}
-		this.clearTbsActionMoveDestination();
+		if(this._tbsActionMoveDestinationX !== -1) {
+			$gamePlayer.setTbsFollowingCharacter(false);
+			$gamePlayer.setTbsShowCursor(true);
+			$gamePlayer.refresh();
+			this.clearTbsActionMoveDestination();
+			this.setTbsCursorFocus(this._tbsActionTargetLocationX, this._tbsActionTargetLocationY);
+			return;
+		}
 		this.setTbsTurnMode("actionBattleScene");
 	};
 	
