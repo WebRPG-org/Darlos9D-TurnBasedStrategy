@@ -2427,9 +2427,10 @@
 		var chara = this._tbsSelectedActor.chara;
 		var checkedTiles = [];
 		var destinationFound = false;
+		var moveTiles = this._tbsSelectedAction.attackAndMove ? this._tbsAttackAndMoveTiles : this._tbsMoveTiles;
 		while(!destinationFound) {
 			var closestDistance = -1;
-			this._tbsMoveTiles.forEach(function (moveTile) {
+			moveTiles.forEach(function (moveTile) {
 				if(this.getExistingTbsTile(moveTile.x, moveTile.y, checkedTiles)) { return; }
 				var distance = this.actualDistance(moveTile.x, moveTile.y, chara.x, chara.y);
 				if(closestDistance < 0 || distance < closestDistance) {
