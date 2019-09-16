@@ -2311,8 +2311,8 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, acc, accBonus, eva, tr
 {
 	var solidDef = fullCoverage ? Math.max(100, partProt.defense.solid) : partProt.defense.solid;
 	var fluidDef = fullCoverage ? Math.max(100, partProt.defense.fluid) : partProt.defense.fluid;
-	var solidAccBypassRoll = this.rollForRanks(acc, subjectStress);
-	var fluidAccBypassRoll = this.rollForRanks(acc, subjectStress);
+	var solidAccBypassRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+	var fluidAccBypassRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
 	var solidBypassRoll = this.rollForRanks(eva, isDown ? 100 : targetStress, 2 * (solidDef/100));
 	var fluidBypassRoll = this.rollForRanks(eva, isDown ? 100 : targetStress, 2 * (fluidDef/100));
 	var solidStilettoBypass = solidAccBypassRoll > solidBypassRoll;
@@ -2320,13 +2320,13 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, acc, accBonus, eva, tr
 	var solidRegularBypass = solidDef <= 70 && solidAccBypassRoll > solidBypassRoll;
 	var fluidBypass = fluidDef < 100 && fluidAccBypassRoll > fluidBypassRoll;
 	
-	var solidAccDamRoll = this.rollForRanks(acc, subjectStress);
-	var solidEvaRoll = this.rollForRanks(eva, isDown ? 100 : targetStress);
+	var solidAccDamRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+	var solidEvaRoll = this.rollForRanks(eva, isDown ? 100 : targetStress, solidDef/100);
 	var solidDamScale = solidEvaRoll <= 0 ? (solidAccDamRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, solidAccDamRoll / solidEvaRoll));
-	var fluidAccDamRoll = this.rollForRanks(acc, subjectStress);
-	var fluidEvaRoll = this.rollForRanks(eva, isDown ? 100 : targetStress);
+	var fluidAccDamRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+	var fluidEvaRoll = this.rollForRanks(eva, isDown ? 100 : targetStress, fluidDef/100);
 	var fluidDamScale = fluidEvaRoll <= 0 ? (fluidAccDamRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, fluidAccDamRoll / fluidEvaRoll));
-	var tripAccDamRoll = this.rollForRanks(acc, subjectStress);
+	var tripAccDamRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
 	var tripEvaRoll = this.rollForRanks(tripEva, isDown ? 100 : targetStress);
 	var tripDamScale = tripEvaRoll <= 0 ? (tripAccDamRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, tripAccDamRoll / tripEvaRoll));
 	
@@ -2426,12 +2426,12 @@ BattleManager.resolvePhysicalDamage = function(hitDamage, acc, accBonus, eva, tr
 };
 
 BattleManager.resolveMentalDamage = function(hitDamage, acc, accBonus, eva, partProt, tough, subjectStress, targetStress, isDown) {
-	var accBypassRoll = this.rollForRanks(acc, subjectStress);
+	var accBypassRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
 	var bypassRoll = this.rollForRanks(eva, isDown ? 100 : targetStress, 2 * (partProt.defense/100));
 	var bypass = partProt.defense < 100 && accBypassRoll > bypassRoll;
 	
-	var accDamRoll = this.rollForRanks(acc, subjectStress);
-	var evaRoll = this.rollForRanks(eva, isDown ? 100 : targetStress);
+	var accDamRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+	var evaRoll = this.rollForRanks(eva, isDown ? 100 : targetStress, partProt.defense/100);
 	var damScale = evaRoll <= 0 ? (accDamRoll <= 0 ? 1 : 1.5) : Math.max(0.5, Math.min(1.5, accDamRoll / evaRoll));
 	
 	var finalPow = Math.max(0, damScale * hitDamage.mental - (bypass ? tough : partProt.armor + tough));
