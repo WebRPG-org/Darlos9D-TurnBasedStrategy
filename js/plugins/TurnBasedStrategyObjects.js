@@ -449,7 +449,8 @@
 		this._sqrtOfTwo = Math.sqrt(2);
 		this._shouldOpenActionWindow = false;
 		this._tbsMoveTiles = [];
-		this._tbsAttackAndMoveTiles = [];
+		this._tbsHalfMoveTiles = [];
+		this._tbsFullMoveTiles = [];
 		this._tbsActionsTiles = [];
 		this._tbsSelectedActor = undefined;
 		this._tbsManualMoveStartX = -1;
@@ -1468,7 +1469,8 @@
 					this._tbsTurnJustStarted = true;
 					this._tbsRoundJustStarted = false;
 					this._tbsMoveTiles = [];
-					this._tbsAttackAndMoveTiles = [];
+					this._tbsHalfMoveTiles = [];
+					this._tbsFullMoveTiles = [];
 					this._tbsActionsTiles = [];
 					this.setTbsSelectedActor(undefined);
 					this.clearTbsManualMoveStart();
@@ -1618,7 +1620,8 @@
 				break;
 			case "victory":
 				this._tbsMoveTiles = [];
-				this._tbsAttackAndMoveTiles = [];
+				this._tbsHalfMoveTiles = [];
+				this._tbsFullMoveTiles = [];
 				this._tbsActionsTiles = [];
 				this.setTbsSelectedActor(undefined);
 				this.clearTbsManualMoveStart();
@@ -1651,7 +1654,8 @@
 				break;
 			case "gameOver":
 				this._tbsMoveTiles = [];
-				this._tbsAttackAndMoveTiles = [];
+				this._tbsHalfMoveTiles = [];
+				this._tbsFullMoveTiles = [];
 				this._tbsActionsTiles = [];
 				this.setTbsSelectedActor(undefined);
 				this.clearTbsManualMoveStart();
@@ -1752,7 +1756,8 @@
 		}
 		
 		this._tbsMoveTiles = [];
-		this._tbsAttackAndMoveTiles = [];
+		this._tbsHalfMoveTiles = [];
+		this._tbsFullMoveTiles = [];
 		this._tbsActionsTiles = [];
 		this.setTbsSelectedActor(undefined);
 		this.clearTbsManualMoveStart();
@@ -1912,7 +1917,7 @@
 			var actionRange = actionAtPosition.actionRange;
 			var actionTiles = actionAtPosition.actionTiles;
 			this._queuedActionLoops++;
-			this.checkActionTiles(actionAtPosition.x, actionAtPosition.y, false, actionRange, actionTiles, true);
+			this.checkActionTiles(actionAtPosition.x, actionAtPosition.y, false, false, actionRange, actionTiles, true);
 			if(this._tbsQueuedActionsAtPositions.length == 0) {
 				break;
 			}
@@ -1932,7 +1937,7 @@
 			var actionRange = this.getLargestActionRange(action);
 			var actionTiles = [];
 			this._queuedActionLoops++;
-			this.checkActionTiles(chara.x, chara.y, action.attackAndMove, actionRange, actionTiles);
+			this.checkActionTiles(chara.x, chara.y, action.cantUseHalfMove, action.cantUseFullMove, actionRange, actionTiles);
 			this._tbsActionsTiles[this._tbsActionsTiles.length] = actionTiles;
 			if(this._tbsQueuedActions.length == 0) {
 				this.processQueuedActionsAtPositions();
@@ -2179,10 +2184,10 @@
 	
 	Game_Map.prototype.updateTbsMovementRangeField = function() {
 		if($gameTemp.isFreeToMakeRangeTiles()) {
-			this._tbsAttackAndMoveTiles.forEach(function (tile) {
+			this._tbsHalfMoveTiles.forEach(function (tile) {
 				$gameTemp.addTbsRangeTile(tile.x, tile.y, 'yellow');
 			});
-			this._tbsMoveTiles.forEach(function (tile) {
+			this._tbsFullMoveTiles.forEach(function (tile) {
 				$gameTemp.addTbsRangeTile(tile.x, tile.y, 'white');
 			});
 		}
@@ -2270,13 +2275,30 @@
 		}
 	};
 	
-	Game_Map.prototype.isTbsSelectedActorInLOSOfPosition = function(x, y) {
-		if(!this._tbsSelectedActor) { return false; }
+	Game_Map.prototype.tbsSelectedActorInLOSOfPositionType = function(x, y) {
+		if(!this._tbsSelectedActor) { return "none"; }
 		var chara = this._tbsSelectedActor.chara;
-		if(x == chara.x && y == chara.y) { return true; }
-		var distance = this.actualDistance(x, y, chara.x, chara.y);
-		return distance < 1.5
-			|| !this.isTrajectoryObstructed(chara.x, chara.y, x, y, "thrown");
+		if(x == chara.x && y == chara.y) { return "direct"; }
+		if(!this.isTrajectoryObstructed(chara.x, chara.y, x, y, "thrown")) {
+			return "direct";
+		}
+		var baseRange = this._tbsSelectedActor.battler.baseRange()/2;
+		var baseRangeRadius = Math.ceil(baseRange);
+		var curY = chara.y-baseRangeRadius;
+		for(; curY <= chara.y+baseRangeRadius; curY++){
+			var curX = chara.x-baseRangeRadius;
+			for(; curX <= chara.x+baseRangeRadius; curX++){
+				if(curX == chara.x && curY == chara.y) { continue; }
+				if(this.tbsCursorRegions().length > 0 && this.tbsCursorRegions().indexOf(this.regionId(curX, curY)) < 0) { continue; }
+				if(curX < 0 || curY < 0 || curX >= this.width || curY >= this.height) { continue; }
+				var baseRangeDistance = this.actualDistance(chara.x, chara.y, curX, curY);
+				if(baseRangeDistance > baseRange) { continue; }
+				if(!this.isTrajectoryObstructed(curX, curY, x, y, "thrown")) {
+					return "reach";
+				}
+			}
+		}
+		return "none";
 	};
 	
 	Game_Map.prototype.spawnTbsLOSSprites = function() {
@@ -2285,8 +2307,9 @@
 		this._tbsForces.forEach(function (force) {
 			force.actors.forEach(function (actor) {
 				if(actor.chara.x == chara.x && actor.chara.y == chara.y) { return; }
-				if(this.isTbsSelectedActorInLOSOfPosition(actor.chara.x, actor.chara.y)) {
-					this._tbsAoeSprites.push($gameTemp.addTbsAoeSprite(actor.chara.x, actor.chara.y));
+				var losType = this.tbsSelectedActorInLOSOfPositionType(actor.chara.x, actor.chara.y);
+				if(losType !== "none") {
+					this._tbsAoeSprites.push($gameTemp.addTbsAoeSprite(actor.chara.x, actor.chara.y, losType === "reach"));
 				}
 			}, this);
 		}, this);
@@ -2426,11 +2449,30 @@
 	Game_Map.prototype.isTargetInRangeFromPosition = function(x, y) {
 		if(!this._tbsSelectedActor || !this._tbsSelectedAction || this._tbsActionTargetLocationX === -1) { return false; }
 		if(x == this._tbsActionTargetLocationX && y == this._tbsActionTargetLocationY) { return true; }
-		var distance = this.actualDistance(x, y, this._tbsActionTargetLocationX, this._tbsActionTargetLocationY);
 		var actionRange = this.getLargestActionRange(this._tbsSelectedAction);
-		if(distance > (actionRange.ignoreUserRange ? 0 : actionRange.baseRange) + actionRange.range) { return false; }
-		return distance < 1.5
-			|| !this.isTrajectoryObstructed(x, y, this._tbsActionTargetLocationX, this._tbsActionTargetLocationY, actionRange.type);
+		if(actionRange.ignoreUserRange) {
+			var distance = this.actualDistance(x, y, this._tbsActionTargetLocationX, this._tbsActionTargetLocationY);
+			if(distance > actionRange.range) { return false; }
+			return !this.isTrajectoryObstructed(x, y, this._tbsActionTargetLocationX, this._tbsActionTargetLocationY, actionRange.type);
+		} else {
+			var baseRangeRadius = Math.ceil(actionRange.baseRange);
+			var curY = y-baseRangeRadius;
+			for(; curY <= y+baseRangeRadius; curY++){
+				var curX = x-baseRangeRadius;
+				for(; curX <= x+baseRangeRadius; curX++){
+					if(this.tbsCursorRegions().length > 0 && this.tbsCursorRegions().indexOf(this.regionId(curX, curY)) < 0) { continue; }
+					if(curX < 0 || curY < 0 || curX >= this.width || curY >= this.height) { continue; }
+					var baseRangeDistance = this.actualDistance(x, y, curX, curY);
+					if(baseRangeDistance > actionRange.baseRange) { continue; }
+					var distance = this.actualDistance(curX, curY, this._tbsActionTargetLocationX, this._tbsActionTargetLocationY);
+					if(distance > actionRange.range) { continue; }
+					if(!this.isTrajectoryObstructed(curX, curY, this._tbsActionTargetLocationX, this._tbsActionTargetLocationY, actionRange.type)) {
+						return true;
+					}
+				}
+			}
+			return false;
+		}
 	};
 	
 	Game_Map.prototype.calculateMoveDestinationForAction = function() {
@@ -2440,7 +2482,12 @@
 		var chara = this._tbsSelectedActor.chara;
 		var checkedTiles = [];
 		var destinationFound = false;
-		var moveTiles = this._tbsSelectedAction.attackAndMove ? this._tbsAttackAndMoveTiles : this._tbsMoveTiles;
+		var moveTiles = this._tbsMoveTiles;
+		if(this._tbsSelectedAction.cantUseHalfMove) {
+			moveTiles = this._tbsFullMoveTiles;
+		} else if(this._tbsSelectedAction.cantUseFullMove) {
+			moveTiles = this._tbsHalfMoveTiles;
+		}
 		while(!destinationFound) {
 			var closestDistance = -1;
 			moveTiles.forEach(function (moveTile) {
@@ -2590,7 +2637,7 @@
 			return;
 		}
 		
-		if(this._tbsSelectedAction.attackAndMove && !this._tbsSelectedActor.battler.isDown()) {
+		if(this._tbsSelectedAction.returnToStart && !this._tbsSelectedActor.battler.isDown()) {
 			this.setTbsCursorFocus(this._tbsSelectedActor.chara.x, this._tbsSelectedActor.chara.y);
 			this.setTbsManualMoveStart(this._tbsMoveTiles[0].x, this._tbsMoveTiles[0].y);
 			this.setTbsTurnMode("postActionMove");
@@ -2685,14 +2732,17 @@
 	Game_Map.prototype.generateTbsMoveField = function() {
 		var tbsActor = this._tbsSelectedActor;
 		this._tbsMoveTiles = [];
-		this._tbsAttackAndMoveTiles = [];
+		this._tbsHalfMoveTiles = [];
+		this._tbsFullMoveTiles = [];
 		if(!tbsActor || !tbsActor.canActThisRound || tbsActor.movedThisRound) { return; }
 		var moveRange = Math.max(1, tbsActor.battler.moveRange() / 2);
 		var moveType = (tbsActor.battler.limbsType() === "winged" && tbsActor.battler.isFlying()) ? "fly" : "walk";
 		this.checkMoveTile(tbsActor.chara.x, tbsActor.chara.y, moveRange, this._tbsMoveTiles, moveType);
 		this._tbsMoveTiles.forEach(function (moveTile) {
 			if(moveRange - moveTile.remainingRange <= moveRange/2) {
-				this._tbsAttackAndMoveTiles.push(moveTile);
+				this._tbsHalfMoveTiles.push(moveTile);
+			} else {
+				this._tbsFullMoveTiles.push(moveTile);
 			}
 		}, this);
 	};
@@ -2791,7 +2841,7 @@
 		return returnActor;
 	};
 	
-	Game_Map.prototype.canReturnFromCurrentPosition = function() {
+	Game_Map.prototype.tbsCurrentPositionIsFullMove = function() {
 		if(!this._tbsSelectedActor || !this._tbsMoveTiles || this._tbsMoveTiles.length <= 0)
 		{
 			return false;
@@ -2800,10 +2850,23 @@
 		var moveTile = this.getExistingTbsTile(
 			tbsActor.chara.x,
 			tbsActor.chara.y,
-			this._tbsMoveTiles
+			this._tbsFullMoveTiles
 		);
-		var moveRange = Math.max(1, tbsActor.battler.moveRange() / 2);
-		return moveTile.remainingRange >= moveRange/2;
+		return !!moveTile;
+	};
+	
+	Game_Map.prototype.tbsCurrentPositionIsHalfMove = function() {
+		if(!this._tbsSelectedActor || !this._tbsMoveTiles || this._tbsMoveTiles.length <= 0)
+		{
+			return false;
+		}
+		var tbsActor = this._tbsSelectedActor;
+		var moveTile = this.getExistingTbsTile(
+			tbsActor.chara.x,
+			tbsActor.chara.y,
+			this._tbsHalfMoveTiles
+		);
+		return !!moveTile;
 	};
 	
 	Game_Map.prototype.directionIsDiagonal = function(d) {
@@ -3002,12 +3065,32 @@
 		return members;
 	};
 	
-	Game_Map.prototype.checkActionTiles = function(x, y, attackAndMove, actionRange, actionTiles, treatAsMovedThisRound) {
-		var baseRange = actionRange.ignoreUserRange ? 0 : actionRange.baseRange;
+	Game_Map.prototype.checkActionTiles = function(x, y, cantUseHalfMove, cantUseFullMove, actionRange, actionTiles, treatAsMovedThisRound) {
 		var that = this;
-		this.getReachedActionTiles(x, y, actionRange.range + baseRange, actionTiles, actionRange.type, !treatAsMovedThisRound);
+		this.getReachedActionTiles(x, y, actionRange.range, actionTiles, actionRange.type, !treatAsMovedThisRound);
+		if(!actionRange.ignoreUserRange) {
+			var baseRangeRadius = Math.ceil(actionRange.baseRange);
+			var curY = y-baseRangeRadius;
+			for(; curY <= y+baseRangeRadius; curY++){
+				var curX = x-baseRangeRadius;
+				for(; curX <= x+baseRangeRadius; curX++){
+					this._queuedActionLoops++;
+					if(curX == x && curY == y) { continue; }
+					if(this.tbsCursorRegions().length > 0 && this.tbsCursorRegions().indexOf(this.regionId(curX, curY)) < 0) { continue; }
+					if(curX < 0 || curY < 0 || curX >= this.width || curY >= this.height) { continue; }
+					var distance = this.actualDistance(x, y, curX, curY);
+					if(distance > actionRange.baseRange) { continue; }
+					this.getReachedActionTiles(curX, curY, actionRange.range, actionTiles, actionRange.type, !treatAsMovedThisRound);
+				}
+			}
+		}
 		if(!treatAsMovedThisRound && !this._tbsSelectedActor.movedThisRound) {
-			var moveTiles = attackAndMove ? this._tbsAttackAndMoveTiles : this._tbsMoveTiles;
+			var moveTiles = this._tbsMoveTiles;
+			if(cantUseHalfMove) {
+				moveTiles = this._tbsFullMoveTiles;
+			} else if(cantUseFullMove) {
+				moveTiles = this._tbsHalfMoveTiles;
+			}
 			moveTiles.forEach(function (moveTile) {
 				this._queuedActionLoops++;
 				if(!that.getTbsActorAtPosition(moveTile.x, moveTile.y)) {
@@ -3037,7 +3120,7 @@
 				tile.x = curX;
 				tile.y = curY;
 				tile.centerMovePosition = centerMoveTile;
-				if(distance < 1.5 || !this.isTrajectoryObstructed(x, y, curX, curY, passageType, tile)) {
+				if(!this.isTrajectoryObstructed(x, y, curX, curY, passageType, tile)) {
 					actionTiles.push(tile);
 				}
 			}

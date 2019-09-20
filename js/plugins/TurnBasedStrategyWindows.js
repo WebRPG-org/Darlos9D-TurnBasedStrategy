@@ -2177,7 +2177,8 @@ Window_TbsAction.prototype.costWidth = function() {
 
 Window_TbsAction.prototype.isEnabled = function(action) {
 	if(this._tbsActor && action) {
-		return !action.attackAndMove || $gameMap.canReturnFromCurrentPosition();
+		return (!action.cantUseHalfMove || $gameMap.tbsCurrentPositionIsFullMove())
+			&& (!action.cantUseFullMove || $gameMap.tbsCurrentPositionIsHalfMove());
 	}
 	return false;
 };
