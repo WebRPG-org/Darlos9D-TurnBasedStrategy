@@ -1516,6 +1516,7 @@
 					this.clearTbsAoeSprites();
 				}
 				if(prevMode === "manualMove") {
+					this.clearTbsAoeSprites();
 					if(this._tbsSelectedActor.movedThisRound) {
 						this.generateTbsActionFields();
 					}
@@ -1532,6 +1533,7 @@
 					}
 				}
 				if(prevMode === "cancelMove") {
+					this.clearTbsAoeSprites();
 					this._tbsSelectedActor.movedThisRound = false;
 					this._tbsCancelMoveJustEnded = true;
 					if(this._tbsAoeSprites.length > 0) {
@@ -1571,6 +1573,7 @@
 			case "cancelMove":
 				//$gameTemp.setShouldClearTbsDamageSprites(true);
 				$gamePlayer.setTbsFollowingCharacter(true);
+				this.clearTbsAoeSprites();
 				break;
 			case "selectActionTarget":
 				if(prevMode !== "manualTarget") {

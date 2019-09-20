@@ -236,15 +236,19 @@
 				$gameMap.setBreadcrumbStage("selectingActor");
 			}
 			if($gameMap.checkTbsCancelMoveJustEnded()) {
-				this._tbsActorWindow.close();
-				this._tbsActorWindow.deactivate();
+				this._tbsActorWindow.refresh();
+				this._tbsActorWindow.show();
+				this._tbsActorWindow.open();
+				this._tbsActorWindow.activate();
 				this._tbsActorWindow.shouldOpenActionTypeWindow(false);
 				this._tbsActorWindow.shouldPassTurn(false);
 				this._tbsActorWindow.shouldActivateSurvey(false);
-				this._tbsActionTypeWindow.refresh();
-				this._tbsActionTypeWindow.show();
-				this._tbsActionTypeWindow.open();
-				this._tbsActionTypeWindow.activate();
+				this._tbsActorWindow.shouldActivateManualMove(false);
+				this._tbsActionTypeWindow.close();
+				this._tbsActionTypeWindow.deactivate();
+				this._tbsActionTypeWindow.shouldOpenActorWindow(false);
+				this._tbsActionTypeWindow.shouldOpenActionWindow(false);
+				this._tbsActionTypeWindow.shouldActivateManualMove(false);
 				this._tbsActionWindow.close();
 				this._tbsActionWindow.deactivate();
 				this._tbsActionWindow.shouldOpenActionTypeWindow(false);
@@ -259,7 +263,7 @@
 				this._tbsTargetPartWindow.deactivate();
 				this._tbsTargetPartWindow.shouldOpenTargetWindow(false);
 				this._tbsTargetPartWindow.shouldActivateManualTarget(false);
-				$gameMap.setBreadcrumbStage("actor");
+				$gameMap.setBreadcrumbStage("selectingActor");
 			}
 			if(this.isOkWhileControllingCursor()) {
 				if(($gameMap.tbsTurnMode() === "manualMove" && $gameMap.getTbsActorAtPosition($gamePlayer.x, $gamePlayer.y, true))
@@ -651,8 +655,8 @@
 		if(this._tbsActorWindow.isOnPass()) {
 			this._tbsActorWindow.shouldPassTurn(true);
 		} else {
-			this._tbsActorWindow.shouldOpenActionTypeWindow(true);
-			$gameMap.setBreadcrumbStage("actor");
+			this._tbsActorWindow.shouldActivateManualMove(true);
+			$gameMap.setBreadcrumbStage("manualMove");
 		}
 		this._tbsActorWindow.close();
 		this._tbsActorWindow.deactivate();
@@ -672,6 +676,7 @@
 			$gameMap.setBreadcrumbStage("selectingActor");
 		} else {
 			this._tbsActionTypeWindow.shouldActivateManualMove(true);
+			$gameMap.setBreadcrumbStage("manualMove");
 		}
 		this._tbsActionTypeWindow.deactivate();
 		this._tbsActionTypeWindow.close();

@@ -1667,6 +1667,10 @@ Window_TbsActor.prototype.shouldActivateSurvey = function(should) {
 	this._shouldActivateSurvey = should;
 };
 
+Window_TbsActor.prototype.shouldActivateManualMove = function(should) {
+	this._shouldActivateManualMove = should;
+};
+
 Window_TbsActor.prototype.refreshWindowContents = function(dontSelectFirst) {
 	this.move(this.x, this.y, this.windowWidth(), this.windowHeight());
 	this.createContents();
@@ -1715,9 +1719,13 @@ Window_TbsActor.prototype.updateClose = function() {
 			if(this._shouldActivateSurvey) {
 				$gameMap.setTbsTurnMode("survey");
 			}
+			if(this._shouldActivateManualMove) {
+				$gameMap.setTbsTurnMode("manualMove");
+			}
 			this._shouldActivateSurvey = false;
 			this._shouldPassTurn = false;
 			this._shouldOpenActionTypeWindow = false;
+			this._shouldActivateManualMove = false;
         }
     }
 };
@@ -1757,7 +1765,7 @@ Window_TbsActionType.prototype.setTbsActor = function(tbsActor) {
 };
 
 Window_TbsActionType.prototype.numVisibleRows = function() {
-    return 5;
+    return 4;
 };
 
 Window_TbsActionType.prototype.makeCommandList = function() {
@@ -1797,7 +1805,7 @@ Window_TbsActionType.prototype.makeCommandList = function() {
 	this.addCommand(name, 'action', actionLists[4].length > 0, 4);
 	var name = $dataSystem.skillTypes[3];
 	this.addCommand(name, 'action', actionLists[3].length > 0, 3);
-	this.addCommand("*Move", 'move', this.isMoveEnabled(), 4);
+	//this.addCommand("*Move", 'move', this.isMoveEnabled(), 4);
 };
 
 Window_TbsActionType.prototype.isMoveEnabled = function() {
@@ -1875,6 +1883,17 @@ Window_TbsActionType.prototype.shouldActivateManualMove = function(should) {
 Window_TbsActionType.prototype.open = function() {
 	Window_Command.prototype.open.call(this);
 	this.update();
+};
+
+Window_TbsActionType.prototype.updateOpen = function() {
+    if (this._opening) {
+        this.openness += this.openCloseSpeed();
+        if (this.isOpen()) {
+            this._opening = false;
+			this.refresh();
+			this.select(0);
+        }
+    }
 };
 
 Window_TbsActionType.prototype.updateClose = function() {
