@@ -1524,7 +1524,6 @@
 					this._tbsSelectedActor.movedThisRound = true;
 					if(this._tbsManualMoveStartX !== -1
 						&& chara.x === this._tbsManualMoveStartX && chara.y === this._tbsManualMoveStartY) {
-						this._tbsSelectedActor.movedThisRound = false;
 						this.clearTbsManualMoveStart();
 					}
 					if(this._tbsAoeSprites.length > 0) {
