@@ -1746,7 +1746,6 @@ Window_TbsActionType.prototype.initialize = function(x, y) {
     Window_Command.prototype.initialize.call(this, x, y);
     this._tbsActor = null;
 	this._skipDisabled = true;
-	this._moveEnabledPrev = true;
 };
 
 Window_TbsActionType.prototype.windowWidth = function() {
@@ -1836,17 +1835,6 @@ Window_TbsActionType.prototype.update = function() {
 			this._actionWindow.setTbsActor(this._tbsActor);
 		}
 	}
-	if(this._moveEnabledPrev !== this.isMoveEnabled()) {
-        this.refresh();
-		if(this.isMoveEnabled()) {
-			this.select(4);
-		} else {
-			if(!this.isCurrentItemEnabled()) {
-				this.selectFirstEnabledItem();
-			}
-		}
-	}
-	this._moveEnabledPrev = this.isMoveEnabled();
 };
 
 Window_TbsActionType.prototype.processCancel = function() {
@@ -1891,7 +1879,6 @@ Window_TbsActionType.prototype.updateOpen = function() {
         if (this.isOpen()) {
             this._opening = false;
 			this.refresh();
-			this.select(0);
         }
     }
 };

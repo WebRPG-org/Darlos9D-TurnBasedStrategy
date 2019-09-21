@@ -277,6 +277,7 @@
 						this._tbsActionTypeWindow.show();
 						this._tbsActionTypeWindow.open();
 						this._tbsActionTypeWindow.activate();
+						this._tbsActionTypeWindow.select(0);
 						this._tbsTargetWindow.setActionIndex(-1);
 						$gameMap.setTbsTurnMode("selectActorActionType");
 						$gameMap.setBreadcrumbStage("actor");

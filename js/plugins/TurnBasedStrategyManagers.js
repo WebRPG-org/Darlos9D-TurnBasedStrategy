@@ -1237,7 +1237,8 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 									target.isDown(),
 									targetingType,
 									useFirstHeld,
-									useSecondHeld);
+									useSecondHeld,
+									hit.rangeType === "fired");
 							} else if (isFluid) {
 								hitResult = this.calculateBodyPartHit(subjectStress, targetStress, acc, accBonus, eva,
 									criticalPartProt.defense.fluid,
@@ -1254,7 +1255,8 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 									target.isDown(),
 									targetingType,
 									useFirstHeld,
-									useSecondHeld);
+									useSecondHeld,
+									hit.rangeType === "fired");
 							}
 						}
 						if(isMental && !hitResult.dodged) {
@@ -2105,7 +2107,7 @@ BattleManager.getCompleteDamage = function(subject, actionInfo, hit) {
 
 BattleManager.calculateBodyPartHit = function(subjectStress, targetStress, acc, accBonus, dodgeEva, criticalDef, vitalDef,
 		firstLimbDef, secondLimbDef, firstHeldDef, secondHeldDef, leftLimbFirst, leftHeldFirst, targetingMobility, leftMobilityFirst,
-		defendingWithLegs, isDown, targetingType, useFirstHeld, useSecondHeld)
+		defendingWithLegs, isDown, targetingType, useFirstHeld, useSecondHeld, hardToBlock)
 {
 	var results = {};
 	results.dodged = false;
@@ -2179,10 +2181,11 @@ BattleManager.calculateBodyPartHit = function(subjectStress, targetStress, acc, 
 	}
 	
 	var limbBypassRoll = this.rollForRanks(acc, subjectStress, accBonus/100);
+	var blockDivider = hardToBlock ? 4 : 1;
 	
 	if(targetingType !== "limbsAndVital") {
 		if(useFirstHeld) {
-			var firstHeldEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress, firstHeldDef/100);
+			var firstHeldEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress, firstHeldDef/100/blockDivider);
 			if(limbBypassRoll <= firstHeldEvaRoll) {
 				if(leftHeldFirst) {
 					results.hit.leftHeld = true;
@@ -2193,7 +2196,7 @@ BattleManager.calculateBodyPartHit = function(subjectStress, targetStress, acc, 
 			}
 		}
 		if(useSecondHeld) {
-			var secondHeldEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress, secondHeldDef/100);
+			var secondHeldEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress, secondHeldDef/100/blockDivider);
 			if(limbBypassRoll <= secondHeldEvaRoll) {
 				if(leftHeldFirst) {
 					results.hit.rightHeld = true;
@@ -2205,7 +2208,7 @@ BattleManager.calculateBodyPartHit = function(subjectStress, targetStress, acc, 
 		}
 	}
 	
-	var firstLimbEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress);
+	var firstLimbEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress, 1/blockDivider);
 	if(limbBypassRoll <= firstLimbEvaRoll) {
 		if(leftLimbFirst) {
 			if(defendingWithLegs) {
@@ -2223,7 +2226,7 @@ BattleManager.calculateBodyPartHit = function(subjectStress, targetStress, acc, 
 		return results;
 	}
 	
-	var secondLimbEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress);
+	var secondLimbEvaRoll = this.rollForRanks(dodgeEva, isDown ? 100 : targetStress, 1/blockDivider);
 	if(limbBypassRoll <= secondLimbEvaRoll) {
 		if(leftLimbFirst) {
 			if(defendingWithLegs) {
