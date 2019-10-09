@@ -34,6 +34,7 @@
 		this._tbsBattleFadeSpeed = 12;
 		this._tbsNextRoundWindowTimer = 0;
 		this._tbsNextRoundWindowTime = 30*3;
+		this._infoWindows = [];
 		this._messageWindows = [];
 		SoundManager.loadTbsBattleStartSound();
 		SoundManager.loadWindowOpenCloseSound();
@@ -72,6 +73,22 @@
 		var needToClose = $gameMap.needToCloseCloseableMessageWindows();
 		var waitingOn = false;
 		var closeablesRemaining = false;
+		this._infoWindows.forEach(function (curWindow) {
+			if(curWindow.isClosed() || curWindow.isClosing()) {
+				return;
+			}
+			if(curWindow.isCloseable()) {
+				if(needToClose && curWindow.isOpen()) {
+					curWindow.close();
+				} else {
+					closeablesRemaining = true;
+				}
+			}
+			if(curWindow.isCountingDown()) {
+				curWindow.countDown();
+			}
+			if(curWindow.isWaitOn()) { waitingOn = true; }
+		});
 		this._messageWindows.forEach(function (curWindow) {
 			if(curWindow.isClosed() || curWindow.isClosing()) {
 				return;
@@ -105,10 +122,22 @@
 		if(!message || !message.text || message.text.length <= 0) { return; }
 		var windowToUse;
 		var i;
-		for(i = 0; i < this._messageWindows.length; i++) {
-			if(this._messageWindows[i].isClosed() && !this._messageWindows[i].isOpening()) {
-				windowToUse = this._messageWindows[i];
-				break;
+		var indexToUse = 0;
+		if(message.infoLog) {
+			windowToUse = this._infoWindows[0];
+			for(i = 0; i < this._infoWindows.length; i++) {
+				if(this._infoWindows[i].isOpen() || this._infoWindows[i].isOpening() || this._infoWindows[i].isClosing()) {
+					windowToUse = this._infoWindows[i+1];
+					indexToUse = i+1;
+				}
+			}
+		} else {
+			windowToUse = this._messageWindows[0];
+			for(i = 0; i < this._messageWindows.length; i++) {
+				if(this._messageWindows[i].isOpen() || this._messageWindows[i].isOpening() || this._messageWindows[i].isClosing()) {
+					windowToUse = this._messageWindows[i+1];
+					indexToUse = i+1;
+				}
 			}
 		}
 		if(!windowToUse) { return; }
@@ -117,8 +146,8 @@
 		var messageX = message.x;
 		var messageY = message.y;
 		if(message.infoLog) {
-			var messageX = 10;
-			var messageY = 10;
+			var messageX = -windowToUse.standardPadding()*(2/3);
+			var messageY = -windowToUse.standardPadding()*(2/3);
 		}
 		windowToUse.setupAndShow(
 			message.infoLog,
@@ -134,11 +163,11 @@
 		);
 		if(message.infoLog) {
 			var j;
-			for(j = 0; j < this._messageWindows.length; j++) {
-				if(i != j && this._messageWindows[j].isInfoLog() 
-					&& (this._messageWindows[j].isOpen() || this._messageWindows[j].isOpening()))
+			for(j = 0; j < this._infoWindows.length; j++) {
+				if(indexToUse != j && this._infoWindows[j].isInfoLog() 
+					&& (this._infoWindows[j].isOpen() || this._infoWindows[j].isOpening()))
 				{
-					this._messageWindows[j].y += windowToUse.height;
+					this._infoWindows[j].y += windowToUse.height - windowToUse.standardPadding()*(2/3);
 				}
 			}
 		}
@@ -466,6 +495,7 @@
 	
 	Scene_Map.prototype.createAllWindows = function() {
 		this.createMessageWindow();
+		this.createInfoLogWindows();
 		this.createConcurrentMessageWindows();
 		this.createScrollTextWindow();
 		this.createTbsActorStatusWindow();
@@ -481,6 +511,15 @@
 		this.createTbsBreadcrumbWindows();
 		this.createTbsNoTargetWindow();
 		this.createTbsNextRoundWindow();
+	};
+	
+	Scene_Map.prototype.createInfoLogWindows = function() {
+		var i;
+		for(i = 0; i < 50; i++) {
+			var concurrentWindow = new Window_ConcurrentWindow();
+			this._infoWindows.push(concurrentWindow);
+			this.addWindow(concurrentWindow);
+		}
 	};
 	
 	Scene_Map.prototype.createConcurrentMessageWindows = function() {
