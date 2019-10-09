@@ -48,7 +48,7 @@
 		this._evaluatingInterpreter = undefined;
 	};
 	
-	Game_Temp.prototype.addTbsPartyMember = function(forceId, partyId, startingX, startingY, label, labelType) {
+	Game_Temp.prototype.addTbsPartyMember = function(forceId, partyId, startingX, startingY, surprised, label, labelType) {
 		this.makeSureForceExists(forceId, true);
 		
 		if(!this._pendingTbsForces[forceId].isParty) { return; }
@@ -61,13 +61,14 @@
 		actor.id = partyId;
 		actor.startingX = startingX;
 		actor.startingY = startingY;
+		actor.surprised = surprised;
 		actor.label = label;
 		actor.labelType = labelType;
 		
 		this._pendingTbsForces[forceId].actors.push(actor);
 	};
 	
-	Game_Temp.prototype.addTbsEnemy = function(forceId, enemyId, startingX, startingY, label, labelType) {
+	Game_Temp.prototype.addTbsEnemy = function(forceId, enemyId, startingX, startingY, surprised, label, labelType) {
 		this.makeSureForceExists(forceId, false);
 		
 		if(this._pendingTbsForces[forceId].isParty) { return; }
@@ -80,6 +81,7 @@
 		actor.id = enemyId;
 		actor.startingX = startingX;
 		actor.startingY = startingY;
+		actor.surprised = surprised;
 		actor.label = label;
 		actor.labelType = labelType;
 		
@@ -821,6 +823,7 @@
 		force.allyForceIds = pendingTbsForce.allyForceIds;
 		force.enemyForceIds = pendingTbsForce.enemyForceIds;
 		force.actors = [];
+		force.perceptionRoll = 0;
 		
 		var index = 0;
 		var that = this;
@@ -849,7 +852,7 @@
 					actor.battler.setDisplayName(actor.battler.nickname() + " " + pendingActor.label);
 				}
 			}
-			actor.canActThisRound = !actor.battler.isDown();
+			actor.canActThisRound = !actor.battler.isDown() && !pendingActor.surprised;
 			actor.battler.setStress(0);
 			
 			var damageStress = actor.battler.getDamage("head") / 5
@@ -1716,6 +1719,7 @@
 			}
 		} else {
 			for(i = 0; i < this._tbsForces.length; i++) {
+				this._tbsForces[i].perceptionRoll = 0;
 				var j;
 				for(j = 0; j < this._tbsForces[i].actors.length; j++) {
 					var battler = this._tbsForces[i].actors[j].battler;
