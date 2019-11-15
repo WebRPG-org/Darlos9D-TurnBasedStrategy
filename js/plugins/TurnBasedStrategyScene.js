@@ -1817,6 +1817,10 @@
 		var actor = this.actor();
 		this._statusSkillsWindow.setActor(actor);
 		this._statusAttributesListWindow.setActor(actor);
+		var actions = actor.getAllSkillActionInfos().map(function (actionInfo) { return actionInfo.action; });
+		var attributes = actor.getAttributes();
+		this._statusSkillLearnedWindow.setOldActions(actions);
+		this._statusSkillLearnedWindow.setOldAttributes(attributes);
 	};
 	
 	Scene_Status.prototype.onActorChange = function() {

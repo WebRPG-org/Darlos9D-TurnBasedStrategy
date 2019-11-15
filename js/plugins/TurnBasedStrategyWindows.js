@@ -4143,7 +4143,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		var i;
 		for(i = 0; i < $dataClasses.length; i++) {
 			if(!$dataClasses[i]) { continue; }
-			if($dataClasses[i].name === "UNIVERSAL ATTRIBUTES") {
+			if($dataClasses[i].name === "UNIVERSAL DEFINITIONS") {
 				var allUniqeSkills = $dataClasses[i].tbsStats.uniqueSkills;
 				if(!allUniqeSkills) { break; }
 				var j;
@@ -4163,7 +4163,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		var i;
 		for(i = 0; i < $dataClasses.length; i++) {
 			if(!$dataClasses[i]) { continue; }
-			if($dataClasses[i].name === "UNIVERSAL ATTRIBUTES") {
+			if($dataClasses[i].name === "UNIVERSAL DEFINITIONS") {
 				var allUniqeSkills = $dataClasses[i].tbsStats.uniqueSkills;
 				if(!allUniqeSkills) { break; }
 				var j;
