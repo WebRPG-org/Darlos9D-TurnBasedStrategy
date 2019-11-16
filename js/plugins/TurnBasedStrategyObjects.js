@@ -445,6 +445,7 @@
 		this._tbsTurnMode = "";
 		this._tbsCancelMoveJustEnded = false;
 		this._tbsTurnJustStarted = false;
+		this._tbsSurpriseRoundJustStarted = false;
 		this._tbsRoundJustStarted = false;
 		this._tbsCursorFocusX = -1;
 		this._tbsCursorFocusY = -1;
@@ -718,6 +719,7 @@
 			if(modeOn) {
 				this._resetCameraAfterBattle = resetCameraAfterBattle;
 				this._tbsCursorRegions = cursorRegions ? cursorRegions : [];
+				this._tbsSurpriseRoundJustStarted = false;
 				this._tbsForces = this.createTbsForces(pendingTbsForces);
 				this.setTbsTurnMode("setup");
 			}
@@ -755,6 +757,12 @@
 	Game_Map.prototype.checkTbsTurnJustStarted = function() {
 		var returnValue = this._tbsTurnJustStarted;
 		this._tbsTurnJustStarted = false;
+		return returnValue;
+	};
+	
+	Game_Map.prototype.checkTbsSurpriseRoundJustStarted = function() {
+		var returnValue = this._tbsSurpriseRoundJustStarted;
+		this._tbsSurpriseRoundJustStarted = false;
 		return returnValue;
 	};
 	
@@ -854,6 +862,9 @@
 			}
 			actor.canActThisRound = !actor.battler.isDown() && !pendingActor.surprised;
 			actor.battler.setStress(0);
+			if(pendingActor.surprised) {
+				that._tbsSurpriseRoundJustStarted = true;
+			}
 			
 			var damageStress = actor.battler.getDamage("head") / 5
 				+ actor.battler.getDamage("mind") / 5

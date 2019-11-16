@@ -2961,6 +2961,37 @@ Window_TbsNoTarget.prototype.windowWidth = function() {
 Window_TbsNoTarget.prototype.windowHeight = function() {
 	return this.fittingHeight(1);
 };
+//-----------------------------------------------------------------------------
+// Window_TbsSurpriseRound
+//
+// The window for informing the player that the battle has begun with a surprise round
+
+function Window_TbsSurpriseRound() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_TbsSurpriseRound.prototype = Object.create(Window_Base.prototype);
+Window_TbsSurpriseRound.prototype.constructor = Window_TbsSurpriseRound;
+
+Window_TbsSurpriseRound.prototype.initialize = function() {
+    Window_Base.prototype.initialize.call(this,
+		Graphics.boxWidth - this.windowWidth(),
+		Graphics.boxHeight / 2 - this.windowHeight() / 2,
+		this.windowWidth(), this.windowHeight());
+    this.refresh();
+};
+
+Window_TbsSurpriseRound.prototype.refresh = function() {
+	this.drawText("Surprise round", this.textPadding(), 0);
+};
+
+Window_TbsSurpriseRound.prototype.windowWidth = function() {
+	return 14*14 + this.standardPadding()*2 + this.textPadding()*2;
+};
+
+Window_TbsSurpriseRound.prototype.windowHeight = function() {
+	return this.fittingHeight(1);
+};
 
 //-----------------------------------------------------------------------------
 // Window_TbsNextRound

@@ -32,6 +32,7 @@
 		this._oldBreadcrumbs = [];
 		this._tbsBattleJustStarted = true;
 		this._tbsBattleFadeSpeed = 12;
+		this._tbsSurpriseRoundWindowTimer = 0;
 		this._tbsNextRoundWindowTimer = 0;
 		this._tbsNextRoundWindowTime = 30*3;
 		this._infoWindows = [];
@@ -177,11 +178,22 @@
 		if($gameMap.tbsBattleMode()
 			&& $gameMap.tbsTurnMode() != "victory" && $gameMap.tbsTurnMode() != "gameOver")
 		{
+			if(this._tbsSurpriseRoundWindowTimer > 0) {
+				this._tbsSurpriseRoundWindowTimer--;
+				if(this._tbsSurpriseRoundWindowTimer <= 0) {
+					this._tbsSurpriseRoundWindow.close();
+				}
+			}
 			if(this._tbsNextRoundWindowTimer > 0) {
 				this._tbsNextRoundWindowTimer--;
 				if(this._tbsNextRoundWindowTimer <= 0) {
 					this._tbsNextRoundWindow.close();
 				}
+			}
+			if($gameMap.tbsTurnMode() != "setup" && $gameMap.checkTbsSurpriseRoundJustStarted()) {
+				this._tbsSurpriseRoundWindow.show();
+				this._tbsSurpriseRoundWindow.open();
+				this._tbsSurpriseRoundWindowTimer = this._tbsNextRoundWindowTime;
 			}
 			if($gameMap.checkTbsRoundJustStarted()) {
 				this._tbsNextRoundWindow.show();
@@ -423,6 +435,7 @@
 			$gameMap.setBreadcrumbStage("none");
 			this._tbsBattleJustStarted = true;
 			this._tbsNoTargetWindow.close();
+			this._tbsSurpriseRoundWindow.close();
 			this._tbsNextRoundWindow.close();
 		}
 	};
@@ -510,6 +523,7 @@
 		this.createTbsTargetPartWindow();
 		this.createTbsBreadcrumbWindows();
 		this.createTbsNoTargetWindow();
+		this.createTbsSurpriseRoundWindow();
 		this.createTbsNextRoundWindow();
 	};
 	
@@ -681,6 +695,14 @@
 		this._tbsNoTargetWindow.hide();
 		this._tbsNoTargetWindow.close();
 		this._tbsNoTargetWindow.deactivate();
+	};
+	
+	Scene_Map.prototype.createTbsSurpriseRoundWindow = function() {
+		this._tbsSurpriseRoundWindow = new Window_TbsSurpriseRound();
+		this.addWindow(this._tbsSurpriseRoundWindow);
+		this._tbsSurpriseRoundWindow.hide();
+		this._tbsSurpriseRoundWindow.close();
+		this._tbsSurpriseRoundWindow.deactivate();
 	};
 	
 	Scene_Map.prototype.createTbsNextRoundWindow = function() {
