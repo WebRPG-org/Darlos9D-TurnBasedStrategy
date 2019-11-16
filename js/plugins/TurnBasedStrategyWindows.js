@@ -3355,9 +3355,9 @@ Window_StatusSkillOption.prototype.makeCommandList = function() {
 	var downgradeCostText = "------";
 	if(this._actor && this._skill) {
 		var battler = this._actor;
-		canUpgrade = battler.skillPoints(this._skill) < 99 && battler.skillXP() >= battler.skillUpgradeCost(this._skill);
+		canUpgrade = battler.skillPoints(this._skill) < battler.maxSkillPoints() && battler.skillXP() >= battler.skillUpgradeCost(this._skill);
 		canDowngrade = battler.skillPoints(this._skill) > 0 && battler.respecXP() >= battler.skillDowngradeCost(this._skill);
-		upgradeCostText = battler.skillPoints(this._skill) < 99 ? battler.skillUpgradeCost(this._skill)+"" : "------";
+		upgradeCostText = battler.skillPoints(this._skill) < battler.maxSkillPoints() ? battler.skillUpgradeCost(this._skill)+"" : "------";
 		downgradeCostText = battler.skillPoints(this._skill) > 0 ? battler.skillDowngradeCost(this._skill)+"" : "------";
 		while(upgradeCostText.length < 6) {
 			upgradeCostText = " " + upgradeCostText;
@@ -3494,18 +3494,39 @@ Window_StatusSkillLearned.prototype.setNewAttributes = function(newAttributes) {
 	this._newAttributes = newAttributes;
 	this._gainedAttributes = [];
 	this._lostAttributes = [];
+	var gainedAndLostAttributes = [];
 	this._oldAttributes.forEach(function (oldAttribute) {
-		if(!this._newAttributes.some(function (newAttribute) {
-			return oldAttribute.name === newAttribute.name;
+		if(!gainedAndLostAttributes.some(function (gainedAndLostAttribute) {
+			return gainedAndLostAttribute.name === oldAttribute.name
 		})) {
-			this._lostAttributes.push(oldAttribute);
+			gainedAndLostAttributes.push(oldAttribute);
 		}
 	}, this);
 	this._newAttributes.forEach(function (newAttribute) {
-		if(!this._oldAttributes.some(function (oldAttribute) {
-			return oldAttribute.name === newAttribute.name;
+		if(!gainedAndLostAttributes.some(function (gainedAndLostAttribute) {
+			return gainedAndLostAttribute.name === newAttribute.name
 		})) {
-			this._gainedAttributes.push(newAttribute);
+			gainedAndLostAttributes.push(newAttribute);
+		}
+	}, this);
+	gainedAndLostAttributes.forEach(function (gainedAndLostAttribute) {
+		var oldCount = this._oldAttributes.filter(function (oldAttribute) {
+			return oldAttribute.name === gainedAndLostAttribute.name;
+		}).length;
+		var newCount = this._newAttributes.filter(function (newAttribute) {
+			return newAttribute.name === gainedAndLostAttribute.name;
+		}).length;
+		var addCount = 0;
+		if(newCount > oldCount) {
+			while(addCount < newCount - oldCount) {
+				this._gainedAttributes.push(gainedAndLostAttribute);
+				addCount++;
+			}
+		} else if(oldCount > newCount) {
+			while(addCount < oldCount - newCount) {
+				this._lostAttributes.push(gainedAndLostAttribute);
+				addCount++;
+			}
 		}
 	}, this);
 };

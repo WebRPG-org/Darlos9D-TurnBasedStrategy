@@ -715,6 +715,10 @@
 	Game_BattlerBase.prototype.forgetSkill = function(skillId) {
 	};
 	
+	Game_BattlerBase.prototype.maxSkillPoints = function() {
+		return 32;
+	};
+	
 	Game_BattlerBase.prototype.setSkillPoints = function(skill, points) {
 		if(this._skillPoints[skill] === undefined) { 
 			var skillFound = false;
@@ -733,7 +737,7 @@
 				return;
 			}
 		}
-		this._skillPoints[skill] = Math.min(99, Math.max(0, points));
+		this._skillPoints[skill] = Math.min(this.maxSkillPoints(), Math.max(0, points));
 		this.checkLearnedSkills();
 	};
 	

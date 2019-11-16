@@ -37,12 +37,15 @@ Classes
 			"description": (string),
 			"skillRequirements": [(see "Skill Requirement" section)], (THIS IS AN ARRAY OF MORE THAN ONE SKILL REQUIREMENT!!!)
 			"strengthPercent": (integer),
-			"toughness": (integer)
+			"toughness": (integer),
+			"movement": (integer),
+			"reach": (integer),
+			"incremental": true/false
 		}
 	]
 }
 
-There is a special classs named "UNIVERSAL ATTRIBUTES". This class contains attributes that are attainable by any class that has the requisite skills. It also contains a special uniqueSkills array that is an array of objects instead of an array of strings. These objects are used to define the unique skills that other classes refer to. The object is as follows:
+There is a special classs named "UNIVERSAL DEFINITIONS". This class contains attributes that are attainable by any class that has the requisite skills. It also contains a special uniqueSkills array that is an array of objects instead of an array of strings. These objects are used to define the unique skills that other classes refer to. The object is as follows:
 
 {
 	"name": (string),
@@ -50,7 +53,7 @@ There is a special classs named "UNIVERSAL ATTRIBUTES". This class contains attr
 	"shortDisplayName": (string)
 }
 
-"UNIVERSAL ATTRIBUTES" class is also used to define further weapon images for attack animations. Add the "userDefinedAttackImages" object to the class' JSON object, which is an array of objects. The object is defined as follows:
+"UNIVERSAL DEFINITIONS" class is also used to define further weapon images for attack animations. Add the "userDefinedAttackImages" object to the class' JSON object, which is an array of objects. The object is defined as follows:
 
 {
 	"imageName": (string),
@@ -162,6 +165,13 @@ Skill Requirements
 {
 	"skill": (string),
 	"level": (integer)
+}
+
+Attributes have an "incremental" boolean. When true, the skillRequirements array is replaced by a single object. This object contains an array of skills, and an integer that defines the skill level increments of the listed skills at which the attribute will be gained multiple times. This is useful for attributes that grow and stack over time, and can be gained across multiple different skills.
+
+{
+	"skills": (array of strings that are skill names),
+	"increments": (integer)
 }
 
 ----------------------------------------------------
