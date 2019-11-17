@@ -3182,8 +3182,77 @@
 		for(i = 0; i < tileRuns.length; i++) {
 			this._queuedActionLoops++;
 			var firstTile = tileRuns[i][0];
-			if(firstTile.passability[10-d][passageType]) { continue; }
 			var lastTile = tileRuns[i][tileRuns[i].length-1];
+			var startAtEdge = false;
+			var endAtEdge = false;
+			if(d == 1) {
+				if(firstTile.x == startX && lastTile.y == startY) {
+					startAtEdge = true;
+				}
+				if(lastTile.x == endX && firstTile.y == endY) {
+					endAtEdge = true;
+				}
+			} else if(d == 2) {
+				if(lastTile.y == startY) {
+					startAtEdge = true;
+				}
+				if(firstTile.y == endY) {
+					endAtEdge = true;
+				}
+			} else if(d == 3) {
+				if(lastTile.x == startX && lastTile.y == startY) {
+					startAtEdge = true;
+				}
+				if(firstTile.x == endX && firstTile.y == endY) {
+					endAtEdge = true;
+				}
+			} else if(d == 4) {
+				if(firstTile.x == startX) {
+					startAtEdge = true;
+				}
+				if(lastTile.x == endX) {
+					endAtEdge = true;
+				}
+			} else if(d == 6) {
+				if(lastTile.x == startX) {
+					startAtEdge = true;
+				}
+				if(firstTile.x == endX) {
+					endAtEdge = true;
+				}
+			} else if(d == 7) {
+				if(firstTile.x == startX && firstTile.y == startY) {
+					startAtEdge = true;
+				}
+				if(lastTile.x == endX && lastTile.y == endY) {
+					endAtEdge = true;
+				}
+			} else if(d == 8) {
+				if(firstTile.y == startY) {
+					startAtEdge = true;
+				}
+				if(lastTile.y == endY) {
+					endAtEdge = true;
+				}
+			} else if(d == 9) {
+				if(lastTile.x == startX && firstTile.y == startY) {
+					startAtEdge = true;
+				}
+				if(firstTile.x == endX && lastTile.y == endY) {
+					endAtEdge = true;
+				}
+			}
+			
+			if(startAtEdge && endAtEdge) {
+				//technically the start and end tiles would have to be one in the same, here
+			} else if(startAtEdge) {
+				if(firstTile.exitability[d][passageType]) { continue; }
+			} else if(endAtEdge) {
+				if(firstTile.enterability[d][passageType]) { continue; }
+			} else {
+				if(firstTile.exitability[d][passageType] && firstTile.enterability[d][passageType]) { continue; }
+			}
+			
 			if(this.cohenSutherlandLineClipAndDraw(x0, y0, x1, y1, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1)) {
 				blockedByTerrain = true;
 				break;
@@ -3338,7 +3407,8 @@
 				var tile = {};
 				tile.x = boxX;
 				tile.y = boxY;
-				tile.passability = this.getTbsTilePassability(tile.x, tile.y);
+				tile.enterability = this.getTbsTileEnterability(tile.x, tile.y);
+				tile.exitability = this.getTbsTileExitability(tile.x, tile.y);
 				if(this.isTileFullyPassable(tile)) {
 					if(curRun.length > 0) {
 						rowRuns.push(curRun);
@@ -3364,9 +3434,11 @@
 					var j;
 					for(j = 0; j < tileRuns.length; j++) {
 						var tileRun = tileRuns[j];
-						if(tileRun[tileRun.length-1].y+1 == rowRun[0].y && tileRun[0].x == rowRun[0].x
-							&& tileRun[tileRun.length-1].x == rowRun[rowRun.length-1].x)
-						{
+						if(
+							tileRun[tileRun.length-1].y+1 == rowRun[0].y && tileRun[0].x == rowRun[0].x &&
+							tileRun[tileRun.length-1].x == rowRun[rowRun.length-1].x &&
+							this.compareTilePassability(tileRun[0], rowRun[0])
+						) {
 							tileRuns[j] = tileRun.concat(rowRun);
 							verticalFound = true;
 							break;
@@ -3412,155 +3484,291 @@
 	};
 	
 	Game_Map.prototype.isTileFullyPassable = function(tile) {
-		return tile.passability[1].walk
-			&& tile.passability[1].fly
-			&& tile.passability[1].melee
-			&& tile.passability[1].thrown
-			&& tile.passability[1].fired
-			&& tile.passability[2].walk
-			&& tile.passability[2].fly
-			&& tile.passability[2].melee
-			&& tile.passability[2].thrown
-			&& tile.passability[2].fired
-			&& tile.passability[3].walk
-			&& tile.passability[3].fly
-			&& tile.passability[3].melee
-			&& tile.passability[3].thrown
-			&& tile.passability[3].fired
-			&& tile.passability[4].walk
-			&& tile.passability[4].fly
-			&& tile.passability[4].melee
-			&& tile.passability[4].thrown
-			&& tile.passability[4].fired
-			&& tile.passability[6].walk
-			&& tile.passability[6].fly
-			&& tile.passability[6].melee
-			&& tile.passability[6].thrown
-			&& tile.passability[6].fired
-			&& tile.passability[7].walk
-			&& tile.passability[7].fly
-			&& tile.passability[7].melee
-			&& tile.passability[7].thrown
-			&& tile.passability[7].fired
-			&& tile.passability[8].walk
-			&& tile.passability[8].fly
-			&& tile.passability[8].melee
-			&& tile.passability[8].thrown
-			&& tile.passability[8].fired
-			&& tile.passability[9].walk
-			&& tile.passability[9].fly
-			&& tile.passability[9].melee
-			&& tile.passability[9].thrown
-			&& tile.passability[9].fired;
+		return tile.enterability[1].walk
+			&& tile.enterability[1].fly
+			&& tile.enterability[1].melee
+			&& tile.enterability[1].thrown
+			&& tile.enterability[1].fired
+			&& tile.enterability[2].walk
+			&& tile.enterability[2].fly
+			&& tile.enterability[2].melee
+			&& tile.enterability[2].thrown
+			&& tile.enterability[2].fired
+			&& tile.enterability[3].walk
+			&& tile.enterability[3].fly
+			&& tile.enterability[3].melee
+			&& tile.enterability[3].thrown
+			&& tile.enterability[3].fired
+			&& tile.enterability[4].walk
+			&& tile.enterability[4].fly
+			&& tile.enterability[4].melee
+			&& tile.enterability[4].thrown
+			&& tile.enterability[4].fired
+			&& tile.enterability[6].walk
+			&& tile.enterability[6].fly
+			&& tile.enterability[6].melee
+			&& tile.enterability[6].thrown
+			&& tile.enterability[6].fired
+			&& tile.enterability[7].walk
+			&& tile.enterability[7].fly
+			&& tile.enterability[7].melee
+			&& tile.enterability[7].thrown
+			&& tile.enterability[7].fired
+			&& tile.enterability[8].walk
+			&& tile.enterability[8].fly
+			&& tile.enterability[8].melee
+			&& tile.enterability[8].thrown
+			&& tile.enterability[8].fired
+			&& tile.enterability[9].walk
+			&& tile.enterability[9].fly
+			&& tile.enterability[9].melee
+			&& tile.enterability[9].thrown
+			&& tile.enterability[9].fired
+			&& tile.exitability[1].walk
+			&& tile.exitability[1].fly
+			&& tile.exitability[1].melee
+			&& tile.exitability[1].thrown
+			&& tile.exitability[1].fired
+			&& tile.exitability[2].walk
+			&& tile.exitability[2].fly
+			&& tile.exitability[2].melee
+			&& tile.exitability[2].thrown
+			&& tile.exitability[2].fired
+			&& tile.exitability[3].walk
+			&& tile.exitability[3].fly
+			&& tile.exitability[3].melee
+			&& tile.exitability[3].thrown
+			&& tile.exitability[3].fired
+			&& tile.exitability[4].walk
+			&& tile.exitability[4].fly
+			&& tile.exitability[4].melee
+			&& tile.exitability[4].thrown
+			&& tile.exitability[4].fired
+			&& tile.exitability[6].walk
+			&& tile.exitability[6].fly
+			&& tile.exitability[6].melee
+			&& tile.exitability[6].thrown
+			&& tile.exitability[6].fired
+			&& tile.exitability[7].walk
+			&& tile.exitability[7].fly
+			&& tile.exitability[7].melee
+			&& tile.exitability[7].thrown
+			&& tile.exitability[7].fired
+			&& tile.exitability[8].walk
+			&& tile.exitability[8].fly
+			&& tile.exitability[8].melee
+			&& tile.exitability[8].thrown
+			&& tile.exitability[8].fired
+			&& tile.exitability[9].walk
+			&& tile.exitability[9].fly
+			&& tile.exitability[9].melee
+			&& tile.exitability[9].thrown
+			&& tile.exitability[9].fired;
 	};
 	
 	Game_Map.prototype.compareTilePassability = function(tileOne, tileTwo) {
-		return tileOne.passability[1].walk		== tileTwo.passability[1].walk
-			&& tileOne.passability[1].fly		== tileTwo.passability[1].fly
-			&& tileOne.passability[1].melee		== tileTwo.passability[1].melee
-			&& tileOne.passability[1].thrown	== tileTwo.passability[1].thrown
-			&& tileOne.passability[1].fired		== tileTwo.passability[1].fired
-			&& tileOne.passability[2].walk		== tileTwo.passability[2].walk
-			&& tileOne.passability[2].fly		== tileTwo.passability[2].fly
-			&& tileOne.passability[2].melee		== tileTwo.passability[2].melee
-			&& tileOne.passability[2].thrown	== tileTwo.passability[2].thrown
-			&& tileOne.passability[2].fired		== tileTwo.passability[2].fired
-			&& tileOne.passability[3].walk		== tileTwo.passability[3].walk
-			&& tileOne.passability[3].fly		== tileTwo.passability[3].fly
-			&& tileOne.passability[3].melee		== tileTwo.passability[3].melee
-			&& tileOne.passability[3].thrown	== tileTwo.passability[3].thrown
-			&& tileOne.passability[3].fired		== tileTwo.passability[3].fired
-			&& tileOne.passability[4].walk		== tileTwo.passability[4].walk
-			&& tileOne.passability[4].fly		== tileTwo.passability[4].fly
-			&& tileOne.passability[4].melee		== tileTwo.passability[4].melee
-			&& tileOne.passability[4].thrown	== tileTwo.passability[4].thrown
-			&& tileOne.passability[4].fired		== tileTwo.passability[4].fired
-			&& tileOne.passability[6].walk		== tileTwo.passability[6].walk
-			&& tileOne.passability[6].fly		== tileTwo.passability[6].fly
-			&& tileOne.passability[6].melee		== tileTwo.passability[6].melee
-			&& tileOne.passability[6].thrown	== tileTwo.passability[6].thrown
-			&& tileOne.passability[6].fired		== tileTwo.passability[6].fired
-			&& tileOne.passability[7].walk		== tileTwo.passability[7].walk
-			&& tileOne.passability[7].fly		== tileTwo.passability[7].fly
-			&& tileOne.passability[7].melee		== tileTwo.passability[7].melee
-			&& tileOne.passability[7].thrown	== tileTwo.passability[7].thrown
-			&& tileOne.passability[7].fired		== tileTwo.passability[7].fired
-			&& tileOne.passability[8].walk		== tileTwo.passability[8].walk
-			&& tileOne.passability[8].fly		== tileTwo.passability[8].fly
-			&& tileOne.passability[8].melee		== tileTwo.passability[8].melee
-			&& tileOne.passability[8].thrown	== tileTwo.passability[8].thrown
-			&& tileOne.passability[8].fired		== tileTwo.passability[8].fired
-			&& tileOne.passability[9].walk		== tileTwo.passability[9].walk
-			&& tileOne.passability[9].fly		== tileTwo.passability[9].fly
-			&& tileOne.passability[9].melee		== tileTwo.passability[9].melee
-			&& tileOne.passability[9].thrown	== tileTwo.passability[9].thrown
-			&& tileOne.passability[9].fired		== tileTwo.passability[9].fired;
+		return tileOne.enterability[1].walk		== tileTwo.enterability[1].walk
+			&& tileOne.enterability[1].fly		== tileTwo.enterability[1].fly
+			&& tileOne.enterability[1].melee	== tileTwo.enterability[1].melee
+			&& tileOne.enterability[1].thrown	== tileTwo.enterability[1].thrown
+			&& tileOne.enterability[1].fired	== tileTwo.enterability[1].fired
+			&& tileOne.enterability[2].walk		== tileTwo.enterability[2].walk
+			&& tileOne.enterability[2].fly		== tileTwo.enterability[2].fly
+			&& tileOne.enterability[2].melee	== tileTwo.enterability[2].melee
+			&& tileOne.enterability[2].thrown	== tileTwo.enterability[2].thrown
+			&& tileOne.enterability[2].fired	== tileTwo.enterability[2].fired
+			&& tileOne.enterability[3].walk		== tileTwo.enterability[3].walk
+			&& tileOne.enterability[3].fly		== tileTwo.enterability[3].fly
+			&& tileOne.enterability[3].melee	== tileTwo.enterability[3].melee
+			&& tileOne.enterability[3].thrown	== tileTwo.enterability[3].thrown
+			&& tileOne.enterability[3].fired	== tileTwo.enterability[3].fired
+			&& tileOne.enterability[4].walk		== tileTwo.enterability[4].walk
+			&& tileOne.enterability[4].fly		== tileTwo.enterability[4].fly
+			&& tileOne.enterability[4].melee	== tileTwo.enterability[4].melee
+			&& tileOne.enterability[4].thrown	== tileTwo.enterability[4].thrown
+			&& tileOne.enterability[4].fired	== tileTwo.enterability[4].fired
+			&& tileOne.enterability[6].walk		== tileTwo.enterability[6].walk
+			&& tileOne.enterability[6].fly		== tileTwo.enterability[6].fly
+			&& tileOne.enterability[6].melee	== tileTwo.enterability[6].melee
+			&& tileOne.enterability[6].thrown	== tileTwo.enterability[6].thrown
+			&& tileOne.enterability[6].fired	== tileTwo.enterability[6].fired
+			&& tileOne.enterability[7].walk		== tileTwo.enterability[7].walk
+			&& tileOne.enterability[7].fly		== tileTwo.enterability[7].fly
+			&& tileOne.enterability[7].melee	== tileTwo.enterability[7].melee
+			&& tileOne.enterability[7].thrown	== tileTwo.enterability[7].thrown
+			&& tileOne.enterability[7].fired	== tileTwo.enterability[7].fired
+			&& tileOne.enterability[8].walk		== tileTwo.enterability[8].walk
+			&& tileOne.enterability[8].fly		== tileTwo.enterability[8].fly
+			&& tileOne.enterability[8].melee	== tileTwo.enterability[8].melee
+			&& tileOne.enterability[8].thrown	== tileTwo.enterability[8].thrown
+			&& tileOne.enterability[8].fired	== tileTwo.enterability[8].fired
+			&& tileOne.enterability[9].walk		== tileTwo.enterability[9].walk
+			&& tileOne.enterability[9].fly		== tileTwo.enterability[9].fly
+			&& tileOne.enterability[9].melee	== tileTwo.enterability[9].melee
+			&& tileOne.enterability[9].thrown	== tileTwo.enterability[9].thrown
+			&& tileOne.enterability[9].fired	== tileTwo.enterability[9].fired
+			&& tileOne.exitability[1].walk		== tileTwo.exitability[1].walk
+			&& tileOne.exitability[1].fly		== tileTwo.exitability[1].fly
+			&& tileOne.exitability[1].melee		== tileTwo.exitability[1].melee
+			&& tileOne.exitability[1].thrown	== tileTwo.exitability[1].thrown
+			&& tileOne.exitability[1].fired		== tileTwo.exitability[1].fired
+			&& tileOne.exitability[2].walk		== tileTwo.exitability[2].walk
+			&& tileOne.exitability[2].fly		== tileTwo.exitability[2].fly
+			&& tileOne.exitability[2].melee		== tileTwo.exitability[2].melee
+			&& tileOne.exitability[2].thrown	== tileTwo.exitability[2].thrown
+			&& tileOne.exitability[2].fired		== tileTwo.exitability[2].fired
+			&& tileOne.exitability[3].walk		== tileTwo.exitability[3].walk
+			&& tileOne.exitability[3].fly		== tileTwo.exitability[3].fly
+			&& tileOne.exitability[3].melee		== tileTwo.exitability[3].melee
+			&& tileOne.exitability[3].thrown	== tileTwo.exitability[3].thrown
+			&& tileOne.exitability[3].fired		== tileTwo.exitability[3].fired
+			&& tileOne.exitability[4].walk		== tileTwo.exitability[4].walk
+			&& tileOne.exitability[4].fly		== tileTwo.exitability[4].fly
+			&& tileOne.exitability[4].melee		== tileTwo.exitability[4].melee
+			&& tileOne.exitability[4].thrown	== tileTwo.exitability[4].thrown
+			&& tileOne.exitability[4].fired		== tileTwo.exitability[4].fired
+			&& tileOne.exitability[6].walk		== tileTwo.exitability[6].walk
+			&& tileOne.exitability[6].fly		== tileTwo.exitability[6].fly
+			&& tileOne.exitability[6].melee		== tileTwo.exitability[6].melee
+			&& tileOne.exitability[6].thrown	== tileTwo.exitability[6].thrown
+			&& tileOne.exitability[6].fired		== tileTwo.exitability[6].fired
+			&& tileOne.exitability[7].walk		== tileTwo.exitability[7].walk
+			&& tileOne.exitability[7].fly		== tileTwo.exitability[7].fly
+			&& tileOne.exitability[7].melee		== tileTwo.exitability[7].melee
+			&& tileOne.exitability[7].thrown	== tileTwo.exitability[7].thrown
+			&& tileOne.exitability[7].fired		== tileTwo.exitability[7].fired
+			&& tileOne.exitability[8].walk		== tileTwo.exitability[8].walk
+			&& tileOne.exitability[8].fly		== tileTwo.exitability[8].fly
+			&& tileOne.exitability[8].melee		== tileTwo.exitability[8].melee
+			&& tileOne.exitability[8].thrown	== tileTwo.exitability[8].thrown
+			&& tileOne.exitability[8].fired		== tileTwo.exitability[8].fired
+			&& tileOne.exitability[9].walk		== tileTwo.exitability[9].walk
+			&& tileOne.exitability[9].fly		== tileTwo.exitability[9].fly
+			&& tileOne.exitability[9].melee		== tileTwo.exitability[9].melee
+			&& tileOne.exitability[9].thrown	== tileTwo.exitability[9].thrown
+			&& tileOne.exitability[9].fired		== tileTwo.exitability[9].fired;
 	};
 	
-	Game_Map.prototype.getTbsTilePassability = function(x, y) {
-		var passability = [];
+	Game_Map.prototype.getTbsTileEnterability = function(x, y) {
+		var enterability = [];
 		
-		passability[8] = {};
-		passability[8].walk		= this.isPassable(x, y, 8, "walk");
-		passability[8].fly		= this.isPassable(x, y, 8, "fly");
-		passability[8].melee 	= this.isPassable(x, y, 8, "melee");
-		passability[8].thrown 	= this.isPassable(x, y, 8, "thrown");
-		passability[8].fired 	= this.isPassable(x, y, 8, "fired");
-		passability[2] = {};
-		passability[2].walk		= this.isPassable(x, y, 2, "walk");
-		passability[2].fly		= this.isPassable(x, y, 2, "fly");
-		passability[2].melee 	= this.isPassable(x, y, 2, "melee");
-		passability[2].thrown 	= this.isPassable(x, y, 2, "thrown");
-		passability[2].fired 	= this.isPassable(x, y, 2, "fired");
-		passability[4] = {};
-		passability[4].walk		= this.isPassable(x, y, 4, "walk");
-		passability[4].fly		= this.isPassable(x, y, 4, "fly");
-		passability[4].melee 	= this.isPassable(x, y, 4, "melee");
-		passability[4].thrown 	= this.isPassable(x, y, 4, "thrown");
-		passability[4].fired 	= this.isPassable(x, y, 4, "fired");
-		passability[6] = {};
-		passability[6].walk		= this.isPassable(x, y, 6, "walk");
-		passability[6].fly		= this.isPassable(x, y, 6, "fly");
-		passability[6].melee 	= this.isPassable(x, y, 6, "melee");
-		passability[6].thrown 	= this.isPassable(x, y, 6, "thrown");
-		passability[6].fired 	= this.isPassable(x, y, 6, "fired");
+		enterability[8] = {};
+		enterability[8].walk	= this.isPassable(x, y, 2, "walk");
+		enterability[8].fly		= this.isPassable(x, y, 2, "fly");
+		enterability[8].melee 	= this.isPassable(x, y, 2, "melee");
+		enterability[8].thrown 	= this.isPassable(x, y, 2, "thrown");
+		enterability[8].fired 	= this.isPassable(x, y, 2, "fired");
+		enterability[2] = {};
+		enterability[2].walk	= this.isPassable(x, y, 8, "walk");
+		enterability[2].fly		= this.isPassable(x, y, 8, "fly");
+		enterability[2].melee 	= this.isPassable(x, y, 8, "melee");
+		enterability[2].thrown 	= this.isPassable(x, y, 8, "thrown");
+		enterability[2].fired 	= this.isPassable(x, y, 8, "fired");
+		enterability[4] = {};
+		enterability[4].walk	= this.isPassable(x, y, 6, "walk");
+		enterability[4].fly		= this.isPassable(x, y, 6, "fly");
+		enterability[4].melee 	= this.isPassable(x, y, 6, "melee");
+		enterability[4].thrown 	= this.isPassable(x, y, 6, "thrown");
+		enterability[4].fired 	= this.isPassable(x, y, 6, "fired");
+		enterability[6] = {};
+		enterability[6].walk	= this.isPassable(x, y, 4, "walk");
+		enterability[6].fly		= this.isPassable(x, y, 4, "fly");
+		enterability[6].melee 	= this.isPassable(x, y, 4, "melee");
+		enterability[6].thrown 	= this.isPassable(x, y, 4, "thrown");
+		enterability[6].fired 	= this.isPassable(x, y, 4, "fired");
 		
-		passability[7] = {};
-		passability[7].walk 	= passability[4].walk 	&& passability[8].walk;
-		passability[7].fly 		= passability[4].fly 	&& passability[8].fly;
-		passability[7].melee 	= passability[4].melee 	&& passability[8].melee;
-		passability[7].thrown 	= passability[4].thrown	&& passability[8].thrown;
-		passability[7].fired 	= passability[4].fired 	&& passability[8].fired;
-		passability[9] = {};
-		passability[9].walk 	= passability[6].walk 	&& passability[8].walk;
-		passability[9].fly 		= passability[6].fly 	&& passability[8].fly;
-		passability[9].melee 	= passability[6].melee 	&& passability[8].melee;
-		passability[9].thrown 	= passability[6].thrown	&& passability[8].thrown;
-		passability[9].fired 	= passability[6].fired 	&& passability[8].fired;
-		passability[1] = {};
-		passability[1].walk 	= passability[4].walk 	&& passability[2].walk;
-		passability[1].fly 		= passability[4].fly 	&& passability[2].fly;
-		passability[1].melee 	= passability[4].melee 	&& passability[2].melee;
-		passability[1].thrown 	= passability[4].thrown	&& passability[2].thrown;
-		passability[1].fired 	= passability[4].fired 	&& passability[2].fired;
-		passability[3] = {};
-		passability[3].walk 	= passability[6].walk 	&& passability[2].walk;
-		passability[3].fly 		= passability[6].fly 	&& passability[2].fly;
-		passability[3].melee 	= passability[6].melee 	&& passability[2].melee;
-		passability[3].thrown 	= passability[6].thrown	&& passability[2].thrown;
-		passability[3].fired 	= passability[6].fired 	&& passability[2].fired;
+		enterability[7] = {};
+		enterability[7].walk 	= enterability[4].walk 		&& enterability[8].walk;
+		enterability[7].fly 	= enterability[4].fly 		&& enterability[8].fly;
+		enterability[7].melee 	= enterability[4].melee 	&& enterability[8].melee;
+		enterability[7].thrown 	= enterability[4].thrown	&& enterability[8].thrown;
+		enterability[7].fired 	= enterability[4].fired 	&& enterability[8].fired;
+		enterability[9] = {};
+		enterability[9].walk 	= enterability[6].walk 		&& enterability[8].walk;
+		enterability[9].fly 	= enterability[6].fly 		&& enterability[8].fly;
+		enterability[9].melee 	= enterability[6].melee 	&& enterability[8].melee;
+		enterability[9].thrown 	= enterability[6].thrown	&& enterability[8].thrown;
+		enterability[9].fired 	= enterability[6].fired 	&& enterability[8].fired;
+		enterability[1] = {};
+		enterability[1].walk 	= enterability[4].walk 		&& enterability[2].walk;
+		enterability[1].fly 	= enterability[4].fly 		&& enterability[2].fly;
+		enterability[1].melee 	= enterability[4].melee 	&& enterability[2].melee;
+		enterability[1].thrown 	= enterability[4].thrown	&& enterability[2].thrown;
+		enterability[1].fired 	= enterability[4].fired 	&& enterability[2].fired;
+		enterability[3] = {};
+		enterability[3].walk 	= enterability[6].walk 		&& enterability[2].walk;
+		enterability[3].fly 	= enterability[6].fly 		&& enterability[2].fly;
+		enterability[3].melee 	= enterability[6].melee 	&& enterability[2].melee;
+		enterability[3].thrown 	= enterability[6].thrown	&& enterability[2].thrown;
+		enterability[3].fired 	= enterability[6].fired 	&& enterability[2].fired;
 		
-		return passability;
+		return enterability;
+	};
+	
+	Game_Map.prototype.getTbsTileExitability = function(x, y) {
+		var exitability = [];
+		
+		exitability[8] = {};
+		exitability[8].walk		= this.isPassable(x, y, 8, "walk");
+		exitability[8].fly		= this.isPassable(x, y, 8, "fly");
+		exitability[8].melee 	= this.isPassable(x, y, 8, "melee");
+		exitability[8].thrown 	= this.isPassable(x, y, 8, "thrown");
+		exitability[8].fired 	= this.isPassable(x, y, 8, "fired");
+		exitability[2] = {};
+		exitability[2].walk		= this.isPassable(x, y, 2, "walk");
+		exitability[2].fly		= this.isPassable(x, y, 2, "fly");
+		exitability[2].melee 	= this.isPassable(x, y, 2, "melee");
+		exitability[2].thrown 	= this.isPassable(x, y, 2, "thrown");
+		exitability[2].fired 	= this.isPassable(x, y, 2, "fired");
+		exitability[4] = {};
+		exitability[4].walk		= this.isPassable(x, y, 4, "walk");
+		exitability[4].fly		= this.isPassable(x, y, 4, "fly");
+		exitability[4].melee 	= this.isPassable(x, y, 4, "melee");
+		exitability[4].thrown 	= this.isPassable(x, y, 4, "thrown");
+		exitability[4].fired 	= this.isPassable(x, y, 4, "fired");
+		exitability[6] = {};
+		exitability[6].walk		= this.isPassable(x, y, 6, "walk");
+		exitability[6].fly		= this.isPassable(x, y, 6, "fly");
+		exitability[6].melee 	= this.isPassable(x, y, 6, "melee");
+		exitability[6].thrown 	= this.isPassable(x, y, 6, "thrown");
+		exitability[6].fired 	= this.isPassable(x, y, 6, "fired");
+		
+		exitability[7] = {};
+		exitability[7].walk 	= exitability[4].walk 	&& exitability[8].walk;
+		exitability[7].fly 		= exitability[4].fly 	&& exitability[8].fly;
+		exitability[7].melee 	= exitability[4].melee 	&& exitability[8].melee;
+		exitability[7].thrown 	= exitability[4].thrown	&& exitability[8].thrown;
+		exitability[7].fired 	= exitability[4].fired 	&& exitability[8].fired;
+		exitability[9] = {};
+		exitability[9].walk 	= exitability[6].walk 	&& exitability[8].walk;
+		exitability[9].fly 		= exitability[6].fly 	&& exitability[8].fly;
+		exitability[9].melee 	= exitability[6].melee 	&& exitability[8].melee;
+		exitability[9].thrown 	= exitability[6].thrown	&& exitability[8].thrown;
+		exitability[9].fired 	= exitability[6].fired 	&& exitability[8].fired;
+		exitability[1] = {};
+		exitability[1].walk 	= exitability[4].walk 	&& exitability[2].walk;
+		exitability[1].fly 		= exitability[4].fly 	&& exitability[2].fly;
+		exitability[1].melee 	= exitability[4].melee 	&& exitability[2].melee;
+		exitability[1].thrown 	= exitability[4].thrown	&& exitability[2].thrown;
+		exitability[1].fired 	= exitability[4].fired 	&& exitability[2].fired;
+		exitability[3] = {};
+		exitability[3].walk 	= exitability[6].walk 	&& exitability[2].walk;
+		exitability[3].fly 		= exitability[6].fly 	&& exitability[2].fly;
+		exitability[3].melee 	= exitability[6].melee 	&& exitability[2].melee;
+		exitability[3].thrown 	= exitability[6].thrown	&& exitability[2].thrown;
+		exitability[3].fired 	= exitability[6].fired 	&& exitability[2].fired;
+		
+		return exitability;
 	};
 	
 	Game_Map.prototype.isPassable = function(x, y, d, passageType) {
 		if(this._tbsBattleMode) {
-			var events = $gameMap.eventsXyNt(x, y);
+			var events = this.eventsXyNt(x, y);
 			if(events.some(function(event) {
 				return event.isNormalPriority();
 			})) { return false; } //event in way
 			
-			if($gameMap.boat().posNt(x, y) || $gameMap.ship().posNt(x, y)) {
+			if(this.boat().posNt(x, y) || this.ship().posNt(x, y)) {
 				return false; // vehicle in the way
 			}
 			
@@ -3620,13 +3828,6 @@
 		if(this._tbsBattleMode !== modeOn) {
 			this._tbsBattleMode = modeOn;
 		}
-	};
-	
-	Game_CharacterBase.prototype.isMapPassable = function(x, y, d) {
-		var x2 = $gameMap.roundXWithDirection(x, d);
-		var y2 = $gameMap.roundYWithDirection(y, d);
-		var d2 = this.reverseDir(d);
-		return $gameMap.isPassable(x, y, d, this) && $gameMap.isPassable(x2, y2, d2, this);
 	};
 	
 	//character
