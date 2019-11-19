@@ -362,10 +362,42 @@ Gives an item/weapon/armor to the first member of the party with available space
 
 Keep in mind that the Stash and Key Items utilize the default party inventory, so simply use regular inventory management event commands to manage those.
 
+----------------------------------------------------
+$gameSystem.giveItemToActor(
+	itemId,
+	actorId
+);
+$gameSystem.giveWeaponToActor(
+	itemId,
+	actorId
+);
+$gameSystem.giveArmorToActor(
+	itemId,
+	actorId
+);
+
+Gives an item/weapon/armor to the actor with the given id. Nobody recieves the item if the actor's inventory is full.
+
+----------------------------------------------------
+$gameSystem.giveItemToPartyMember(
+	itemId,
+	partyPosition
+);
+$gameSystem.giveWeaponToPartyMember(
+	itemId,
+	partyPosition
+);
+$gameSystem.giveArmorToPartyMember(
+	itemId,
+	partyPosition
+);
+
+Gives an item/weapon/armor to the party member at the given position. Nobody recieves the item if the party member's inventory is full.
+
 -----------------------------------------------------
 $gameSystem.getItemReceiver();
 
-Returns the display name of the party member who recieved the item given by the last call of giveItemToParty(), giveWeaponToParty(), or giveArmorToParty(). If nobody had room to recieve the item, this will return undefined. Use it with a script call in an event IF branch to know how to proceed after attempting to give an item.
+Returns the display name of the party member who recieved the item given by the last call of any of the give*To*() functions. If nobody had room to recieve the item, this will return undefined. Use it with a script call in an event IF branch to know how to proceed after attempting to give an item.
 
 -----------------------------------------------------
 $gameSystem.giveSkillPointsToParty(

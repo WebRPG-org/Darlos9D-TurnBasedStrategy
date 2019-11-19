@@ -293,6 +293,7 @@
 	};
 	
 	Game_System.prototype.giveItemToParty = function(itemId) {
+		$gameTemp.clearItemReceiver();
 		var i;
 		for(i = 0; i < $gameParty.size(); i++) {
 			var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(i));
@@ -305,6 +306,7 @@
 	};
 	
 	Game_System.prototype.giveWeaponToParty = function(itemId) {
+		$gameTemp.clearItemReceiver();
 		var i;
 		for(i = 0; i < $gameParty.size(); i++) {
 			var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(i));
@@ -317,6 +319,7 @@
 	};
 	
 	Game_System.prototype.giveArmorToParty = function(itemId) {
+		$gameTemp.clearItemReceiver();
 		var i;
 		for(i = 0; i < $gameParty.size(); i++) {
 			var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(i));
@@ -325,6 +328,60 @@
 				$gameTemp.setItemReceiver(battler.displayName());
 				break;
 			}
+		}
+	};
+	
+	Game_System.prototype.giveItemToActor = function(itemId, actorId) {
+		$gameTemp.clearItemReceiver();
+		var battler = $gameActors.actor(actorId);
+		if(battler.totalItemCount() < battler.maxItems()) {
+			battler.gainItem($dataItems[itemId]);
+			$gameTemp.setItemReceiver(battler.displayName());
+		}
+	};
+	
+	Game_System.prototype.giveWeaponToActor = function(itemId, actorId) {
+		$gameTemp.clearItemReceiver();
+		var battler = $gameActors.actor(actorId);
+		if(battler.totalItemCount() < battler.maxItems()) {
+			battler.gainItem($dataWeapons[itemId]);
+			$gameTemp.setItemReceiver(battler.displayName());
+		}
+	};
+	
+	Game_System.prototype.giveArmorToActor = function(itemId, actorId) {
+		$gameTemp.clearItemReceiver();
+		var battler = $gameActors.actor(actorId);
+		if(battler.totalItemCount() < battler.maxItems()) {
+			battler.gainItem($dataArmors[itemId]);
+			$gameTemp.setItemReceiver(battler.displayName());
+		}
+	};
+	
+	Game_System.prototype.giveItemToPartyMember = function(itemId, partyPosition) {
+		$gameTemp.clearItemReceiver();
+		var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(partyPosition));
+		if(battler.totalItemCount() < battler.maxItems()) {
+			battler.gainItem($dataItems[itemId]);
+			$gameTemp.setItemReceiver(battler.displayName());
+		}
+	};
+	
+	Game_System.prototype.giveWeaponToPartyMember = function(itemId, partyPosition) {
+		$gameTemp.clearItemReceiver();
+		var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(partyPosition));
+		if(battler.totalItemCount() < battler.maxItems()) {
+			battler.gainItem($dataWeapons[itemId]);
+			$gameTemp.setItemReceiver(battler.displayName());
+		}
+	};
+	
+	Game_System.prototype.giveArmorToPartyMember = function(itemId, partyPosition) {
+		$gameTemp.clearItemReceiver();
+		var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(partyPosition));
+		if(battler.totalItemCount() < battler.maxItems()) {
+			battler.gainItem($dataArmors[itemId]);
+			$gameTemp.setItemReceiver(battler.displayName());
 		}
 	};
 	
