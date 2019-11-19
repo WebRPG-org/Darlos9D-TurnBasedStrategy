@@ -378,6 +378,8 @@ $gameSystem.giveArmorToActor(
 
 Gives an item/weapon/armor to the actor with the given id. Nobody recieves the item if the actor's inventory is full.
 
+This is mostly useful for outfitting actors upon their first appearance.
+
 ----------------------------------------------------
 $gameSystem.giveItemToPartyMember(
 	itemId,
@@ -395,9 +397,25 @@ $gameSystem.giveArmorToPartyMember(
 Gives an item/weapon/armor to the party member at the given position. Nobody recieves the item if the party member's inventory is full.
 
 -----------------------------------------------------
+$gameSystem.equipArmorToActor(
+	itemId,
+	actorId,
+	slotId
+);
+$gameSystem.equipWeaponToActor(
+	itemId,
+	actorId,
+	slotId
+);
+
+Equip a weapon or armor to an equip slot of an actor. If they already have equipment in that slot, it will be placed in their personal inventory. If there isn't room in their personal inventory, then they don't recieve the item at all.
+
+This is mostly useful for outfitting actors upon their first appearance.
+
+-----------------------------------------------------
 $gameSystem.getItemReceiver();
 
-Returns the display name of the party member who recieved the item given by the last call of any of the give*To*() functions. If nobody had room to recieve the item, this will return undefined. Use it with a script call in an event IF branch to know how to proceed after attempting to give an item.
+Returns the display name of the party member who recieved the item given by the last call of any of the give*To*() and equip*ToActor() functions. If nobody had room to recieve the item, this will return undefined. Use it with a script call in an event IF branch to know how to proceed after attempting to give an item.
 
 -----------------------------------------------------
 $gameSystem.giveSkillPointsToParty(

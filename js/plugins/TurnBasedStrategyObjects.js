@@ -389,6 +389,22 @@
 		return $gameTemp.getItemReceiver();
 	};
 	
+	Game_System.prototype.equipWeaponToActor = function(itemId, actorId, slotId) {
+		$gameTemp.clearItemReceiver();
+		var battler = $gameActors.actor(actorId);
+		if(battler.giveEquip(slotId, $dataWeapons[itemId])) {
+			$gameTemp.setItemReceiver(battler.displayName());
+		}
+	};
+	
+	Game_System.prototype.equipArmorToActor = function(itemId, actorId, slotId) {
+		$gameTemp.clearItemReceiver();
+		var battler = $gameActors.actor(actorId);
+		if(battler.giveEquip(slotId, $dataArmors[itemId])) {
+			$gameTemp.setItemReceiver(battler.displayName());
+		}
+	};
+	
 	Game_System.prototype.giveSkillPointsToParty = function(amount) {
 		var i;
 		for(i = 0; i < $gameParty.size(); i++) {

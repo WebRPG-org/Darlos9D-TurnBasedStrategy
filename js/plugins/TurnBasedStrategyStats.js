@@ -558,6 +558,15 @@
 		return this.items();
 	};
 	
+	Game_BattlerBase.prototype.firstAvailableItemIndex = function() {
+		for(i = 0; i < this.maxItems(); i++) {
+			if(this._items[i].id <= 0 && this._items[i].type === "") {
+				return i;
+			}
+		}
+		return -1;
+	};
+	
 	Game_BattlerBase.prototype.setDisplayName = function(displayName) {
 		this._displayName = displayName;
 	};
@@ -1647,6 +1656,18 @@
 			this._equips[slotId].setObject(item);
 			this.refresh();
 		}
+	};
+	
+	Game_Actor.prototype.giveEquip = function(slotId, item) {
+		if(this.equips()[slotId]) {
+			index = this.firstAvailableItemIndex();
+			if(index == -1) {
+				return false;
+			}
+			this.gainItemAtIndex(this.equips()[slotId], index);
+		}
+		this._equips[slotId].setObject(item);
+		return true;
 	};
 	
 	Game_Actor.prototype.releaseUnequippableItems = function(forcing) {
