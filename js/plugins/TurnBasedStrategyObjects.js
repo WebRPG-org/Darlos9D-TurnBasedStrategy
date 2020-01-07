@@ -1724,9 +1724,7 @@
 					if(tbsForce.isParty) {
 						tbsForce.actors.forEach(function (tbsActor) {
 							var battler = tbsActor.battler;
-							if(battler.getDamage("head") >= 100) { battler.setDamage("head", 99); }
-							if(battler.getDamage("mind") >= 100) { battler.setDamage("mind", 99); }
-							if(battler.getDamage("torso") >= 100) { battler.setDamage("torso", 99); }
+							if(battler.getDamage("core") >= 100) { battler.setDamage("core", 99); }
 							battler.setStress(0);
 							battler.clearStressCost();
 							battler.clearTbsBuffs();

@@ -287,41 +287,62 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 				this.setupSingleDamagePopup(false, 0, "dodged");
 				this.setupSingleDamagePopup(totalStress != 0, totalStress, "stress", false, 90, -60);
 			} else {
-				var leftArmHit = results.hit.leftArm;
-				var leftArmDamage = results.damage.leftArm - results.heal.leftArm;
-				var leftArmCrit = results.critical.leftArm;
-				var leftArmResultsType = "physicalDamage";
-				if(!results.hit.leftArm && results.hit.leftHeld) {
-					leftArmHit = true;
-					leftArmDamage = 0;
-					leftArmCrit = false;
-					leftArmResultsType = "blocked";
+				var totalDamage = Math.floor((results.damage.head - results.heal.head)*1.5
+					+ (results.damage.mind - results.heal.mind)*1.5
+					+ (results.damage.torso - results.heal.torso)
+					+ (results.damage.leftArm - results.heal.leftArm)*0.5
+					+ (results.damage.rightArm - results.heal.rightArm)*0.5
+					+ (results.damage.leftLeg - results.heal.leftLeg)*0.5
+					+ (results.damage.rightLeg - results.heal.rightLeg)*0.5);
+				var crit = results.critical.mind || results.critical.torso || results.critical.mind ||
+					results.critical.leftArm || results.critical.rightArm ||
+					results.critical.leftLeg || results.critical.rightLeg;
+				var resultsType = "physicalDamage";
+				if(
+					(results.hit.leftHeld || results.hit.rightHeld) &&
+					!results.hit.mind && !results.hit.head && !results.hit.torso &&
+					!results.hit.leftArm && !results.hit.rightArm &&
+					!results.hit.leftLeg && !results.hit.rightLeg
+				) {
+					resultsType = "blocked";
 				}
-				this.setupSingleDamagePopup(leftArmHit, leftArmDamage, leftArmResultsType, leftArmCrit, -90);
-					
-				var rightArmHit = results.hit.rightArm;
-				var rightArmDamage = results.damage.rightArm - results.heal.rightArm;
-				var rightArmCrit = results.critical.rightArm;
-				var rightArmResultsType = "physicalDamage";
-				if(!results.hit.rightArm && results.hit.rightHeld) {
-					rightArmHit = true;
-					rightArmDamage = 0;
-					rightArmCrit = false;
-					rightArmResultsType = "blocked";
-				}
-				this.setupSingleDamagePopup(rightArmHit, rightArmDamage, rightArmResultsType, rightArmCrit, 90);
+				this.setupSingleDamagePopup(true, totalDamage, resultsType, crit);
 				
-				this.setupSingleDamagePopup(results.hit.head, results.damage.head - results.heal.head,
-					"physicalDamage", results.critical.head, 0, -60);
-				this.setupSingleDamagePopup(results.hit.torso, results.damage.torso - results.heal.torso,
-					"physicalDamage");
-				this.setupSingleDamagePopup(results.hit.leftLeg, results.damage.leftLeg - results.heal.leftLeg,
-					"physicalDamage", results.critical.leftLeg, -45, 60);
-				this.setupSingleDamagePopup(results.hit.rightLeg, results.damage.rightLeg - results.heal.rightLeg,
-					"physicalDamage", results.critical.rightLeg, 45, 60);
-				this.setupSingleDamagePopup(results.hit.mind, results.damage.mind - results.heal.mind,
-					"mentalDamage", results.critical.mind, -90, -60);
-				this.setupSingleDamagePopup(totalStress != 0, totalStress, "stress", false, 90, -60);
+				// var leftArmHit = results.hit.leftArm;
+				// var leftArmDamage = results.damage.leftArm - results.heal.leftArm;
+				// var leftArmCrit = results.critical.leftArm;
+				// var leftArmResultsType = "physicalDamage";
+				// if(!results.hit.leftArm && results.hit.leftHeld) {
+					// leftArmHit = true;
+					// leftArmDamage = 0;
+					// leftArmCrit = false;
+					// leftArmResultsType = "blocked";
+				// }
+				// this.setupSingleDamagePopup(leftArmHit, leftArmDamage, leftArmResultsType, leftArmCrit, -90);
+					
+				// var rightArmHit = results.hit.rightArm;
+				// var rightArmDamage = results.damage.rightArm - results.heal.rightArm;
+				// var rightArmCrit = results.critical.rightArm;
+				// var rightArmResultsType = "physicalDamage";
+				// if(!results.hit.rightArm && results.hit.rightHeld) {
+					// rightArmHit = true;
+					// rightArmDamage = 0;
+					// rightArmCrit = false;
+					// rightArmResultsType = "blocked";
+				// }
+				// this.setupSingleDamagePopup(rightArmHit, rightArmDamage, rightArmResultsType, rightArmCrit, 90);
+				
+				// this.setupSingleDamagePopup(results.hit.head, results.damage.head - results.heal.head,
+					// "physicalDamage", results.critical.head, 0, -60);
+				// this.setupSingleDamagePopup(results.hit.torso, results.damage.torso - results.heal.torso,
+					// "physicalDamage");
+				// this.setupSingleDamagePopup(results.hit.leftLeg, results.damage.leftLeg - results.heal.leftLeg,
+					// "physicalDamage", results.critical.leftLeg, -45, 60);
+				// this.setupSingleDamagePopup(results.hit.rightLeg, results.damage.rightLeg - results.heal.rightLeg,
+					// "physicalDamage", results.critical.rightLeg, 45, 60);
+				// this.setupSingleDamagePopup(results.hit.mind, results.damage.mind - results.heal.mind,
+					// "mentalDamage", results.critical.mind, -90, -60);
+				// this.setupSingleDamagePopup(totalStress != 0, totalStress, "stress", false, 90, -60);
 			}
 			this._battler.clearDamagePopup();
 			this._battler.clearResult();

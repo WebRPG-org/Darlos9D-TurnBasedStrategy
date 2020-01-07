@@ -1239,16 +1239,16 @@ Window_TbsActorStatus.prototype.initialize = function(x, y) {
 	this._actorStressWindow = undefined;
 };
 
-Window_TbsActorStatus.prototype.lineHeight = function() {
-    return 29;
-};
+//Window_TbsActorStatus.prototype.lineHeight = function() {
+//    return 29;
+//};
 
 Window_TbsActorStatus.prototype.windowWidth = function() {
-	return this.standardPadding()*2 + 14*22;
+	return this.standardPadding()*2 + this.textPadding()*2 + 14*this.statusMeterFullLength();
 };
 
 Window_TbsActorStatus.prototype.windowHeight = function() {
-	return this.standardPadding()*2 + this.lineHeight()*4;
+	return this.fittingHeight(1);
 };
 
 Window_TbsActorStatus.prototype.setTbsActor = function(tbsActor, forceRefresh) {
@@ -1292,7 +1292,7 @@ Window_TbsActorStatus.prototype.setActorBuffsWindow = function(buffsWindow) {
 Window_TbsActorStatus.prototype.refresh = function() {
     this.contents.clear();
     if (this._tbsActor) {
-        this.drawActorDamage(this._tbsActor.battler, 0, 0);
+        this.drawActorDamage(this._tbsActor.battler, this.textPadding(), 0);
     }
 };
 
@@ -1383,15 +1383,13 @@ Window_TbsActorBuffs.prototype.iconColumnHeight = function() {
 };
 
 Window_TbsActorBuffs.prototype.windowWidth = function() {
-	return this.standardPadding()*2
+	return this.standardPadding()*2 + this.textPadding()*2
 		+ Window_Base._iconWidth*this.iconRowWidth()
 		+ this.iconSeparation()*(this.iconRowWidth()-1);
 };
 
 Window_TbsActorBuffs.prototype.windowHeight = function() {
-	return this.standardPadding()*2
-		+ Window_Base._iconHeight*this.iconColumnHeight()
-		+ this.iconSeparation()*(this.iconColumnHeight()-1);
+	return this.fittingHeight(this.iconColumnHeight());
 };
 
 Window_TbsActorBuffs.prototype.setTbsActor = function(tbsActor) {
@@ -1427,7 +1425,7 @@ Window_TbsActorBuffs.prototype.drawActorBuffs = function(battler, x, y) {
 		this.drawIcon(buffs[i].iconId, curX, curY);
 		if(i > 0 && i % this.iconRowWidth() == 1) {
 			curX = x;
-			curY = curY + iconHeight+this.iconSeparation();
+			curY = curY + this.lineHeight();
 		} else {
 			curX += iconWidth+this.iconSeparation();
 		}
@@ -1451,16 +1449,16 @@ Window_TbsActorStress.prototype.initialize = function(x, y) {
     this._tbsActor = null;
 };
 
-Window_TbsActorStress.prototype.lineHeight = function() {
-    return 29;
-};
+//Window_TbsActorStress.prototype.lineHeight = function() {
+//    return 29;
+//};
 
 Window_TbsActorStress.prototype.windowWidth = function() {
-	return this.standardPadding()*2 + 14*2;
+	return this.standardPadding()*2 + this.textPadding()*2 + 14*2;
 };
 
 Window_TbsActorStress.prototype.windowHeight = function() {
-	return this.standardPadding()*2 + this.lineHeight()*5;
+	return this.fittingHeight(5);
 };
 
 Window_TbsActorStress.prototype.setTbsActor = function(tbsActor) {
@@ -1472,7 +1470,7 @@ Window_TbsActorStress.prototype.setTbsActor = function(tbsActor) {
 Window_TbsActorStress.prototype.refresh = function() {
     this.contents.clear();
     if (this._tbsActor) {
-		this.drawActorStress(this._tbsActor.battler, 0, 0);
+		this.drawActorStress(this._tbsActor.battler, this.textPadding(), 0);
     }
 };
 
@@ -2578,9 +2576,9 @@ Window_TbsTargetName.prototype.initialize = function(x, y) {
 
 Window_TbsTargetName.prototype.windowWidth = function() {
 	if(this._tbsActor) {
-		return this.standardPadding() * 2 + this._tbsActor.battler.displayName().length * 14;
+		return this.standardPadding()*2 + this.textPadding()*2 + this._tbsActor.battler.displayName().length * 14;
 	} else {
-		return 300;
+		return this.standardPadding()*2 + this.textPadding()*2;
 	}
 };
 
@@ -2622,7 +2620,7 @@ Window_TbsTargetName.prototype.drawTargetNameText = function() {
 		if(battler.isDown()) {
 			this.changeTextColor(this.deathColor());
 		}
-		this.drawText(battler.blankDummy() ? "NO TARGET" : battler.displayName(), 0, 0);
+		this.drawText(battler.blankDummy() ? "NO TARGET" : battler.displayName(), this.textPadding(), 0);
 		this.resetTextColor();
 		this.changePaintOpacity(true);
 	}
@@ -3853,23 +3851,32 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.drawText(actor.respecXP(), x, y+this.lineHeight(), width, 'right');
 	};
 	
+	Window_Base.prototype.statusMeterPipCount = function() {
+		return 10;
+	};
+	Window_Base.prototype.statusMeterFullLength = function() {
+		return this.statusMeterPipCount() + 7;
+	}
+	
 	Window_Base.prototype.drawActorDamage = function(actor, x, y) {
 		if(actor.blankDummy()) { return; }
-		this.drawActorPartDamage(actor, "head"    , x		, y							, "He");
-		this.drawActorPartDamage(actor, "torso"   , x		, y + this.lineHeight()		, "To");
-		this.drawActorLimbDamage(actor, "leftArm" , x		, y + this.lineHeight()*2	, "Ar");
-		this.drawActorLimbDamage(actor, "rightArm", x+14*12	, y + this.lineHeight()*2);
-		this.drawActorLimbDamage(actor, "leftLeg" , x		, y + this.lineHeight()*3	, "Le");
-		this.drawActorLimbDamage(actor, "rightLeg", x+14*12	, y + this.lineHeight()*3);
+		this.drawActorPartDamage(actor, "core"    , x		, y							, "HP");
+		//this.drawActorPartDamage(actor, "head"    , x		, y							, "He");
+		//this.drawActorPartDamage(actor, "torso"   , x		, y + this.lineHeight()		, "To");
+		//this.drawActorLimbDamage(actor, "leftArm" , x		, y + this.lineHeight()*2	, "Ar");
+		//this.drawActorLimbDamage(actor, "rightArm", x+14*12	, y + this.lineHeight()*2);
+		//this.drawActorLimbDamage(actor, "leftLeg" , x		, y + this.lineHeight()*3	, "Le");
+		//this.drawActorLimbDamage(actor, "rightLeg", x+14*12	, y + this.lineHeight()*3);
 	};
 	
 	Window_Base.prototype.drawActorSimpleDamage = function(actor, x, y) {
-		this.drawActorSimplePartDamage(actor, "head"    , x		, y							, "He");
-		this.drawActorSimplePartDamage(actor, "torso"   , x		, y + this.lineHeight()		, "To");
-		this.drawActorSimpleLimbDamage(actor, "leftArm" , x		, y + this.lineHeight()*2	, "Ar");
-		this.drawActorSimpleLimbDamage(actor, "rightArm", x+14*8	, y + this.lineHeight()*2);
-		this.drawActorSimpleLimbDamage(actor, "leftLeg" , x		, y + this.lineHeight()*3	, "Le");
-		this.drawActorSimpleLimbDamage(actor, "rightLeg", x+14*8	, y + this.lineHeight()*3);
+		this.drawActorSimplePartDamage(actor, "core"    , x		, y							, "HP");
+		//this.drawActorSimplePartDamage(actor, "head"    , x		, y							, "He");
+		//this.drawActorSimplePartDamage(actor, "torso"   , x		, y + this.lineHeight()		, "To");
+		//this.drawActorSimpleLimbDamage(actor, "leftArm" , x		, y + this.lineHeight()*2	, "Ar");
+		//this.drawActorSimpleLimbDamage(actor, "rightArm", x+14*8	, y + this.lineHeight()*2);
+		//this.drawActorSimpleLimbDamage(actor, "leftLeg" , x		, y + this.lineHeight()*3	, "Le");
+		//this.drawActorSimpleLimbDamage(actor, "rightLeg", x+14*8	, y + this.lineHeight()*3);
 	};
 	
 	Window_Base.prototype.drawActorMentalDamage = function(actor, part, x, y, label) {
@@ -3889,15 +3896,20 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_Base.prototype.drawActorPartDamage = function(actor, part, x, y, label) {
 		this.changeTextColor(this.systemColor());
 		this.drawText(label, x, y, 14*2);
-		this.drawText("[               ]", x+14*5, y, 14*17);
+		var brackets = "[";
+		var i;
+		for(i = 0; i < this.statusMeterPipCount(); i++) {
+			brackets += " ";
+		}
+		brackets += "]";
+		this.drawText(brackets, x+14*5, y, brackets.length*14);
 		var health = 100 - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
 		}
 		this.drawText(health, x + 14*2, y, 14*3, 'right');
-		var pips = (health / 100) * 15;
-		var i;
+		var pips = (health / 100) * this.statusMeterPipCount();
 		for(i = 0; i < pips; i++) {
 			var width = 14;
 			if(pips - i > 0 && pips - i < 1) {

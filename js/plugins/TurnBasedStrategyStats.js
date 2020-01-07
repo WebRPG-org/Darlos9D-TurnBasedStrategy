@@ -398,6 +398,7 @@
 		this.clearBuffs();
 		this._stress = 0;
 		this._damage = {};
+		this._damage.core = 0;
 		this._damage.mind = 0;
 		this._damage.head = 0;
 		this._damage.torso = 0;
@@ -591,6 +592,7 @@
 		this._mp = this._mp.clamp(0, this.mmp);
 		this._tp = this._tp.clamp(0, this.maxTp());
 		this._stress = this._stress.clamp(0, 100);
+		this._damage.core = this._damage.core.clamp(0, 100);
 		this._damage.head = this._damage.head.clamp(0, 100);
 		this._damage.torso = this._damage.torso.clamp(0, 100);
 		this._damage.leftArm = this._damage.leftArm.clamp(0, 100);
@@ -605,6 +607,7 @@
 		this._hp = this.mhp;
 		this._mp = this.mmp;
 		this._stress = 0;
+		this._damage.core = 0;
 		this._damage.head = 0;
 		this._damage.torso = 0;
 		this._damage.leftArm = 0;
@@ -648,7 +651,7 @@
 	};
 	
 	Game_BattlerBase.prototype.isDown = function() {
-		return this._damage.torso >= 100 || this._damage.head >= 100 || this._damage.mind >= 100;
+		return this._damage.core >= 100;
 	};
 	
 	Game_BattlerBase.prototype.addTbsBuffs = function(buffs) {
@@ -1372,14 +1375,24 @@
 		if(!hit.heal || hit.heal.damage === undefined || hit.heal.damage <= 0) { return; }
 		
 		if(bodyPart === "undefined") {
-			this.adjustDamage("head", -hit.heal.damage);
+			this.adjustDamage("head", -hit.heal.damage*1.5);
 			this.adjustDamage("torso", -hit.heal.damage);
-			this.adjustDamage("leftArm", -hit.heal.damage);
-			this.adjustDamage("rightArm", -hit.heal.damage);
-			this.adjustDamage("leftLeg", -hit.heal.damage);
-			this.adjustDamage("rightLeg", -hit.heal.damage);
+			this.adjustDamage("leftArm", -hit.heal.damage*0.5);
+			this.adjustDamage("rightArm", -hit.heal.damage*0.5);
+			this.adjustDamage("leftLeg", -hit.heal.damage*0.5);
+			this.adjustDamage("rightLeg", -hit.heal.damage*0.5);
 		} else {
-			this.adjustDamage(bodyPart, -hit.heal.damage);
+			var multiplier = 1;
+			if(bodyPart === "mind" || bodyPart === "head") {
+				multiplier = 1.5;
+			}
+			if(
+				bodyPart === "leftArm" || bodyPart === "rightArm" ||
+				bodyPart === "leftLeg" || bodyPart === "rightLeg"
+			) {
+				multiplier = 0.5;
+			}
+			this.adjustDamage(bodyPart, -hit.heal.damage*multiplier);
 		}
 	};
 	

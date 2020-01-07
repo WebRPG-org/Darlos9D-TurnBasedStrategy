@@ -2487,6 +2487,14 @@ BattleManager.applyActionResults = function(results, target) {
 	target.adjustDamage("rightArm", results.damage.rightArm - results.heal.rightArm);
 	target.adjustDamage("leftLeg", results.damage.leftLeg - results.heal.leftLeg);
 	target.adjustDamage("rightLeg", results.damage.rightLeg - results.heal.rightLeg);
+	var totalDamage = Math.floor((results.damage.head - results.heal.head)*1.5
+					+ (results.damage.mind - results.heal.mind)*1.5
+					+ (results.damage.torso - results.heal.torso)
+					+ (results.damage.leftArm - results.heal.leftArm)*0.5
+					+ (results.damage.rightArm - results.heal.rightArm)*0.5
+					+ (results.damage.leftLeg - results.heal.leftLeg)*0.5
+					+ (results.damage.rightLeg - results.heal.rightLeg)*0.5);
+	target.adjustDamage("core", totalDamage);
 	if(initialDownState != target.isDown()) {
 		if(initialDownState) {
 			results.revived = true;
