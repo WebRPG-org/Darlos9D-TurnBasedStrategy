@@ -839,11 +839,15 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 	var targetMentalProt = target.mentalProtection();
 	
 	var physEvaSkill = target.totalSkill("physEvade");
-	var physArmorSkill = 1;
+	var defenseSkill = target.defenseSkill();
+	var reflexSkill = target.reflexSkill();
+	var defenseTestDice = physEvaSkill > defenseSkill ? physEvaSkill - defenseSkill : defenseSkill - physEvaSkill;
+	var defenseCrisisDice = physEvaSkill > defenseSkill ? defenseSkill : physEvaSkill;
+	var reflexTestDice = physEvaSkill > reflexSkill ? physEvaSkill - reflexSkill : reflexSkill - physEvaSkill;
+	var reflexCrisisDice = physEvaSkill > reflexSkill ? reflexSkill : physEvaSkill;
+	
 	var mentalEvaSkill = target.totalSkill("mentalEvade");
 	var mentalArmorSkill = 1;
-	var physTestDice = physEvaSkill > physArmorSkill ? physEvaSkill - physArmorSkill : physArmorSkill - physEvaSkill;
-	var physCrisisDice = physEvaSkill > physArmorSkill ? physArmorSkill : physEvaSkill;
 	var mentalTestDice = mentalEvaSkill > mentalArmorSkill ? mentalEvaSkill - mentalArmorSkill : mentalArmorSkill - mentalEvaSkill;
 	var mentalCrisisDice = mentalEvaSkill > mentalArmorSkill ? mentalArmorSkill : mentalEvaSkill;
 	
@@ -984,14 +988,14 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				dicePool.skill = 0;
 				dicePool.expert = 0;
 				dicePool.buff = 0;
-				dicePool.test = physTestDice;
-				dicePool.crisis = physCrisisDice;
+				dicePool.test = 0;
+				dicePool.crisis = 0;
 				dicePool.debuff = 0;
 				dicePool.mentalTest = mentalTestDice;
 				dicePool.mentalCrisis = mentalCrisisDice;
 				dicePool.mentalDebuff = 0;
 				
-				var testDiceReduction = hit.accuracyBonus === undefined ? 0 : hit.accuracyBonus;
+				var testDiceReduction = hit.evasionPenalty === undefined ? 0 : hit.evasionPenalty;
 				dicePool.debuff = subjectStress + processedHitGroup.accuracyReduction + hitDamage.damageReduction;
 				dicePool.buff = targetStress;
 				
@@ -1031,6 +1035,14 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				dicePool.expert = accSkill > abilitySkill ? abilitySkill : accSkill;
 				if(dicePool.skill <= 0 && dicePool.expert <= 0 && dicePool.buff <= 0) {
 					dicePool.buff = 1;
+				}
+				
+				if(hit.evadedBy === "defense") {
+					dicePool.test = defenseTestDice;
+					dicePool.crisis = defenseCrisisDice;
+				} else if(hit.evadedBy === "reflex") {
+					dicePool.test = reflexTestDice;
+					dicePool.crisis = reflexCrisisDice;
 				}
 				
 				var testDice = dicePool.test;
@@ -1712,7 +1724,7 @@ BattleManager.cleaveMath = function(
 	hitGroup.hits = [];
 	var newHit = {};
 	newHit.rangeType = hit.rangeType;
-	newHit.accuracyBonus = hit.accuracyBonus;
+	newHit.evasionPenalty = hit.evasionPenalty;
 	newHit.usesParts = hit.usesParts;
 	newHit.damage = {};
 	if(damageResult.remainingPower.blunt > 0) { newHit.damage.blunt = damageResult.remainingPower.blunt; }
@@ -2324,10 +2336,10 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 	}
 	
 	if(hitDamage.stiletto !== undefined) {
-		var power = Math.max(0, hitDamage.stiletto);
+		var power = Math.max(0, hitDamage.stiletto + hitResult.rareDamageBonus);
 		var damage = Math.max(0, power - Math.max(0,
 			partProt.armor.cut -
-			(hitResult.damageBonus*2 + hitResult.rareDamageBonus*4)
+			(hitResult.damageBonus*2 + hitResult.rareDamageBonus*2)
 		));
 		if(damage < power) {
 			bluntPow += Math.floor((power - damage) / 8);
@@ -2340,8 +2352,11 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 	if(hitDamage.bullet !== undefined) {
 		var power = Math.max(0, hitDamage.bullet +
 			hitResult.damageBonus +
-			hitResult.rareDamageBonus*2);
-		var damage = Math.max(0, power - partProt.armor.bullet);
+			hitResult.rareDamageBonus);
+		var damage = Math.max(0, power - Math.max(0, 
+			partProt.armor.bullet -
+			hitResult.rareDamageBonus*2
+		));
 		if(damage < power) {
 			bluntPow += power - damage;
 		}
@@ -2362,12 +2377,10 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 	}
 	
 	if(hitDamage.fire !== undefined) {
-		var power = Math.max(0, hitDamage.fire +
-			hitResult.damageBonus +
-			hitResult.rareDamageBonus);
+		var power = Math.max(0, hitDamage.fire + hitResult.rareDamageBonus);
 		var damage = Math.max(0, power - Math.max(0, 
 			partProt.armor.fire -
-			hitResult.rareDamageBonus*2
+			(hitResult.damageBonus*2 + hitResult.rareDamageBonus*2)
 		));
 		returnObj.damage += damage;
 		returnObj.remainingPower.fire = Math.max(0, damage - tough);
@@ -2375,12 +2388,10 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 	}
 	
 	if(hitDamage.ice !== undefined) {
-		var power = Math.max(0, hitDamage.ice +
-			hitResult.damageBonus +
-			hitResult.rareDamageBonus);
+		var power = Math.max(0, hitDamage.ice + hitResult.rareDamageBonus);
 		var damage = Math.max(0, power - Math.max(0, 
 			partProt.armor.ice -
-			hitResult.rareDamageBonus*2
+			(hitResult.damageBonus*2 + hitResult.rareDamageBonus*2)
 		));
 		returnObj.damage += damage;
 		returnObj.remainingPower.ice = Math.max(0, damage - tough);
@@ -2388,12 +2399,10 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 	}
 	
 	if(hitDamage.corrosion !== undefined) {
-		var power = Math.max(0, hitDamage.corrosion +
-			hitResult.damageBonus +
-			hitResult.rareDamageBonus);
+		var power = Math.max(0, hitDamage.corrosion + hitResult.rareDamageBonus);
 		var damage = Math.max(0, power - Math.max(0, 
 			partProt.armor.corrosion -
-			hitResult.rareDamageBonus*2
+			(hitResult.damageBonus*2 + hitResult.rareDamageBonus*2)
 		));
 		returnObj.damage += damage;
 		returnObj.remainingPower.corrosion = Math.max(0, damage - tough);
@@ -2401,12 +2410,10 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 	}
 	
 	if(hitDamage.lightning !== undefined) {
-		var power = Math.max(0, hitDamage.lightning +
-			hitResult.damageBonus +
-			hitResult.rareDamageBonus);
+		var power = Math.max(0, hitDamage.lightning + hitResult.rareDamageBonus);
 		var damage = Math.max(0, power - Math.max(0, 
 			partProt.armor.conducted -
-			hitResult.rareDamageBonus*2
+			(hitResult.damageBonus*2 + hitResult.rareDamageBonus*2)
 		));
 		returnObj.damage += damage;
 		returnObj.remainingPower.lightning = Math.max(0, damage - tough);

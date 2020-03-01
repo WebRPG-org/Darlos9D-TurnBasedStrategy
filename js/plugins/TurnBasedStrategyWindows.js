@@ -4055,8 +4055,9 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 				hitRange += hits[i].ignoreUserRange || !actor ? 0 : actor.baseRange();
 				var range = hitRange;
 				this.drawText(!rangeIsSelf && range > 0 ? range : "-", nameOffset - 38, lineHeight, 100, 'right');
-				var accuracyBonus = hits[i].accuracyBonus !== undefined ? hits[i].accuracyBonus : 0;
-				this.drawText((hits[i].damage || hits[i].debuffs) && accuracyBonus > 0 ? accuracyBonus : "-", nameOffset + 8, lineHeight, 100, 'right');
+				var evasionPenalty = hits[i].evasionPenalty !== undefined ? hits[i].evasionPenalty : 0;
+				var evasionPenalty += hits[i].accuracy !== undefined ? hits[i].accuracy : 0;
+				this.drawText((hits[i].damage || hits[i].debuffs) && evasionPenalty > 0 ? evasionPenalty : "-", nameOffset + 8, lineHeight, 100, 'right');
 				this.drawText(hits[i].aoe > 0 ? hits[i].aoe : "-", nameOffset + 124, lineHeight, 100, 'right');
 				
 				if(i === 0 && n === 0) {

@@ -815,6 +815,14 @@
 		return this.skillPoints(skill) + this.getSkillBuff(skill);
 	};
 	
+	Game_BattlerBase.prototype.defenseSkill = function() {
+		return 0;
+	};
+	
+	Game_BattlerBase.prototype.reflexSkill = function() {
+		return 0;
+	};
+	
 	Game_BattlerBase.prototype.getSkillBuff = function(skill) {
 		var total = 0;
 		this._tbsBuffs.forEach(function (buff) {
@@ -1617,6 +1625,14 @@
 			+ this.skillPoints(skill) + this.getSkillBuff(skill);
 	};
 	
+	Game_Actor.prototype.defenseSkill = function() {
+		return this.totalSkill(this.currentClass().tbsStats.defenseAbility);
+	};
+	
+	Game_Actor.prototype.reflexSkill = function() {
+		return this.totalSkill(this.currentClass().tbsStats.reflexAbility);
+	};
+	
 	Game_Actor.prototype.baseProtection = function() {
 		return this.currentClass().tbsStats.protection;
 	};
@@ -1798,6 +1814,14 @@
 	Game_Enemy.prototype.totalSkill = function(skill) {
 		return (this.enemy().tbsStats.startingSkills[skill] === undefined ? 0 : this.enemy().tbsStats.startingSkills[skill])
 			+ this.skillPoints(skill) + this.getSkillBuff(skill);
+	};
+	
+	Game_Enemy.prototype.defenseSkill = function() {
+		return this.totalSkill(this.enemy().tbsStats.defenseAbility);
+	};
+	
+	Game_Enemy.prototype.reflexSkill = function() {
+		return this.totalSkill(this.enemy().tbsStats.reflexAbility);
 	};
 	
 	Game_Enemy.prototype.isFlying = function() {
