@@ -421,7 +421,6 @@
 		this._skillPoints.perception = 0;
 		
 		this._displayName = undefined;
-		this._stressCost = 0;
 		this._skillXP = 0;
 		this._respecXP = 0;
 		this.initAllItems();
@@ -591,15 +590,15 @@
 		this._hp = this._hp.clamp(0, this.mhp);
 		this._mp = this._mp.clamp(0, this.mmp);
 		this._tp = this._tp.clamp(0, this.maxTp());
-		this._stress = this._stress.clamp(0, 100);
-		this._damage.core = this._damage.core.clamp(0, 100);
-		this._damage.head = this._damage.head.clamp(0, 100);
-		this._damage.torso = this._damage.torso.clamp(0, 100);
-		this._damage.leftArm = this._damage.leftArm.clamp(0, 100);
-		this._damage.rightArm = this._damage.rightArm.clamp(0, 100);
-		this._damage.leftLeg = this._damage.leftLeg.clamp(0, 100);
-		this._damage.rightLeg = this._damage.rightLeg.clamp(0, 100);
-		this._damage.mind = this._damage.mind.clamp(0, 100);
+		this._stress = this._stress.clamp(0, 10);
+		this._damage.core = this._damage.core.clamp(0, this.toughness()*2);
+		this._damage.head = this._damage.head.clamp(0, this.toughness());
+		this._damage.torso = this._damage.torso.clamp(0, this.toughness());
+		this._damage.leftArm = this._damage.leftArm.clamp(0, this.toughness());
+		this._damage.rightArm = this._damage.rightArm.clamp(0, this.toughness());
+		this._damage.leftLeg = this._damage.leftLeg.clamp(0, this.toughness());
+		this._damage.rightLeg = this._damage.rightLeg.clamp(0, this.toughness());
+		this._damage.mind = this._damage.mind.clamp(0, this.toughness());
 	};
 
 	Game_BattlerBase.prototype.recoverAll = function() {
@@ -618,7 +617,7 @@
 	};
 	
 	Game_BattlerBase.prototype.setStress = function(newStress) {
-		this._stress = Math.min(100, Math.max(0, newStress));
+		this._stress = Math.min(10, Math.max(0, newStress));
 	};
 	
 	Game_BattlerBase.prototype.adjustStress = function(change) {
@@ -629,21 +628,17 @@
 		this.setStress(0);
 	};
 	
-	Game_BattlerBase.prototype.stressModifier = function() {
-		return Math.floor(this.stress() / 20);
-	};
-	
 	Game_BattlerBase.prototype.stress = function() {
-		return Math.max(0, this._stress + this._stressCost);
+		return Math.max(0, this._stress);
 	};
 	
 	Game_BattlerBase.prototype.setDamage = function(part, damage) {
 		if(this._damage[part] === undefined) { return; }
-		this._damage[part] = Math.min(100, Math.max(0, damage));
+		this._damage[part] = Math.min(this.toughness()*(part==="core"?2:1), Math.max(0, damage));
 	};
 	
 	Game_BattlerBase.prototype.adjustDamage = function(part, change) {
-		this.setDamage(part, (this._damage[part] === undefined ? 0 : this._damage[part]) + change);
+		this.setDamage(part, (this._damage[part] === undefined ? 0 : this._damage[part]) + Math.floor(change));
 	};
 	
 	Game_BattlerBase.prototype.getDamage = function(part) {
@@ -651,7 +646,7 @@
 	};
 	
 	Game_BattlerBase.prototype.isDown = function() {
-		return this._damage.core >= 100;
+		return this._damage.core >= this.toughness()*2;
 	};
 	
 	Game_BattlerBase.prototype.addTbsBuffs = function(buffs) {
@@ -728,7 +723,7 @@
 	};
 	
 	Game_BattlerBase.prototype.maxSkillPoints = function() {
-		return 32;
+		return 5;
 	};
 	
 	Game_BattlerBase.prototype.setSkillPoints = function(skill, points) {
@@ -852,11 +847,11 @@
 	
 	Game_BattlerBase.prototype.moveRange = function() {
 		var moveDamage = this.getDamage("torso");
-		var moveDenom = 400;
+		var moveDenom = this.toughness()*4;
 		if(this.limbsType() === "winged" && this.isFlying()) {
 			moveDamage += this.getDamage("leftArm") + this.getDamage("rightArm");
 		} else if(this.limbsType() === "quadrupedal") {
-			moveDenom = 600;
+			moveDenom = this.toughness()*6;
 			moveDamage += this.getDamage("leftLeg") + this.getDamage("rightLeg")
 				+ this.getDamage("leftArm") + this.getDamage("rightArm");
 		} else {
@@ -870,20 +865,19 @@
 		return false;
 	};
 	
-	Game_BattlerBase.prototype.strengthMultiplier = function() {
-		var percent = 0;
+	Game_BattlerBase.prototype.strength = function() {
+		var strength = 0;
 		var attributes = this.getAttributes();
 		attributes.forEach(function (attribute) {
-			if(attribute.strengthPercent !== undefined) {
-				percent += attribute.strengthPercent;
+			if(attribute.strength !== undefined) {
+				strength += attribute.strength;
 			}
 		});
-		var multiplier = 1 + percent/100;
-		return multiplier > 0 ? multiplier : 0;
+		return strength;
 	};
 	
 	Game_BattlerBase.prototype.toughness = function() {
-		var toughness = 4;
+		var toughness = 10;
 		var attributes = this.getAttributes();
 		attributes.forEach(function (attribute) {
 			if(attribute.toughness !== undefined) {
@@ -894,24 +888,11 @@
 	};
 	
 	Game_BattlerBase.prototype.mentalToughness = function() {
-		return 4;
+		return 10;
 	};
 	
 	Game_BattlerBase.prototype.stressRecovery = function() {
-		return 20;
-	};
-	
-	Game_BattlerBase.prototype.adjustStressCost = function(adjustValue) {
-		this._stressCost = Math.max(0, this._stressCost + adjustValue);
-	};
-	
-	Game_BattlerBase.prototype.clearStressCost = function() {
-		this._stressCost = 0;
-	};
-	
-	Game_BattlerBase.prototype.applyStressCost = function() {
-		this.adjustStress(this._stressCost);
-		this.clearStressCost();
+		return 2;
 	};
 	
 	Game_BattlerBase.prototype.baseProtection = function() {
@@ -1375,16 +1356,17 @@
 		if(!hit.heal || hit.heal.damage === undefined || hit.heal.damage <= 0) { return; }
 		
 		if(bodyPart === "undefined") {
-			this.adjustDamage("head", -hit.heal.damage*1.5);
+			this.adjustDamage("head", -hit.heal.damage*2);
 			this.adjustDamage("torso", -hit.heal.damage);
 			this.adjustDamage("leftArm", -hit.heal.damage*0.5);
 			this.adjustDamage("rightArm", -hit.heal.damage*0.5);
 			this.adjustDamage("leftLeg", -hit.heal.damage*0.5);
 			this.adjustDamage("rightLeg", -hit.heal.damage*0.5);
+			this.adjustDamage("core", -hit.heal.damage*5);
 		} else {
 			var multiplier = 1;
 			if(bodyPart === "mind" || bodyPart === "head") {
-				multiplier = 1.5;
+				multiplier = 2;
 			}
 			if(
 				bodyPart === "leftArm" || bodyPart === "rightArm" ||
@@ -1393,6 +1375,7 @@
 				multiplier = 0.5;
 			}
 			this.adjustDamage(bodyPart, -hit.heal.damage*multiplier);
+			this.adjustDamage("core", -hit.heal.damage*multiplier)
 		}
 	};
 	

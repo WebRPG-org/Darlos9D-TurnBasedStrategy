@@ -1482,7 +1482,7 @@ Window_TbsActorStress.prototype.drawActorStress = function(battler, x, y) {
 	this.drawText("t", x, y+this.lineHeight(), 14);
 	//this.drawText("_", x+14, y-this.lineHeight()+7, 14);
 	//this.drawText("_", x+14, y+this.lineHeight()*4, 14);
-	if(battler.stress() >= 100) {
+	if(battler.stress() >= 10) {
 		this.changeTextColor(this.deathColor());
 	} else {
 		this.changeTextColor(this.crisisColor());
@@ -1504,7 +1504,7 @@ Window_TbsActorStress.prototype.drawActorStress = function(battler, x, y) {
 		numHeight++;
 	}
 	this.drawText(numStress, x, y+this.lineHeight()*numHeight, 14);
-	var pips = (battler.stress() / 100) * 5;
+	var pips = (battler.stress() / 10) * 5;
 	var pipsBaseY = y;
 	if(pips - Math.floor(pips) > 0) {
 		var pipHeight = lineHeight * (pips - Math.floor(pips));
@@ -3903,13 +3903,13 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		}
 		brackets += "]";
 		this.drawText(brackets, x+14*5, y, brackets.length*14);
-		var health = 100 - actor.getDamage(part);
+		var health = actor.toughness() - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
 		}
 		this.drawText(health, x + 14*2, y, 14*3, 'right');
-		var pips = (health / 100) * this.statusMeterPipCount();
+		var pips = (health / actor.toughness()) * this.statusMeterPipCount();
 		for(i = 0; i < pips; i++) {
 			var width = 14;
 			if(pips - i > 0 && pips - i < 1) {
@@ -3928,13 +3928,13 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			x -= 14*2;
 		}
 		this.drawText("[     ]", x+14*5, y, 14*7);
-		var health = 100 - actor.getDamage(part);
+		var health = actor.toughness() - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
 		}
 		this.drawText(health, x + 14*2, y, 14*3, 'right');
-		var pips = (health / 100) * 5;
+		var pips = (health / actor.toughness()) * 5;
 		var i;
 		for(i = 0; i < pips; i++) {
 			var width = 14;
@@ -3950,7 +3950,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.changeTextColor(this.systemColor());
 		this.drawText(label, x, y, 14*2);
 		x += 14*4;
-		var health = 100 - actor.getDamage(part);
+		var health = actor.toughness() - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
@@ -3966,7 +3966,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		} else {
 			x -= 14*2;
 		}
-		var health = 100 - actor.getDamage(part);
+		var health = actor.toughness() - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
@@ -4170,9 +4170,9 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_Base.prototype.drawDamage = function(power, drawName, nameOffset, lineHeight, lineOffset, reqLacked, iconId) {
-		if(power > 0) {
+		if(power !== undefined && !isNaN(power)) {
 			this.drawIcon(iconId, nameOffset + 116, lineHeight + this.lineHeight() * lineOffset);
-			this.drawText(power > 0 ? power : "-", nameOffset + 78, lineHeight + this.lineHeight() * lineOffset, 100, 'right');
+			this.drawText(power, nameOffset + 78, lineHeight + this.lineHeight() * lineOffset, 100, 'right');
 			if(drawName && lineOffset > 0) {
 				if(reqLacked) {
 					this.changeTextColor(this.deathColor());

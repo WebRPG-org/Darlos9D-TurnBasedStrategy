@@ -220,8 +220,8 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 		var varianceY = 0;
 		if(variance !== undefined) {
 			var angle = Math.random() * Math.PI;
-			varianceX = Math.cos(angle) * Math.floor(variance/2);
-			varianceY = Math.sin(angle) * Math.floor(variance/2);
+			varianceX = Math.cos(angle) * Math.floor(variance*10);
+			varianceY = Math.sin(angle) * Math.floor(variance*10);
 		}
 		sprite.setup(this._effectTarget, animation, mirror, delay, varianceX, varianceY);
 		this.parent.addChild(sprite);

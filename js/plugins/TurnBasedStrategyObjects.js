@@ -451,7 +451,8 @@
 	
 	Game_System.prototype.skillCheck = function(successSkill, difficulty, abilitySkill, abilitySkillLevel) {
 		var userFound = false;
-		var highestLevel = 0;
+		var highestSuccessSkill = 0;
+		var highestAbilitySkill = 0;
 		var i;
 		for(i = 0; i < $gameParty.size(); i++) {
 			var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(i));
@@ -459,11 +460,21 @@
 				&& abilitySkillLevel !== undefined
 				&& battler.totalSkill(abilitySkill) < abilitySkillLevel) { continue; }
 			userFound = true;
-			if(battler.totalSkill(successSkill) > highestLevel) {
-				highestLevel = battler.totalSkill(successSkill);
+			if(battler.totalSkill(successSkill) > highestSuccessSkill) {
+				highestSuccessSkill = battler.totalSkill(successSkill);
+				highestAbilitySkill = battler.totalSkill(abilitySkill)
 			}
 		}
-		return userFound ? BattleManager.rollForRanks(highestLevel*10, 0) > difficulty*10+30 : false;
+		if(userFound) {
+			var skillDice = highestSuccessSkill < highestAbilitySkill ?
+				highestAbilitySkill - highestSuccessSkill :
+				highestSuccessSkill - highestAbilitySkill;
+			var expertDice = highestSuccessSkill < highestAbilitySkill ? highestSuccessSkill : highestAbilitySkill;
+			var skillRoll = BattleManager.rollSkillDice(skillDice, expertDice);
+			var testRoll = BattleManager.rollTestDice(difficulty);
+			return skillRoll.hits > testRoll.misses;
+		}
+		return false;
 	};
 	
 	//item
@@ -547,7 +558,6 @@
 		this._cameraFocusDirection = undefined;
 		this._cameraFocusResetToPlayer = undefined;
 		this._resetCameraAfterBattle = undefined;
-		this._perceptionMultiplier = 10;
 		this._tbsCursorRegions = [];
 		this._mapBgm = undefined;
 		this._tileRuns = [];
@@ -939,40 +949,59 @@
 				that._tbsSurpriseRoundJustStarted = true;
 			}
 			
-			var damageStress = actor.battler.getDamage("head") / 5
-				+ actor.battler.getDamage("mind") / 5
-				+ actor.battler.getDamage("torso") / 10;
-			if(actor.battler.limbsType() === "winged" && actor.battler.isFlying()) {
-				damageStress += actor.battler.getDamage("leftLeg") / 20
-					+ actor.battler.getDamage("rightLeg") / 20
-					+ actor.battler.getDamage("leftArm") / 5
-					+ actor.battler.getDamage("rightArm") / 5;
-			} else if(actor.battler.limbsType() === "quadrupedal") {
-				damageStress += actor.battler.getDamage("leftLeg") / 10
-					+ actor.battler.getDamage("rightLeg") / 10
-					+ actor.battler.getDamage("leftArm") / 10
-					+ actor.battler.getDamage("rightArm") / 10;
-			} else {
-				damageStress += actor.battler.getDamage("leftLeg") / 5
-					+ actor.battler.getDamage("rightLeg") / 5
-					+ actor.battler.getDamage("leftArm") / 20
-					+ actor.battler.getDamage("rightArm") / 20;
-			}
-			actor.battler.adjustStress(Math.floor(damageStress-actor.battler.stressRecovery()));
+			this.stressFromDamage(actor.battler);
 			
 			force.actors.push(actor);
 			
-			if(actor.canActThisRound) {
-				var perceptionRoll = BattleManager.rollForRanks(actor.battler.totalSkill("perception") * that._perceptionMultiplier, actor.battler.stress());
-				if(force.perceptionRoll === undefined || force.perceptionRoll < perceptionRoll) {
-					force.perceptionRoll = perceptionRoll;
-				}
-			}
+			this.rollPerception(actor, force);
 			
 			index++;
 		});
 		
 		return force;
+	};
+	
+	Game_Map.prototype.stressFromDamage = function(battler) {
+		var tough = battler.toughness();
+		var damageStress = battler.getDamage("head") / tough * 4
+			+ battler.getDamage("mind") / tough * 4
+			+ battler.getDamage("torso") / tough * 2;
+		if(battler.limbsType() === "winged" && battler.isFlying()) {
+			damageStress += battler.getDamage("leftLeg") / tough * 2
+				+ battler.getDamage("rightLeg") / tough * 2
+				+ battler.getDamage("leftArm") / tough * 4
+				+ battler.getDamage("rightArm") / tough * 4;
+		} else if(battler.limbsType() === "quadrupedal") {
+			damageStress += battler.getDamage("leftLeg") / tough * 2
+				+ battler.getDamage("rightLeg") / tough * 2
+				+ battler.getDamage("leftArm") / tough * 2
+				+ battler.getDamage("rightArm") / tough * 2;
+		} else {
+			damageStress += battler.getDamage("leftLeg") / tough * 4
+				+ battler.getDamage("rightLeg") / tough * 4
+				+ battler.getDamage("leftArm") / tough * 2
+				+ battler.getDamage("rightArm") / tough * 2;
+		}
+		battler.adjustStress(Math.floor(damageStress-battler.stressRecovery()));
+	}
+	
+	Game_Map.prototype.rollPerception = function(actor, force) {
+		if(actor.canActThisRound) {
+			var skillDice = actor.battler.totalSkill("perception");
+			var debuffDice = actor.battler.stress();
+			perceptionRoll = BattleManager.rollSkillDice(skillDice);
+			var stressRoll = BattleManager.rollTestDice(0, 0, debuffDice);
+			perceptionRoll.hits -= stressRoll.misses;
+			perceptionRoll.bonuses -= stressRoll.penalties;
+			if(
+				force.perceptionRoll === undefined ||
+				force.perceptionRoll.hits < perceptionRoll.hits ||
+				(force.perceptionRoll.hits == perceptionRoll.hits &&
+				force.perceptionRoll.bonuses < perceptionRoll.bonuses)
+			) {
+				force.perceptionRoll = perceptionRoll;
+			}
+		}
 	};
 	
 	Game_Map.prototype.spawnTbsCharacters = function() {
@@ -1585,7 +1614,6 @@
 					this._dummyTarget.battler = new Game_Enemy(7);
 					this._dummyTarget.memberPosition = -1;
 					this._dummyTarget.canActThisRound = false;
-					this._damageStressDivisor = 2.5;
 					this._queuedActionLoops = 0;
 					this._queuedActionLimit = 500000;
 					var chara = new Game_Character();
@@ -1724,9 +1752,10 @@
 					if(tbsForce.isParty) {
 						tbsForce.actors.forEach(function (tbsActor) {
 							var battler = tbsActor.battler;
-							if(battler.getDamage("core") >= 100) { battler.setDamage("core", 99); }
+							if(battler.getDamage("core") >= battler.toughness()) {
+								battler.setDamage("core", battler.toughness()-1);
+							}
 							battler.setStress(0);
-							battler.clearStressCost();
 							battler.clearTbsBuffs();
 							battler.setDisplayName(undefined);
 						});
@@ -1801,42 +1830,16 @@
 			}
 		} else {
 			for(i = 0; i < this._tbsForces.length; i++) {
-				this._tbsForces[i].perceptionRoll = 0;
+				this._tbsForces[i].perceptionRoll = {};
 				var j;
 				for(j = 0; j < this._tbsForces[i].actors.length; j++) {
 					var battler = this._tbsForces[i].actors[j].battler;
 					this._tbsForces[i].actors[j].canActThisRound = !battler.isDown();
 					this._tbsForces[i].actors[j].movedThisRound = false;
-					
-					var damageStress = battler.getDamage("head") / this._damageStressDivisor / 2
-						+ battler.getDamage("mind") / this._damageStressDivisor / 2
-						+ battler.getDamage("torso") / this._damageStressDivisor / 4;
-					if(battler.limbsType() === "winged" && battler.isFlying()) {
-						damageStress += battler.getDamage("leftLeg") / this._damageStressDivisor / 4
-							+ battler.getDamage("rightLeg") / this._damageStressDivisor / 4
-							+ battler.getDamage("leftArm") / this._damageStressDivisor / 2
-							+ battler.getDamage("rightArm") / this._damageStressDivisor / 2;
-					} else if(battler.limbsType() === "quadrupedal") {
-						damageStress += battler.getDamage("leftLeg") / this._damageStressDivisor / 4
-							+ battler.getDamage("rightLeg") / this._damageStressDivisor / 4
-							+ battler.getDamage("leftArm") / this._damageStressDivisor / 4
-							+ battler.getDamage("rightArm") / this._damageStressDivisor / 4;
-					} else {
-						damageStress += battler.getDamage("leftLeg") / this._damageStressDivisor / 2
-							+ battler.getDamage("rightLeg") / this._damageStressDivisor / 2
-							+ battler.getDamage("leftArm") / this._damageStressDivisor / 4
-							+ battler.getDamage("rightArm") / this._damageStressDivisor / 4;
-					}
-					battler.adjustStress(Math.floor(damageStress-battler.stressRecovery()));
-					battler.applyStressCost();
+					this.stressFromDamage(battler);
 					battler.tickTbsBuffs();
 					
-					if(this._tbsForces[i].actors[j].canActThisRound) {
-						var perceptionRoll = BattleManager.rollForRanks(battler.totalSkill("perception") * this._perceptionMultiplier, battler.stress());
-						if(this._tbsForces[i].perceptionRoll === undefined || this._tbsForces[i].perceptionRoll < perceptionRoll) {
-							this._tbsForces[i].perceptionRoll = perceptionRoll;
-						}
-					}
+					this.rollPerception(this._tbsForces[i].actors[j], this._tbsForces[i]);
 				}
 			}
 			this.determineForceOrder();
@@ -1866,10 +1869,13 @@
 			this._tbsOrderedForces.push(force);
 		}, this);
 		this._tbsOrderedForces.sort(function (a, b) {
-			if(a.perceptionRoll == b.perceptionRoll) {
-				return Math.random() >= 0.5 ? 1 : -1;
+			if(a.perceptionRoll.hits == b.perceptionRoll.hits) {
+				if(a.perceptionRoll.bonuses == b.perceptionRoll.bonuses) {
+					return Math.random() >= 0.5 ? 1 : -1;
+				}
+				return b.perceptionRoll.bonuses - a.perceptionRoll.bonuses;
 			}
-			return b.perceptionRoll - a.perceptionRoll;
+			return b.perceptionRoll.hits - a.perceptionRoll.hits;
 		});
 		this._tbsCurrentTurnForce = this._tbsOrderedForces[0].forceId;
 	};
@@ -2095,12 +2101,12 @@
 				this.currentForce().actors.forEach(function (actor) {
 					if(actor.canActThisRound) {
 						var chances = 1;
-						var stress = actor.battler.stressModifier();
-						if(stress >= 5) {
+						var stress = actor.battler.stress();
+						if(stress >= 10) {
 							chances = 4;
-						} else if (stress >= 3) {
+						} else if (stress >= 6) {
 							chances = 3;
-						} else if (stress >= 1) {
+						} else if (stress >= 2) {
 							chances = 2;
 						}
 						while(chances) {
@@ -2126,8 +2132,8 @@
 				var shouldRest = false;
 				var defensePriority = 0;
 				var stress = this._tbsSelectedActor.battler.stress();
-				if(stress > 20) {
-					var stressCompare = 1 - ((stress - 20) / 120);
+				if(stress > 2) {
+					var stressCompare = 1 - ((stress - 2) / 12);
 					if(Math.random() > stressCompare) {
 						defensePriority = 3;
 					}
