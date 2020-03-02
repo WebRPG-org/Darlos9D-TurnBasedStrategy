@@ -287,8 +287,7 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 				this.setupSingleDamagePopup(false, 0, "dodged");
 				this.setupSingleDamagePopup(totalStress != 0, totalStress, "stress", false, 90, -60);
 			} else {
-				var totalDamage = Math.floor((results.damage.head - results.heal.head)*1.5
-					+ (results.damage.mind - results.heal.mind)*1.5
+				var totalDamage = Math.floor((results.damage.head - results.heal.head)*2
 					+ (results.damage.torso - results.heal.torso)
 					+ (results.damage.leftArm - results.heal.leftArm)*0.5
 					+ (results.damage.rightArm - results.heal.rightArm)*0.5
