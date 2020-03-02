@@ -477,6 +477,11 @@
 		return false;
 	};
 	
+	Game_System.prototype.setSkillLevel = function(skill, level, partyPosition) {
+		var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(partyPosition));
+		battler.setSkillPoints(skill, level);
+	};
+	
 	//item
 	Game_Item.prototype.actions = function() {
 		if(!this.isWeapon() && !this.isArmor() && !this.isItem()) {
@@ -956,7 +961,7 @@
 			this.rollPerception(actor, force);
 			
 			index++;
-		});
+		}, this);
 		
 		return force;
 	};
@@ -987,9 +992,12 @@
 	
 	Game_Map.prototype.rollPerception = function(actor, force) {
 		if(actor.canActThisRound) {
-			var skillDice = actor.battler.totalSkill("perception");
+			var perception = actor.battler.totalSkill("perception");
+			var reflex = actor.battler.reflexSkill();
+			var skillDice = perception > reflex ? perception - reflex : reflex - perception;
+			var expertDice = perception > reflex ? reflex : perception;
 			var debuffDice = actor.battler.stress();
-			perceptionRoll = BattleManager.rollSkillDice(skillDice);
+			perceptionRoll = BattleManager.rollSkillDice(skillDice, expertDice);
 			var stressRoll = BattleManager.rollTestDice(0, 0, debuffDice);
 			perceptionRoll.hits -= stressRoll.misses;
 			perceptionRoll.bonuses -= stressRoll.penalties;
@@ -1752,8 +1760,8 @@
 					if(tbsForce.isParty) {
 						tbsForce.actors.forEach(function (tbsActor) {
 							var battler = tbsActor.battler;
-							if(battler.getDamage("core") >= battler.toughness()) {
-								battler.setDamage("core", battler.toughness()-1);
+							if(battler.getDamage("core") >= battler.toughness()*2) {
+								battler.setDamage("core", battler.toughness()*2-1);
 							}
 							battler.setStress(0);
 							battler.clearTbsBuffs();

@@ -3903,13 +3903,13 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		}
 		brackets += "]";
 		this.drawText(brackets, x+14*5, y, brackets.length*14);
-		var health = actor.toughness() - actor.getDamage(part);
+		var health = actor.toughness()*(part==="core"?2:1) - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
 		}
 		this.drawText(health, x + 14*2, y, 14*3, 'right');
-		var pips = (health / actor.toughness()) * this.statusMeterPipCount();
+		var pips = (health / (actor.toughness()*(part==="core"?2:1))) * this.statusMeterPipCount();
 		for(i = 0; i < pips; i++) {
 			var width = 14;
 			if(pips - i > 0 && pips - i < 1) {
@@ -3928,13 +3928,13 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			x -= 14*2;
 		}
 		this.drawText("[     ]", x+14*5, y, 14*7);
-		var health = actor.toughness() - actor.getDamage(part);
+		var health = actor.toughness()*(part==="core"?2:1) - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
 		}
 		this.drawText(health, x + 14*2, y, 14*3, 'right');
-		var pips = (health / actor.toughness()) * 5;
+		var pips = (health / (actor.toughness()*(part==="core"?2:1))) * 5;
 		var i;
 		for(i = 0; i < pips; i++) {
 			var width = 14;
@@ -3950,7 +3950,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.changeTextColor(this.systemColor());
 		this.drawText(label, x, y, 14*2);
 		x += 14*4;
-		var health = actor.toughness() - actor.getDamage(part);
+		var health = actor.toughness()*(part==="core"?2:1) - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
@@ -3966,7 +3966,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		} else {
 			x -= 14*2;
 		}
-		var health = actor.toughness() - actor.getDamage(part);
+		var health = actor.toughness()*(part==="core"?2:1) - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
@@ -4055,9 +4055,9 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 				hitRange += hits[i].ignoreUserRange || !actor ? 0 : actor.baseRange();
 				var range = hitRange;
 				this.drawText(!rangeIsSelf && range > 0 ? range : "-", nameOffset - 38, lineHeight, 100, 'right');
-				var evasionPenalty = hits[i].evasionPenalty !== undefined ? hits[i].evasionPenalty : 0;
-				var evasionPenalty += hits[i].accuracy !== undefined ? hits[i].accuracy : 0;
-				this.drawText((hits[i].damage || hits[i].debuffs) && evasionPenalty > 0 ? evasionPenalty : "-", nameOffset + 8, lineHeight, 100, 'right');
+				var accuracy = hits[i].evasionPenalty !== undefined ? hits[i].evasionPenalty : 0;
+				accuracy += hits[i].accuracy !== undefined ? hits[i].accuracy : 0;
+				this.drawText((hits[i].damage || hits[i].debuffs) && accuracy > 0 ? accuracy : "-", nameOffset + 8, lineHeight, 100, 'right');
 				this.drawText(hits[i].aoe > 0 ? hits[i].aoe : "-", nameOffset + 124, lineHeight, 100, 'right');
 				
 				if(i === 0 && n === 0) {

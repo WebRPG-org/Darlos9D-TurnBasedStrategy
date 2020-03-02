@@ -977,12 +977,12 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				}
 				
 				var hitDamage = this.getCompleteDamage(subject, actionInfo, hit);
-				hitDamage.blunt += physDamageBonus;
-				hitDamage.cut += physDamageBonus;
-				hitDamage.keen += physDamageBonus;
-				hitDamage.thrust += physDamageBonus;
-				hitDamage.stiletto += physDamageBonus;
-				hitDamage.trip += physDamageBonus;
+				if(hitDamage.blunt !== undefined) { hitDamage.blunt += physDamageBonus; }
+				if(hitDamage.cut !== undefined) { hitDamage.cut += physDamageBonus; }
+				if(hitDamage.keen !== undefined) { hitDamage.keen += physDamageBonus; }
+				if(hitDamage.thrust !== undefined) { hitDamage.thrust += physDamageBonus; }
+				if(hitDamage.stiletto !== undefined) { hitDamage.stiletto += physDamageBonus; }
+				if(hitDamage.trip !== undefined) { hitDamage.trip += physDamageBonus; }
 				
 				var dicePool = {};
 				dicePool.skill = 0;
@@ -1850,7 +1850,7 @@ BattleManager.getPartDamagePotential = function(damage, partProt) {
 	return damagePotential;
 };
 
-BattleManager.getUsedParts = funcion(subject, actionInfo, hit) {
+BattleManager.getUsedParts = function(subject, actionInfo, hit) {
 	var usesParts = hit.usesParts;
 	var actualUsedParts = [];
 	if(usesParts) {
@@ -2299,7 +2299,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		var power = Math.max(0, hitDamage.cut +
 			hitResult.damageBonus +
 			hitResult.rareDamageBonus*2);
-		var damage = Math.max(0, (power - partProt.armor.cut);
+		var damage = Math.max(0, power - partProt.armor.cut);
 		if(damage < power) {
 			bluntPow += Math.floor((power - damage) / 2);
 		}
@@ -2332,7 +2332,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		}
 		returnObj.damage += damage;
 		returnObj.remainingPower.thrust = Math.max(0, damage - tough);
-		returnObj.critical = hitResult.rareDamageBonus > 0 ? true : critical;
+		returnObj.critical = hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
 	
 	if(hitDamage.stiletto !== undefined) {
@@ -2346,7 +2346,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		}
 		returnObj.damage += damage;
 		returnObj.remainingPower.stiletto = Math.max(0, damage - tough);
-		returnObj.critical = hitResult.damageBonus > 0 || hitResult.rareDamageBonus > 0 ? true : critical;
+		returnObj.critical = hitResult.damageBonus > 0 || hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
 	
 	if(hitDamage.bullet !== undefined) {
@@ -2365,6 +2365,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 			damage = Math.max(Math.floor(damage/2), Math.floor((tough / damage) * damage));
 		}
 		returnObj.damage += damage;
+		returnObj.critical = hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
 	
 	if(hitDamage.blunt !== undefined || bluntPow > 0) {
@@ -2384,7 +2385,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		));
 		returnObj.damage += damage;
 		returnObj.remainingPower.fire = Math.max(0, damage - tough);
-		returnObj.critical = hitResult.rareDamageBonus > 0 ? true : critical;
+		returnObj.critical = hitResult.damageBonus > 0 || hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
 	
 	if(hitDamage.ice !== undefined) {
@@ -2395,7 +2396,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		));
 		returnObj.damage += damage;
 		returnObj.remainingPower.ice = Math.max(0, damage - tough);
-		returnObj.critical = hitResult.rareDamageBonus > 0 ? true : critical;
+		returnObj.critical = hitResult.damageBonus > 0 || hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
 	
 	if(hitDamage.corrosion !== undefined) {
@@ -2406,7 +2407,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		));
 		returnObj.damage += damage;
 		returnObj.remainingPower.corrosion = Math.max(0, damage - tough);
-		returnObj.critical = hitResult.rareDamageBonus > 0 ? true : critical;
+		returnObj.critical = hitResult.damageBonus > 0 || hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
 	
 	if(hitDamage.lightning !== undefined) {
@@ -2417,7 +2418,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		));
 		returnObj.damage += damage;
 		returnObj.remainingPower.lightning = Math.max(0, damage - tough);
-		returnObj.critical = hitResult.rareDamageBonus > 0 ? true : critical;
+		returnObj.critical = hitResult.damageBonus > 0 || hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
 	
 	returnObj.shouldCleave = hitDamage.overkillType !== undefined && hitDamage.overkillType === "cleave" &&
@@ -2671,7 +2672,7 @@ BattleManager.rollDie = function(size) {
 
 BattleManager.applyActionResults = function(results, subject, target) {
 	subject.adjustStress(results.subjectStress - results.subjectStressRecovery);
-	if(target.blankDummy()) { return; }
+	if(!target || target.blankDummy()) { return; }
 	var initialDownState = target.isDown();
 	var totalStress = results.stress.other + results.stress.mind + results.stress.head + results.stress.torso
 		+ results.stress.leftArm + results.stress.rightArm + results.stress.leftLeg + results.stress.rightLeg
@@ -2685,7 +2686,6 @@ BattleManager.applyActionResults = function(results, subject, target) {
 	target.adjustDamage("leftLeg", results.damage.leftLeg - results.heal.leftLeg);
 	target.adjustDamage("rightLeg", results.damage.rightLeg - results.heal.rightLeg);
 	var totalDamage = Math.floor((results.damage.head - results.heal.head)*2
-					+ (results.damage.mind - results.heal.mind)*2
 					+ (results.damage.torso - results.heal.torso)
 					+ (results.damage.leftArm - results.heal.leftArm)*0.5
 					+ (results.damage.rightArm - results.heal.rightArm)*0.5

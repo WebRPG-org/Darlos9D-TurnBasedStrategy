@@ -36,7 +36,7 @@ Classes
 			"name": (string),
 			"description": (string),
 			"skillRequirements": [(see "Skill Requirement" section)], (THIS IS AN ARRAY OF MORE THAN ONE SKILL REQUIREMENT!!!)
-			"strengthPercent": (integer),
+			"strength": (integer),
 			"toughness": (integer),
 			"movement": (integer),
 			"reach": (integer),
@@ -125,7 +125,8 @@ Enemies
 		"accessoryThree": (integer) (armor id),
 		"accessoryFour": (integer) (armor id),
 		"accessoryFive": (integer) (armor id),
-	}
+	},
+	"attributes": (see Classes)
 }
 
 ----------------------------------------------------
@@ -157,7 +158,7 @@ Part name can be "head", "torso", "leftArm", "rightArm", "leftLeg", or "rightLeg
 "fullBody": Applies defensive statistics to every physical body part.
 "arms": Applies defensive statistics to both arms.
 "legs": Applies defensive statistics to both legs.
-"equippedArm": For weapons, applies defensive statistics to equipped arm.
+"equippedArm": For weapons, applies defensive statistics to equipped slot.
 
 ----------------------------------------------------
 Skill Requirements
@@ -221,11 +222,14 @@ Action
 			"aoe": (integer),
 			"ignoreCenter": true/false,
 			"ignoreUserRange": true/false,
-			"accuracyBonus": (integer),
+                        "evasionPenalty": (integer),
 			"ignoreUserAccuracy": true/false,
+			"accuracy": (integer),
 			"ignoreUserStrength": true/false,
+                        "abilitySkill": (skill name),
+                        "evadedBy": "defense"/"reflex",
 			"multipleHits": (integer),
-			"accuracyVariance": (integer),
+			"accuracyVariance": (float),
 			"usesParts": [
 				(entries can be "head", "torso", "mind", "bestLimb", and "equippedOn")
 			],
@@ -487,3 +491,12 @@ $gameSystem.skillCheck(
 );
 
 Performs a skill check, against the given difficulty, using the party member who has the highest level in the given skill. successSkill is the name of a skill. difficulty is an integer, providing about a 50/50 chance of success against a skill of an equivalent level. abilitySkill and abilitySkillLevel are optional, and similar to the parameters of skillLevelCheck(). Any party member who does not meet the ability skill level check is excluded from the search for the highest successSkill level.
+
+------------------------------------------------------
+$gameSystem.setSkillLevel(
+	skill,
+	level,
+	partyPosition
+);
+
+Sets the given skill to the given level, for the character at the given partyPosition. Use this to set up skills at the start of the game, or when characters are first introduced.

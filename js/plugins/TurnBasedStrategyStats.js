@@ -993,7 +993,7 @@
 					return;
 				}
 				for(i = 0; i < attribute.skillRequirements.skills.length; i++) {
-					var remaining = this.totalSkill(attribute.skillRequirements.skills[i]) + 1 - attribute.skillRequirements.increments;
+					var remaining = this.totalSkill(attribute.skillRequirements.skills[i]) - attribute.skillRequirements.increments;
 					while(remaining >= 0) {
 						returnArray.push(attribute);
 						remaining -= attribute.skillRequirements.increments;
