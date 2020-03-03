@@ -968,24 +968,23 @@
 	
 	Game_Map.prototype.stressFromDamage = function(battler) {
 		var tough = battler.toughness();
-		var damageStress = battler.getDamage("head") / tough * 4
-			+ battler.getDamage("mind") / tough * 4
-			+ battler.getDamage("torso") / tough * 2;
+		var damageStress = battler.getDamage("head") >= tough ? 6 : (battler.getDamage("head") >= tough/2 ? 2 : 0)
+			+ battler.getDamage("torso") >= tough ? 3 : (battler.getDamage("torso") >= tough/2 ? 1 : 0);
 		if(battler.limbsType() === "winged" && battler.isFlying()) {
-			damageStress += battler.getDamage("leftLeg") / tough * 2
-				+ battler.getDamage("rightLeg") / tough * 2
-				+ battler.getDamage("leftArm") / tough * 4
-				+ battler.getDamage("rightArm") / tough * 4;
+			damageStress += battler.getDamage("leftLeg") >= tough ? 3 : (battler.getDamage("leftLeg") >= tough/2 ? 1 : 0)
+				+ battler.getDamage("rightLeg") >= tough ? 3 : (battler.getDamage("rightLeg") >= tough/2 ? 1 : 0)
+				+ battler.getDamage("leftArm") >= tough ? 6 : (battler.getDamage("leftArm") >= tough/2 ? 2 : 0)
+				+ battler.getDamage("rightArm") >= tough ? 6 : (battler.getDamage("rightArm") >= tough/2 ? 2 : 0);
 		} else if(battler.limbsType() === "quadrupedal") {
-			damageStress += battler.getDamage("leftLeg") / tough * 2
-				+ battler.getDamage("rightLeg") / tough * 2
-				+ battler.getDamage("leftArm") / tough * 2
-				+ battler.getDamage("rightArm") / tough * 2;
+			damageStress += battler.getDamage("leftLeg") >= tough ? 3 : (battler.getDamage("leftLeg") >= tough/2 ? 1 : 0)
+				+ battler.getDamage("rightLeg") >= tough ? 3 : (battler.getDamage("rightLeg") >= tough/2 ? 1 : 0)
+				+ battler.getDamage("leftArm") >= tough ? 3 : (battler.getDamage("leftArm") >= tough/2 ? 1 : 0)
+				+ battler.getDamage("rightArm") >= tough ? 3 : (battler.getDamage("rightArm") >= tough/2 ? 1 : 0);
 		} else {
-			damageStress += battler.getDamage("leftLeg") / tough * 4
-				+ battler.getDamage("rightLeg") / tough * 4
-				+ battler.getDamage("leftArm") / tough * 2
-				+ battler.getDamage("rightArm") / tough * 2;
+			damageStress += battler.getDamage("leftLeg") >= tough ? 6 : (battler.getDamage("leftLeg") >= tough/2 ? 2 : 0)
+				+ battler.getDamage("rightLeg") >= tough ? 6 : (battler.getDamage("rightLeg") >= tough/2 ? 2 : 0)
+				+ battler.getDamage("leftArm") >= tough ? 3 : (battler.getDamage("leftArm") >= tough/2 ? 1 : 0)
+				+ battler.getDamage("rightArm") >= tough ? 3 : (battler.getDamage("rightArm") >= tough/2 ? 1 : 0);
 		}
 		battler.adjustStress(Math.floor(damageStress-battler.stressRecovery()));
 	}

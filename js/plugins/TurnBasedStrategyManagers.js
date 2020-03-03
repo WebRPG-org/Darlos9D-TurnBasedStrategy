@@ -209,7 +209,7 @@ BattleManager.initMembers = function() {
 	this._hitMissDelay = [];
 	this._showCastAnimation = true;
 	this._firstTarget = true;
-	this._equipmentBaseToughness = 1;
+	this._equipmentBaseToughness = 5;
 	this._rangedDistance = 0;
 };
 
@@ -711,6 +711,7 @@ BattleManager.invokeNormalAction = function(subject, target, resultsPerGroup) {
 	totalResults.damage.leftHeld = 0;
 	totalResults.damage.rightHeld = 0;
 	totalResults.damage.mind = 0;
+	totalResults.damage.core = 0;
 	totalResults.heal = {};
 	totalResults.heal.stress = 0;
 	totalResults.heal.head = 0;
@@ -722,6 +723,7 @@ BattleManager.invokeNormalAction = function(subject, target, resultsPerGroup) {
 	totalResults.heal.leftHeld = 0;
 	totalResults.heal.rightHeld = 0;
 	totalResults.heal.mind = 0;
+	totalResults.heal.core = 0;
 	totalResults.dodged = true;
 	totalResults.hit = {};
 	totalResults.hit.mind = false;
@@ -762,6 +764,7 @@ BattleManager.invokeNormalAction = function(subject, target, resultsPerGroup) {
 		totalResults.damage.leftLeg += results.damage.leftLeg;
 		totalResults.damage.rightLeg += results.damage.rightLeg;
 		totalResults.damage.mind += results.damage.mind;
+		totalResults.damage.core += results.damage.core;
 		totalResults.heal.stress += results.heal.stress;
 		totalResults.heal.head += results.heal.head;
 		totalResults.heal.torso += results.heal.torso;
@@ -770,6 +773,7 @@ BattleManager.invokeNormalAction = function(subject, target, resultsPerGroup) {
 		totalResults.heal.leftLeg += results.heal.leftLeg;
 		totalResults.heal.rightLeg += results.heal.rightLeg;
 		totalResults.heal.mind += results.heal.mind;
+		totalResults.heal.core += results.heal.core;
 		totalResults.hit.mind = results.hit.mind ? true : totalResults.hit.mind;
 		totalResults.hit.head = results.hit.head ? true : totalResults.hit.head;
 		totalResults.hit.torso = results.hit.torso ? true : totalResults.hit.torso;
@@ -851,6 +855,10 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 	var mentalTestDice = mentalEvaSkill > mentalArmorSkill ? mentalEvaSkill - mentalArmorSkill : mentalArmorSkill - mentalEvaSkill;
 	var mentalCrisisDice = mentalEvaSkill > mentalArmorSkill ? mentalArmorSkill : mentalEvaSkill;
 	
+	var tripEvaSkill = target.totalSkill("tripEvade");
+	var tripTestDice = tripEvaSkill > reflexSkill ? tripEvaSkill - reflexSkill : reflexSkill - tripEvaSkill;
+	var tripCrisisDice = tripEvaSkill > reflexSkill ? reflexSkill : tripEvaSkill;
+	
 	var i;
 	var results = {};
 	results.stress = {};
@@ -917,8 +925,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 	results.ongoingAnimationIds = [];
 	results.skipTarget = true;
 	results.subjectStress = 0;
-	results.subjectStressRecovery = 0;
-	results.targetStressRecovery = 0;
 	var hitDodged = true;
 	var hitGroup = processedHitGroup.hitGroup;
 	if(target.blankDummy()) {
@@ -991,9 +997,10 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				dicePool.test = 0;
 				dicePool.crisis = 0;
 				dicePool.debuff = 0;
+				dicePool.tripTest = tripTestDice;
+				dicePool.tripCrisis = tripCrisisDice;
 				dicePool.mentalTest = mentalTestDice;
 				dicePool.mentalCrisis = mentalCrisisDice;
-				dicePool.mentalDebuff = 0;
 				
 				var testDiceReduction = hit.evasionPenalty === undefined ? 0 : hit.evasionPenalty;
 				dicePool.debuff = subjectStress + processedHitGroup.accuracyReduction + hitDamage.damageReduction;
@@ -1004,7 +1011,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					variance = Math.random() * (accuracyVariance + 1);
 					dicePool.debuff += Math.floor(variance);
 				}
-				dicePool.mentalDebuff = dicePool.debuff;
 				
 				var accSkill = 0;
 				if(hit.ignoreUserAccuracy) {
@@ -1074,31 +1080,34 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				
 				var isMental = hitDamage.psychic !== undefined;
 				
-				var hitResult = this.instantiateHitResults();
+				var hitResult = {};
+				hitResult.dodged = true;
+				hitResult.subjectStress = 0;
+				hitResult.targetStress = 0;
 				if(hit.aoe !== undefined && hit.aoe > 0) {
 					if(isSolid || isFluid) {
-						hitResult.dodged = false;
-						hitResult.hit.leftHeld = true;
-						hitResult.hit.rightHeld = true;
-						hitResult.hit.head = true;
-						hitResult.hit.torso = true;
-						hitResult.hit.leftArm = true;
-						hitResult.hit.rightArm = true;
-						hitResult.hit.leftLeg = true;
-						hitResult.hit.rightLeg = true;
 						hitResult.targetStress = 1;
+						hitResult.head = this.calculateSinglePartHit(hitResult, dicePool, true);
+						hitResult.torso = this.calculateSinglePartHit(hitResult, dicePool);
+						hitResult.leftArm = this.calculateSinglePartHit(hitResult, dicePool);
+						hitResult.rightArm = this.calculateSinglePartHit(hitResult, dicePool);
+						hitResult.leftLeg = this.calculateSinglePartHit(hitResult, dicePool);
+						hitResult.rightLeg = this.calculateSinglePartHit(hitResult, dicePool);
+						if(targetLeftHeldProt.defense.solid > 0) {
+							hitResult.leftHeld = this.calculateSinglePartHit(hitResult, dicePool);
+						}
+						if(targetRightHeldProt.defense.solid > 0) {
+							hitResult.rightHeld = this.calculateSinglePartHit(hitResult, dicePool);
+						}
 					}
 					if(isMental) {
-						hitResult.dodged = false;
-						hitResult.hit.mind = true;
-						hitResult.targetStress = 1;
+						
 					}
 				} else {
 					if(isSolid || isFluid) {
 						if(targetingType === undefined && this._tbsTargetPart != undefined && this._tbsTargetPart != "mobility" && this._tbsTargetPart != "vital") {
-							hitResult.dodged = false;
-							hitResult.hit[this._tbsTargetPart] = true;
 							hitResult.targetStress = 1;
+							hitResult[this._tbsTargetPart] = this.calculateSinglePartHit(hitResult, dicePool, this._tbsTargetPart === "head");
 						} else {
 							var targetingMobility = this._tbsTargetPart === "mobility";
 							var defendingWithLegs = target.limbsType() === "winged" && target.isFlying();
@@ -1172,45 +1181,42 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 								}
 							}
 							
-							hitResult = this.calculatePhysicalHit(
+							this.calculatePhysicalHit(
+								hitResult,
 								dicePool,
 								leftLimbFirst,
 								leftHeldFirst,
 								targetingMobility,
 								leftMobilityFirst,
 								defendingWithLegs,
-								target.isDown(),
 								targetingType,
 								firstHeldDefense,
-								secondHeldDefense,
-								subjectStress,
-								targetStress
+								secondHeldDefense
 							);
 						}
 						if(isMental && !hitResult.dodged) {
-							hitResult.hit.mind = true;
+							
 						}
 					} else if(isMental) {
-						hitResult = this.calculateMentalHit(
-							dicePool,
-							target.isDown()
+						this.calculateMentalHit(
+							hitResult,
+							dicePool
 						);
 					}
 				}
 				results.subjectStress += hitResult.subjectStress;
-				results.subjectStressRecovery += hitResult.subjectStressRecovery;
 				results.stress.other += hitResult.targetStress;
-				results.targetStressRecovery += hitResult.targetStressRecovery;
 				if(!hitResult.dodged) {
-					if(hitResult.hit.head || hitResult.hit.torso || hitResult.hit.leftArm || hitResult.hit.rightArm
-						|| hitResult.hit.leftLeg || hitResult.hit.rightLeg || hitResult.hit.leftHeld || hitResult.hit.rightHeld) {
-						if(hitResult.hit.head) {
+					if(hitResult.head || hitResult.torso || hitResult.leftArm || hitResult.rightArm
+						|| hitResult.leftLeg || hitResult.rightLeg || hitResult.leftHeld || hitResult.rightHeld) {
+						if(hitResult.head) {
 							results.hit.head = true;
 							var damageResult = this.resolvePhysicalDamage(
-								hitResult,
+								hitResult.head,
 								hitDamage,
 								targetHeadProt,
 								Math.ceil(target.toughness()/2),
+								dicePool,
 								true);
 							results.stress.head += damageResult.stress;
 							results.damage.head += damageResult.damage;
@@ -1247,13 +1253,14 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 									? true : results.critical.rightLeg;
 							}
 						}
-						if(hitResult.hit.torso) {
+						if(hitResult.torso) {
 							results.hit.torso = true;
 							var damageResult = this.resolvePhysicalDamage(
-								hitResult,
+								hitResult.torso,
 								hitDamage,
 								targetTorsoProt,
 								target.toughness(),
+								dicePool,
 								false
 							);
 							results.stress.torso += damageResult.stress;
@@ -1286,13 +1293,14 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 									? true : results.critical.rightLeg;
 							}
 						}
-						if(hitResult.hit.leftArm) {
+						if(hitResult.leftArm) {
 							results.hit.leftArm = true;
 							var damageResult = this.resolvePhysicalDamage(
-								hitResult,
+								hitResult.leftArm,
 								hitDamage,
 								targetLeftArmProt,
 								target.toughness(),
+								dicePool,
 								target.limbsType() === "winged" && target.isFlying()
 							);
 							results.stress.leftArm += damageResult.stress;
@@ -1329,13 +1337,14 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 									? true : results.critical.rightLeg;
 							}
 						}
-						if(hitResult.hit.rightArm) {
+						if(hitResult.rightArm) {
 							results.hit.rightArm = true;
 							var damageResult = this.resolvePhysicalDamage(
-								hitResult,
+								hitResult.rightArm,
 								hitDamage,
 								targetRightArmProt,
 								target.toughness(),
+								dicePool,
 								target.limbsType() === "winged" && target.isFlying()
 							);
 							results.stress.rightArm += damageResult.stress;
@@ -1372,13 +1381,14 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 									? true : results.critical.rightLeg;
 							}
 						}
-						if(hitResult.hit.leftLeg) {
+						if(hitResult.leftLeg) {
 							results.hit.leftLeg = true;
 							var damageResult = this.resolvePhysicalDamage(
-								hitResult,
+								hitResult.leftLeg,
 								hitDamage,
 								targetLeftLegProt,
 								target.toughness(),
+								dicePool,
 								target.limbsType() !== "quadrupedal" && (target.limbsType() !== "winged" || !target.isFlying())
 							);
 							results.stress.leftLeg += damageResult.stress;
@@ -1397,13 +1407,14 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 								results.damage.head += cleaveResults.damage.head;
 							}
 						}
-						if(hitResult.hit.rightLeg) {
+						if(hitResult.rightLeg) {
 							results.hit.rightLeg = true;
 							var damageResult = this.resolvePhysicalDamage(
-								hitResult,
+								hitResult.rightLeg,
 								hitDamage,
 								targetRightLegProt,
 								target.toughness(),
+								dicePool,
 								target.limbsType() !== "quadrupedal" && (target.limbsType() !== "winged" || !target.isFlying())
 							);
 							results.stress.rightLeg += damageResult.stress;
@@ -1422,13 +1433,14 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 								results.damage.head += cleaveResults.damage.head;
 							}
 						}
-						if(hitResult.hit.leftHeld) {
+						if(hitResult.leftHeld) {
 							results.hit.leftHeld = true;
 							var damageResult = this.resolvePhysicalDamage(
-								hitResult,
+								hitResult.leftHeld,
 								hitDamage,
 								targetLeftHeldProt, 
 								this._equipmentBaseToughness,
+								dicePool,
 								false
 							);
 							results.stress.leftHeld += damageResult.stress;
@@ -1485,13 +1497,14 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 									? true : results.critical.rightLeg;
 							}
 						}
-						if(hitResult.hit.rightHeld) {
+						if(hitResult.rightHeld) {
 							results.hit.rightHeld = true;
 							var damageResult = this.resolvePhysicalDamage(
-								hitResult,
-								hitDamage, 
-								targetRightHeldProt, 
-								this._equipmentBaseToughness, 
+								hitResult.rightHeld,
+								hitDamage,
+								targetRightHeldProt,
+								this._equipmentBaseToughness,
+								dicePool,
 								false
 							);
 							results.stress.rightHeld += damageResult.stress;
@@ -1549,10 +1562,10 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 							}
 						}
 					}
-					if(hitResult.hit.mind) {
+					if(hitResult.mind) {
 						results.hit.mind = true;
 						var damageResult = this.resolveMentalDamage(
-							hitResult,
+							hitResult.mind,
 							hitDamage, 
 							targetMentalProt, 
 							target.mentalToughness(), 
@@ -1962,30 +1975,31 @@ BattleManager.getCompleteDamage = function(subject, actionInfo, hit) {
 	var actualUsedParts = this.getUsedParts(subject, actionInfo, hit);
 	var damageReduction = 0;
 	if(subject && actualUsedParts.length > 0) {
-		var denom = actualUsedParts.length * subject.toughness();
+		var denom = actualUsedParts.length;
 		var numer = 0;
+		var tough = subject.toughness();
 		if(actualUsedParts.indexOf("mind") >= 0) {
-			numer += subject.getDamage("mind");
+			numer += subject.getDamage("mind") >= tough ? 3 : (subject.getDamage("mind") >= tough/2 ? 1 : 0);
 		}
 		if(actualUsedParts.indexOf("head") >= 0) {
-			numer += subject.getDamage("head");
+			numer += subject.getDamage("head") >= tough ? 3 : (subject.getDamage("head") >= tough/2 ? 1 : 0);
 		}
 		if(actualUsedParts.indexOf("torso") >= 0) {
-			numer += subject.getDamage("torso");
+			numer += subject.getDamage("torso") >= tough ? 3 : (subject.getDamage("torso") >= tough/2 ? 1 : 0);
 		}
 		if(actualUsedParts.indexOf("leftArm") >= 0) {
-			numer += subject.getDamage("leftArm");
+			numer += subject.getDamage("leftArm") >= tough ? 3 : (subject.getDamage("leftArm") >= tough/2 ? 1 : 0);
 		}
 		if(actualUsedParts.indexOf("rightArm") >= 0) {
-			numer += subject.getDamage("rightArm");
+			numer += subject.getDamage("rightArm") >= tough ? 3 : (subject.getDamage("rightArm") >= tough/2 ? 1 : 0);
 		}
 		if(actualUsedParts.indexOf("leftLeg") >= 0) {
-			numer += subject.getDamage("leftLeg");
+			numer += subject.getDamage("leftLeg") >= tough ? 3 : (subject.getDamage("leftLeg") >= tough/2 ? 1 : 0);
 		}
 		if(actualUsedParts.indexOf("rightLeg") >= 0) {
-			numer += subject.getDamage("rightLeg");
+			numer += subject.getDamage("rightLeg") >= tough ? 3 : (subject.getDamage("rightLeg") >= tough/2 ? 1 : 0);
 		}
-		damageReduction = Math.floor(4 * (numer / denom));
+		damageReduction = Math.floor(numer / denom);
 	}
 	
 	completeDamage.damageReduction = damageReduction;
@@ -2005,44 +2019,58 @@ BattleManager.getCompleteDamage = function(subject, actionInfo, hit) {
 	return completeDamage;
 };
 
-BattleManager.instantiateHitResults = function() {
-	var results = {};
-	results.dodged = true;
-	results.hit = {};
-	results.hit.leftHeld = false;
-	results.hit.rightHeld = false;
-	results.hit.head = false;
-	results.hit.torso = false;
-	results.hit.leftArm = false;
-	results.hit.rightArm = false;
-	results.hit.leftLeg = false;
-	results.hit.rightLeg = false;
-	results.hit.mind = false;
-	results.subjectStress = 0;
-	results.targetStress = 1;
-	results.subjectStressRecovery = 0;
-	results.targetStressRecovery = 0;
-	results.damageBonus = 0;
-	results.rareDamageBonus = 0;
+BattleManager.calculateSinglePartHit = function(hitResult, dicePool, hardToHit) {
+	var partResult = {};
+	partResult.damageBonus = 0;
+	partResult.rareDamageBonus = 0;
 	
-	return results;
+	var skillRoll = this.rollSkillDice(dicePool.skill, dicePool.expert, dicePool.buff);
+	var testRoll = this.rollTestDice(dicePool.test, dicePool.crisis, dicePool.debuff);
+	
+	var bonuses = skillRoll.bonuses - testRoll.penalties;
+	
+	var misses = testRoll.misses + (hardToHit ? 1 : 0);
+	if(skillRoll.hits <= misses) {
+		//miss
+		//determine bonuses
+		hitResult.targetStress += bonuses > 0 ? bonuses : 0;
+		
+		//determine rare bonuses
+		hitResult.targetStress += skillRoll.rareBonuses*2;
+		
+		return undefined;
+	}
+	
+	//hit
+	hitResult.dodged = false;
+	partResult.damageBonus = skillRoll.hits - misses;
+	partResult.rareDamageBonus = skillRoll.rareBonuses;
+	
+	//determine bonuses
+	hitResult.targetStress += bonuses > 0 ? bonuses : 0;
+	
+	//determine rare bonuses
+	hitResult.targetStress += skillRoll.rareBonuses*2;
+	
+	return partResult;
 };
 
 BattleManager.calculatePhysicalHit = function(
+	hitResult,
 	dicePool,
 	leftLimbFirst,
 	leftHeldFirst,
 	targetingMobility,
 	leftMobilityFirst,
 	defendingWithLegs,
-	isDown,
 	targetingType,
 	firstHeldDefense,
 	secondHeldDefense,
-	subjectStress,
-	targetStress
 ) {
-	var results = this.instantiateHitResults();
+	hitResult.targetStress = 1;
+	var damageBonus = 0;
+	var rareDamageBonus = 0;
+	var partHit = undefined;
 	
 	var skillRoll = this.rollSkillDice(dicePool.skill, dicePool.expert, dicePool.buff);
 	var testRoll = this.rollTestDice(dicePool.test, dicePool.crisis, dicePool.debuff);
@@ -2052,80 +2080,35 @@ BattleManager.calculatePhysicalHit = function(
 	if(skillRoll.hits <= testRoll.misses) {
 		//miss
 		//determine bonuses
-		while(bonuses > 0) {
-			bonuses--;
-			if(this.rollDie(2) == 1) {
-				results.targetStress++;
-			} else {
-				results.subjectStressRecovery++;
-			}
-		}
+		hitResult.targetStress += bonuses > 0 ? bonuses : 0;
 		
 		//determine rare bonuses
-		var rareBonuses = skillRoll.rareBonuses*4;
-		while(rareBonuses > 0) {
-			rareBonuses--;
-			if(this.rollDie(2) == 1) {
-				results.targetStress++;
-			} else {
-				results.subjectStressRecovery++;
-			}
-		}
+		hitResult.targetStress += skillRoll.rareBonuses*2;
 		
 		//determine penalties
-		while(bonuses < 0) {
-			bonuses++;
-			if(this.rollDie(2) == 1) {
-				results.subjectStress++;
-			} else {
-				results.targetStressRecovery++;
-			}
-		}
+		hitResult.subjectStress += bonuses < 0 ? -bonuses : 0;
 		
 		//determine rare penalties
 		var rarePenalties = testRoll.rarePenalties;
 		if(rarePenalties > 0) {
-			results.targetStress--;
+			hitResult.targetStress--;
 			rarePenalties--;
 		}
-		rarePenalties *= 4;
-		while(rarePenalties > 0) {
-			rarePenalties--;
-			if(this.rollDie(2) == 1) {
-				results.subjectStress++;
-			} else {
-				results.targetStressRecovery++;
-			}
-		}
+		hitResult.subjectStress += rarePenalties*2;
 		
-		return results;
+		return;
 	}
 	
 	//hit
-	results.dodged = false;
-	results.damageBonus = skillRoll.hits - testRoll.misses;
-	results.rareDamageBonus = skillRoll.rareBonuses;
+	hitResult.dodged = false;
+	damageBonus = skillRoll.hits - testRoll.misses;
+	rareDamageBonus = skillRoll.rareBonuses;
 		
 	//determine penalties
-	while(bonuses < 0) {
-		bonuses++;
-		if(this.rollDie(2) == 1) {
-			results.subjectStress++;
-		} else {
-			results.targetStressRecovery++;
-		}
-	}
+	hitResult.subjectStress += bonuses < 0 ? -bonuses : 0;
 	
 	//determine rare penalties
-	var rarePenalties = testRoll.rarePenalties * 4;
-	while(rarePenalties > 0) {
-		rarePenalties--;
-		if(this.rollDie(2) == 1) {
-			results.subjectStress++;
-		} else {
-			results.targetStressRecovery++;
-		}
-	}
+	hitResult.subjectStress += testRoll.rarePenalties * 2;
 	
 	//determine part hit
 	var partSelect = Math.max(0, bonuses);
@@ -2136,144 +2119,113 @@ BattleManager.calculatePhysicalHit = function(
 	}
 	if(partSelect < firstHeldDefense) {
 		if(leftHeldFirst) {
-			results.hit.leftHeld = true;
+			partHit = "leftHeld";
 		} else {
-			results.hit.rightHeld = true;
+			partHit = "rightHeld";
 		}
-		return results;
 	} else if(partSelect < firstHeldDefense + secondHeldDefense) {
 		if(leftHeldFirst) {
-			results.hit.rightHeld = true;
+			partHit = "rightHeld";
 		} else {
-			results.hit.leftHeld = true;
+			partHit = "leftHeld";
 		}
-		return results;
 	} else if(partSelect < firstHeldDefense + secondHeldDefense + 1) {
 		if(defendingWithLegs) {
 			if(leftLimbFirst) {
-				results.hit.leftLeg = true;
+				partHit = "leftLeg";
 			} else {
-				results.hit.rightLeg = true;
+				partHit = "rightLeg";
 			}
 		} else {
 			if(leftLimbFirst) {
-				results.hit.leftArm = true;
+				partHit = "leftArm";
 			} else {
-				results.hit.rightArm = true;
+				partHit = "rightArm";
 			}
 		}
-		return results;
 	} else if(partSelect < firstHeldDefense + secondHeldDefense + 2) {
 		if(defendingWithLegs) {
 			if(leftLimbFirst) {
-				results.hit.rightLeg = true;
+				partHit = "rightLeg";
 			} else {
-				results.hit.leftLeg = true;
+				partHit = "leftLeg";
 			}
 		} else {
 			if(leftLimbFirst) {
-				results.hit.rightArm = true;
+				partHit = "rightArm";
 			} else {
-				results.hit.leftArm = true;
+				partHit = "leftArm";
 			}
 		}
-		return results;
 	} else if(partSelect < firstHeldDefense + secondHeldDefense + 3) {
 		if(targetingMobility) {
 			if(defendingWithLegs) {
 				if(leftMobilityFirst) {
-					results.hit.leftArm = true;
+					partHit = "leftArm";
 				} else {
-					results.hit.rightArm = true;
+					partHit = "rightArm";
 				}
 			} else {
 				if(leftMobilityFirst) {
-					results.hit.leftLeg = true;
+					partHit = "leftLeg";
 				} else {
-					results.hit.rightLeg = true;
+					partHit = "rightLeg";
 				}
 			}
 		} else {
-			results.hit.torso = true;
+			partHit = "torso";
 		}
-		return results;
 	} else if(partSelect < firstHeldDefense + secondHeldDefense + 4) {
 		if(targetingMobility) {
 			if(defendingWithLegs) {
 				if(leftMobilityFirst) {
-					results.hit.rightArm = true;
+					partHit = "rightArm";
 				} else {
-					results.hit.leftArm = true;
+					partHit = "leftArm";
 				}
 			} else {
 				if(leftMobilityFirst) {
-					results.hit.rightLeg = true;
+					partHit = "rightLeg";
 				} else {
-					results.hit.leftLeg = true;
+					partHit = "leftLeg";
 				}
 			}
 		} else {
-			results.hit.torso = true;
-		}
-		return results;
-	}
-	
-	if(targetingMobility) {
-		if(defendingWithLegs) {
-			if(leftMobilityFirst) {
-				results.hit.rightArm = true;
-			} else {
-				results.hit.leftArm = true;
-			}
-		} else {
-			if(leftMobilityFirst) {
-				results.hit.rightLeg = true;
-			} else {
-				results.hit.leftLeg = true;
-			}
+			partHit = "torso";
 		}
 	} else {
-		results.hit.head = true;
-	}
-	
-	//determine bonuses
-	partSelect -= firstHeldDefense + secondHeldDefense + 4;
-	while(partSelect > 0) {
-		partSelect--;
-		if(this.rollDie(2) == 1) {
-			results.targetStress++;
+		if(targetingMobility) {
+			if(defendingWithLegs) {
+				if(leftMobilityFirst) {
+					partHit = "rightArm";
+				} else {
+					partHit = "leftArm";
+				}
+			} else {
+				if(leftMobilityFirst) {
+					partHit = "rightLeg";
+				} else {
+					partHit = "leftLeg";
+				}
+			}
 		} else {
-			results.subjectStressRecovery++;
+			partHit = "head";
 		}
+		
+		//determine bonuses
+		hitResult.targetStress += partSelect - (firstHeldDefense + secondHeldDefense + 4);
 	}
 	
-	return results;
+	hitResult[partHit] = {};
+	hitResult[partHit].damageBonus = damageBonus;
+	hitResult[partHit].rareDamageBonus = rareDamageBonus;
 };
 
-BattleManager.calculateMentalHit = function(dicePool, isDown) {
-	var results = {};
-	results.dodged = true;
-	results.hit = {};
-	results.hit.leftHeld = false;
-	results.hit.rightHeld = false;
-	results.hit.head = false;
-	results.hit.torso = false;
-	results.hit.leftArm = false;
-	results.hit.rightArm = false;
-	results.hit.leftLeg = false;
-	results.hit.rightLeg = false;
-	results.hit.mind = false;
-	results.subjectStress = 0;
-	results.targetStress = 1;
-	results.subjectStressRecovery = 0;
-	results.targetStressRecovery = 0;
-	results.damageBonus = 0;
-	results.rareDamageBonus = 0;
-	
-	return results;
+BattleManager.calculateMentalHit = function(hitResult, dicePool) {
+	return;
 };
 
-BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, tough, extraStress)
+BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, tough, dicePool, extraStress)
 {
 	var returnObj = {};
 	returnObj.stress = 0;
@@ -2368,13 +2320,18 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		returnObj.critical = hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
 	
+	var tripPow = 0;
 	if(hitDamage.blunt !== undefined || bluntPow > 0) {
 		var power = bluntPow;
 		if(hitDamage.blunt !== undefined) {
-			power += Math.max(0, hitResult.blunt + hitResult.damageBonus + hitResult.rareDamageBonus*2);
+			power += Math.max(0, hitDamage.blunt + hitResult.damageBonus + hitResult.rareDamageBonus*2);
 		}
-		returnObj.damage += Math.max(0, power - partProt.armor.blunt);
+		var damage = Math.max(0, power - partProt.armor.blunt);
+		returnObj.damage += damage;
 		returnObj.remainingPower.blunt = Math.max(0, damage - tough);
+		if(damage < power) {
+			tripPow += power - damage;
+		}
 	}
 	
 	if(hitDamage.fire !== undefined) {
@@ -2421,6 +2378,17 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		returnObj.critical = hitResult.damageBonus > 0 || hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
 	
+	if(hitDamage.trip !== undefined || tripPow > 0) {
+		var power = tripPow;
+		if(hitDamage.trip !== undefined) {
+			power += Math.max(0, hitDamage.trip + hitResult.damageBonus + hitResult.rareDamageBonus*2);
+		}
+		var skillResult = this.rollSkillDice(power, 0 , dicePool.buff);
+		var testResult = this.rollTestDice(dicePool.tripTest, dicePool.tripCrisis, dicePool.debuff);
+		var tripStress = skillResult.hits > testResult.misses ? skillResult.hits - testResult.misses : 0;
+		returnObj.stress += tripStress * (extraStress ? 2 : 1);
+	}
+	
 	returnObj.shouldCleave = hitDamage.overkillType !== undefined && hitDamage.overkillType === "cleave" &&
 		(
 			returnObj.remainingPower.blunt > 0 ||
@@ -2435,7 +2403,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		);
 	returnObj.shouldConduct = returnObj.remainingPower.lightning > 0;
 	
-	returnObj.stress = (1 + (returnObj.damage > 0 ? 1 : 0)) * (extraStress ? 2 : 1);
+	returnObj.stress += Math.floor((returnObj.damage / (tough/2)) * (extraStress ? 2 : 1));
 	
 	return returnObj;
 };
@@ -2671,13 +2639,13 @@ BattleManager.rollDie = function(size) {
 };
 
 BattleManager.applyActionResults = function(results, subject, target) {
-	subject.adjustStress(results.subjectStress - results.subjectStressRecovery);
+	subject.adjustStress(results.subjectStress);
 	if(!target || target.blankDummy()) { return; }
 	var initialDownState = target.isDown();
 	var totalStress = results.stress.other + results.stress.mind + results.stress.head + results.stress.torso
 		+ results.stress.leftArm + results.stress.rightArm + results.stress.leftLeg + results.stress.rightLeg
 		+ results.stress.leftHeld + results.stress.rightHeld;
-	target.adjustStress(totalStress - results.heal.stress - results.targetStressRecovery);
+	target.adjustStress(totalStress - results.heal.stress);
 	target.adjustDamage("mind", results.damage.mind * 2 - results.heal.mind * 2);
 	target.adjustDamage("head", results.damage.head * 2 - results.heal.head * 2);
 	target.adjustDamage("torso", results.damage.torso - results.heal.torso);

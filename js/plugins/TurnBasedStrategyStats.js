@@ -854,19 +854,24 @@
 	};
 	
 	Game_BattlerBase.prototype.moveRange = function() {
-		var moveDamage = this.getDamage("torso");
-		var moveDenom = this.toughness()*4;
+		var moveRange = this.baseMove();
+		var tough = this.toughness();
 		if(this.limbsType() === "winged" && this.isFlying()) {
-			moveDamage += this.getDamage("leftArm") + this.getDamage("rightArm");
+			moveRange -= this.getDamage("torso") >= tough ? 2 : (this.getDamage("torso") >= tough/2 ? 1 : 0);
+			moveRange -= this.getDamage("leftArm") >= tough ? 4 : (this.getDamage("leftArm") >= tough/2 ? 2 : 0);
+			moveRange -= this.getDamage("rightArm") >= tough ? 4 : (this.getDamage("rightArm") >= tough/2 ? 2 : 0);
 		} else if(this.limbsType() === "quadrupedal") {
-			moveDenom = this.toughness()*6;
-			moveDamage += this.getDamage("leftLeg") + this.getDamage("rightLeg")
-				+ this.getDamage("leftArm") + this.getDamage("rightArm");
+			moveRange -= this.getDamage("torso") >= tough ? 2 : (this.getDamage("torso") >= tough/2 ? 1 : 0);
+			moveRange -= this.getDamage("leftArm") >= tough ? 2 : (this.getDamage("leftArm") >= tough/2 ? 1 : 0);
+			moveRange -= this.getDamage("rightArm") >= tough ? 2 : (this.getDamage("rightArm") >= tough/2 ? 1 : 0);
+			moveRange -= this.getDamage("leftLeg") >= tough ? 2 : (this.getDamage("leftLeg") >= tough/2 ? 1 : 0);
+			moveRange -= this.getDamage("rightLeg") >= tough ? 2 : (this.getDamage("rightLeg") >= tough/2 ? 1 : 0);
 		} else {
-			moveDamage += this.getDamage("leftLeg") + this.getDamage("rightLeg");
+			moveRange -= this.getDamage("torso") >= tough ? 2 : (this.getDamage("torso") >= tough/2 ? 1 : 0);
+			moveRange -= this.getDamage("leftLeg") >= tough ? 4 : (this.getDamage("leftLeg") >= tough/2 ? 2 : 0);
+			moveRange -= this.getDamage("rightLeg") >= tough ? 4 : (this.getDamage("rightLeg") >= tough/2 ? 2 : 0);
 		}
-		var moveRange = Math.max(2, this.baseMove() * ((moveDenom - moveDamage) / moveDenom));
-		return moveRange;
+		return moveRange >= 2 ? moveRange : 2;
 	};
 	
 	Game_BattlerBase.prototype.isFlying = function() {
