@@ -397,6 +397,7 @@
 		this.clearStates();
 		this.clearBuffs();
 		this._stress = 0;
+		this._roundBuffs = 0;
 		this._damage = {};
 		this._damage.core = 0;
 		this._damage.mind = 0;
@@ -591,6 +592,7 @@
 		this._mp = this._mp.clamp(0, this.mmp);
 		this._tp = this._tp.clamp(0, this.maxTp());
 		this._stress = this._stress.clamp(0, 10);
+		this._roundBuffs = this._roundBuffs.clamp(0, 10);
 		this._damage.core = this._damage.core.clamp(0, this.toughness()*2);
 		this._damage.head = this._damage.head.clamp(0, this.toughness());
 		this._damage.torso = this._damage.torso.clamp(0, this.toughness());
@@ -630,6 +632,22 @@
 	
 	Game_BattlerBase.prototype.stress = function() {
 		return Math.max(0, this._stress);
+	};
+	
+	Game_BattlerBase.prototype.setRoundBuffs = function(newRoundBuffs) {
+		this._roundBuffs = Math.min(10, Math.max(0, newRoundBuffs));
+	};
+	
+	Game_BattlerBase.prototype.adjustRoundBuffs = function(change) {
+		this.setRoundBuffs(this._roundBuffs + change);
+	};
+	
+	Game_BattlerBase.prototype.clearRoundBuffs = function() {
+		this.setRoundBuffs(0);
+	};
+	
+	Game_BattlerBase.prototype.roundBuffs = function() {
+		return Math.max(0, this._roundBuffs);
 	};
 	
 	Game_BattlerBase.prototype.setDamage = function(part, damage) {
@@ -1033,9 +1051,9 @@
 				skills[i].tbsStats.action.hitGroups.forEach(function (hitGroup) {
 					if(!hitGroup.hits || hitGroup.hits.length == 0) { return; }
 					actionInfo.canTargetBodyPart = hitGroup.hits.some(function (hit) {
-						if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
-							return true;
-						}
+						// if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+							// return true;
+						// }
 						return false;
 					});
 					actionInfo.canTargetDownedBodyPart = hitGroup.hits.some(function (hit) {
@@ -1077,9 +1095,9 @@
 								if(groups[k].hits && groups[k].hits.length > 0) {
 									var hits = groups[k].hits;
 									returnActionInfo.canTargetBodyPart = hits.some(function (hit) {
-										if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
-											return true;
-										}
+										// if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+											// return true;
+										// }
 										return false;
 									});
 									returnActionInfo.canTargetDownedBodyPart = hits.some(function (hit) {
@@ -1144,9 +1162,9 @@
 								if(groups[k].hits && groups[k].hits.length > 0) {
 									var hits = groups[k].hits;
 									returnActionInfo.canTargetBodyPart = hits.some(function (hit) {
-										if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
-											return true;
-										}
+										// if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+											// return true;
+										// }
 										return false;
 									});
 									returnActionInfo.canTargetDownedBodyPart = hits.some(function (hit) {
@@ -1368,28 +1386,14 @@
 	Game_BattlerBase.prototype.applyHit = function(hit, bodyPart) {
 		if(!hit.heal || hit.heal.damage === undefined || hit.heal.damage <= 0) { return; }
 		
-		if(bodyPart === "undefined") {
-			this.adjustDamage("head", -hit.heal.damage*2);
-			this.adjustDamage("torso", -hit.heal.damage);
-			this.adjustDamage("leftArm", -hit.heal.damage*0.5);
-			this.adjustDamage("rightArm", -hit.heal.damage*0.5);
-			this.adjustDamage("leftLeg", -hit.heal.damage*0.5);
-			this.adjustDamage("rightLeg", -hit.heal.damage*0.5);
-			this.adjustDamage("core", -hit.heal.damage*5);
-		} else {
-			var multiplier = 1;
-			if(bodyPart === "mind" || bodyPart === "head") {
-				multiplier = 2;
-			}
-			if(
-				bodyPart === "leftArm" || bodyPart === "rightArm" ||
-				bodyPart === "leftLeg" || bodyPart === "rightLeg"
-			) {
-				multiplier = 0.5;
-			}
-			this.adjustDamage(bodyPart, -hit.heal.damage*multiplier);
-			this.adjustDamage("core", -hit.heal.damage*multiplier)
-		}
+		var tough = this.toughness();
+		this.adjustDamage("head", -tough);
+		this.adjustDamage("torso", -tough);
+		this.adjustDamage("leftArm", -tough);
+		this.adjustDamage("rightArm", -tough);
+		this.adjustDamage("leftLeg", -tough);
+		this.adjustDamage("rightLeg", -tough);
+		this.adjustDamage("core", -hit.heal.damage);
 	};
 	
 	//battler

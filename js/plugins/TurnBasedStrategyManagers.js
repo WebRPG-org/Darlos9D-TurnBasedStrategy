@@ -644,11 +644,13 @@ BattleManager.updateAction = function() {
 		this._actionTimer++;
 		if(noHitGroupsLeft && noHitMissDelaysLeft && !this._spriteset.isAnimationPlaying()) {
 			var target = this._tbsTargets[0];
+			target.battler.setRoundBuffs(0);
 			this._tbsTargets.shift();
 			while(this._tbsTargets.length > 0 && this.shouldSkipTarget(this._processedHitGroups, this._tbsTargets[0].battler, this._tbsTargetsByHit)) {
 				this._tbsTargets.shift();
 			}
 			if(this._tbsTargets.length <= 0) {
+				this._subject.battler.setRoundBuffs(0);
 				if(this._tbsActionInfo.action.stressCost !== undefined) {
 					this._subject.battler.adjustStress(this._tbsActionInfo.action.stressCost);
 					this._logWindow.showStressCost(this._subject.battler, this._tbsActionInfo.action.stressCost);
@@ -893,6 +895,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 	results.heal.leftHeld = 0;
 	results.heal.rightHeld = 0;
 	results.heal.mind = 0;
+	results.heal.core = 0;
 	results.dodged = true;
 	results.hit = {};
 	results.hit.leftHeld = false;
@@ -1003,8 +1006,8 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				dicePool.mentalCrisis = mentalCrisisDice;
 				
 				var testDiceReduction = hit.evasionPenalty === undefined ? 0 : hit.evasionPenalty;
-				dicePool.debuff = subjectStress + processedHitGroup.accuracyReduction + hitDamage.damageReduction;
-				dicePool.buff = targetStress;
+				dicePool.debuff = subjectStress + processedHitGroup.accuracyReduction + hitDamage.damageReduction + target.roundBuffs();
+				dicePool.buff = targetStress + subject.roundBuffs();
 				
 				if(hit.accuracyVariance !== undefined && rangedDistance !== undefined) {
 					var accuracyVariance = hit.accuracyVariance * rangedDistance;
@@ -1012,13 +1015,16 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					dicePool.debuff += Math.floor(variance);
 				}
 				
+				var parryable = false;
 				var accSkill = 0;
 				if(hit.ignoreUserAccuracy) {
 					accSkill = hit.accuracy == undefined ? 0 : hit.accuracy;
+					dicePool.buff -= subject.roundBuffs();
 				} else {
 					switch(hit.rangeType) {
 						case "melee":
 							accSkill = subject.totalSkill("meleeAcc");
+							parryable = true;
 							break;
 						case "thrown":
 						case "fired":
@@ -1084,20 +1090,22 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				hitResult.dodged = true;
 				hitResult.subjectStress = 0;
 				hitResult.targetStress = 0;
+				var cleaves = true;
 				if(hit.aoe !== undefined && hit.aoe > 0) {
 					if(isSolid || isFluid) {
+						cleaves = false;
 						hitResult.targetStress = 1;
-						hitResult.head = this.calculateSinglePartHit(hitResult, dicePool, true);
-						hitResult.torso = this.calculateSinglePartHit(hitResult, dicePool);
-						hitResult.leftArm = this.calculateSinglePartHit(hitResult, dicePool);
-						hitResult.rightArm = this.calculateSinglePartHit(hitResult, dicePool);
-						hitResult.leftLeg = this.calculateSinglePartHit(hitResult, dicePool);
-						hitResult.rightLeg = this.calculateSinglePartHit(hitResult, dicePool);
+						hitResult.head = this.calculateSinglePartHit(hitResult, dicePool, parryable, true);
+						hitResult.torso = this.calculateSinglePartHit(hitResult, dicePool, parryable);
+						hitResult.leftArm = this.calculateSinglePartHit(hitResult, dicePool, parryable);
+						hitResult.rightArm = this.calculateSinglePartHit(hitResult, dicePool, parryable);
+						hitResult.leftLeg = this.calculateSinglePartHit(hitResult, dicePool, parryable);
+						hitResult.rightLeg = this.calculateSinglePartHit(hitResult, dicePool, parryable);
 						if(targetLeftHeldProt.defense.solid > 0) {
-							hitResult.leftHeld = this.calculateSinglePartHit(hitResult, dicePool);
+							hitResult.leftHeld = this.calculateSinglePartHit(hitResult, dicePool, parryable);
 						}
 						if(targetRightHeldProt.defense.solid > 0) {
-							hitResult.rightHeld = this.calculateSinglePartHit(hitResult, dicePool);
+							hitResult.rightHeld = this.calculateSinglePartHit(hitResult, dicePool, parryable);
 						}
 					}
 					if(isMental) {
@@ -1107,7 +1115,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					if(isSolid || isFluid) {
 						if(targetingType === undefined && this._tbsTargetPart != undefined && this._tbsTargetPart != "mobility" && this._tbsTargetPart != "vital") {
 							hitResult.targetStress = 1;
-							hitResult[this._tbsTargetPart] = this.calculateSinglePartHit(hitResult, dicePool, this._tbsTargetPart === "head");
+							hitResult[this._tbsTargetPart] = this.calculateSinglePartHit(hitResult, dicePool, parryable, this._tbsTargetPart === "head");
 						} else {
 							var targetingMobility = this._tbsTargetPart === "mobility";
 							var defendingWithLegs = target.limbsType() === "winged" && target.isFlying();
@@ -1191,7 +1199,8 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 								defendingWithLegs,
 								targetingType,
 								firstHeldDefense,
-								secondHeldDefense
+								secondHeldDefense,
+								parryable
 							);
 						}
 						if(isMental && !hitResult.dodged) {
@@ -1217,6 +1226,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 								targetHeadProt,
 								Math.ceil(target.toughness()/2),
 								dicePool,
+								cleaves,
 								true);
 							results.stress.head += damageResult.stress;
 							results.damage.head += damageResult.damage;
@@ -1261,6 +1271,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 								targetTorsoProt,
 								target.toughness(),
 								dicePool,
+								cleaves,
 								false
 							);
 							results.stress.torso += damageResult.stress;
@@ -1301,6 +1312,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 								targetLeftArmProt,
 								target.toughness(),
 								dicePool,
+								cleaves,
 								target.limbsType() === "winged" && target.isFlying()
 							);
 							results.stress.leftArm += damageResult.stress;
@@ -1345,6 +1357,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 								targetRightArmProt,
 								target.toughness(),
 								dicePool,
+								cleaves,
 								target.limbsType() === "winged" && target.isFlying()
 							);
 							results.stress.rightArm += damageResult.stress;
@@ -1389,6 +1402,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 								targetLeftLegProt,
 								target.toughness(),
 								dicePool,
+								cleaves,
 								target.limbsType() !== "quadrupedal" && (target.limbsType() !== "winged" || !target.isFlying())
 							);
 							results.stress.leftLeg += damageResult.stress;
@@ -1415,6 +1429,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 								targetRightLegProt,
 								target.toughness(),
 								dicePool,
+								cleaves,
 								target.limbsType() !== "quadrupedal" && (target.limbsType() !== "winged" || !target.isFlying())
 							);
 							results.stress.rightLeg += damageResult.stress;
@@ -1441,6 +1456,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 								targetLeftHeldProt, 
 								this._equipmentBaseToughness,
 								dicePool,
+								cleaves,
 								false
 							);
 							results.stress.leftHeld += damageResult.stress;
@@ -1505,6 +1521,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 								targetRightHeldProt,
 								this._equipmentBaseToughness,
 								dicePool,
+								cleaves,
 								false
 							);
 							results.stress.rightHeld += damageResult.stress;
@@ -1591,30 +1608,21 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					results.heal.stress += heal.stress ;
 				}
 				if(heal.damage !== undefined) {
-					if((hit.aoe === undefined || hit.aoe <= 0) && this._tbsTargetPart != undefined) {
-						results.heal[this._tbsTargetPart] = heal.damage;
-						results.stress.other = Math.floor(Math.min(target.getDamage(this._tbsTargetPart), heal.damage));
-					} else if(hit.aoe !== undefined && hit.aoe >= 1) {
-						results.heal.head += heal.damage;
-						results.heal.torso += heal.damage;
-						results.heal.leftArm += heal.damage;
-						results.heal.rightArm += heal.damage;
-						results.heal.leftLeg += heal.damage;
-						results.heal.rightLeg += heal.damage;
-						results.hit.head = true;
-						results.hit.torso = true;
-						results.hit.leftArm = true;
-						results.hit.rightArm = true;
-						results.hit.leftLeg = true;
-						results.hit.rightLeg = true;
-						var stressFromHealing = Math.min(target.getDamage("head"), heal.damage);
-						stressFromHealing += Math.min(target.getDamage("torso"), heal.damage);
-						stressFromHealing += Math.min(target.getDamage("leftArm"), heal.damage);
-						stressFromHealing += Math.min(target.getDamage("rightArm"), heal.damage);
-						stressFromHealing += Math.min(target.getDamage("leftLeg"), heal.damage);
-						stressFromHealing += Math.min(target.getDamage("rightLeg"), heal.damage);
-						results.stress.other += Math.floor(stressFromHealing);
-					}
+					var tough = target.toughness();
+					results.heal.head += tough;
+					results.heal.torso += tough;
+					results.heal.leftArm += tough;
+					results.heal.rightArm += tough;
+					results.heal.leftLeg += tough;
+					results.heal.rightLeg += tough;
+					results.heal.core += heal.damage;
+					results.hit.head = true;
+					results.hit.torso = true;
+					results.hit.leftArm = true;
+					results.hit.rightArm = true;
+					results.hit.leftLeg = true;
+					results.hit.rightLeg = true;
+					results.stress.other += Math.floor(heal.damage / (tough/2));
 				}
 			}
 			var buffs = hit.buffs;
@@ -2019,7 +2027,7 @@ BattleManager.getCompleteDamage = function(subject, actionInfo, hit) {
 	return completeDamage;
 };
 
-BattleManager.calculateSinglePartHit = function(hitResult, dicePool, hardToHit) {
+BattleManager.calculateSinglePartHit = function(hitResult, dicePool, parryable, hardToHit) {
 	var partResult = {};
 	partResult.damageBonus = 0;
 	partResult.rareDamageBonus = 0;
@@ -2038,6 +2046,16 @@ BattleManager.calculateSinglePartHit = function(hitResult, dicePool, hardToHit) 
 		//determine rare bonuses
 		hitResult.targetStress += skillRoll.rareBonuses*2;
 		
+		//determine penalties
+		if(parryable) {
+			hitResult.subjectStress += bonuses < 0 ? -bonuses : 0;
+		}
+		
+		//determine rare penalties
+		if(parryable) {
+			hitResult.subjectStress += testRoll.rarePenalties * 2;
+		}
+		
 		return undefined;
 	}
 	
@@ -2051,6 +2069,16 @@ BattleManager.calculateSinglePartHit = function(hitResult, dicePool, hardToHit) 
 	
 	//determine rare bonuses
 	hitResult.targetStress += skillRoll.rareBonuses*2;
+		
+	//determine penalties
+	if(parryable) {
+		hitResult.subjectStress += bonuses < 0 ? -bonuses : 0;
+	}
+	
+	//determine rare penalties
+	if(parryable) {
+		hitResult.subjectStress += testRoll.rarePenalties * 2;
+	}
 	
 	return partResult;
 };
@@ -2066,6 +2094,7 @@ BattleManager.calculatePhysicalHit = function(
 	targetingType,
 	firstHeldDefense,
 	secondHeldDefense,
+	parryable
 ) {
 	hitResult.targetStress = 1;
 	var damageBonus = 0;
@@ -2086,7 +2115,9 @@ BattleManager.calculatePhysicalHit = function(
 		hitResult.targetStress += skillRoll.rareBonuses*2;
 		
 		//determine penalties
-		hitResult.subjectStress += bonuses < 0 ? -bonuses : 0;
+		if(parryable) {
+			hitResult.subjectStress += bonuses < 0 ? -bonuses : 0;
+		}
 		
 		//determine rare penalties
 		var rarePenalties = testRoll.rarePenalties;
@@ -2094,7 +2125,9 @@ BattleManager.calculatePhysicalHit = function(
 			hitResult.targetStress--;
 			rarePenalties--;
 		}
-		hitResult.subjectStress += rarePenalties*2;
+		if(parryable) {
+			hitResult.subjectStress += rarePenalties*2;
+		}
 		
 		return;
 	}
@@ -2105,10 +2138,14 @@ BattleManager.calculatePhysicalHit = function(
 	rareDamageBonus = skillRoll.rareBonuses;
 		
 	//determine penalties
-	hitResult.subjectStress += bonuses < 0 ? -bonuses : 0;
+	if(parryable) {
+		hitResult.subjectStress += bonuses < 0 ? -bonuses : 0;
+	}
 	
 	//determine rare penalties
-	hitResult.subjectStress += testRoll.rarePenalties * 2;
+	if(parryable) {
+		hitResult.subjectStress += testRoll.rarePenalties * 2;
+	}
 	
 	//determine part hit
 	var partSelect = Math.max(0, bonuses);
@@ -2225,7 +2262,7 @@ BattleManager.calculateMentalHit = function(hitResult, dicePool) {
 	return;
 };
 
-BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, tough, dicePool, extraStress)
+BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, tough, dicePool, cleaves, extraStress)
 {
 	var returnObj = {};
 	returnObj.stress = 0;
@@ -2255,7 +2292,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		if(damage < power) {
 			bluntPow += Math.floor((power - damage) / 2);
 		}
-		returnObj.damage += damage;
+		returnObj.damage += damage > tough ? damage : tough;
 		returnObj.remainingPower.cut = Math.max(0, damage - tough);
 	}
 	
@@ -2267,7 +2304,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		if(damage < power) {
 			bluntPow += Math.floor((power - damage) / 4);
 		}
-		returnObj.damage += damage;
+		returnObj.damage += damage > tough ? damage : tough;
 		returnObj.remainingPower.keen = Math.max(0, damage - tough);
 	}
 	
@@ -2282,7 +2319,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		if(damage < power) {
 			bluntPow += Math.floor((power - damage) / 4);
 		}
-		returnObj.damage += damage;
+		returnObj.damage += damage > tough ? damage : tough;
 		returnObj.remainingPower.thrust = Math.max(0, damage - tough);
 		returnObj.critical = hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
@@ -2296,7 +2333,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		if(damage < power) {
 			bluntPow += Math.floor((power - damage) / 8);
 		}
-		returnObj.damage += damage;
+		returnObj.damage += damage > tough ? damage : tough;
 		returnObj.remainingPower.stiletto = Math.max(0, damage - tough);
 		returnObj.critical = hitResult.damageBonus > 0 || hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
@@ -2316,7 +2353,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		if(returnObj.remainingPower.bullet > 0) {
 			damage = Math.max(Math.floor(damage/2), Math.floor((tough / damage) * damage));
 		}
-		returnObj.damage += damage;
+		returnObj.damage += damage > tough ? damage : tough;
 		returnObj.critical = hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
 	
@@ -2327,7 +2364,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 			power += Math.max(0, hitDamage.blunt + hitResult.damageBonus + hitResult.rareDamageBonus*2);
 		}
 		var damage = Math.max(0, power - partProt.armor.blunt);
-		returnObj.damage += damage;
+		returnObj.damage += damage > tough ? damage : tough;
 		returnObj.remainingPower.blunt = Math.max(0, damage - tough);
 		if(damage < power) {
 			tripPow += power - damage;
@@ -2340,7 +2377,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 			partProt.armor.fire -
 			(hitResult.damageBonus*2 + hitResult.rareDamageBonus*2)
 		));
-		returnObj.damage += damage;
+		returnObj.damage += damage > tough ? damage : tough;
 		returnObj.remainingPower.fire = Math.max(0, damage - tough);
 		returnObj.critical = hitResult.damageBonus > 0 || hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
@@ -2351,7 +2388,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 			partProt.armor.ice -
 			(hitResult.damageBonus*2 + hitResult.rareDamageBonus*2)
 		));
-		returnObj.damage += damage;
+		returnObj.damage += damage > tough ? damage : tough;
 		returnObj.remainingPower.ice = Math.max(0, damage - tough);
 		returnObj.critical = hitResult.damageBonus > 0 || hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
@@ -2362,7 +2399,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 			partProt.armor.corrosion -
 			(hitResult.damageBonus*2 + hitResult.rareDamageBonus*2)
 		));
-		returnObj.damage += damage;
+		returnObj.damage += damage > tough ? damage : tough;
 		returnObj.remainingPower.corrosion = Math.max(0, damage - tough);
 		returnObj.critical = hitResult.damageBonus > 0 || hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
@@ -2373,7 +2410,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 			partProt.armor.conducted -
 			(hitResult.damageBonus*2 + hitResult.rareDamageBonus*2)
 		));
-		returnObj.damage += damage;
+		returnObj.damage += damage > tough ? damage : tough;
 		returnObj.remainingPower.lightning = Math.max(0, damage - tough);
 		returnObj.critical = hitResult.damageBonus > 0 || hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
@@ -2389,9 +2426,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		returnObj.stress += tripStress * (extraStress ? 2 : 1);
 	}
 	
-	returnObj.shouldCleave = hitDamage.overkillType !== undefined && hitDamage.overkillType === "cleave" &&
-		(
-			returnObj.remainingPower.blunt > 0 ||
+	returnObj.shouldCleave = cleaves && (returnObj.remainingPower.blunt > 0 ||
 			returnObj.remainingPower.cut > 0 ||
 			returnObj.remainingPower.keen > 0 ||
 			returnObj.remainingPower.thrust > 0 ||
@@ -2399,9 +2434,8 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 			returnObj.remainingPower.bullet > 0 ||
 			returnObj.remainingPower.fire > 0 ||
 			returnObj.remainingPower.ice > 0 ||
-			returnObj.remainingPower.corrosion > 0
-		);
-	returnObj.shouldConduct = returnObj.remainingPower.lightning > 0;
+			returnObj.remainingPower.corrosion > 0);
+	returnObj.shouldConduct = cleaves && returnObj.remainingPower.lightning > 0;
 	
 	returnObj.stress += Math.floor((returnObj.damage / (tough/2)) * (extraStress ? 2 : 1));
 	
@@ -2646,20 +2680,20 @@ BattleManager.applyActionResults = function(results, subject, target) {
 		+ results.stress.leftArm + results.stress.rightArm + results.stress.leftLeg + results.stress.rightLeg
 		+ results.stress.leftHeld + results.stress.rightHeld;
 	target.adjustStress(totalStress - results.heal.stress);
-	target.adjustDamage("mind", results.damage.mind * 2 - results.heal.mind * 2);
-	target.adjustDamage("head", results.damage.head * 2 - results.heal.head * 2);
+	target.adjustDamage("mind", results.damage.mind * 2 - results.heal.mind);
+	target.adjustDamage("head", results.damage.head * 2 - results.heal.head);
 	target.adjustDamage("torso", results.damage.torso - results.heal.torso);
 	target.adjustDamage("leftArm", results.damage.leftArm - results.heal.leftArm);
 	target.adjustDamage("rightArm", results.damage.rightArm - results.heal.rightArm);
 	target.adjustDamage("leftLeg", results.damage.leftLeg - results.heal.leftLeg);
 	target.adjustDamage("rightLeg", results.damage.rightLeg - results.heal.rightLeg);
-	var totalDamage = Math.floor((results.damage.head - results.heal.head)*2
-					+ (results.damage.torso - results.heal.torso)
-					+ (results.damage.leftArm - results.heal.leftArm)*0.5
-					+ (results.damage.rightArm - results.heal.rightArm)*0.5
-					+ (results.damage.leftLeg - results.heal.leftLeg)*0.5
-					+ (results.damage.rightLeg - results.heal.rightLeg)*0.5);
-	target.adjustDamage("core", totalDamage);
+	var totalDamage = Math.floor(results.damage.head*2
+					+ results.damage.torso
+					+ results.damage.leftArm*0.5
+					+ results.damage.rightArm*0.5
+					+ results.damage.leftLeg*0.5
+					+ results.damage.rightLeg*0.5);
+	target.adjustDamage("core", totalDamage - results.heal.core);
 	if(initialDownState != target.isDown()) {
 		if(initialDownState) {
 			results.revived = true;

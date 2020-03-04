@@ -919,7 +919,9 @@
 		force.allyForceIds = pendingTbsForce.allyForceIds;
 		force.enemyForceIds = pendingTbsForce.enemyForceIds;
 		force.actors = [];
-		force.perceptionRoll = 0;
+		force.initiativeRoll = {};
+		force.initiativeRoll.hits = 0;
+		force.initiativeRoll.bonuses = 0;
 		
 		var index = 0;
 		var that = this;
@@ -950,6 +952,7 @@
 			}
 			actor.canActThisRound = !actor.battler.isDown() && !pendingActor.surprised;
 			actor.battler.setStress(0);
+			actor.battler.setRoundBuffs(0);
 			if(pendingActor.surprised) {
 				that._tbsSurpriseRoundJustStarted = true;
 			}
@@ -958,7 +961,7 @@
 			
 			force.actors.push(actor);
 			
-			this.rollPerception(actor, force);
+			this.rollInitiative(actor, force);
 			
 			index++;
 		}, this);
@@ -989,24 +992,33 @@
 		battler.adjustStress(Math.floor(damageStress-battler.stressRecovery()));
 	}
 	
-	Game_Map.prototype.rollPerception = function(actor, force) {
+	Game_Map.prototype.rollInitiative = function(actor, force) {
+		actor.battler.setRoundBuffs(0);
 		if(actor.canActThisRound) {
 			var perception = actor.battler.totalSkill("perception");
 			var reflex = actor.battler.reflexSkill();
+			var stress = actor.battler.stress();
 			var skillDice = perception > reflex ? perception - reflex : reflex - perception;
 			var expertDice = perception > reflex ? reflex : perception;
-			var debuffDice = actor.battler.stress();
-			perceptionRoll = BattleManager.rollSkillDice(skillDice, expertDice);
-			var stressRoll = BattleManager.rollTestDice(0, 0, debuffDice);
-			perceptionRoll.hits -= stressRoll.misses;
-			perceptionRoll.bonuses -= stressRoll.penalties;
+			var debuffDice = stress;
+			initiativeRoll = BattleManager.rollSkillDice(skillDice, expertDice);
+			stressRoll = BattleManager.rollTestDice(0, 0, debuffDice);
+			initiativeRoll.bonuses += initiativeRoll.rareBonuses * 2;
+			initiativeRoll.hits -= stressRoll.misses;
+			initiativeRoll.bonuses -= stressRoll.bonuses;
+			if(initiativeRoll.bonuses > stress) {
+				actor.battler.setRoundBuffs(initiativeRoll.bonuses - stress);
+			}
+			if(initiativeRoll.bonuses > 0) {
+				actor.battler.adjustStress(-initiativeRoll.bonuses);
+			}
 			if(
-				force.perceptionRoll === undefined ||
-				force.perceptionRoll.hits < perceptionRoll.hits ||
-				(force.perceptionRoll.hits == perceptionRoll.hits &&
-				force.perceptionRoll.bonuses < perceptionRoll.bonuses)
+				force.initiativeRoll === undefined ||
+				force.initiativeRoll.hits < initiativeRoll.hits ||
+				(force.initiativeRoll.hits == initiativeRoll.hits &&
+				force.initiativeRoll.bonuses < initiativeRoll.bonuses)
 			) {
-				force.perceptionRoll = perceptionRoll;
+				force.initiativeRoll = initiativeRoll;
 			}
 		}
 	};
@@ -1763,6 +1775,7 @@
 								battler.setDamage("core", battler.toughness()*2-1);
 							}
 							battler.setStress(0);
+							battler.setRoundBuffs(0);
 							battler.clearTbsBuffs();
 							battler.setDisplayName(undefined);
 						});
@@ -1837,7 +1850,7 @@
 			}
 		} else {
 			for(i = 0; i < this._tbsForces.length; i++) {
-				this._tbsForces[i].perceptionRoll = {};
+				this._tbsForces[i].initiativeRoll = {};
 				var j;
 				for(j = 0; j < this._tbsForces[i].actors.length; j++) {
 					var battler = this._tbsForces[i].actors[j].battler;
@@ -1846,7 +1859,7 @@
 					this.stressFromDamage(battler);
 					battler.tickTbsBuffs();
 					
-					this.rollPerception(this._tbsForces[i].actors[j], this._tbsForces[i]);
+					this.rollInitiative(this._tbsForces[i].actors[j], this._tbsForces[i]);
 				}
 			}
 			this.determineForceOrder();
@@ -1876,13 +1889,13 @@
 			this._tbsOrderedForces.push(force);
 		}, this);
 		this._tbsOrderedForces.sort(function (a, b) {
-			if(a.perceptionRoll.hits == b.perceptionRoll.hits) {
-				if(a.perceptionRoll.bonuses == b.perceptionRoll.bonuses) {
+			if(a.initiativeRoll.hits == b.initiativeRoll.hits) {
+				if(a.initiativeRoll.bonuses == b.initiativeRoll.bonuses) {
 					return Math.random() >= 0.5 ? 1 : -1;
 				}
-				return b.perceptionRoll.bonuses - a.perceptionRoll.bonuses;
+				return b.initiativeRoll.bonuses - a.initiativeRoll.bonuses;
 			}
-			return b.perceptionRoll.hits - a.perceptionRoll.hits;
+			return b.initiativeRoll.hits - a.initiativeRoll.hits;
 		});
 		this._tbsCurrentTurnForce = this._tbsOrderedForces[0].forceId;
 	};
@@ -2653,9 +2666,11 @@
 						if(!results.skipTarget) {
 							BattleManager.applyActionResults(results, tbsTarget.battler);
 						}
+						tbsTarget.battler.setRoundBuffs(0);
 						index++;
 					});
 				});
+				that._tbsSelectedActor.battler.setRoundBuffs(0);
 			}
 		}
 		if(this.isAnyTbsActionTargets(false)) {

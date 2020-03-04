@@ -283,16 +283,16 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 			var totalStress = results.stress.head + results.stress.torso + results.stress.leftArm
 				+ results.stress.rightArm + results.stress.leftLeg + results.stress.rightLeg
 				+ results.stress.leftHeld + results.stress.rightHeld + results.stress.other - results.heal.stress;
+			this.setupSingleDamagePopup(totalStress != 0, totalStress, "stress", false, 90, -60);
 			if(results.dodged) {
 				this.setupSingleDamagePopup(false, 0, "dodged");
-				this.setupSingleDamagePopup(totalStress != 0, totalStress, "stress", false, 90, -60);
 			} else {
-				var totalDamage = Math.floor((results.damage.head - results.heal.head)*2
-					+ (results.damage.torso - results.heal.torso)
-					+ (results.damage.leftArm - results.heal.leftArm)*0.5
-					+ (results.damage.rightArm - results.heal.rightArm)*0.5
-					+ (results.damage.leftLeg - results.heal.leftLeg)*0.5
-					+ (results.damage.rightLeg - results.heal.rightLeg)*0.5);
+				var totalDamage = Math.floor(results.damage.head*2
+					+ results.damage.torso
+					+ results.damage.leftArm*0.5
+					+ results.damage.rightArm*0.5
+					+ results.damage.leftLeg*0.5
+					+ results.damage.rightLeg*0.5);
 				var crit = results.critical.mind || results.critical.torso || results.critical.mind ||
 					results.critical.leftArm || results.critical.rightArm ||
 					results.critical.leftLeg || results.critical.rightLeg;
@@ -305,7 +305,7 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 				) {
 					resultsType = "blocked";
 				}
-				this.setupSingleDamagePopup(true, totalDamage, resultsType, crit);
+				this.setupSingleDamagePopup(true, totalDamage - results.heal.core, resultsType, crit);
 				
 				// var leftArmHit = results.hit.leftArm;
 				// var leftArmDamage = results.damage.leftArm - results.heal.leftArm;

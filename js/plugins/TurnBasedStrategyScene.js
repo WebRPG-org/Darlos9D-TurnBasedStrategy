@@ -784,14 +784,14 @@
 		} else {
 			var actionInfo = $gameMap.getTbsSelectedActionInfo();
 			var selectedTarget = $gameMap.getTbsActorAtPosition($gameMap.getTbsActionTargetLocationX(), $gameMap.getTbsActionTargetLocationY());
-			if(selectedTarget && (actionInfo.canTargetBodyPart || (actionInfo.canTargetDownedBodyPart && selectedTarget.battler.isDown()))) {
-				this._tbsTargetWindow.shouldOpenTargetPartWindow(true);
-				this._tbsTargetPartFromManualTarget = false;
-				$gameMap.setTbsTurnMode("selectTargetPart");
-				$gameMap.setBreadcrumbStage("target");
-			} else {
+			// if(selectedTarget && (actionInfo.canTargetBodyPart || (actionInfo.canTargetDownedBodyPart && selectedTarget.battler.isDown()))) {
+				// this._tbsTargetWindow.shouldOpenTargetPartWindow(true);
+				// this._tbsTargetPartFromManualTarget = false;
+				// $gameMap.setTbsTurnMode("selectTargetPart");
+				// $gameMap.setBreadcrumbStage("target");
+			// } else {
 				$gameMap.setTbsTurnMode("executeAction");
-			}
+			//}
 		}
 		this._tbsTargetWindow.close();
 		this._tbsTargetWindow.deactivate();
