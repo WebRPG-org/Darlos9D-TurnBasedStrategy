@@ -1269,7 +1269,7 @@ Window_TbsActorStatus.prototype.refresh = function() {
 		this.drawActorBuffs(this._tbsActor.battler, this.textPadding()+14*20, 0)
         this.drawActorDamage(this._tbsActor.battler, this.textPadding(), this.lineHeight());
         this.drawActorStress(this._tbsActor.battler, this.textPadding()+14*20, this.lineHeight());
-        this.drawActorPartsDamage(this._tbsActor.battler, this.textPadding(), this.lineHeight()*2);
+        this.drawActorPartsDamage(this._tbsActor.battler, this.textPadding()+14, this.lineHeight()*2);
         this.drawActorRoundBuffs(this._tbsActor.battler, this.textPadding()+14*20, this.lineHeight()*2);
     }
 };
@@ -2740,7 +2740,7 @@ Window_TbsSurpriseRound.prototype.constructor = Window_TbsSurpriseRound;
 
 Window_TbsSurpriseRound.prototype.initialize = function() {
     Window_Base.prototype.initialize.call(this,
-		Graphics.boxWidth - this.windowWidth(),
+		Graphics.boxWidth - this.windowWidth() + this.standardPadding()*(2/3),
 		Graphics.boxHeight / 2 - this.windowHeight() / 2,
 		this.windowWidth(), this.windowHeight());
     this.refresh();
@@ -2772,7 +2772,7 @@ Window_TbsNextRound.prototype.constructor = Window_TbsNextRound;
 
 Window_TbsNextRound.prototype.initialize = function() {
     Window_Base.prototype.initialize.call(this,
-		Graphics.boxWidth - this.windowWidth(),
+		Graphics.boxWidth - this.windowWidth() + this.standardPadding()*(2/3),
 		Graphics.boxHeight / 2 - this.windowHeight() / 2,
 		this.windowWidth(), this.windowHeight());
     this.refresh();

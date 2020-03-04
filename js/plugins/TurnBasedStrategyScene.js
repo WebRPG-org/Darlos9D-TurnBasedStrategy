@@ -545,15 +545,17 @@
 
 	Scene_Map.prototype.createTbsActorStatusWindow = function() {
 		var wx = Graphics.boxWidth
-			- Window_TbsActorStatus.prototype.windowWidth();
-		this._tbsActorStatusWindow = new Window_TbsActorStatus(wx, 0);
+			- Window_TbsActorStatus.prototype.windowWidth()
+			+ Window_TbsActorStatus.prototype.standardPadding()*(2/3);
+		this._tbsActorStatusWindow = new Window_TbsActorStatus(wx, -Window_TbsActorStatus.prototype.standardPadding()*(2/3));
 		this.addWindow(this._tbsActorStatusWindow);
 		this._tbsActorStatusWindow.hide();
 		this._tbsActorStatusWindow.close();
 	};
 
 	Scene_Map.prototype.createTbsActorWindow = function() {
-		this._tbsActorWindow = new Window_TbsActor(0, 0);
+		this._tbsActorWindow = new Window_TbsActor(-Window_TbsActorStatus.prototype.standardPadding()*(2/3),
+			-Window_TbsActorStatus.prototype.standardPadding()*(2/3));
 		this._tbsActorWindow.setHandler('ok',     this.onActorOk.bind(this));
 		this._tbsActorWindow.setHandler('cancel',     this.onActorCancel.bind(this));
 		this.addWindow(this._tbsActorWindow);
@@ -564,7 +566,8 @@
 	};
 
 	Scene_Map.prototype.createTbsActionTypeWindow = function() {
-		this._tbsActionTypeWindow = new Window_TbsActionType(0, 0);
+		this._tbsActionTypeWindow = new Window_TbsActionType(-Window_TbsActorStatus.prototype.standardPadding()*(2/3),
+			-Window_TbsActorStatus.prototype.standardPadding()*(2/3));
 		this._tbsActionTypeWindow.setHandler('action',     this.commandAction.bind(this));
 		this._tbsActionTypeWindow.setHandler('move',     this.commandMove.bind(this));
 		this._tbsActionTypeWindow.setHandler('cancel',     this.commandActionTypeCancel.bind(this));
@@ -577,14 +580,15 @@
 	};
 
 	Scene_Map.prototype.createTbsActionInfoWindow = function() {
-		var wx = Graphics.boxWidth - 298;
-		this._tbsActionInfoWindow = new Window_TbsActionInfo(wx, 0);
+		var wx = Graphics.boxWidth - 298 + Window_TbsActorStatus.prototype.standardPadding()*(2/3);
+		this._tbsActionInfoWindow = new Window_TbsActionInfo(wx, -Window_TbsActorStatus.prototype.standardPadding()*(2/3));
 		this.addWindow(this._tbsActionInfoWindow);
 		this._tbsActionInfoWindow.hide();
 	};
 
 	Scene_Map.prototype.createTbsActionWindow = function() {
-		this._tbsActionWindow = new Window_TbsAction(0, 0);
+		this._tbsActionWindow = new Window_TbsAction(-Window_TbsActorStatus.prototype.standardPadding()*(2/3),
+			-Window_TbsActorStatus.prototype.standardPadding()*(2/3));
 		this._tbsActionWindow.setHandler('ok',     this.onActionOk.bind(this));
 		this._tbsActionWindow.setHandler('cancel',     this.onActionCancel.bind(this));
 		this.addWindow(this._tbsActionWindow);
@@ -597,7 +601,8 @@
 	};
 
 	Scene_Map.prototype.createTbsTargetWindow = function() {
-		this._tbsTargetWindow = new Window_TbsTarget(0, 0);
+		this._tbsTargetWindow = new Window_TbsTarget(-Window_TbsActorStatus.prototype.standardPadding()*(2/3),
+			-Window_TbsActorStatus.prototype.standardPadding()*(2/3));
 		this._tbsTargetWindow.setHandler('ok',     this.onTargetOk.bind(this));
 		this._tbsTargetWindow.setHandler('cancel',     this.onTargetCancel.bind(this));
 		this._tbsTargetWindow.setHandler('control',     this.onTargetSwitchGroups.bind(this));
@@ -612,7 +617,8 @@
 	};
 
 	Scene_Map.prototype.createTbsTargetNameWindow = function() {
-		this._tbsTargetNameWindow = new Window_TbsTargetName(0, 0);
+		this._tbsTargetNameWindow = new Window_TbsTargetName(-Window_TbsActorStatus.prototype.standardPadding()*(2/3),
+			-Window_TbsActorStatus.prototype.standardPadding()*(2/3));
 		this.addWindow(this._tbsTargetNameWindow);
 		this._tbsTargetNameWindow.hide();
 		this._tbsTargetNameWindow.close();
@@ -632,10 +638,14 @@
 	};
 
 	Scene_Map.prototype.createTbsBreadcrumbWindows = function() {
-		this._tbsBreadcrumbWindowOne = new Window_TbsBreadcrumb(0, Graphics.boxHeight - 288);
-		this._tbsBreadcrumbWindowTwo = new Window_TbsBreadcrumb(0, Graphics.boxHeight - 216);
-		this._tbsBreadcrumbWindowThree = new Window_TbsBreadcrumb(0, Graphics.boxHeight - 144);
-		this._tbsBreadcrumbWindowFour = new Window_TbsBreadcrumb(0, Graphics.boxHeight - 72);
+		this._tbsBreadcrumbWindowOne = new Window_TbsBreadcrumb(-Window_TbsActorStatus.prototype.standardPadding()*(2/3),
+			Graphics.boxHeight - 288 + Window_TbsActorStatus.prototype.standardPadding()*(2/3)*4);
+		this._tbsBreadcrumbWindowTwo = new Window_TbsBreadcrumb(-Window_TbsActorStatus.prototype.standardPadding()*(2/3),
+			Graphics.boxHeight - 216 + Window_TbsActorStatus.prototype.standardPadding()*(2/3)*3);
+		this._tbsBreadcrumbWindowThree = new Window_TbsBreadcrumb(-Window_TbsActorStatus.prototype.standardPadding()*(2/3),
+			Graphics.boxHeight - 144 + Window_TbsActorStatus.prototype.standardPadding()*(2/3)*2);
+		this._tbsBreadcrumbWindowFour = new Window_TbsBreadcrumb(-Window_TbsActorStatus.prototype.standardPadding()*(2/3),
+			Graphics.boxHeight - 72 + Window_TbsActorStatus.prototype.standardPadding()*(2/3));
 		this.addWindow(this._tbsBreadcrumbWindowOne);
 		this.addWindow(this._tbsBreadcrumbWindowTwo);
 		this.addWindow(this._tbsBreadcrumbWindowThree);
@@ -928,15 +938,17 @@
 	};
 
 	Scene_Battle.prototype.createTbsLeftActorStatusWindow = function() {
-		var wx = 0;
-		var wy = Graphics.boxHeight - Window_TbsActorStatus.prototype.windowHeight();
+		var wx = -Window_TbsActorStatus.prototype.standardPadding()*(2/3);
+		var wy = Graphics.boxHeight - Window_TbsActorStatus.prototype.windowHeight()
+			+ Window_TbsActorStatus.prototype.standardPadding()*(2/3);
 		this._tbsLeftActorStatusWindow = new Window_TbsActorStatus(wx, wy);
 		this.addWindow(this._tbsLeftActorStatusWindow);
 	};
 
 	Scene_Battle.prototype.createTbsRightActorStatusWindow = function() {
-		var wx = Graphics.boxWidth - Window_TbsActorStatus.prototype.windowWidth();
-		var wy = 0;
+		var wx = Graphics.boxWidth - Window_TbsActorStatus.prototype.windowWidth()
+			+ Window_TbsActorStatus.prototype.standardPadding()*(2/3);
+		var wy = -Window_TbsActorStatus.prototype.standardPadding()*(2/3);
 		this._tbsRightActorStatusWindow = new Window_TbsActorStatus(wx, wy);
 		this.addWindow(this._tbsRightActorStatusWindow);
 	};
