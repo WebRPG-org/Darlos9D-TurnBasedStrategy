@@ -1005,7 +1005,7 @@
 			stressRoll = BattleManager.rollTestDice(0, 0, debuffDice);
 			initiativeRoll.bonuses += initiativeRoll.rareBonuses * 2;
 			initiativeRoll.hits -= stressRoll.misses;
-			initiativeRoll.bonuses -= stressRoll.bonuses;
+			initiativeRoll.bonuses -= stressRoll.penalties;
 			if(initiativeRoll.bonuses > stress) {
 				actor.battler.setRoundBuffs(initiativeRoll.bonuses - stress);
 			}

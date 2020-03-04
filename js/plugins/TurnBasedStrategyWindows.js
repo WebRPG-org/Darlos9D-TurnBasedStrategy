@@ -1236,7 +1236,6 @@ Window_TbsActorStatus.prototype.constructor = Window_TbsActorStatus;
 Window_TbsActorStatus.prototype.initialize = function(x, y) {
     Window_Base.prototype.initialize.call(this, x, y, this.windowWidth(), this.windowHeight());
     this._tbsActor = null;
-	this._actorStressWindow = undefined;
 };
 
 //Window_TbsActorStatus.prototype.lineHeight = function() {
@@ -1244,11 +1243,11 @@ Window_TbsActorStatus.prototype.initialize = function(x, y) {
 //};
 
 Window_TbsActorStatus.prototype.windowWidth = function() {
-	return this.standardPadding()*2 + this.textPadding()*2 + 14*this.statusMeterFullLength();
+	return this.standardPadding()*2 + this.textPadding()*2 + 14*36;
 };
 
 Window_TbsActorStatus.prototype.windowHeight = function() {
-	return this.fittingHeight(1);
+	return this.fittingHeight(3);
 };
 
 Window_TbsActorStatus.prototype.setTbsActor = function(tbsActor, forceRefresh) {
@@ -1258,41 +1257,20 @@ Window_TbsActorStatus.prototype.setTbsActor = function(tbsActor, forceRefresh) {
 		}
         this._tbsActor = tbsActor;
         this.refresh();
-		if(this._actorStressWindow) {
-			this._actorStressWindow.setTbsActor(this._tbsActor);
-			this._actorStressWindow.refresh();
-		}
-		if(this._actorBuffsWindow) {
-			this._actorBuffsWindow.setTbsActor(this._tbsActor);
-			this._actorBuffsWindow.refresh();
-		}
     } else if(forceRefresh) {
 		this.refresh();
-		if(this._actorStressWindow) {
-			this._actorStressWindow.refresh();
-		}
-		if(this._actorBuffsWindow) {
-			this._actorBuffsWindow.refresh();
-		}
-	}
-};
-
-Window_TbsActorStatus.prototype.setActorStressWindow = function(stressWindow) {
-	if (this._actorStressWindow !== stressWindow) {
-		this._actorStressWindow = stressWindow;
-	}
-};
-
-Window_TbsActorStatus.prototype.setActorBuffsWindow = function(buffsWindow) {
-	if (this._actorBuffsWindow !== buffsWindow) {
-		this._actorBuffsWindow = buffsWindow;
 	}
 };
 
 Window_TbsActorStatus.prototype.refresh = function() {
     this.contents.clear();
     if (this._tbsActor) {
-        this.drawActorDamage(this._tbsActor.battler, this.textPadding(), 0);
+		this.drawActorNickname(this._tbsActor.battler, this.textPadding(), 0);
+		this.drawActorBuffs(this._tbsActor.battler, this.textPadding()+14*20, 0)
+        this.drawActorDamage(this._tbsActor.battler, this.textPadding(), this.lineHeight());
+        this.drawActorStress(this._tbsActor.battler, this.textPadding()+14*20, this.lineHeight());
+        this.drawActorPartsDamage(this._tbsActor.battler, this.textPadding(), this.lineHeight()*2);
+        this.drawActorRoundBuffs(this._tbsActor.battler, this.textPadding()+14*20, this.lineHeight()*2);
     }
 };
 
@@ -1311,217 +1289,6 @@ Window_TbsActorStatus.prototype.updateClose = function() {
 			this._shouldReOpen = false;
         }
     }
-};
-
-Window_TbsActorStatus.prototype.open = function() {
-	Window_Base.prototype.open.call(this);
-	if(this._actorStressWindow) {
-		this._actorStressWindow.open();
-	}
-	if(this._actorBuffsWindow) {
-		this._actorBuffsWindow.open();
-	}
-};
-
-Window_TbsActorStatus.prototype.close = function() {
-	Window_Base.prototype.close.call(this);
-	if(this._actorStressWindow) {
-		this._actorStressWindow.close();
-	}
-	if(this._actorBuffsWindow) {
-		this._actorBuffsWindow.close();
-	}
-};
-
-Window_TbsActorStatus.prototype.show = function() {
-	Window_Base.prototype.show.call(this);
-	if(this._actorStressWindow) {
-		this._actorStressWindow.show();
-	}
-	if(this._actorBuffsWindow) {
-		this._actorBuffsWindow.show();
-	}
-};
-
-Window_TbsActorStatus.prototype.hide = function() {
-	Window_Base.prototype.hide.call(this);
-	if(this._actorStressWindow) {
-		this._actorStressWindow.hide();
-	}
-	if(this._actorBuffsWindow) {
-		this._actorBuffsWindow.hide();
-	}
-};
-
-//-----------------------------------------------------------------------------
-// Window_TbsActorBuffs
-//
-// The window for displaying a tbs actor's buffs/debuffs during a turn based strategy battle
-
-function Window_TbsActorBuffs() {
-    this.initialize.apply(this, arguments);
-}
-
-Window_TbsActorBuffs.prototype = Object.create(Window_Base.prototype);
-Window_TbsActorBuffs.prototype.constructor = Window_TbsActorBuffs;
-
-Window_TbsActorBuffs.prototype.initialize = function(x, y) {
-    Window_Base.prototype.initialize.call(this, x, y, this.windowWidth(), this.windowHeight());
-    this._tbsActor = null;
-};
-
-Window_TbsActorBuffs.prototype.iconSeparation = function() {
-	return 4;
-};
-
-Window_TbsActorBuffs.prototype.iconRowWidth = function() {
-	return 2;
-};
-
-Window_TbsActorBuffs.prototype.iconColumnHeight = function() {
-	return 2;
-};
-
-Window_TbsActorBuffs.prototype.windowWidth = function() {
-	return this.standardPadding()*2 + this.textPadding()*2
-		+ Window_Base._iconWidth*this.iconRowWidth()
-		+ this.iconSeparation()*(this.iconRowWidth()-1);
-};
-
-Window_TbsActorBuffs.prototype.windowHeight = function() {
-	return this.fittingHeight(this.iconColumnHeight());
-};
-
-Window_TbsActorBuffs.prototype.setTbsActor = function(tbsActor) {
-    if (this._tbsActor !== tbsActor) {
-        this._tbsActor = tbsActor;
-    }
-};
-
-Window_TbsActorBuffs.prototype.update = function() {
-	Window_Base.prototype.update.call(this);
-	if (this._tbsActor && this._tbsActor.battler.tbsBuffs().length > 0) {
-		this.show();
-	} else {
-		this.hide();
-	}
-};
-
-Window_TbsActorBuffs.prototype.refresh = function() {
-    this.contents.clear();
-    if (this._tbsActor) {
-		this.drawActorBuffs(this._tbsActor.battler, 0, 0);
-    }
-};
-
-Window_TbsActorBuffs.prototype.drawActorBuffs = function(battler, x, y) {
-	var iconHeight = Window_Base._iconHeight;
-	var iconWidth = Window_Base._iconWidth;
-	var buffs = battler.tbsBuffs();
-	var curX = x;
-	var curY = y;
-	var i;
-	for(i = 0; i < buffs.length; i++) {
-		this.drawIcon(buffs[i].iconId, curX, curY);
-		if(i > 0 && i % this.iconRowWidth() == 1) {
-			curX = x;
-			curY = curY + this.lineHeight();
-		} else {
-			curX += iconWidth+this.iconSeparation();
-		}
-	}
-};
-
-//-----------------------------------------------------------------------------
-// Window_TbsActorStress
-//
-// The window for displaying a tbs actor's stress during a turn based strategy battle
-
-function Window_TbsActorStress() {
-    this.initialize.apply(this, arguments);
-}
-
-Window_TbsActorStress.prototype = Object.create(Window_Base.prototype);
-Window_TbsActorStress.prototype.constructor = Window_TbsActorStress;
-
-Window_TbsActorStress.prototype.initialize = function(x, y) {
-    Window_Base.prototype.initialize.call(this, x, y, this.windowWidth(), this.windowHeight());
-    this._tbsActor = null;
-};
-
-//Window_TbsActorStress.prototype.lineHeight = function() {
-//    return 29;
-//};
-
-Window_TbsActorStress.prototype.windowWidth = function() {
-	return this.standardPadding()*2 + this.textPadding()*2 + 14*2;
-};
-
-Window_TbsActorStress.prototype.windowHeight = function() {
-	return this.fittingHeight(5);
-};
-
-Window_TbsActorStress.prototype.setTbsActor = function(tbsActor) {
-    if (this._tbsActor !== tbsActor) {
-        this._tbsActor = tbsActor;
-    }
-};
-
-Window_TbsActorStress.prototype.refresh = function() {
-    this.contents.clear();
-    if (this._tbsActor) {
-		this.drawActorStress(this._tbsActor.battler, this.textPadding(), 0);
-    }
-};
-
-Window_TbsActorStress.prototype.drawActorStress = function(battler, x, y) {
-	if(battler.blankDummy()) { return; }
-	var lineHeight = this.lineHeight();
-	this.changeTextColor(this.systemColor());
-	this.drawText("S", x, y, 14);
-	this.drawText("t", x, y+this.lineHeight(), 14);
-	//this.drawText("_", x+14, y-this.lineHeight()+7, 14);
-	//this.drawText("_", x+14, y+this.lineHeight()*4, 14);
-	if(battler.stress() >= 10) {
-		this.changeTextColor(this.deathColor());
-	} else {
-		this.changeTextColor(this.crisisColor());
-	}
-	var numStress = battler.stress();
-	var numHeight = 2;
-	if(numStress >= 100) {
-		this.drawText(1, x, y+this.lineHeight()*numHeight, 14);
-		numStress -= 100;
-		numHeight++;
-		if(numStress <= 0) {
-			this.drawText(0, x, y+this.lineHeight()*numHeight, 14);
-			numHeight++;
-		}
-	}
-	if(numStress >= 10) {
-		this.drawText(Math.floor(numStress/10), x, y+this.lineHeight()*numHeight, 14);
-		numStress -= 10 * Math.floor(numStress/10);
-		numHeight++;
-	}
-	this.drawText(numStress, x, y+this.lineHeight()*numHeight, 14);
-	var pips = (battler.stress() / 10) * 5;
-	var pipsBaseY = y;
-	if(pips - Math.floor(pips) > 0) {
-		var pipHeight = lineHeight * (pips - Math.floor(pips));
-		var pipY = lineHeight - pipHeight;
-		this.drawText("|", x+14-this.textPadding()/2, pipsBaseY+lineHeight*(4-Math.floor(pips))+pipY, 14);
-		this.drawText("|", x+14+this.textPadding()/2, pipsBaseY+lineHeight*(4-Math.floor(pips))+pipY, 14);
-	}
-	var i;
-	for(i = 0; i < Math.floor(pips); i++) {
-		this.drawText("|", x+14-this.textPadding()/2, pipsBaseY+lineHeight*(4-i), 14);
-		this.drawText("|", x+14+this.textPadding()/2, pipsBaseY+lineHeight*(4-i), 14);
-	}
-	this.resetTextColor();
-};
-
-Window_TbsActorStress.prototype.drawTextWithHeight = function(text, x, y, maxWidth, height, align) {
-    this.contents.drawText(text, x, y, maxWidth, height, align);
 };
 
 //-----------------------------------------------------------------------------
@@ -3893,29 +3660,44 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.changePaintOpacity(true);
 	};
 	
+	Window_Base.prototype.drawActorBuffs = function(battler, x, y) {
+		var iconHeight = Window_Base._iconHeight;
+		var iconWidth = Window_Base._iconWidth;
+		var buffs = battler.tbsBuffs();
+		var curX = x;
+		var curY = y;
+		var i;
+		for(i = 0; i < buffs.length; i++) {
+			this.drawIcon(buffs[i].iconId, curX, curY);
+			curX += iconWidth+this.iconSeparation();
+		}
+	};
+	
 	Window_Base.prototype.drawActorPartDamage = function(actor, part, x, y, label) {
 		this.changeTextColor(this.systemColor());
 		this.drawText(label, x, y, 14*2);
+		this.drawText("/", x+14*4, y, 14);
 		var brackets = "[";
 		var i;
 		for(i = 0; i < this.statusMeterPipCount(); i++) {
 			brackets += " ";
 		}
 		brackets += "]";
-		this.drawText(brackets, x+14*5, y, brackets.length*14);
+		this.drawText(brackets, x+14*7, y, brackets.length*14);
 		var health = actor.toughness()*(part==="core"?2:1) - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
 		}
-		this.drawText(health, x + 14*2, y, 14*3, 'right');
+		this.drawText(health, x + 14*2, y, 14*2, 'right');
+		this.drawText(actor.toughness()*(part==="core"?2:1), x + 14*5, y, 14*2, 'right');
 		var pips = (health / (actor.toughness()*(part==="core"?2:1))) * this.statusMeterPipCount();
 		for(i = 0; i < pips; i++) {
 			var width = 14;
 			if(pips - i > 0 && pips - i < 1) {
 				width *= pips - i;
 			}
-			this.drawText("=", x+14*(6+i), y, width);
+			this.drawText("=", x+14*(8+i), y, width);
 		}
 		this.resetTextColor();
 	};
@@ -3949,13 +3731,14 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_Base.prototype.drawActorSimplePartDamage = function(actor, part, x, y, label) {
 		this.changeTextColor(this.systemColor());
 		this.drawText(label, x, y, 14*2);
-		x += 14*4;
+		this.drawText("/", x+14*4, y, 14);
 		var health = actor.toughness()*(part==="core"?2:1) - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
 		}
-		this.drawText(health, x + 14*2, y, 14*3, 'right');
+		this.drawText(health, x + 14*2, y, 14*2, 'right');
+		this.drawText(actor.toughness()*(part==="core"?2:1), x + 14*5, y, 14*2, 'right');
 		this.resetTextColor();
 	};
 	
@@ -3972,6 +3755,101 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			this.changeTextColor(this.deathColor());
 		}
 		this.drawText(health, x + 14*3, y, 14*3, 'right');
+		this.resetTextColor();
+	};
+	
+	Window_Base.prototype.drawActorPartsDamage = function(actor, x, y) {
+		var tough = actor.toughness();
+		if(actor.getDamage("head") >= tough/2) {
+			this.changeTextColor(this.crisisColor());
+			if(actor.getDamage("head") >= tough) {
+				this.changeTextColor(this.deathColor());
+			}
+			this.drawText("He", x, y, 14*2);
+		}
+		if(actor.getDamage("torso") >= tough/2) {
+			this.changeTextColor(this.crisisColor());
+			if(actor.getDamage("torso") >= tough) {
+				this.changeTextColor(this.deathColor());
+			}
+			this.drawText("To", x+14*3, y, 14*2);
+		}
+		if(actor.getDamage("leftArm") >= tough/2) {
+			this.changeTextColor(this.crisisColor());
+			if(actor.getDamage("leftArm") >= tough) {
+				this.changeTextColor(this.deathColor());
+			}
+			this.drawText("LA", x+14*6, y, 14*2);
+		}
+		if(actor.getDamage("rightArm") >= tough/2) {
+			this.changeTextColor(this.crisisColor());
+			if(actor.getDamage("rightArm") >= tough) {
+				this.changeTextColor(this.deathColor());
+			}
+			this.drawText("RA", x+14*9, y, 14*2);
+		}
+		if(actor.getDamage("leftLeg") >= tough/2) {
+			this.changeTextColor(this.crisisColor());
+			if(actor.getDamage("leftLeg") >= tough) {
+				this.changeTextColor(this.deathColor());
+			}
+			this.drawText("LL", x+14*12, y, 14*2);
+		}
+		if(actor.getDamage("rightLeg") >= tough/2) {
+			this.changeTextColor(this.crisisColor());
+			if(actor.getDamage("rightLeg") >= tough) {
+				this.changeTextColor(this.deathColor());
+			}
+			this.drawText("RL", x+14*15, y, 14*2);
+		}
+		this.resetTextColor();
+	};
+	
+	Window_Base.prototype.drawActorStress = function(actor, x, y) {
+		this.changeTextColor(this.systemColor());
+		this.drawText("St", x, y, 14*2);
+		var brackets = "[";
+		var i;
+		for(i = 0; i < this.statusMeterPipCount(); i++) {
+			brackets += " ";
+		}
+		brackets += "]";
+		this.drawText(brackets, x+14*4, y, brackets.length*14);
+		this.changeTextColor(this.crisisColor());
+		var stress = actor.stress();
+		this.drawText(stress, x + 14*2, y, 14*2, 'right');
+		var pips = (stress / 10) * this.statusMeterPipCount();
+		for(i = 0; i < pips; i++) {
+			var width = 14;
+			if(pips - i > 0 && pips - i < 1) {
+				width *= pips - i;
+			}
+			this.drawText("=", x+14*(5+i), y, width);
+		}
+		this.resetTextColor();
+	};
+	
+	Window_Base.prototype.drawActorRoundBuffs = function(actor, x, y) {
+		this.changeTextColor(this.systemColor());
+		this.drawText("Pw", x, y, 14*2);
+		var brackets = "[";
+		var i;
+		for(i = 0; i < this.statusMeterPipCount(); i++) {
+			brackets += " ";
+		}
+		brackets += "]";
+		this.drawText(brackets, x+14*4, y, brackets.length*14);
+		this.changeTextColor(this.textColor(27));
+		var roundBuffs = actor.roundBuffs();
+		this.drawText(roundBuffs, x + 14*2, y, 14*2, 'right');
+		var pips = (roundBuffs / 10) * this.statusMeterPipCount();
+		for(i = 0; i < pips; i++) {
+			var width = 14;
+			if(pips - i > 0 && pips - i < 1) {
+				width *= pips - i;
+			}
+			this.drawText("=", x+14*(5+i), y, width);
+		}
 		this.resetTextColor();
 	};
 	

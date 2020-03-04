@@ -245,16 +245,6 @@ BattleManager.setRightActorStatusWindow = function(actorStatusWindow) {
 	this.refreshRightActorStatusWindow();
 };
 
-BattleManager.setLeftActorNameWindow = function(actorNameWindow) {
-    this._leftActorNameWindow = actorNameWindow;
-	this.refreshLeftActorNameWindow(true);
-};
-
-BattleManager.setRightActorNameWindow = function(actorNameWindow) {
-    this._rightActorNameWindow = actorNameWindow;
-	this.refreshRightActorNameWindow(true);
-};
-
 BattleManager.refreshLeftActorStatusWindow = function(forceRefresh) {
 	if(this._leftActorStatusWindow) {
 		if(this._targetsOnLeft) {
@@ -273,28 +263,6 @@ BattleManager.refreshRightActorStatusWindow = function(forceRefresh) {
 		} else {
 			this._rightActorStatusWindow.setTbsActor(this._tbsTargets[0], forceRefresh);
 			this._curWindowTarget = this._tbsTargets[0];
-		}
-	}
-};
-
-BattleManager.refreshLeftActorNameWindow = function(rightNow) {
-	if(this._leftActorNameWindow) {
-		var newActor = this._targetsOnLeft ? this._tbsTargets[0] : this._tbsActors[0];
-		if(rightNow) {
-			this._leftActorNameWindow.setTargetActor(newActor);
-		} else {
-			this._leftActorNameWindow.setTargetAndPosOnOpen(newActor);
-		}
-	}
-};
-
-BattleManager.refreshRightActorNameWindow = function(rightNow) {
-	if(this._rightActorNameWindow) {
-		var newActor = this._targetsOnLeft ? this._tbsActors[0] : this._tbsTargets[0];
-		if(rightNow) {
-			this._rightActorNameWindow.setTargetActor(newActor, true);
-		} else {
-			this._rightActorNameWindow.setTargetAndPosOnOpen(newActor, true);
 		}
 	}
 };
@@ -549,10 +517,8 @@ BattleManager.startAction = function() {
 	var that = this;
 	if(this._targetsOnLeft) {
 		this.refreshLeftActorStatusWindow();
-		this.refreshLeftActorNameWindow();
 	} else {
 		this.refreshRightActorStatusWindow();
-		this.refreshRightActorNameWindow();
 	}
 	var i;
 	for(i = 0; i < this._processedHitGroups.length; i++) {
@@ -573,16 +539,10 @@ BattleManager.updateAction = function() {
 				this._leftActorStatusWindow.close();
 				this._leftActorStatusWindow.setShouldReOpen(true);
 				this.refreshLeftActorStatusWindow();
-				this._leftActorNameWindow.close();
-				this._leftActorNameWindow.setShouldReOpen(true);
-				this.refreshLeftActorNameWindow();
 			} else {
 				this._rightActorStatusWindow.close();
 				this._rightActorStatusWindow.setShouldReOpen(true);
 				this.refreshRightActorStatusWindow();
-				this._rightActorNameWindow.close();
-				this._rightActorNameWindow.setShouldReOpen(true);
-				this.refreshRightActorNameWindow();
 			}
 			this._curSwitchTargetTime = this._switchTargetTime;
 			this._logWindow.clear();
