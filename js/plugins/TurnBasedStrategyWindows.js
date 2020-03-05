@@ -3597,18 +3597,20 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	Window_Base.prototype.drawActorSimpleStatus = function(actor, x, y, width) {
 		var lineHeight = this.lineHeight();
-		var x2 = x + 180;
 		var width2 = Math.min(200, width - 180 - this.textPadding());
 		this.drawActorNickname(actor, x, y);
 		this.changePaintOpacity(false);
-		this.drawActorClass(actor, x, y+lineHeight);
+		if(actor.tbsBuffs().length > 0) {
+			this.drawActorBuffs(actor, x, y+lineHeight);
+		} else {
+			this.drawActorClass(actor, x, y+lineHeight);
+		}
 		this.changePaintOpacity(true);
-		this.drawActorSkillXP(actor, x, y+lineHeight*2, 14*12);
+		this.drawActorSkillXP(actor, x, y+lineHeight*2, 14*11);
 		//this.drawActorIcons(actor, x, y + lineHeight * 2);
 		//this.drawActorStress(actor, x, y + lineHeight);
-		this.drawActorSimpleDamage(actor, x+14*14, y);
-		this.drawActorPartsDamage(actor, x+14*15, y+lineHeight, true);
-        //this.drawActorBuffs(actor, x+14*24+4, y + lineHeight);
+		this.drawActorSimpleDamage(actor, x+14*12, y);
+		this.drawActorPartsDamage(actor, x+14*13, y+lineHeight, true);
 	};
 	
 	Window_Base.prototype.drawActorSkillXP = function(actor, x, y, width) {
@@ -5606,12 +5608,12 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.changePaintOpacity(false);
 		this.drawActorClass(this._actor, x, y+lineHeight);
 		this.changePaintOpacity(true);
-		this.drawActorSkillXP(this._actor, x, y+lineHeight*2, 14*12);
+		this.drawActorSkillXP(this._actor, x, y+lineHeight*2, 14*11);
 		//this.drawActorIcons(this._actor, x, y + lineHeight * 2);
 		//this.drawActorStress(this._actor, x, y + lineHeight);
 		this.drawActorDamage(this._actor, 432, y);
-		this.drawActorPartsDamage(this._actor, 432+14, y+lineHeight);
-        //this.drawActorBuffs(this._actor, x+14*24+4, y + lineHeight);
+		this.drawActorPartsDamage(this._actor, 432+14, y+lineHeight, true);
+		this.drawActorBuffs(this._actor, 432+14*7, y+lineHeight);
 	};
 	
 	//BattleLog
