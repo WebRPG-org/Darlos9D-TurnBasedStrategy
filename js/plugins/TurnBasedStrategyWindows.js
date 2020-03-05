@@ -1243,7 +1243,7 @@ Window_TbsActorStatus.prototype.initialize = function(x, y) {
 //};
 
 Window_TbsActorStatus.prototype.windowWidth = function() {
-	return this.standardPadding()*2 + this.textPadding()*2 + 14*36;
+	return this.standardPadding()*2 + this.textPadding()*2 + 14*29;
 };
 
 Window_TbsActorStatus.prototype.windowHeight = function() {
@@ -1266,11 +1266,12 @@ Window_TbsActorStatus.prototype.refresh = function() {
     this.contents.clear();
     if (this._tbsActor) {
 		this.drawActorNickname(this._tbsActor.battler, this.textPadding(), 0);
-		this.drawActorBuffs(this._tbsActor.battler, this.textPadding()+14*20, 0)
+		this.drawActorBuffs(this._tbsActor.battler, this.textPadding()+14*12, 0)
         this.drawActorDamage(this._tbsActor.battler, this.textPadding(), this.lineHeight());
-        this.drawActorStress(this._tbsActor.battler, this.textPadding()+14*20, this.lineHeight());
-        this.drawActorPartsDamage(this._tbsActor.battler, this.textPadding()+14, this.lineHeight()*2);
-        this.drawActorRoundBuffs(this._tbsActor.battler, this.textPadding()+14*20, this.lineHeight()*2);
+        this.drawActorStress(this._tbsActor.battler, this.textPadding(), this.lineHeight()*2);
+        this.drawActorRoundBuffs(this._tbsActor.battler, this.textPadding()+14*12, this.lineHeight()*2);
+		
+        this.drawActorPartsDamage(this._tbsActor.battler, this.textPadding()+14*24, 0, true);
     }
 };
 
@@ -3606,6 +3607,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		//this.drawActorIcons(actor, x, y + lineHeight * 2);
 		//this.drawActorStress(actor, x, y + lineHeight);
 		this.drawActorSimpleDamage(actor, x+14*14, y);
+		this.drawActorPartsDamage(actor, x+14*15, y+lineHeight, true);
         //this.drawActorBuffs(actor, x+14*24+4, y + lineHeight);
 	};
 	
@@ -3618,12 +3620,13 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.drawText(actor.respecXP(), x, y+this.lineHeight(), width, 'right');
 	};
 	
-	Window_Base.prototype.statusMeterPipCount = function() {
-		return 10;
+	Window_Base.prototype.healthMeterPipCount = function() {
+		return 14;
 	};
-	Window_Base.prototype.statusMeterFullLength = function() {
-		return this.statusMeterPipCount() + 7;
-	}
+	
+	Window_Base.prototype.statusMeterPipCount = function() {
+		return 5;
+	};
 	
 	Window_Base.prototype.drawActorDamage = function(actor, x, y) {
 		if(actor.blankDummy()) { return; }
@@ -3679,7 +3682,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.drawText("/", x+14*4, y, 14);
 		var brackets = "[";
 		var i;
-		for(i = 0; i < this.statusMeterPipCount(); i++) {
+		for(i = 0; i < this.healthMeterPipCount(); i++) {
 			brackets += " ";
 		}
 		brackets += "]";
@@ -3691,7 +3694,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		}
 		this.drawText(health, x + 14*2, y, 14*2, 'right');
 		this.drawText(actor.toughness()*(part==="core"?2:1), x + 14*5, y, 14*2, 'right');
-		var pips = (health / (actor.toughness()*(part==="core"?2:1))) * this.statusMeterPipCount();
+		var pips = (health / (actor.toughness()*(part==="core"?2:1))) * this.healthMeterPipCount();
 		for(i = 0; i < pips; i++) {
 			var width = 14;
 			if(pips - i > 0 && pips - i < 1) {
@@ -3758,49 +3761,57 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.resetTextColor();
 	};
 	
-	Window_Base.prototype.drawActorPartsDamage = function(actor, x, y) {
+	Window_Base.prototype.drawActorPartsDamage = function(actor, x, y, multipleLines) {
+		var curX = x;
 		var tough = actor.toughness();
 		if(actor.getDamage("head") >= tough/2) {
 			this.changeTextColor(this.crisisColor());
 			if(actor.getDamage("head") >= tough) {
 				this.changeTextColor(this.deathColor());
 			}
-			this.drawText("He", x, y, 14*2);
+			this.drawText("He", curX, y, 14*2);
 		}
+		curX += 14*3;
 		if(actor.getDamage("torso") >= tough/2) {
 			this.changeTextColor(this.crisisColor());
 			if(actor.getDamage("torso") >= tough) {
 				this.changeTextColor(this.deathColor());
 			}
-			this.drawText("To", x+14*3, y, 14*2);
+			this.drawText("To", curX, y, 14*2);
 		}
+		curX += 14*3;
+		if(multipleLines) { curX = x; y += this.lineHeight(); }
 		if(actor.getDamage("leftArm") >= tough/2) {
 			this.changeTextColor(this.crisisColor());
 			if(actor.getDamage("leftArm") >= tough) {
 				this.changeTextColor(this.deathColor());
 			}
-			this.drawText("LA", x+14*6, y, 14*2);
+			this.drawText("LA", curX, y, 14*2);
 		}
+		curX += 14*3;
 		if(actor.getDamage("rightArm") >= tough/2) {
 			this.changeTextColor(this.crisisColor());
 			if(actor.getDamage("rightArm") >= tough) {
 				this.changeTextColor(this.deathColor());
 			}
-			this.drawText("RA", x+14*9, y, 14*2);
+			this.drawText("RA", curX, y, 14*2);
 		}
+		curX += 14*3;
+		if(multipleLines) { curX = x; y += this.lineHeight(); }
 		if(actor.getDamage("leftLeg") >= tough/2) {
 			this.changeTextColor(this.crisisColor());
 			if(actor.getDamage("leftLeg") >= tough) {
 				this.changeTextColor(this.deathColor());
 			}
-			this.drawText("LL", x+14*12, y, 14*2);
+			this.drawText("LL", curX, y, 14*2);
 		}
+		curX += 14*3;
 		if(actor.getDamage("rightLeg") >= tough/2) {
 			this.changeTextColor(this.crisisColor());
 			if(actor.getDamage("rightLeg") >= tough) {
 				this.changeTextColor(this.deathColor());
 			}
-			this.drawText("RL", x+14*15, y, 14*2);
+			this.drawText("RL", curX, y, 14*2);
 		}
 		this.resetTextColor();
 	};
@@ -5599,6 +5610,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		//this.drawActorIcons(this._actor, x, y + lineHeight * 2);
 		//this.drawActorStress(this._actor, x, y + lineHeight);
 		this.drawActorDamage(this._actor, 432, y);
+		this.drawActorPartsDamage(this._actor, 432+14, y+lineHeight);
         //this.drawActorBuffs(this._actor, x+14*24+4, y + lineHeight);
 	};
 	

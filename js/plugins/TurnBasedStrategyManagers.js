@@ -1184,7 +1184,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 								hitResult.head,
 								hitDamage,
 								targetHeadProt,
-								Math.ceil(target.toughness()/2),
+								target.toughness()/2,
 								dicePool,
 								cleaves,
 								true);
@@ -2242,6 +2242,8 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 	returnObj.shouldCleave = false;
 	returnObj.shouldConduct = false;
 	
+	var roundedTough = Math.floor(tough);
+	
 	var bluntPow = 0;
 	
 	if(hitDamage.cut !== undefined) {
@@ -2252,8 +2254,8 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		if(damage < power) {
 			bluntPow += Math.floor((power - damage) / 2);
 		}
-		returnObj.damage += damage > tough ? damage : tough;
-		returnObj.remainingPower.cut = Math.max(0, damage - tough);
+		returnObj.damage += damage < tough ? damage : roundedTough;
+		returnObj.remainingPower.cut = Math.max(0, damage - roundedTough);
 	}
 	
 	if(hitDamage.keen !== undefined) {
@@ -2264,8 +2266,8 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		if(damage < power) {
 			bluntPow += Math.floor((power - damage) / 4);
 		}
-		returnObj.damage += damage > tough ? damage : tough;
-		returnObj.remainingPower.keen = Math.max(0, damage - tough);
+		returnObj.damage += damage < tough ? damage : roundedTough;
+		returnObj.remainingPower.keen = Math.max(0, damage - roundedTough);
 	}
 	
 	if(hitDamage.thrust !== undefined) {
@@ -2279,8 +2281,8 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		if(damage < power) {
 			bluntPow += Math.floor((power - damage) / 4);
 		}
-		returnObj.damage += damage > tough ? damage : tough;
-		returnObj.remainingPower.thrust = Math.max(0, damage - tough);
+		returnObj.damage += damage < tough ? damage : roundedTough;
+		returnObj.remainingPower.thrust = Math.max(0, damage - roundedTough);
 		returnObj.critical = hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
 	
@@ -2293,8 +2295,8 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		if(damage < power) {
 			bluntPow += Math.floor((power - damage) / 8);
 		}
-		returnObj.damage += damage > tough ? damage : tough;
-		returnObj.remainingPower.stiletto = Math.max(0, damage - tough);
+		returnObj.damage += damage < tough ? damage : roundedTough;
+		returnObj.remainingPower.stiletto = Math.max(0, damage - roundedTough);
 		returnObj.critical = hitResult.damageBonus > 0 || hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
 	
@@ -2309,11 +2311,11 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		if(damage < power) {
 			bluntPow += power - damage;
 		}
-		returnObj.remainingPower.bullet = Math.max(0, damage - tough);
+		returnObj.remainingPower.bullet = Math.max(0, damage - roundedTough);
 		if(returnObj.remainingPower.bullet > 0) {
 			damage = Math.max(Math.floor(damage/2), Math.floor((tough / damage) * damage));
 		}
-		returnObj.damage += damage > tough ? damage : tough;
+		returnObj.damage += damage < tough ? damage : roundedTough;
 		returnObj.critical = hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
 	
@@ -2324,8 +2326,8 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 			power += Math.max(0, hitDamage.blunt + hitResult.damageBonus + hitResult.rareDamageBonus*2);
 		}
 		var damage = Math.max(0, power - partProt.armor.blunt);
-		returnObj.damage += damage > tough ? damage : tough;
-		returnObj.remainingPower.blunt = Math.max(0, damage - tough);
+		returnObj.damage += damage < tough ? damage : roundedTough;
+		returnObj.remainingPower.blunt = Math.max(0, damage - roundedTough);
 		if(damage < power) {
 			tripPow += power - damage;
 		}
@@ -2337,8 +2339,8 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 			partProt.armor.fire -
 			(hitResult.damageBonus*2 + hitResult.rareDamageBonus*2)
 		));
-		returnObj.damage += damage > tough ? damage : tough;
-		returnObj.remainingPower.fire = Math.max(0, damage - tough);
+		returnObj.damage += damage < tough ? damage : roundedTough;
+		returnObj.remainingPower.fire = Math.max(0, damage - roundedTough);
 		returnObj.critical = hitResult.damageBonus > 0 || hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
 	
@@ -2348,8 +2350,8 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 			partProt.armor.ice -
 			(hitResult.damageBonus*2 + hitResult.rareDamageBonus*2)
 		));
-		returnObj.damage += damage > tough ? damage : tough;
-		returnObj.remainingPower.ice = Math.max(0, damage - tough);
+		returnObj.damage += damage < tough ? damage : roundedTough;
+		returnObj.remainingPower.ice = Math.max(0, damage - roundedTough);
 		returnObj.critical = hitResult.damageBonus > 0 || hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
 	
@@ -2359,8 +2361,8 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 			partProt.armor.corrosion -
 			(hitResult.damageBonus*2 + hitResult.rareDamageBonus*2)
 		));
-		returnObj.damage += damage > tough ? damage : tough;
-		returnObj.remainingPower.corrosion = Math.max(0, damage - tough);
+		returnObj.damage += damage < tough ? damage : roundedTough;
+		returnObj.remainingPower.corrosion = Math.max(0, damage - roundedTough);
 		returnObj.critical = hitResult.damageBonus > 0 || hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
 	
@@ -2370,8 +2372,8 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 			partProt.armor.conducted -
 			(hitResult.damageBonus*2 + hitResult.rareDamageBonus*2)
 		));
-		returnObj.damage += damage > tough ? damage : tough;
-		returnObj.remainingPower.lightning = Math.max(0, damage - tough);
+		returnObj.damage += damage < tough ? damage : roundedTough;
+		returnObj.remainingPower.lightning = Math.max(0, damage - roundedTough);
 		returnObj.critical = hitResult.damageBonus > 0 || hitResult.rareDamageBonus > 0 ? true : returnObj.critical;
 	}
 	

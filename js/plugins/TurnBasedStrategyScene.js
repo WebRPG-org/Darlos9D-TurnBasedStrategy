@@ -981,16 +981,16 @@
 	
 	Scene_ItemBase.prototype.onActorOk = function() {
 		if (this.canUseAction()) {
-			if(this.actionEffectTargetsBodyPart()) {
-				SoundManager.playOk();
-				this._actorWindow.deactivate();
-				this._actorBodyPartWindow.show();
-				this._actorBodyPartWindow.activate();
-				this._actorBodyPartWindow.select(0);
-			} else {
+			// if(this.actionEffectTargetsBodyPart()) {
+				// SoundManager.playOk();
+				// this._actorWindow.deactivate();
+				// this._actorBodyPartWindow.show();
+				// this._actorBodyPartWindow.activate();
+				// this._actorBodyPartWindow.select(0);
+			// } else {
 				this._actorBodyPart = undefined;
 				this.useAction();
-			}
+			//}
 		} else {
 			SoundManager.playBuzzer();
 		}
