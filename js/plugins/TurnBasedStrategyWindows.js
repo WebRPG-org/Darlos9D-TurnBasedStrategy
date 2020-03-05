@@ -3935,7 +3935,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			if(!hits) { continue; }
 			var i;
 			for(i = 0; i < hits.length; i++) {
-				var lineHeight = this.lineHeight() * (actionIndex + n + i + 1 + curLineOffset);
+				var lineHeight = this.lineHeight() * (actionIndex + n + 1 + curLineOffset);
 				
 				var rangeTypeIconId = hits[i].rangeType ? this.getIconIdFor(hits[i].rangeType) : 0;
 				var rangeIsSelf = hits[i].rangeType && hits[i].rangeType === "self";
@@ -3979,7 +3979,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 							var groupText = n + "th";
 							if(n == 0) { groupText = "1st"; }
 							else if(n == 1) { groupText = "2nd"; }
-							else if(n == 3) { groupText = "3rd"; }
+							else if(n == 2) { groupText = "3rd"; }
 							this.drawText(": " + groupText, 0, lineHeight);
 						} else {
 							this.drawText(":", 0, lineHeight);
@@ -4046,11 +4046,11 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 						}
 					}
 				}
-				curLineOffset += Math.max(0, damageLineOffset-1);
+				curLineOffset += Math.max(0, damageLineOffset);
 			}
 		}
 		
-		return curLineOffset - lineOffset;
+		return Math.max(0, curLineOffset - lineOffset - 1);
 	};
 	
 	Window_Base.prototype.drawDamageForType = function(damage, drawName, nameOffset, lineHeight, lineOffset, reqLacked, iconId) {
