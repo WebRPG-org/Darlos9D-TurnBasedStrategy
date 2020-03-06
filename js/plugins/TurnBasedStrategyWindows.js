@@ -3783,55 +3783,86 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_Base.prototype.drawActorPartsDamage = function(actor, x, y, multipleLines) {
 		var curX = x;
 		var tough = actor.toughness();
-		if(actor.getDamage("head") >= tough/2) {
-			this.changeTextColor(this.crisisColor());
-			if(actor.getDamage("head") >= tough) {
-				this.changeTextColor(this.deathColor());
+		if(actor.getDamage("head") > 0) {
+			this.resetTextColor();
+			this.changePaintOpacity(false);
+			if(actor.getDamage("head") >= tough/2) {
+				this.changePaintOpacity(true);
+				this.changeTextColor(this.crisisColor());
+				if(actor.getDamage("head") >= tough) {
+					this.changeTextColor(this.deathColor());
+				}
 			}
 			this.drawText("He", curX, y, 14*2);
 		}
 		curX += 14*3;
-		if(actor.getDamage("torso") >= tough/2) {
-			this.changeTextColor(this.crisisColor());
-			if(actor.getDamage("torso") >= tough) {
-				this.changeTextColor(this.deathColor());
+		if(actor.getDamage("torso") > 0) {
+			this.resetTextColor();
+			this.changePaintOpacity(false);
+			if(actor.getDamage("torso") >= tough/2) {
+				this.changePaintOpacity(true);
+				this.changeTextColor(this.crisisColor());
+				if(actor.getDamage("torso") >= tough) {
+					this.changeTextColor(this.deathColor());
+				}
 			}
 			this.drawText("To", curX, y, 14*2);
 		}
 		curX += 14*3;
 		if(multipleLines) { curX = x; y += this.lineHeight(); }
-		if(actor.getDamage("leftArm") >= tough/2) {
-			this.changeTextColor(this.crisisColor());
-			if(actor.getDamage("leftArm") >= tough) {
-				this.changeTextColor(this.deathColor());
+		if(actor.getDamage("leftArm") > 0) {
+			this.resetTextColor();
+			this.changePaintOpacity(false);
+			if(actor.getDamage("leftArm") >= tough/2) {
+				this.changePaintOpacity(true);
+				this.changeTextColor(this.crisisColor());
+				if(actor.getDamage("leftArm") >= tough) {
+					this.changeTextColor(this.deathColor());
+				}
 			}
 			this.drawText("LA", curX, y, 14*2);
 		}
 		curX += 14*3;
-		if(actor.getDamage("rightArm") >= tough/2) {
-			this.changeTextColor(this.crisisColor());
-			if(actor.getDamage("rightArm") >= tough) {
-				this.changeTextColor(this.deathColor());
+		if(actor.getDamage("rightArm") > 0) {
+			this.resetTextColor();
+			this.changePaintOpacity(false);
+			if(actor.getDamage("rightArm") >= tough/2) {
+				this.changePaintOpacity(true);
+				this.changeTextColor(this.crisisColor());
+				if(actor.getDamage("rightArm") >= tough) {
+					this.changeTextColor(this.deathColor());
+				}
 			}
 			this.drawText("RA", curX, y, 14*2);
 		}
 		curX += 14*3;
 		if(multipleLines) { curX = x; y += this.lineHeight(); }
-		if(actor.getDamage("leftLeg") >= tough/2) {
-			this.changeTextColor(this.crisisColor());
-			if(actor.getDamage("leftLeg") >= tough) {
-				this.changeTextColor(this.deathColor());
+		if(actor.getDamage("leftLeg") > 0) {
+			this.resetTextColor();
+			this.changePaintOpacity(false);
+			if(actor.getDamage("leftLeg") >= tough/2) {
+				this.changePaintOpacity(true);
+				this.changeTextColor(this.crisisColor());
+				if(actor.getDamage("leftLeg") >= tough) {
+					this.changeTextColor(this.deathColor());
+				}
 			}
 			this.drawText("LL", curX, y, 14*2);
 		}
 		curX += 14*3;
-		if(actor.getDamage("rightLeg") >= tough/2) {
-			this.changeTextColor(this.crisisColor());
-			if(actor.getDamage("rightLeg") >= tough) {
-				this.changeTextColor(this.deathColor());
+		if(actor.getDamage("rightLeg") > 0) {
+			this.resetTextColor();
+			this.changePaintOpacity(false);
+			if(actor.getDamage("rightLeg") >= tough/2) {
+				this.changePaintOpacity(true);
+				this.changeTextColor(this.crisisColor());
+				if(actor.getDamage("rightLeg") >= tough) {
+					this.changeTextColor(this.deathColor());
+				}
 			}
 			this.drawText("RL", curX, y, 14*2);
 		}
+		this.changePaintOpacity(true);
 		this.resetTextColor();
 	};
 	
@@ -3861,7 +3892,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	Window_Base.prototype.drawActorRoundBuffs = function(actor, x, y) {
 		this.changeTextColor(this.systemColor());
-		this.drawText("Pw", x, y, 14*2);
+		this.drawText("Fo", x, y, 14*2);
 		var brackets = "[";
 		var i;
 		for(i = 0; i < this.statusMeterPipCount(); i++) {
@@ -4095,7 +4126,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_Base.prototype.drawHeal = function(heal, drawName, nameOffset, lineHeight, lineOffset, reqLacked, iconId) {
-		if(heal !== undefined) {
+		if(heal !== undefined && !isNaN(heal)) {
 			this.drawIcon(iconId, nameOffset + 116, lineHeight + this.lineHeight() * lineOffset);
 			var power = heal !== undefined ? heal : 0;
 			this.drawText(power > 0 ? (power >= 100 ? "**" : power) : "-", nameOffset + 78, lineHeight + this.lineHeight() * lineOffset, 100, 'right');
