@@ -2065,6 +2065,14 @@ Window_TbsTarget.prototype.initialize = function(x, y) {
 	this._skipDisabled = true;
 };
 
+Window_TbsTarget.prototype.cursorRight = function(wrap) {
+    this.select(this.maxItems()-1);
+};
+
+Window_TbsTarget.prototype.cursorLeft = function(wrap) {
+    this.select(this.maxItems()-1);
+};
+
 Window_TbsTarget.prototype.windowWidth = function() {
 	if(this._actors.length > 0) {
 		var longestLength = 7;
@@ -3038,6 +3046,7 @@ Window_StatusSkills.prototype.refresh = function() {
 
 Window_StatusSkills.prototype.drawParametersColumnOne = function() {
 	var rect = this.itemRect(0);
+	var iconWidth = Window_Base._iconWidth;
 	this.resetTextColor();
 	this.drawText("Ability", rect.x, rect.y, rect.width);
 	var uniqueSkills = this._actor.uniqueSkills();
@@ -3045,7 +3054,15 @@ Window_StatusSkills.prototype.drawParametersColumnOne = function() {
 	for(i = 0; i < uniqueSkills.length; i++)
 	{
 		rect = this.itemRect((i+1)*2);
-		this.drawSkillLevel(this.getDisplayNameForUniqueSkill(uniqueSkills[i]), uniqueSkills[i], rect.x, rect.y, rect.width);
+		var xOffset = 0;
+		if(uniqueSkills[i] === this._actor.defenseSkillName()) {
+			xOffset = iconWidth + this.textPadding();
+			this.drawIcon(81, rect.x, rect.y);
+		} else if(uniqueSkills[i] === this._actor.reflexSkillName()) {
+			xOffset = iconWidth + this.textPadding();
+			this.drawIcon(82, rect.x, rect.y);
+		}
+		this.drawSkillLevel(this.getDisplayNameForUniqueSkill(uniqueSkills[i]), uniqueSkills[i], rect.x + xOffset, rect.y, rect.width-xOffset);
 		this._activeIndicies.push((i+1)*2);
 	}
 };

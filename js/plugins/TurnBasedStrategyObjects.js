@@ -1901,6 +1901,10 @@
 	};
 	
 	Game_Map.prototype.switchToNextForce = function() {
+		if(this._tbsMinorAction) {
+			this._tbsMinorAction = false;
+			return;
+		}
 		var i;
 		for(i = 0; i < this._tbsOrderedForces.length; i++) {
 			if(this._tbsOrderedForces[i].forceId == this._tbsCurrentTurnForce) {
@@ -2680,6 +2684,7 @@
 				}
 			});
 		}
+		this._tbsMinorAction = this._tbsSelectedAction.minorAction;
 		
 		var enemyForceIds = [];
 		var partyAndAlliesIds = [];

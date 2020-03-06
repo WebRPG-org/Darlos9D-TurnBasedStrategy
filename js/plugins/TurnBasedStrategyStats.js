@@ -833,6 +833,14 @@
 		return this.skillPoints(skill) + this.getSkillBuff(skill);
 	};
 	
+	Game_BattlerBase.prototype.defenseSkillName = function() {
+		return "";
+	};
+	
+	Game_BattlerBase.prototype.reflexSkillName = function() {
+		return "";
+	};
+	
 	Game_BattlerBase.prototype.defenseSkill = function() {
 		return 0;
 	};
@@ -923,7 +931,7 @@
 	};
 	
 	Game_BattlerBase.prototype.stressRecovery = function() {
-		return 2;
+		return 4;
 	};
 	
 	Game_BattlerBase.prototype.baseProtection = function() {
@@ -1634,6 +1642,14 @@
 			+ this.skillPoints(skill) + this.getSkillBuff(skill);
 	};
 	
+	Game_Actor.prototype.defenseSkillName = function() {
+		return this.currentClass().tbsStats.defenseAbility;
+	};
+	
+	Game_Actor.prototype.reflexSkillName = function() {
+		return this.currentClass().tbsStats.reflexAbility;
+	};
+	
 	Game_Actor.prototype.defenseSkill = function() {
 		return this.totalSkill(this.currentClass().tbsStats.defenseAbility);
 	};
@@ -1823,6 +1839,14 @@
 	Game_Enemy.prototype.totalSkill = function(skill) {
 		return (this.enemy().tbsStats.startingSkills[skill] === undefined ? 0 : this.enemy().tbsStats.startingSkills[skill])
 			+ this.skillPoints(skill) + this.getSkillBuff(skill);
+	};
+	
+	Game_Enemy.prototype.defenseSkillName = function() {
+		return this.enemy().tbsStats.defenseAbility;
+	};
+	
+	Game_Enemy.prototype.reflexSkillName = function() {
+		return this.enemy().tbsStats.reflexAbility;
 	};
 	
 	Game_Enemy.prototype.defenseSkill = function() {
