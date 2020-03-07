@@ -576,6 +576,13 @@
 		return this._displayName == undefined ? this.nickname() : this._displayName;
 	};
 	
+	Game_BattlerBase.prototype.displayNameSuffix = function() {
+		if(this._displayName && this._displayName.length > this.nickname().length) {
+			return this._displayName[this._displayName.length-1];
+		}
+		return undefined;
+	};
+	
 	Game_BattlerBase.prototype.nickname = function() {
 		return this.name();
 	};

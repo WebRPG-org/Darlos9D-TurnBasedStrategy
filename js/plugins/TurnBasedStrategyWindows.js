@@ -31,7 +31,7 @@ Window_ConcurrentWindow.prototype.initialize = function() {
     Window_Base.prototype.initialize.call(this, 0, 0, this.windowWidth(), this.windowHeight());
 	this._curTextLength = 0;
 	this._textLength = 0;
-	this._infoLog = false;
+	this._type = "";
 	this._absolute = false;
 	this._stayOnScreen = false;
 	this._absoluteX = 0;
@@ -58,7 +58,7 @@ Window_ConcurrentWindow.prototype.windowHeight = function() {
 };
 
 Window_ConcurrentWindow.prototype.setupAndShow = function(
-	infoLog,
+	type,
 	absolute,
 	stayOnScreen,
 	x,
@@ -78,9 +78,9 @@ Window_ConcurrentWindow.prototype.setupAndShow = function(
 		this._textLength += textRow.length;
 	}, this);
 	
-	this._curTextLength = infoLog ? this._textLength : 0;
+	this._curTextLength = type !== "message" ? this._textLength : 0;
 	
-	this._infoLog = infoLog;
+	this._type = type;
 	this._soundEffect = soundEffect;
 	this._waitOn = waitOn;
 	this._duration = duration === undefined ? -1 : duration;
@@ -88,8 +88,8 @@ Window_ConcurrentWindow.prototype.setupAndShow = function(
 	this._absolute = absolute;
 	this._stayOnScreen = stayOnScreen;
 	
-	this.x = infoLog ? Math.floor(x) : Math.floor(x - this.windowWidth() / 2);
-	this.y = infoLog ? Math.floor(y) : Math.floor(y - this.windowHeight() / 2);
+	this.x = type === "infoLog" ? Math.floor(x) : Math.floor(x - this.windowWidth() / 2);
+	this.y = type === "infoLog" ? Math.floor(y) : Math.floor(y - this.windowHeight() / 2);
 	if(absolute) {
 		this._absoluteX = this.x;
 		this._absoluteY = this.y;
@@ -100,8 +100,22 @@ Window_ConcurrentWindow.prototype.setupAndShow = function(
 	this.createContents();
 	this.drawCurrentText();
 	
-	this.show();
+	this.windowskin = type === "suffix" ? ImageManager.loadSystem('BlankWindow') : ImageManager.loadSystem('Window');
+	if(type === "suffix") {
+		this.hide();
+	} else {
+		this.show();
+	}
 	this.open();
+};
+
+Window_ConcurrentWindow.prototype.reposition = function(x, y) {
+	if(this._type !== "suffix") { return; }
+	this.x = x;
+	this.y = y;
+	this._absoluteX = this.x;
+	this._absoluteY = this.y;
+	this.absoluteReposition();
 };
 
 Window_ConcurrentWindow.prototype.drawCurrentText = function() {
@@ -128,6 +142,10 @@ Window_ConcurrentWindow.prototype.absoluteReposition = function() {
 	if(!this._absolute) { return; }
 	this.x = $gameMap.mapToCanvasX(this._absoluteX);
 	this.y = $gameMap.mapToCanvasY(this._absoluteY);
+	if(this._type === "suffix") {
+		this.x -= 23;
+		this.y -= 30;
+	}
 	if(this._stayOnScreen) {
 		this.x = Math.max(0, Math.min(Graphics.boxWidth-this.windowWidth(), this.x));
 		this.y = Math.max(0, Math.min(Graphics.boxHeight-this.windowHeight(), this.y));
@@ -137,6 +155,7 @@ Window_ConcurrentWindow.prototype.absoluteReposition = function() {
 Window_ConcurrentWindow.prototype.update = function() {
     Window_Base.prototype.update.call(this);
 	this.absoluteReposition();
+	if(this._type === "suffix") { return; }
 	if(this._waitOn && this.isOpen() && this.isCloseable() && this.isTriggered()) {
 		this.close();
 	}
@@ -175,7 +194,7 @@ Window_ConcurrentWindow.prototype.isCountingDown = function() {
 };
 
 Window_ConcurrentWindow.prototype.countDown = function() {
-	if(!this.hasDrawnAllText() || this._duration < 0) { return; }
+	if(this._type === "suffix" || !this.hasDrawnAllText() || this._duration < 0) { return; }
 	this._duration--;
 	if(this._duration <= 0) {
 		this._duration = -1;
@@ -192,7 +211,11 @@ Window_ConcurrentWindow.prototype.isWaitOn = function() {
 };
 
 Window_ConcurrentWindow.prototype.isInfoLog = function() {
-	return this._infoLog;
+	return this._type === "infoLog";
+};
+
+Window_ConcurrentWindow.prototype.isSuffix = function() {
+	return this._type === "suffix";
 };
 
 Window_ConcurrentWindow.prototype.updateClose = function() {
@@ -207,7 +230,9 @@ Window_ConcurrentWindow.prototype.updateClose = function() {
 
 Window_ConcurrentWindow.prototype.hide = function() {
     this.visible = false;
-	this.close();
+	if(this._type !== "suffix") {
+		this.close();
+	}
 };
 
 //-----------------------------------------------------------------------------
@@ -1265,7 +1290,13 @@ Window_TbsActorStatus.prototype.setTbsActor = function(tbsActor, forceRefresh) {
 Window_TbsActorStatus.prototype.refresh = function() {
     this.contents.clear();
     if (this._tbsActor) {
-		this.drawActorNickname(this._tbsActor.battler, this.textPadding(), 0);
+		this.resetTextColor();
+		this.drawText(
+			this._tbsActor.battler.blankDummy() ? "NO TARGET" : this._tbsActor.battler.displayName(),
+			this.textPadding(),
+			0,
+			270
+		);
 		this.drawActorBuffs(this._tbsActor.battler, this.textPadding()+14*12, 0)
         this.drawActorDamage(this._tbsActor.battler, this.textPadding(), this.lineHeight());
         this.drawActorStress(this._tbsActor.battler, this.textPadding(), this.lineHeight()*2);
@@ -2285,6 +2316,18 @@ Window_TbsTarget.prototype.shouldActivateManualTarget = function(should) {
 
 Window_TbsTarget.prototype.open = function() {
     if (!this.isOpen()) {
+		if(!this.isOpening()) {
+			this._allies.forEach(function (actor) {
+				if(!actor.suffixWindow) { return; }
+				actor.suffixWindow.reposition(actor.chara.x, actor.chara.y);
+				actor.suffixWindow.show();
+			}, this);
+			this._enemies.forEach(function (actor) {
+				if(!actor.suffixWindow) { return; }
+				actor.suffixWindow.reposition(actor.chara.x, actor.chara.y);
+				actor.suffixWindow.show();
+			}, this);
+		}
         this._opening = true;
     }
     this._closing = false;
@@ -2297,6 +2340,16 @@ Window_TbsTarget.prototype.open = function() {
 
 Window_TbsTarget.prototype.close = function() {
     if (!this.isClosed()) {
+		if(!this.isClosing()) {
+			this._allies.forEach(function (actor) {
+				if(!actor.suffixWindow) { return; }
+				actor.suffixWindow.hide();
+			}, this);
+			this._enemies.forEach(function (actor) {
+				if(!actor.suffixWindow) { return; }
+				actor.suffixWindow.hide();
+			}, this);
+		}
         this._closing = true;
     }
     this._opening = false;
@@ -3781,6 +3834,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_Base.prototype.drawActorPartsDamage = function(actor, x, y, multipleLines) {
+		if(actor.blankDummy()) { return; }
 		var curX = x;
 		var tough = actor.toughness();
 		if(actor.getDamage("head") > 0) {
@@ -3867,6 +3921,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_Base.prototype.drawActorStress = function(actor, x, y) {
+		if(actor.blankDummy()) { return; }
 		this.changeTextColor(this.systemColor());
 		this.drawText("St", x, y, 14*2);
 		var brackets = "[";
@@ -3891,6 +3946,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_Base.prototype.drawActorRoundBuffs = function(actor, x, y) {
+		if(actor.blankDummy()) { return; }
 		this.changeTextColor(this.systemColor());
 		this.drawText("Fo", x, y, 14*2);
 		var brackets = "[";

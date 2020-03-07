@@ -588,7 +588,8 @@
 	Game_Map.prototype.addInfoLogWindow = function(text) {
 		if(!text || text.length <= 0) { return; }
 		var message = {};
-		message.infoLog = true;
+		message.type = "infoLog";
+		message.suffix = false;
 		message.absolute = false;
 		message.stayOnScreen = false;
 		message.x = 10;
@@ -603,7 +604,8 @@
 	Game_Map.prototype.addMessageWindow = function(absolute, stayOnScreen, x, y, text, soundEffect, dontWaitOn, duration, closeable) {
 		if(!text || text.length <= 0) { return; }
 		var message = {};
-		message.infoLog = false;
+		message.type = "message";
+		message.suffix = false;
 		message.absolute = absolute;
 		message.stayOnScreen = stayOnScreen;
 		message.x = x;
@@ -614,6 +616,26 @@
 		message.duration = duration;
 		message.closeable = closeable;
 		if(!dontWaitOn) { this.setWaitingOnMessageWindows(); }
+		this._pendingMessages.push(message);
+	};
+	
+	Game_Map.prototype.addSuffixWindow = function(tbsActor) {
+		if(!tbsActor) { return; }
+		var suffix = tbsActor.battler.displayNameSuffix();
+		if(!suffix) { return; }
+		var message = {};
+		message.type = "suffix";
+		message.suffix = true;
+		message.absolute = true;
+		message.stayOnScreen = false;
+		message.x = tbsActor.chara.x;
+		message.y = tbsActor.chara.y;
+		message.text = [];
+		message.text.push(suffix);
+		message.waitOn = false;
+		message.duration = -1;
+		message.closeable = false;
+		message.tbsActor = tbsActor;
 		this._pendingMessages.push(message);
 	};
 	
@@ -950,6 +972,7 @@
 					actor.battler.setDisplayName(actor.battler.nickname() + " " + pendingActor.label);
 				}
 			}
+			
 			actor.canActThisRound = !actor.battler.isDown() && !pendingActor.surprised;
 			actor.battler.setStress(0);
 			actor.battler.setRoundBuffs(0);
@@ -1589,6 +1612,11 @@
 			case "setup":
 				this._tbsCurrentTurnForce = 0;
 				this.spawnTbsCharacters();
+				this._tbsForces.forEach(function (force) {
+					force.actors.forEach(function (actor) {
+						this.addSuffixWindow(actor);
+					}, this)
+				}, this);
 				this.saveBgmAndBgs();
 				this._tileRuns = this.getTileRuns();
 				this.determineForceOrder();
@@ -1600,7 +1628,6 @@
 					this.clearTbsRangeSprites();
 				}
 				if(prevMode === "setup") {
-					this._tbsCurrentTurnForce = 0;
 					this._tbsTurnJustStarted = true;
 					this._tbsRoundJustStarted = false;
 					this._tbsMoveTiles = [];
@@ -1770,6 +1797,11 @@
 				this._tbsForces.forEach(function (tbsForce) {
 					if(tbsForce.isParty) {
 						tbsForce.actors.forEach(function (tbsActor) {
+							if(tbsActor.suffixWindow) {
+								tbsActor.suffixWindow.hide();
+								tbsActor.suffixWindow.close();
+								tbsActor.suffixWindow == undefined;
+							}
 							var battler = tbsActor.battler;
 							if(battler.getDamage("core") >= battler.toughness()*2) {
 								battler.setDamage("core", battler.toughness()*2-1);
@@ -1789,6 +1821,14 @@
 				this._tbsEnemyFadeoutTimer = this._tbsEnemyFadeoutTime;
 				break;
 			case "gameOver":
+				this._tbsForces.forEach(function (force) {
+					force.actors.forEach(function (actor) {
+						if(!actor.suffixWindow) { return; }
+						actor.suffixWindow.hide();
+						actor.suffixWindow.close();
+						actor.suffixWindow == undefined;
+					}, this)
+				}, this);
 				this._tbsMoveTiles = [];
 				this._tbsHalfMoveTiles = [];
 				this._tbsFullMoveTiles = [];
@@ -1924,6 +1964,10 @@
 	
 	Game_Map.prototype.setInActionBattleScene = function(inActionBattleScene) {
 		this._tbsInActionBattleScene = inActionBattleScene;
+	};
+	
+	Game_Map.prototype.needToRecreateWindows = function() {
+		this._needToRecreateWindows = true;
 	};
 	
 	Game_Map.prototype.updateCharacters = function() {
@@ -2128,9 +2172,7 @@
 						var stress = actor.battler.stress();
 						if(stress >= 10) {
 							chances = 4;
-						} else if (stress >= 6) {
-							chances = 3;
-						} else if (stress >= 2) {
+						} else if (stress >= 5) {
 							chances = 2;
 						}
 						while(chances) {
@@ -2641,6 +2683,13 @@
 	
 	Game_Map.prototype.updateTbsActionBattleScene = function() {
 		if(this._tbsInActionBattleScene) { return; }
+		if(this._needToRecreateWindows) {
+			this._tbsForces.forEach(function (force) {
+				force.actors.forEach(function (actor) {
+					this.addSuffixWindow(actor);
+				}, this)
+			}, this);
+		}
 		if(this._tbsCurAfterBtlScnFrames === -1) {
 			var noTargets = !this.isAnyTbsActionTargets(true);
 			this._tbsCurAfterBtlScnFrames = this._tbsAfterBtlScnFrames * (noTargets ? 2 : 1);

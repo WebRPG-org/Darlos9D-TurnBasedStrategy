@@ -37,6 +37,7 @@
 		this._tbsNextRoundWindowTime = 30*3;
 		this._infoWindows = [];
 		this._messageWindows = [];
+		this._suffixWindows = [];
 		SoundManager.loadTbsBattleStartSound();
 		SoundManager.loadWindowOpenCloseSound();
 		SoundManager.loadDeflectionSound();
@@ -124,11 +125,19 @@
 		var windowToUse;
 		var i;
 		var indexToUse = 0;
-		if(message.infoLog) {
+		if(message.type === "infoLog") {
 			windowToUse = this._infoWindows[0];
 			for(i = 0; i < this._infoWindows.length; i++) {
 				if(this._infoWindows[i].isOpen() || this._infoWindows[i].isOpening() || this._infoWindows[i].isClosing()) {
 					windowToUse = this._infoWindows[i+1];
+					indexToUse = i+1;
+				}
+			}
+		} else if(message.type === "suffix") {
+			windowToUse = this._suffixWindows[0];
+			for(i = 0; i < this._suffixWindows.length; i++) {
+				if(this._suffixWindows[i].isOpen() || this._suffixWindows[i].isOpening() || this._suffixWindows[i].isClosing()) {
+					windowToUse = this._suffixWindows[i+1];
 					indexToUse = i+1;
 				}
 			}
@@ -142,16 +151,23 @@
 			}
 		}
 		if(!windowToUse) { return; }
-		if(message.duration == undefined || message.duration < 0 || message.closeable) { $gameMap.setCloseableMessageWindowsExist(); }
+		if(
+			!message.suffix &&
+			(message.duration == undefined ||
+			message.duration < 0 ||
+			message.closeable)
+		) {
+			$gameMap.setCloseableMessageWindowsExist();
+		}
 		if(message.waitOn) { $gameMap.setWaitingOnMessageWindows(); }
 		var messageX = message.x;
 		var messageY = message.y;
-		if(message.infoLog) {
+		if(message.type === "infoLog") {
 			var messageX = -windowToUse.standardPadding()*(2/3);
 			var messageY = -windowToUse.standardPadding()*(2/3);
 		}
 		windowToUse.setupAndShow(
-			message.infoLog,
+			message.type,
 			message.absolute,
 			message.stayOnScreen,
 			messageX,
@@ -162,7 +178,10 @@
 			message.duration,
 			message.closeable
 		);
-		if(message.infoLog) {
+		if(message.type === "suffix") {
+			message.tbsActor.suffixWindow = windowToUse;
+		}
+		if(message.type === "infoLog") {
 			var j;
 			for(j = 0; j < this._infoWindows.length; j++) {
 				if(indexToUse != j && this._infoWindows[j].isInfoLog() 
@@ -507,6 +526,7 @@
 	};
 	
 	Scene_Map.prototype.createAllWindows = function() {
+		this.createSuffixWindows();
 		this.createMessageWindow();
 		this.createInfoLogWindows();
 		this.createConcurrentMessageWindows();
@@ -539,6 +559,15 @@
 		for(i = 0; i < 50; i++) {
 			var concurrentWindow = new Window_ConcurrentWindow();
 			this._messageWindows.push(concurrentWindow);
+			this.addWindow(concurrentWindow);
+		}
+	};
+	
+	Scene_Map.prototype.createSuffixWindows = function() {
+		var i;
+		for(i = 0; i < 50; i++) {
+			var concurrentWindow = new Window_ConcurrentWindow();
+			this._suffixWindows.push(concurrentWindow);
 			this.addWindow(concurrentWindow);
 		}
 	};
@@ -854,6 +883,7 @@
 				var rangedDistance = $gameMap.getRangedDistance();
 				BattleManager.setup(actors, actionInfo, targetX, targetY, targets, targetsByHit, targetPart, rangedDistance);
 				BattleManager.onEncounter();
+				$gameMap.needToRecreateWindows();
 				SceneManager.push(Scene_Battle);
 			} else {
 				$gameMap.setInActionBattleScene(false);
