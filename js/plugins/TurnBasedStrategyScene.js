@@ -547,11 +547,20 @@
 	
 	Scene_Map.prototype.createInfoLogWindows = function() {
 		var i;
+		var storedWindows = $gameMap.storedInfoWindows();
+		if(storedWindows) {
+			this._infoWindows = storedWindows;
+			for(i = 0; i < storedWindows.length; i++) {
+				this.addWindow(storedWindows[i]);
+			}
+			return;
+		}
 		for(i = 0; i < 50; i++) {
 			var concurrentWindow = new Window_ConcurrentWindow();
 			this._infoWindows.push(concurrentWindow);
 			this.addWindow(concurrentWindow);
 		}
+		$gameMap.setStoredInfoWindows(this._infoWindows);
 	};
 	
 	Scene_Map.prototype.createConcurrentMessageWindows = function() {
@@ -565,11 +574,20 @@
 	
 	Scene_Map.prototype.createSuffixWindows = function() {
 		var i;
+		var storedWindows = $gameMap.storedSuffixWindows();
+		if(storedWindows) {
+			this._suffixWindows = storedWindows;
+			for(i = 0; i < storedWindows.length; i++) {
+				this.addWindow(storedWindows[i]);
+			}
+			return;
+		}
 		for(i = 0; i < 50; i++) {
 			var concurrentWindow = new Window_ConcurrentWindow();
 			this._suffixWindows.push(concurrentWindow);
 			this.addWindow(concurrentWindow);
 		}
+		$gameMap.setStoredSuffixWindows(this._suffixWindows);
 	};
 
 	Scene_Map.prototype.createTbsActorStatusWindow = function() {
@@ -883,7 +901,6 @@
 				var rangedDistance = $gameMap.getRangedDistance();
 				BattleManager.setup(actors, actionInfo, targetX, targetY, targets, targetsByHit, targetPart, rangedDistance);
 				BattleManager.onEncounter();
-				$gameMap.needToRecreateWindows();
 				SceneManager.push(Scene_Battle);
 			} else {
 				$gameMap.setInActionBattleScene(false);

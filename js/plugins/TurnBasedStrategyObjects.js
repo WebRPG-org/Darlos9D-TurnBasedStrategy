@@ -569,6 +569,24 @@
 		this._pendingMessages = [];
 		this._closeableMessageWindowsExist = false;
 		this._waitingOnMessageWindows = false;
+		this._storedInfoWindows = undefined;
+		this._storedSuffixWindows = undefined;
+	};
+	
+	Game_Map.prototype.setStoredInfoWindows = function(windows) {
+		this._storedInfoWindows = windows;
+	};
+	
+	Game_Map.prototype.setStoredSuffixWindows = function(windows) {
+		this._storedSuffixWindows = windows;
+	};
+	
+	Game_Map.prototype.storedInfoWindows = function() {
+		return this._storedInfoWindows;
+	};
+	
+	Game_Map.prototype.storedSuffixWindows = function() {
+		return this._storedSuffixWindows;
 	};
 	
 	Game_Map.prototype.mapToCanvasX = function(x) {
@@ -1966,10 +1984,6 @@
 		this._tbsInActionBattleScene = inActionBattleScene;
 	};
 	
-	Game_Map.prototype.needToRecreateWindows = function() {
-		this._needToRecreateWindows = true;
-	};
-	
 	Game_Map.prototype.updateCharacters = function() {
 		if(this._tbsBattleMode) {
 			this._tbsForces.forEach(function (force) {
@@ -2683,13 +2697,6 @@
 	
 	Game_Map.prototype.updateTbsActionBattleScene = function() {
 		if(this._tbsInActionBattleScene) { return; }
-		if(this._needToRecreateWindows) {
-			this._tbsForces.forEach(function (force) {
-				force.actors.forEach(function (actor) {
-					this.addSuffixWindow(actor);
-				}, this)
-			}, this);
-		}
 		if(this._tbsCurAfterBtlScnFrames === -1) {
 			var noTargets = !this.isAnyTbsActionTargets(true);
 			this._tbsCurAfterBtlScnFrames = this._tbsAfterBtlScnFrames * (noTargets ? 2 : 1);
