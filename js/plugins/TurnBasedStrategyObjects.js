@@ -3153,6 +3153,7 @@
 		largestActionRange.range = 0;
 		largestActionRange.type = "air";
 		largestActionRange.ignoreUserRange = false;
+		largestActionRange.arcedTrajectory = false;
 		var battlerBaseRange = this._tbsSelectedActor.battler.baseRange();
 		battlerBaseRange = battlerBaseRange < 2 ? 2 : battlerBaseRange;
 		largestActionRange.baseRange = battlerBaseRange / 2;
@@ -3167,6 +3168,7 @@
 							largestActionRange.range = hitRange;
 							largestActionRange.type = hit.rangeType;
 							largestActionRange.ignoreUserRange = hit.ignoreUserRange;
+							largestActionRange.arcedTrajectory = hit.arcedTrajectory;
 						}
 					});
 				}
@@ -3188,7 +3190,7 @@
 	
 	Game_Map.prototype.checkActionTiles = function(x, y, cantUseHalfMove, cantUseFullMove, actionRange, actionTiles, treatAsMovedThisRound) {
 		var that = this;
-		this.getReachedActionTiles(x, y, actionRange.range, actionTiles, actionRange.type, !treatAsMovedThisRound);
+		this.getReachedActionTiles(x, y, actionRange.range, actionTiles, actionRange.type, !treatAsMovedThisRound, actionRange.arcedTrajectory);
 		if(!actionRange.ignoreUserRange) {
 			var baseRangeRadius = Math.ceil(actionRange.baseRange);
 			var curY = y-baseRangeRadius;
@@ -3201,7 +3203,7 @@
 					if(curX < 0 || curY < 0 || curX >= this.width || curY >= this.height) { continue; }
 					var distance = this.actualDistance(x, y, curX, curY);
 					if(distance > actionRange.baseRange) { continue; }
-					this.getReachedActionTiles(curX, curY, actionRange.range, actionTiles, actionRange.type, !treatAsMovedThisRound);
+					this.getReachedActionTiles(curX, curY, actionRange.range, actionTiles, actionRange.type, !treatAsMovedThisRound, actionRange.arcedTrajectory);
 				}
 			}
 		}
@@ -3226,7 +3228,7 @@
 		}
 	};
 	
-	Game_Map.prototype.getReachedActionTiles = function(x, y, radius, actionTiles, passageType, centerMoveTile) {
+	Game_Map.prototype.getReachedActionTiles = function(x, y, radius, actionTiles, passageType, centerMoveTile, arcedTrajectory) {
 		var checkRadius = Math.ceil(radius);
 		var curY = y-checkRadius;
 		for(; curY <= y+checkRadius; curY++){
@@ -3241,14 +3243,14 @@
 				tile.x = curX;
 				tile.y = curY;
 				tile.centerMovePosition = centerMoveTile;
-				if(!this.isTrajectoryObstructed(x, y, curX, curY, passageType, tile)) {
+				if(!this.isTrajectoryObstructed(x, y, curX, curY, passageType, arcedTrajectory)) {
 					actionTiles.push(tile);
 				}
 			}
 		}
 	};
 	
-	Game_Map.prototype.isTrajectoryObstructed = function(startX, startY, endX, endY, passageType) {
+	Game_Map.prototype.isTrajectoryObstructed = function(startX, startY, endX, endY, passageType, arcedTrajectory) {
 		var d = 5;
 		if(endX > startX) {
 			if(endY > startY) {
@@ -3370,8 +3372,10 @@
 					this._queuedActionLoops++;
 					var chara = this._tbsForces[i].actors[j].chara;
 					if((startX == chara.x && startY == chara.y)
-						|| (passageType !== "walk" && passageType !== "fly" && endX == chara.x && endY == chara.y)
-						|| (this._tbsForces[i].actors[j].battler.isDown())
+						|| (passageType !== "walk" && passageType !== "fly" && 
+							((endX == chara.x && endY == chara.y) || arcedTrajectory ||
+							this._tbsForces[i].actors[j].battler.isShort()))
+						|| this._tbsForces[i].actors[j].battler.isDown()
 						|| (this._tbsSelectedActor && (passageType === "walk" || passageType === "fly")
 							&& (this._tbsSelectedActor.forceId == i
 								|| this._tbsForces[i].allyForceIds.indexOf(this._tbsSelectedActor.forceId) >= 0)))

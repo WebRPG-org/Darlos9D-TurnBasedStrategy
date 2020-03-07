@@ -1184,7 +1184,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 								hitResult.head,
 								hitDamage,
 								targetHeadProt,
-								target.toughness()/2,
+								target.toughness(),
 								dicePool,
 								cleaves,
 								true);
@@ -2642,8 +2642,8 @@ BattleManager.applyActionResults = function(results, subject, target) {
 		+ results.stress.leftArm + results.stress.rightArm + results.stress.leftLeg + results.stress.rightLeg
 		+ results.stress.leftHeld + results.stress.rightHeld;
 	target.adjustStress(totalStress - results.heal.stress);
-	target.adjustDamage("mind", results.damage.mind * 2 - results.heal.mind);
-	target.adjustDamage("head", results.damage.head * 2 - results.heal.head);
+	target.adjustDamage("mind", results.damage.mind - results.heal.mind);
+	target.adjustDamage("head", results.damage.head - results.heal.head);
 	target.adjustDamage("torso", results.damage.torso - results.heal.torso);
 	target.adjustDamage("leftArm", results.damage.leftArm - results.heal.leftArm);
 	target.adjustDamage("rightArm", results.damage.rightArm - results.heal.rightArm);

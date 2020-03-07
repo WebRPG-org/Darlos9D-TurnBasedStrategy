@@ -817,6 +817,10 @@
 		}
 	};
 	
+	Game_BattlerBase.prototype.isShort = function() {
+		return false;
+	};
+	
 	Game_BattlerBase.prototype.handedness = function() {
 		return "right";
 	};
@@ -1625,6 +1629,10 @@
 		}
 	};
 	
+	Game_Actor.prototype.isShort = function() {
+		return this.actor().tbsStats.short;
+	};
+	
 	Game_Actor.prototype.handedness = function() {
 		return this.actor().tbsStats.handedness;
 	};
@@ -1822,6 +1830,10 @@
 	
 	Game_Enemy.prototype.isSpriteVisible = function() {
 		return true;
+	};
+	
+	Game_Enemy.prototype.isShort = function() {
+		return this.enemy().tbsStats.short;
 	};
 	
 	Game_Enemy.prototype.handedness = function() {
