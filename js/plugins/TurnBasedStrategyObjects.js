@@ -2219,7 +2219,7 @@
 					}
 				}
 				
-				var actionsByPriority = {};
+				var actionsByPriority = [];
 				
 				var actionInfos = this.getEnemyActionInfos();
 				var highestPriority = 0;
@@ -2261,6 +2261,7 @@
 					var actionByPriority = {};
 					actionByPriority.actionInfo = actionInfo;
 					actionByPriority.index = i;
+					actionByPriority.selfTargetFlee = aiType === "tactical" || defensePriority > 0;
 					actionsByPriority[priority].push(actionByPriority);
 				}
 				
@@ -2314,6 +2315,7 @@
 				actionWithTargets.actionInfo = actionInfo;
 				actionWithTargets.targets = targets;
 				actionWithTargets.index = actionIndex;
+				actionWithTargets.selfTargetFlee = actionWithIndex.selfTargetFlee;
 				actionsWithTargets.push(actionWithTargets);
 			}
 		}
@@ -2337,33 +2339,81 @@
 						enemies = enemies.concat(this._tbsForces[i].actors);
 					}
 				}
-				var closestEnemy = undefined;
-				var shortesetDistance = -1;
 				var chara = this._tbsSelectedActor.chara;
-				var that = this;
-				enemies.forEach(function (enemy) {
-					if(!enemy.battler.isDown()) {
-						var distance = that.actualDistance(chara.x, chara.y, enemy.chara.x, enemy.chara.y);
-						if(shortesetDistance === -1 || shortesetDistance > distance) {
-							shortesetDistance = distance;
-							closestEnemy = enemy;
+				if(actionWithTargets.selfTargetFlee) {
+					var bestCoveredTile = undefined;
+					var closestEnemyDistanceForCover = -1;
+					var bestFleeTile = undefined;
+					var closestEnemyDistanceForFlee = -1;
+					this._tbsMoveTiles.forEach(function (tile) {
+						if((tile.x == chara.x && tile.y == chara.y) || !this.getTbsActorAtPosition(tile.x, tile.y)) {
+							var threat = false;
+							var closestEnemyDistanceForTile = -1;
+							enemies.forEach(function (enemy) {
+								var distance = this.actualDistance(enemy.chara.x, enemy.chara.y, tile.x, tile.y);
+								if(closestEnemyDistanceForTile == -1 || closestEnemyDistanceForTile > distance) {
+									closestEnemyDistanceForTile = distance;
+								}
+								if(
+									!enemy.battler.isDown() &&
+									this.tbsActorInLOSOfPositionType(enemy, tile.x, tile.y) !== "none"
+								) {
+									threat = true;
+								}
+							}, this);
+							if(!threat && (
+									closestEnemyDistanceForCover == -1 ||
+									closestEnemyDistanceForCover < closestEnemyDistanceForTile
+							)) {
+								bestCoveredTile = tile;
+								closestEnemyDistanceForCover = closestEnemyDistanceForTile;
+							}
+							if(
+								closestEnemyDistanceForFlee == -1 ||
+								closestEnemyDistanceForFlee < closestEnemyDistanceForTile
+							) {
+								bestFleeTile = tile;
+								closestEnemyDistanceForFlee = closestEnemyDistanceForTile;
+							}
+						}
+					}, this);
+					if(bestCoveredTile && closestEnemyDistanceForCover >= closestEnemyDistanceForFlee / 2) {
+						if(bestCoveredTile.x != chara.x || bestCoveredTile.y != chara.y) {
+							this.setTbsActionTargetLocation(bestCoveredTile.x, bestCoveredTile.y);
+						}
+					} else if(bestFleeTile) {
+						if(bestFleeTile.x != chara.x || bestFleeTile.y != chara.y) {
+							this.setTbsActionTargetLocation(bestFleeTile.x, bestFleeTile.y);
 						}
 					}
-				});
-				if(closestEnemy) {
-					var closestTile = undefined;
-					shortesetDistance = -1;
-					this._tbsMoveTiles.forEach(function (tile) {
-						if(!that.getTbsActorAtPosition(tile.x, tile.y)) {
-							var distanceTwo = that.actualDistance(tile.x, tile.y, closestEnemy.chara.x, closestEnemy.chara.y);
-							if(shortesetDistance == -1 || shortesetDistance > distanceTwo) {
-								shortesetDistance = distanceTwo;
-								closestTile = tile;
+				} else {
+					var closestEnemy = undefined;
+					var shortesetDistance = -1;
+					var that = this;
+					enemies.forEach(function (enemy) {
+						if(!enemy.battler.isDown()) {
+							var distance = that.actualDistance(chara.x, chara.y, enemy.chara.x, enemy.chara.y);
+							if(shortesetDistance === -1 || shortesetDistance > distance) {
+								shortesetDistance = distance;
+								closestEnemy = enemy;
 							}
 						}
 					});
-					if(closestTile) {
-						this.setTbsActionTargetLocation(closestTile.x, closestTile.y);
+					if(closestEnemy) {
+						var closestTile = undefined;
+						shortesetDistance = -1;
+						this._tbsMoveTiles.forEach(function (tile) {
+							if(!that.getTbsActorAtPosition(tile.x, tile.y)) {
+								var distanceTwo = that.actualDistance(tile.x, tile.y, closestEnemy.chara.x, closestEnemy.chara.y);
+								if(shortesetDistance == -1 || shortesetDistance > distanceTwo) {
+									shortesetDistance = distanceTwo;
+									closestTile = tile;
+								}
+							}
+						});
+						if(closestTile) {
+							this.setTbsActionTargetLocation(closestTile.x, closestTile.y);
+						}
 					}
 				}
 			}
@@ -2449,7 +2499,7 @@
 			
 			var chara = this._tbsSelectedActor.chara;
 			if(chara.isMoving()) { return; }
-			if(this._tbsActionMoveDestinationX === -1 && !this.isTargetInRangeFromPosition(chara.x, chara.y)) {
+			if(this._tbsActionMoveDestinationX === -1) {
 				this.calculateMoveDestinationForAction();
 			}
 			if(this._tbsActionMoveDestinationX !== -1 && (this._tbsActionMoveDestinationX !== chara.x || this._tbsActionMoveDestinationY !== chara.y)) {
@@ -2463,14 +2513,14 @@
 		}
 	};
 	
-	Game_Map.prototype.tbsSelectedActorInLOSOfPositionType = function(x, y) {
-		if(!this._tbsSelectedActor) { return "none"; }
-		var chara = this._tbsSelectedActor.chara;
+	Game_Map.prototype.tbsActorInLOSOfPositionType = function(tbsActor, x, y) {
+		if(!tbsActor) { return "none"; }
+		var chara = tbsActor.chara;
 		if(x == chara.x && y == chara.y) { return "direct"; }
 		if(!this.isTrajectoryObstructed(chara.x, chara.y, x, y, "thrown")) {
 			return "direct";
 		}
-		var baseRange = this._tbsSelectedActor.battler.baseRange()/2;
+		var baseRange = tbsActor.battler.baseRange()/2;
 		var baseRangeRadius = Math.ceil(baseRange);
 		var curY = chara.y-baseRangeRadius;
 		for(; curY <= chara.y+baseRangeRadius; curY++){
@@ -2495,7 +2545,7 @@
 		this._tbsForces.forEach(function (force) {
 			force.actors.forEach(function (actor) {
 				if(actor.chara.x == chara.x && actor.chara.y == chara.y) { return; }
-				var losType = this.tbsSelectedActorInLOSOfPositionType(actor.chara.x, actor.chara.y);
+				var losType = this.tbsActorInLOSOfPositionType(this._tbsSelectedActor, actor.chara.x, actor.chara.y);
 				if(losType !== "none") {
 					this._tbsAoeSprites.push($gameTemp.addTbsAoeSprite(actor.chara.x, actor.chara.y, losType === "reach"));
 				}
@@ -2608,7 +2658,7 @@
 		var enemies = [];
 		var chara = this._tbsSelectedActor.chara;
 		if(chara.isMoving()) { return; }
-		if(this._tbsActionMoveDestinationX === -1 && !this.isTargetInRangeFromPosition(chara.x, chara.y)) {
+		if(this._tbsActionMoveDestinationX === -1) {
 			this.calculateMoveDestinationForAction();
 			this.setTbsCursorFocus(chara.x, chara.y);
 			return;
@@ -2665,40 +2715,36 @@
 	
 	Game_Map.prototype.calculateMoveDestinationForAction = function() {
 		if(!this._tbsSelectedActor || !this._tbsSelectedAction || this._tbsActionTargetLocationX === -1) { return; }
-		var closestX = -1;
-		var closestY = -1;
+		var furthestTile = undefined;
+		var furthestDistance = -1;
 		var chara = this._tbsSelectedActor.chara;
-		var checkedTiles = [];
-		var destinationFound = false;
 		var moveTiles = this._tbsMoveTiles;
 		if(this._tbsSelectedAction.cantUseHalfMove) {
 			moveTiles = this._tbsFullMoveTiles;
 		} else if(this._tbsSelectedAction.cantUseFullMove) {
 			moveTiles = this._tbsHalfMoveTiles;
 		}
-		while(!destinationFound) {
-			var closestDistance = -1;
-			moveTiles.forEach(function (moveTile) {
-				if(this.getExistingTbsTile(moveTile.x, moveTile.y, checkedTiles)) { return; }
-				var distance = this.actualDistance(moveTile.x, moveTile.y, chara.x, chara.y);
-				if(closestDistance < 0 || distance < closestDistance) {
-					closestDistance = distance;
-					closestX = moveTile.x;
-					closestY = moveTile.y;
+		moveTiles.forEach(function (moveTile) {
+			if(
+				(moveTile.x == chara.x && moveTile.y == chara.y ||
+				!this.getTbsActorAtPosition(moveTile.x, moveTile.y)) &&
+				this.isTargetInRangeFromPosition(moveTile.x, moveTile.y)
+			) {
+				var distance = this.actualDistance(
+					moveTile.x,
+					moveTile.y,
+					this._tbsActionTargetLocationX,
+					this._tbsActionTargetLocationY
+				);
+				if(!furthestTile || furthestDistance < distance) {
+					furthestTile = moveTile;
+					furthestDistance = distance;
 				}
-			}, this);
-			if(!this.getTbsActorAtPosition(closestX, closestY)
-				&& this.isTargetInRangeFromPosition(closestX, closestY))
-			{
-				destinationFound = true;
-			} else {
-				var invalidTile = {};
-				invalidTile.x = closestX;
-				invalidTile.y = closestY;
-				checkedTiles.push(invalidTile);
 			}
+		}, this);
+		if(furthestTile) {
+			this.setTbsActionMoveDestination(furthestTile.x, furthestTile.y);
 		}
-		this.setTbsActionMoveDestination(closestX, closestY);
 	};
 	
 	Game_Map.prototype.actualDistance = function(x1, y1, x2, y2) {
