@@ -824,6 +824,10 @@
 		}
 	};
 	
+	Game_BattlerBase.prototype.aiType = function() {
+		return "aggressive";
+	};
+	
 	Game_BattlerBase.prototype.isShort = function() {
 		return false;
 	};
@@ -1837,6 +1841,10 @@
 	
 	Game_Enemy.prototype.isSpriteVisible = function() {
 		return true;
+	};
+	
+	Game_Enemy.prototype.aiType = function() {
+		return this.enemy().tbsStats.aiType;
 	};
 	
 	Game_Enemy.prototype.isShort = function() {

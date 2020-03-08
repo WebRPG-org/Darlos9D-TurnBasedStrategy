@@ -2212,10 +2212,10 @@
 				var shouldRest = false;
 				var defensePriority = 0;
 				var stress = this._tbsSelectedActor.battler.stress();
-				if(stress > 2) {
-					var stressCompare = 1 - ((stress - 2) / 12);
+				if(stress > 0) {
+					var stressCompare = 1 - (stress / 10);
 					if(Math.random() > stressCompare) {
-						defensePriority = 3;
+						defensePriority = 4;
 					}
 				}
 				
@@ -2223,6 +2223,8 @@
 				
 				var actionInfos = this.getEnemyActionInfos();
 				var highestPriority = 0;
+				var aiType = this._tbsSelectedActor.battler.aiType();
+				if(!aiType) { aiType = "aggressive"; }
 				var i;
 				for(i = 0; i < actionInfos.length; i++) {
 					var actionInfo = actionInfos[i];
@@ -2230,10 +2232,25 @@
 					var priority = 0;
 					if(action.name === "Rest") {
 						priority = defensePriority;
-					} else if(action.name === "Unarmed Attack" || action.name === "Shove") {
+					} else if(action.name.includes("Unarmed") || action.name === "Shove") {
 						priority = 1;
 					} else {
 						priority = 2;
+						var j = 0;
+						var k = 0;
+						for(j = 0; j < action.hitGroups.length; j++) {
+							for(k = 0; k < action.hitGroups[j].hits.length; k++) {
+								var rangeType = action.hitGroups[j].hits[k].rangeType;
+								if(
+									(rangeType === "melee" && aiType === "aggressive") ||
+									(rangeType !== "melee" && aiType === "tactical")
+								) {
+									priority = 3;
+									break;
+								}
+							}
+							if(priority == 3) { break; }
+						}
 					}
 					if(priority > highestPriority) {
 						highestPriority = priority;
@@ -2303,10 +2320,10 @@
 		
 		if(actionsWithTargets.length > 0) {
 			var randomActionIndex = this.getRandomInt(actionsWithTargets.length);
-			var actionWithTarget = actionsWithTargets[randomActionIndex];
-			this.setTbsSelectedAction(actionWithTarget.actionInfo, actionWithTarget.index);
-			var randomTargetIndex = this.getRandomInt(actionWithTarget.targets.length);
-			var finalTarget = actionWithTarget.targets[randomTargetIndex];
+			var actionWithTargets = actionsWithTargets[randomActionIndex];
+			this.setTbsSelectedAction(actionWithTargets.actionInfo, actionWithTargets.index);
+			var randomTargetIndex = this.getRandomInt(actionWithTargets.targets.length);
+			var finalTarget = actionWithTargets.targets[randomTargetIndex];
 			this.setTbsActionTargetLocation(finalTarget.chara.x, finalTarget.chara.y);
 			
 			//TODO: set this to mobility for attacks designed to target mobility
@@ -2333,18 +2350,15 @@
 						}
 					}
 				});
-				if(closestEnemy && shortesetDistance < 15) {
+				if(closestEnemy) {
 					var closestTile = undefined;
 					shortesetDistance = -1;
 					this._tbsMoveTiles.forEach(function (tile) {
 						if(!that.getTbsActorAtPosition(tile.x, tile.y)) {
-							var distanceOne = that.actualDistance(chara.x, chara.y, tile.x, tile.y);
-							if(distanceOne < 1.5) {
-								var distanceTwo = that.actualDistance(tile.x, tile.y, closestEnemy.chara.x, closestEnemy.chara.y);
-								if(shortesetDistance == -1 || shortesetDistance > distanceTwo) {
-									shortesetDistance = distanceTwo;
-									closestTile = tile;
-								}
+							var distanceTwo = that.actualDistance(tile.x, tile.y, closestEnemy.chara.x, closestEnemy.chara.y);
+							if(shortesetDistance == -1 || shortesetDistance > distanceTwo) {
+								shortesetDistance = distanceTwo;
+								closestTile = tile;
 							}
 						}
 					});
