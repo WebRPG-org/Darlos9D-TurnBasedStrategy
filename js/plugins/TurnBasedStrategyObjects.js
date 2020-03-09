@@ -1034,6 +1034,7 @@
 	}
 	
 	Game_Map.prototype.rollInitiative = function(actor, force) {
+		var roundBuffs = actor.battler.roundBuffs();
 		actor.battler.setRoundBuffs(0);
 		if(actor.canActThisRound) {
 			var perception = actor.battler.totalSkill("perception");
@@ -1041,9 +1042,10 @@
 			var stress = actor.battler.stress();
 			var skillDice = perception > reflex ? perception - reflex : reflex - perception;
 			var expertDice = perception > reflex ? reflex : perception;
+			var buffDice = roundBuffs;
 			var debuffDice = stress;
-			initiativeRoll = BattleManager.rollSkillDice(skillDice, expertDice);
-			stressRoll = BattleManager.rollTestDice(0, 0, debuffDice);
+			var initiativeRoll = BattleManager.rollSkillDice(skillDice, expertDice, buffDice);
+			var stressRoll = BattleManager.rollTestDice(0, 0, debuffDice);
 			initiativeRoll.bonuses += initiativeRoll.rareBonuses * 2;
 			initiativeRoll.hits -= stressRoll.misses;
 			initiativeRoll.bonuses -= stressRoll.penalties;
@@ -2215,13 +2217,38 @@
 				if(stress > 0) {
 					var stressCompare = 1 - (stress / 10);
 					if(Math.random() > stressCompare) {
-						defensePriority = 4;
+						defensePriority = 5;
+					}
+				}
+				
+				var enemies = [];
+				var curForce = this.currentForce();
+				for(i = 0; i < this._tbsForces.length; i++) {
+					if(curForce.enemyForceIds.indexOf(i) >= 0) {
+						enemies = enemies.concat(this._tbsForces[i].actors);
+					}
+				}
+				var noThreats = true;
+				var chara = this._tbsSelectedActor.chara;
+				for(i = 0; i < enemies.length; i++) {
+					var enemy = enemies[i];
+					if(!enemy.battler.isDown() && this.tbsActorInLOSOfPositionType(enemy, chara.x, chara.y) !== "none") {
+						noThreats = false;
+						break;
+					}
+				}
+				
+				var actionInfos = this.getEnemyActionInfos();
+				if(defensePriority == 0 && !noThreats && aiType === "tactical") {
+					for(i = 0; i < actionInfos.length; i++) {
+						if(actionInfos[i].action.returnToStart) {
+							defensePriority = 3;
+						}
 					}
 				}
 				
 				var actionsByPriority = [];
 				
-				var actionInfos = this.getEnemyActionInfos();
 				var highestPriority = 0;
 				var aiType = this._tbsSelectedActor.battler.aiType();
 				if(!aiType) { aiType = "aggressive"; }
@@ -2229,6 +2256,9 @@
 				for(i = 0; i < actionInfos.length; i++) {
 					var actionInfo = actionInfos[i];
 					var action = actionInfo.action;
+					if(action.returnToStart && !noThreats) {
+						continue;
+					}
 					var priority = 0;
 					if(action.name === "Rest") {
 						priority = defensePriority;
@@ -2245,11 +2275,14 @@
 									(rangeType === "melee" && aiType === "aggressive") ||
 									(rangeType !== "melee" && aiType === "tactical")
 								) {
-									priority = 3;
+									priority = 4;
 									break;
 								}
 							}
-							if(priority == 3) { break; }
+							if(priority == 4) { break; }
+						}
+						if(action.returnToStart && noThreats) {
+							priority++;
 						}
 					}
 					if(priority > highestPriority) {
@@ -2655,10 +2688,9 @@
 			return;
 		}
 		
-		var enemies = [];
 		var chara = this._tbsSelectedActor.chara;
 		if(chara.isMoving()) { return; }
-		if(this._tbsActionMoveDestinationX === -1) {
+		if(this._tbsActionMoveDestinationX === -1 && !this.isTargetInRangeFromPosition(chara.x, chara.y)) {
 			this.calculateMoveDestinationForAction();
 			this.setTbsCursorFocus(chara.x, chara.y);
 			return;
@@ -2776,7 +2808,9 @@
 			var tbsTargetsByHit = this.getTbsActionTargetsByHit();
 			if(tbsTargets.length > 0) {
 				BattleManager.initMembers();
+				var subjectRoundBuffs = 0;
 				var that = this;
+				var nonSkippedTargets = [];
 				tbsTargets.forEach(function (tbsTarget) {
 					var index = 0;
 					var processedHitGroups = BattleManager.processHitGroups(that._tbsSelectedActionInfo.action.hitGroups);
@@ -2784,13 +2818,17 @@
 						var rangedDistance = that.getRangedDistance();
 						var results = BattleManager.combatMath(that._tbsSelectedActor.battler, that._tbsSelectedActionInfo, processedHitGroup, tbsTarget.battler, tbsTargetsByHit, index, undefined, rangedDistance);
 						if(!results.skipTarget) {
-							BattleManager.applyActionResults(results, tbsTarget.battler);
+							nonSkippedTargets.push(tbsTarget);
+							BattleManager.applyActionResults(results, that._tbsSelectedActor.battler, tbsTarget.battler);
 						}
-						tbsTarget.battler.setRoundBuffs(0);
+						subjectRoundBuffs += results.subjectRoundBuffs;
 						index++;
 					});
 				});
-				that._tbsSelectedActor.battler.setRoundBuffs(0);
+				nonSkippedTargets.forEach(function (tbsTarget) {
+					tbsTarget.battler.setRoundBuffs(0);
+				});
+				that._tbsSelectedActor.battler.setRoundBuffs(subjectRoundBuffs);
 			}
 		}
 		if(this.isAnyTbsActionTargets(false)) {

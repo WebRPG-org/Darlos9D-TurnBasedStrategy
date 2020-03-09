@@ -186,6 +186,7 @@ BattleManager.initMembers = function() {
 	this._processedHitGroups = [];
 	this._tbsTargets = [];
 	this._tbsTargetsByHit = [];
+	this._nonSkippedtargets = [];
 	this._targetsOnLeft = false;
     this._subject = null;
     this._action = null;
@@ -604,13 +605,19 @@ BattleManager.updateAction = function() {
 		this._actionTimer++;
 		if(noHitGroupsLeft && noHitMissDelaysLeft && !this._spriteset.isAnimationPlaying()) {
 			var target = this._tbsTargets[0];
-			target.battler.setRoundBuffs(0);
-			this._tbsTargets.shift();
+			this._nonSkippedtargets.push(this._tbsTargets.shift());
 			while(this._tbsTargets.length > 0 && this.shouldSkipTarget(this._processedHitGroups, this._tbsTargets[0].battler, this._tbsTargetsByHit)) {
 				this._tbsTargets.shift();
 			}
 			if(this._tbsTargets.length <= 0) {
-				this._subject.battler.setRoundBuffs(0);
+				this._nonSkippedtargets.forEach(function (tbsTarget) {
+					tbsTarget.battler.setRoundBuffs(0);
+				});
+				var subjectRoundBuffs = 0;
+				this._resultsPerGroup.forEach(function (results) {
+					subjectRoundBuffs += results.subjectRoundBuffs;
+				}, this);
+				this._subject.battler.setRoundBuffs(subjectRoundBuffs);
 				if(this._tbsActionInfo.action.stressCost !== undefined) {
 					this._subject.battler.adjustStress(this._tbsActionInfo.action.stressCost);
 					this._logWindow.showStressCost(this._subject.battler, this._tbsActionInfo.action.stressCost);
@@ -888,6 +895,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 	results.ongoingAnimationIds = [];
 	results.skipTarget = true;
 	results.subjectStress = 0;
+	results.subjectRoundBuffs = 0;
 	var hitDodged = true;
 	var hitGroup = processedHitGroup.hitGroup;
 	if(target.blankDummy()) {
@@ -1651,6 +1659,32 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					}
 					results.buffs.push(newBuff);
 				});
+			}
+			if(hit.rollInitiative) {
+				hitDodged = false;
+				results.dodged = false;
+				results.shouldPassTurn = false;
+				var stressRecovery = subject.stressRecovery();
+				var perception = subject.totalSkill("perception");
+				var reflex = subject.reflexSkill();
+				var stress = Math.max(0, subject.stress() - stressRecovery);
+				results.heal.stress += stressRecovery;
+				var roundBuffs = subject.roundBuffs();
+				var skillDice = perception > reflex ? perception - reflex : reflex - perception;
+				var expertDice = perception > reflex ? reflex : perception;
+				var buffDice = roundBuffs;
+				var debuffDice = stress;
+				var initiativeRoll = this.rollSkillDice(skillDice, expertDice, buffDice);
+				var stressRoll = this.rollTestDice(0, 0, debuffDice);
+				initiativeRoll.bonuses += initiativeRoll.rareBonuses * 2;
+				initiativeRoll.hits -= stressRoll.misses;
+				initiativeRoll.bonuses -= stressRoll.penalties;
+				if(initiativeRoll.bonuses > stress) {
+					results.subjectRoundBuffs += initiativeRoll.bonuses - stress;
+				}
+				if(initiativeRoll.bonuses > 0) {
+					results.heal.stress += initiativeRoll.bonuses;
+				}
 			}
 			if(hit.initialAnimationId !== undefined && hit.initialAnimationId > 0) {
 				results.initialAnimationIds.push(hit.initialAnimationId);
