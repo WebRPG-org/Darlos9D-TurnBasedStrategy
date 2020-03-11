@@ -1160,10 +1160,8 @@
 				var item = undefined;
 				if(actorItems[i].type === "item") {
 					item = $dataItems[actorItems[i].id];
-				} else if(actorItems[i].type === "weapon") {
-					item = $dataWeapons[actorItems[i].id];
-				} else if(actorItems[i].type === "armor") {
-					item = $dataArmors[actorItems[i].id];
+				} else {
+					continue;
 				}
 				if(item && item.tbsStats.actions && item.tbsStats.actions.length > 0)
 				{
