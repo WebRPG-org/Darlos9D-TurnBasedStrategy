@@ -973,14 +973,16 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				dicePool.mentalTest = mentalTestDice;
 				dicePool.mentalCrisis = mentalCrisisDice;
 				
+				var skillDiceReduction = hit.accuracyPenalty === undefined ? 0 : hit.accuracyPenalty;
+				
 				var testDiceReduction = hit.evasionPenalty === undefined ? 0 : hit.evasionPenalty;
 				dicePool.debuff = subjectStress + processedHitGroup.accuracyReduction + hitDamage.damageReduction + target.roundBuffs();
 				dicePool.buff = targetStress + subject.roundBuffs();
 				
-				if(hit.accuracyVariance !== undefined && rangedDistance !== undefined) {
-					var accuracyVariance = hit.accuracyVariance * rangedDistance;
-					variance = Math.random() * (accuracyVariance + 1);
-					dicePool.debuff += Math.floor(variance);
+				if(hit.accuracyDropoffDistance !== undefined && rangedDistance !== undefined) {
+					var accuracyDropoff = (rangedDistance*2) / hit.accuracyDropoffDistance;
+					variance = Math.random() * accuracyDropoff;
+					dicePool.debuff += Math.floor(accuracyDropoff);
 				}
 				
 				var parryable = false;
@@ -1013,6 +1015,14 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				
 				dicePool.skill = accSkill > abilitySkill ? accSkill - abilitySkill : abilitySkill - accSkill;
 				dicePool.expert = accSkill > abilitySkill ? abilitySkill : accSkill;
+				
+				var skillDice = dicePool.skill;
+				dicePool.skill -= Math.min(dicePool.skill, skillDiceReduction);
+				skillDiceReduction -= skillDice;
+				if(skillDiceReduction > 0) {
+					dicePool.expert -= Math.min(dicePool.expert, skillDiceReduction);
+				}
+				
 				if(dicePool.skill <= 0 && dicePool.expert <= 0 && dicePool.buff <= 0) {
 					dicePool.buff = 1;
 				}
