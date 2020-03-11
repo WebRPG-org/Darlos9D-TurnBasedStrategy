@@ -34,6 +34,8 @@
 		this._damageSpritesExist = false;
 		this._itemReceiver = undefined;
 		this._evaluatingInterpreter = undefined;
+		this._storedInfoWindows = undefined;
+		this._storedSuffixWindows = undefined;
 	};
 	
 	Game_Temp.prototype.setEvaluatingInterpreter = function(interpreter) {
@@ -252,6 +254,22 @@
 	
 	Game_Temp.prototype.getItemReceiver = function() {
 		return this._itemReceiver;
+	};
+	
+	Game_Temp.prototype.setStoredInfoWindows = function(windows) {
+		this._storedInfoWindows = windows;
+	};
+	
+	Game_Temp.prototype.setStoredSuffixWindows = function(windows) {
+		this._storedSuffixWindows = windows;
+	};
+	
+	Game_Temp.prototype.storedInfoWindows = function() {
+		return this._storedInfoWindows;
+	};
+	
+	Game_Temp.prototype.storedSuffixWindows = function() {
+		return this._storedSuffixWindows;
 	};
 	
 	//system
@@ -477,9 +495,26 @@
 		return false;
 	};
 	
-	Game_System.prototype.setSkillLevel = function(skill, level, partyPosition) {
+	Game_System.prototype.setActorSkillLevel = function(skill, level, actorId) {
+		var battler = $gameActors.actor(actorId);
+		battler.setSkillPoints(skill, level);
+	};
+	
+	Game_System.prototype.setPartyMemberSkillLevel = function(skill, level, partyPosition) {
 		var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(partyPosition));
 		battler.setSkillPoints(skill, level);
+	};
+	
+	Game_System.prototype.addActorSkillPoints = function(points, actorId) {
+		var battler = $gameActors.actor(actorId);
+		battler.adjustSkillXP(points);
+		battler.adjustRespecXP(points);
+	};
+	
+	Game_System.prototype.addPartyMemberSkillPoints = function(points, partyPosition) {
+		var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(partyPosition));
+		battler.adjustSkillXP(points);
+		battler.adjustRespecXP(points);
 	};
 	
 	//item
@@ -569,24 +604,6 @@
 		this._pendingMessages = [];
 		this._closeableMessageWindowsExist = false;
 		this._waitingOnMessageWindows = false;
-		this._storedInfoWindows = undefined;
-		this._storedSuffixWindows = undefined;
-	};
-	
-	Game_Map.prototype.setStoredInfoWindows = function(windows) {
-		this._storedInfoWindows = windows;
-	};
-	
-	Game_Map.prototype.setStoredSuffixWindows = function(windows) {
-		this._storedSuffixWindows = windows;
-	};
-	
-	Game_Map.prototype.storedInfoWindows = function() {
-		return this._storedInfoWindows;
-	};
-	
-	Game_Map.prototype.storedSuffixWindows = function() {
-		return this._storedSuffixWindows;
 	};
 	
 	Game_Map.prototype.mapToCanvasX = function(x) {
@@ -2211,13 +2228,12 @@
 				}
 				if(this._tbsQueuedActions.length > 0 || this._tbsQueuedActionsAtPositions.length > 0) { return; }
 				
-				var shouldRest = false;
 				var defensePriority = 0;
 				var stress = this._tbsSelectedActor.battler.stress();
 				if(stress > 0) {
 					var stressCompare = 1 - (stress / 10);
 					if(Math.random() > stressCompare) {
-						defensePriority = 5;
+						defensePriority = 6;
 					}
 				}
 				
@@ -2229,12 +2245,16 @@
 					}
 				}
 				var noThreats = true;
+				var closestEnemyDistance = -1;
 				var chara = this._tbsSelectedActor.chara;
 				for(i = 0; i < enemies.length; i++) {
 					var enemy = enemies[i];
-					if(!enemy.battler.isDown() && this.tbsActorInLOSOfPositionType(enemy, chara.x, chara.y) !== "none") {
+					var distance = this.actualDistance(enemy.chara.x, enemy.chara.y, chara.x, chara.y);
+					if(closestEnemyDistance == -1 || distance < closestEnemyDistance) {
+						closestEnemyDistance = distance;
+					}
+					if(noThreats && !enemy.battler.isDown() && this.tbsActorInLOSOfPositionType(enemy, chara.x, chara.y) !== "none") {
 						noThreats = false;
-						break;
 					}
 				}
 				
@@ -2242,7 +2262,8 @@
 				if(defensePriority == 0 && !noThreats && aiType === "tactical") {
 					for(i = 0; i < actionInfos.length; i++) {
 						if(actionInfos[i].action.returnToStart) {
-							defensePriority = 3;
+							defensePriority = 4;
+							break;
 						}
 					}
 				}
@@ -2294,7 +2315,19 @@
 					var actionByPriority = {};
 					actionByPriority.actionInfo = actionInfo;
 					actionByPriority.index = i;
-					actionByPriority.selfTargetFlee = aiType === "tactical" || defensePriority > 0;
+					actionByPriority.selfTargetMoveType = "advance";
+					if(
+						defensePriority >= 6 ||
+						(aiType === "tactical" &&
+						closestEnemyDistance <= (this._tbsSelectedActor.battler.moveRange() / 2) * 1.5)
+					) {
+						actionByPriority.selfTargetMoveType = "retreat";
+					} else if(
+						aiType === "tactical" &&
+						closestEnemyDistance > (this._tbsSelectedActor.battler.moveRange() / 2) * 1.5
+					) {
+						actionByPriority.selfTargetMoveType = "cover";
+					}
 					actionsByPriority[priority].push(actionByPriority);
 				}
 				
@@ -2348,7 +2381,7 @@
 				actionWithTargets.actionInfo = actionInfo;
 				actionWithTargets.targets = targets;
 				actionWithTargets.index = actionIndex;
-				actionWithTargets.selfTargetFlee = actionWithIndex.selfTargetFlee;
+				actionWithTargets.selfTargetMoveType = actionWithIndex.selfTargetMoveType;
 				actionsWithTargets.push(actionWithTargets);
 			}
 		}
@@ -2373,7 +2406,10 @@
 					}
 				}
 				var chara = this._tbsSelectedActor.chara;
-				if(actionWithTargets.selfTargetFlee) {
+				if(
+					actionWithTargets.selfTargetMoveType === "retreat" ||
+					actionWithTargets.selfTargetMoveType === "cover"
+				) {
 					var bestCoveredTile = undefined;
 					var closestEnemyDistanceForCover = -1;
 					var bestFleeTile = undefined;
@@ -2396,21 +2432,31 @@
 							}, this);
 							if(!threat && (
 									closestEnemyDistanceForCover == -1 ||
-									closestEnemyDistanceForCover < closestEnemyDistanceForTile
+									(actionWithTargets.selfTargetMoveType === "retreat" &&
+									closestEnemyDistanceForCover < closestEnemyDistanceForTile) ||
+									(actionWithTargets.selfTargetMoveType === "cover" &&
+									closestEnemyDistanceForCover > closestEnemyDistanceForTile)
 							)) {
 								bestCoveredTile = tile;
 								closestEnemyDistanceForCover = closestEnemyDistanceForTile;
 							}
 							if(
 								closestEnemyDistanceForFlee == -1 ||
-								closestEnemyDistanceForFlee < closestEnemyDistanceForTile
+								(actionWithTargets.selfTargetMoveType === "retreat" &&
+								closestEnemyDistanceForFlee < closestEnemyDistanceForTile) ||
+								(actionWithTargets.selfTargetMoveType === "cover" &&
+								closestEnemyDistanceForFlee > closestEnemyDistanceForTile)
 							) {
 								bestFleeTile = tile;
 								closestEnemyDistanceForFlee = closestEnemyDistanceForTile;
 							}
 						}
 					}, this);
-					if(bestCoveredTile && closestEnemyDistanceForCover >= closestEnemyDistanceForFlee / 2) {
+					if(
+						bestCoveredTile &&
+						(actionWithTargets.selfTargetMoveType === "cover" ||
+						closestEnemyDistanceForCover >= closestEnemyDistanceForFlee * 0.75)
+					) {
 						if(bestCoveredTile.x != chara.x || bestCoveredTile.y != chara.y) {
 							this.setTbsActionTargetLocation(bestCoveredTile.x, bestCoveredTile.y);
 						}
@@ -2419,7 +2465,7 @@
 							this.setTbsActionTargetLocation(bestFleeTile.x, bestFleeTile.y);
 						}
 					}
-				} else {
+				} else if(actionWithTargets.selfTargetMoveType === "advance") {
 					var closestEnemy = undefined;
 					var shortesetDistance = -1;
 					var that = this;

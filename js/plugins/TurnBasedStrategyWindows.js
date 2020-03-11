@@ -4241,7 +4241,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_Base.prototype.getIconIdFor = function(type) {
 		switch(type) {
 			case "solidDefense":   	return  81; break;
-			case "fluidDefense":   	return  69; break;
+			case "fluidDefense":   	return  67; break;
 			case "tripEvade":   	return  82; break;
 			case "mentalDefense":	return 302; break;
 			

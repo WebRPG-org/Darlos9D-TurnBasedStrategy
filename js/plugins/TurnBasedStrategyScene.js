@@ -547,7 +547,7 @@
 	
 	Scene_Map.prototype.createInfoLogWindows = function() {
 		var i;
-		var storedWindows = $gameMap.storedInfoWindows();
+		var storedWindows = $gameTemp.storedInfoWindows();
 		if(storedWindows) {
 			this._infoWindows = storedWindows;
 			for(i = 0; i < storedWindows.length; i++) {
@@ -560,7 +560,7 @@
 			this._infoWindows.push(concurrentWindow);
 			this.addWindow(concurrentWindow);
 		}
-		$gameMap.setStoredInfoWindows(this._infoWindows);
+		$gameTemp.setStoredInfoWindows(this._infoWindows);
 	};
 	
 	Scene_Map.prototype.createConcurrentMessageWindows = function() {
@@ -574,7 +574,7 @@
 	
 	Scene_Map.prototype.createSuffixWindows = function() {
 		var i;
-		var storedWindows = $gameMap.storedSuffixWindows();
+		var storedWindows = $gameTemp.storedSuffixWindows();
 		if(storedWindows) {
 			this._suffixWindows = storedWindows;
 			for(i = 0; i < storedWindows.length; i++) {
@@ -587,7 +587,7 @@
 			this._suffixWindows.push(concurrentWindow);
 			this.addWindow(concurrentWindow);
 		}
-		$gameMap.setStoredSuffixWindows(this._suffixWindows);
+		$gameTemp.setStoredSuffixWindows(this._suffixWindows);
 	};
 
 	Scene_Map.prototype.createTbsActorStatusWindow = function() {
