@@ -3759,14 +3759,14 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		}
 		brackets += "]";
 		this.drawText(brackets, x+14*7, y, brackets.length*14);
-		var health = actor.toughness()*(part==="core"?2:1) - actor.getDamage(part);
+		var health = actor.toughness()*(part==="core"||part==="torso"?2:1) - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
 		}
 		this.drawText(health, x + 14*2, y, 14*2, 'right');
-		this.drawText(actor.toughness()*(part==="core"?2:1), x + 14*5, y, 14*2, 'right');
-		var pips = (health / (actor.toughness()*(part==="core"?2:1))) * this.healthMeterPipCount();
+		this.drawText(actor.toughness()*(part==="core"||part==="torso"?2:1), x + 14*5, y, 14*2, 'right');
+		var pips = (health / (actor.toughness()*(part==="core"||part==="torso"?2:1))) * this.healthMeterPipCount();
 		for(i = 0; i < pips; i++) {
 			var width = 14;
 			if(pips - i > 0 && pips - i < 1) {
@@ -3785,13 +3785,13 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			x -= 14*2;
 		}
 		this.drawText("[     ]", x+14*5, y, 14*7);
-		var health = actor.toughness()*(part==="core"?2:1) - actor.getDamage(part);
+		var health = actor.toughness()*(part==="core"||part==="torso"?2:1) - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
 		}
 		this.drawText(health, x + 14*2, y, 14*3, 'right');
-		var pips = (health / (actor.toughness()*(part==="core"?2:1))) * 5;
+		var pips = (health / (actor.toughness()*(part==="core"||part==="torso"?2:1))) * 5;
 		var i;
 		for(i = 0; i < pips; i++) {
 			var width = 14;
@@ -3807,13 +3807,13 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.changeTextColor(this.systemColor());
 		this.drawText(label, x, y, 14*2);
 		this.drawText("/", x+14*4, y, 14);
-		var health = actor.toughness()*(part==="core"?2:1) - actor.getDamage(part);
+		var health = actor.toughness()*(part==="core"||part==="torso"?2:1) - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
 		}
 		this.drawText(health, x + 14*2, y, 14*2, 'right');
-		this.drawText(actor.toughness()*(part==="core"?2:1), x + 14*5, y, 14*2, 'right');
+		this.drawText(actor.toughness()*(part==="core"||part==="torso"?2:1), x + 14*5, y, 14*2, 'right');
 		this.resetTextColor();
 	};
 	
@@ -3824,7 +3824,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		} else {
 			x -= 14*2;
 		}
-		var health = actor.toughness()*(part==="core"?2:1) - actor.getDamage(part);
+		var health = actor.toughness()*(part==="core"||part==="torso"?2:1) - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
@@ -3853,10 +3853,10 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		if(actor.getDamage("torso") > 0) {
 			this.resetTextColor();
 			this.changePaintOpacity(false);
-			if(actor.getDamage("torso") >= tough/2) {
+			if(actor.getDamage("torso") >= tough) {
 				this.changePaintOpacity(true);
 				this.changeTextColor(this.crisisColor());
-				if(actor.getDamage("torso") >= tough) {
+				if(actor.getDamage("torso") >= tough*2) {
 					this.changeTextColor(this.deathColor());
 				}
 			}

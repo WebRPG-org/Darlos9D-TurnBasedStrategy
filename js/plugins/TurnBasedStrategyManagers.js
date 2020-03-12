@@ -1247,7 +1247,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 								hitResult.torso,
 								hitDamage,
 								targetTorsoProt,
-								target.toughness(),
+								target.toughness()*2,
 								dicePool,
 								cleaves,
 								false
@@ -1997,7 +1997,7 @@ BattleManager.getCompleteDamage = function(subject, actionInfo, hit) {
 			numer += subject.getDamage("head") >= tough ? 3 : (subject.getDamage("head") >= tough/2 ? 1 : 0);
 		}
 		if(actualUsedParts.indexOf("torso") >= 0) {
-			numer += subject.getDamage("torso") >= tough ? 3 : (subject.getDamage("torso") >= tough/2 ? 1 : 0);
+			numer += subject.getDamage("torso") >= tough*2 ? 3 : (subject.getDamage("torso") >= tough ? 1 : 0);
 		}
 		if(actualUsedParts.indexOf("leftArm") >= 0) {
 			numer += subject.getDamage("leftArm") >= tough ? 3 : (subject.getDamage("leftArm") >= tough/2 ? 1 : 0);

@@ -1030,7 +1030,7 @@
 	Game_Map.prototype.stressFromDamage = function(battler) {
 		var tough = battler.toughness();
 		var damageStress = battler.getDamage("head") >= tough ? 6 : (battler.getDamage("head") >= tough/2 ? 2 : 0)
-			+ battler.getDamage("torso") >= tough ? 3 : (battler.getDamage("torso") >= tough/2 ? 1 : 0);
+			+ battler.getDamage("torso") >= tough*2 ? 3 : (battler.getDamage("torso") >= tough ? 1 : 0);
 		if(battler.limbsType() === "winged" && battler.isFlying()) {
 			damageStress += battler.getDamage("leftLeg") >= tough ? 3 : (battler.getDamage("leftLeg") >= tough/2 ? 1 : 0)
 				+ battler.getDamage("rightLeg") >= tough ? 3 : (battler.getDamage("rightLeg") >= tough/2 ? 1 : 0)

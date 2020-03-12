@@ -602,7 +602,7 @@
 		this._roundBuffs = this._roundBuffs.clamp(0, 10);
 		this._damage.core = this._damage.core.clamp(0, this.toughness()*2);
 		this._damage.head = this._damage.head.clamp(0, this.toughness());
-		this._damage.torso = this._damage.torso.clamp(0, this.toughness());
+		this._damage.torso = this._damage.torso.clamp(0, this.toughness()*2);
 		this._damage.leftArm = this._damage.leftArm.clamp(0, this.toughness());
 		this._damage.rightArm = this._damage.rightArm.clamp(0, this.toughness());
 		this._damage.leftLeg = this._damage.leftLeg.clamp(0, this.toughness());
@@ -659,7 +659,7 @@
 	
 	Game_BattlerBase.prototype.setDamage = function(part, damage) {
 		if(this._damage[part] === undefined) { return; }
-		this._damage[part] = Math.min(this.toughness()*(part==="core"?2:1), Math.max(0, damage));
+		this._damage[part] = Math.min(this.toughness()*(part==="core"||part==="torso"?2:1), Math.max(0, damage));
 	};
 	
 	Game_BattlerBase.prototype.adjustDamage = function(part, change) {
@@ -898,17 +898,17 @@
 		var moveRange = this.baseMove();
 		var tough = this.toughness();
 		if(this.limbsType() === "winged" && this.isFlying()) {
-			moveRange -= this.getDamage("torso") >= tough ? 2 : (this.getDamage("torso") >= tough/2 ? 1 : 0);
+			moveRange -= this.getDamage("torso") >= tough*2 ? 2 : (this.getDamage("torso") >= tough ? 1 : 0);
 			moveRange -= this.getDamage("leftArm") >= tough ? 4 : (this.getDamage("leftArm") >= tough/2 ? 2 : 0);
 			moveRange -= this.getDamage("rightArm") >= tough ? 4 : (this.getDamage("rightArm") >= tough/2 ? 2 : 0);
 		} else if(this.limbsType() === "quadrupedal") {
-			moveRange -= this.getDamage("torso") >= tough ? 2 : (this.getDamage("torso") >= tough/2 ? 1 : 0);
+			moveRange -= this.getDamage("torso") >= tough*2 ? 2 : (this.getDamage("torso") >= tough ? 1 : 0);
 			moveRange -= this.getDamage("leftArm") >= tough ? 2 : (this.getDamage("leftArm") >= tough/2 ? 1 : 0);
 			moveRange -= this.getDamage("rightArm") >= tough ? 2 : (this.getDamage("rightArm") >= tough/2 ? 1 : 0);
 			moveRange -= this.getDamage("leftLeg") >= tough ? 2 : (this.getDamage("leftLeg") >= tough/2 ? 1 : 0);
 			moveRange -= this.getDamage("rightLeg") >= tough ? 2 : (this.getDamage("rightLeg") >= tough/2 ? 1 : 0);
 		} else {
-			moveRange -= this.getDamage("torso") >= tough ? 2 : (this.getDamage("torso") >= tough/2 ? 1 : 0);
+			moveRange -= this.getDamage("torso") >= tough*2 ? 2 : (this.getDamage("torso") >= tough ? 1 : 0);
 			moveRange -= this.getDamage("leftLeg") >= tough ? 4 : (this.getDamage("leftLeg") >= tough/2 ? 2 : 0);
 			moveRange -= this.getDamage("rightLeg") >= tough ? 4 : (this.getDamage("rightLeg") >= tough/2 ? 2 : 0);
 		}
@@ -1409,7 +1409,7 @@
 		
 		var tough = this.toughness();
 		this.adjustDamage("head", -tough);
-		this.adjustDamage("torso", -tough);
+		this.adjustDamage("torso", -tough*2);
 		this.adjustDamage("leftArm", -tough);
 		this.adjustDamage("rightArm", -tough);
 		this.adjustDamage("leftLeg", -tough);
