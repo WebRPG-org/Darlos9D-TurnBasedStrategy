@@ -73,6 +73,7 @@
 	
 	Scene_Map.prototype.updateMessageWindows = function() {
 		var needToClose = $gameMap.needToCloseCloseableMessageWindows();
+		var needToClearMessages = $gameMap.needToClearMessageWindows();
 		var waitingOn = false;
 		var closeablesRemaining = false;
 		this._infoWindows.forEach(function (curWindow) {
@@ -93,6 +94,10 @@
 		});
 		this._messageWindows.forEach(function (curWindow) {
 			if(curWindow.isClosed() || curWindow.isClosing()) {
+				return;
+			}
+			if(needToClearMessages) {
+				curWindow.close();
 				return;
 			}
 			if(curWindow.isCloseable()) {

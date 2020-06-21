@@ -18,6 +18,8 @@ Actors
 Classes
 ----------------------------------------------------
 {
+	"defenseAbility": (name of unique skill),
+	"reflexAbility": (name of unique skill),
 	"uniqueSkills": [(array of strings that are unique skill names)],
 	"startingSkills": {
 		"meleeAcc": (integer),
@@ -105,6 +107,8 @@ Enemies
 	"handedness": "left"/"right",
 	"flying": true/false,
 	"limbsType": "humanoid"/"quadrupedal"/"winged",
+	"defenseAbility": (name of unique skill),
+	"reflexAbility": (name of unique skill),
 	"uniqueSkills": [(array of strings that are unique skill names)],
 	"startingSkills": {
 		"meleeAcc": (integer),
@@ -225,11 +229,12 @@ Action
                         "evasionPenalty": (integer),
 			"ignoreUserAccuracy": true/false,
 			"accuracy": (integer),
+			"accuracyDropoffDistance": (integer),
+			"accuracyPenalty": (integer),
 			"ignoreUserStrength": true/false,
                         "abilitySkill": (skill name),
                         "evadedBy": "defense"/"reflex",
 			"multipleHits": (integer),
-			"accuracyVariance": (float),
 			"usesParts": [
 				(entries can be "head", "torso", "mind", "bestLimb", and "equippedOn")
 			],
@@ -446,7 +451,7 @@ $gameSystem.addMessageWindow(
 	closeable
 );
 
-Add a special message window to the screen, centered on the the given location, with a size based on the text. text is an array of strings, where each string in the array represents a new line in the message window. soundEffect is an object, defined below, that tells what sound effect to play every time the text advances. dontWaitOn determines whether or not the event processing will wait for the window to close before proceeding, and if true the event processing will continue after opening the window. duration, if set to zero or higher, will automatically close the window after that number of frames. Normally, if duration is not set or is less than zero, the window will be closed when the player presses ok or cancel buttons. With a valid duration, player input will no longer close the window. If you wish for the player to still be able to manually close the window even with a valid duration, set closeable to true.
+Add a special message window to the screen, centered on the the given window location, with a size based on the text. text is an array of strings, where each string in the array represents a new line in the message window. soundEffect is an object, defined below, that tells what sound effect to play every time the text advances. dontWaitOn determines whether or not the event processing will wait for the window to close before proceeding, and if true the event processing will continue after opening the window. duration, if set to zero or higher, will automatically close the window after that number of frames. Normally, if duration is not set or is less than zero, the window will be closed when the player presses ok or cancel buttons. With a valid duration, player input will no longer close the window. If you wish for the player to still be able to manually close the window even with a valid duration, set closeable to true.
 
 Multiple windows can be opened concurrently, if multiple are called upon with dontWaitOn set to true.
 
@@ -473,6 +478,11 @@ $gameSystem.addAbsoluteMessageWindow(
 Add a special message window to the screen, centered on the given map location, with a size based on the text. stayOnScreen will keep the message window at the edge of the screen, if the map location is currently offscreen. text is an array of strings, where each string in the array represents a new line in the message window. soundEffect is an object, defined above, that tells what sound effect to play every time the text advances. waitOn determines whether or not the event processing will wait for the window to close before proceeding, and if false the event processing will continue after opening the window. duration, if set to zero or higher, will automatically close the window after that number of frames. Normally, if duration is not set or is less than zero, the window will be closed when the player presses ok or cancel buttons. With a valid duration, player input will no longer close the window. If you wish for the player to still be able to manually close the window even with a valid duration, set closeable to true.
 
 Multiple windows can be opened concurrently, if multiple are called upon with dontWaitOn set to true.
+
+------------------------------------------------------
+$gameSystem.clearMessageWindows();
+
+Closes all currently open message windows, regardless of their type or settings. Useful if you want to open multiple windows and don't want to specifically coordinate when they all close, or if you just wanna make real sure everything closes at the end of a scene.
 
 ------------------------------------------------------
 $gameSystem.skillLevelCheck(

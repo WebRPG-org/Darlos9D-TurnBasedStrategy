@@ -456,6 +456,10 @@
 		$gameMap.addMessageWindow(true, stayOnScreen, x, y, text, soundEffect, dontWaitOn, duration, closeable);
 	};
 	
+	Game_System.prototype.clearMessageWindows = function() {
+		$gameMap.clearMessageWindows();
+	};
+	
 	Game_System.prototype.skillLevelCheck = function(skillName, skillLevel) {
 		var i;
 		for(i = 0; i < $gameParty.size(); i++) {
@@ -652,6 +656,16 @@
 		message.closeable = closeable;
 		if(!dontWaitOn) { this.setWaitingOnMessageWindows(); }
 		this._pendingMessages.push(message);
+	};
+	
+	Game_Map.prototype.clearMessageWindows = function() {
+		this._needToClearMessageWindows = true;
+	};
+	
+	Game_Map.prototype.needToClearMessageWindows = function() {
+		var returnValue = this._needToClearMessageWindows;
+		this._needToClearMessageWindows = false;
+		return returnValue;
 	};
 	
 	Game_Map.prototype.addSuffixWindow = function(tbsActor) {
