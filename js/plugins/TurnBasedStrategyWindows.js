@@ -1790,19 +1790,25 @@ Window_TbsAction.prototype = Object.create(Window_Selectable.prototype);
 Window_TbsAction.prototype.constructor = Window_TbsAction;
 
 Window_TbsAction.prototype.initialize = function(x, y) {
-	this._actionInfos = [];
+	this._actionInfoGroups = [];
     Window_Selectable.prototype.initialize.call(this, x, y, this.windowWidth(), this.windowHeight());
 	this._stypeId = 0;
 	this._actionTextColor = [];
+	this._previousIndex = 0;
 };
 
 Window_TbsAction.prototype.windowWidth = function() {
-	if(this._actionInfos.length > 0) {
+	if(this._actionInfoGroups.length > 0) {
 		var longestLength = 0;
-		this._actionInfos.forEach(function (actionInfo) {
-			var thisLength = actionInfo.action.name.length;
-			if(actionInfo.action.stressCost !== undefined && actionInfo.action.stressCost > 0) {
-				thisLength += 3;
+		this._actionInfoGroups.forEach(function (actionInfoGroup) {
+			var thisLength = actionInfoGroup[actionInfoGroup.length-1].actionInfo.action.name.length;
+			var i;
+			for(i = 0; i < actionInfoGroup.length; i++) {
+				var actionInfo = actionInfoGroup[i].actionInfo;
+				if(actionInfo.action.stressCost !== undefined && actionInfo.action.stressCost > 0) {
+					thisLength += 3;
+					break;
+				}
 			}
 			if(longestLength < thisLength) {
 				longestLength = thisLength;
@@ -1810,7 +1816,7 @@ Window_TbsAction.prototype.windowWidth = function() {
 		});
 		return this.standardPadding() * 2 + longestLength * 14 + Window_Base._iconWidth + this.textPadding() * 3;
 	} else {
-		return Graphics.boxWidth / 2;
+		return Graphics.boxWidth / 4;
 	}
 };
 
@@ -1820,6 +1826,32 @@ Window_TbsAction.prototype.windowHeight = function() {
 
 Window_TbsAction.prototype.numVisibleRows = function() {
 	return this.maxItems();
+};
+
+Window_TbsAction.prototype.cursorRight = function(wrap) {
+	if(this._actionLevelWindow && this._actionLevelWindow.visible) {
+		var newIndex = this._actionLevelWindow.index()+1;
+		if(newIndex >= this._actionLevelWindow.maxItems()) {
+			newIndex = 0;
+		}
+		this._actionLevelWindow.select(newIndex);
+		this.updateSelectedAction();
+		this.refresh(true);
+		SoundManager.playCursor();
+	}
+};
+
+Window_TbsAction.prototype.cursorLeft = function(wrap) {
+	if(this._actionLevelWindow && this._actionLevelWindow.visible) {
+		var newIndex = this._actionLevelWindow.index()-1;
+		if(newIndex < 0) {
+			newIndex = this._actionLevelWindow.maxItems()-1;
+		}
+		this._actionLevelWindow.select(newIndex);
+		this.updateSelectedAction();
+		this.refresh(true);
+		SoundManager.playCursor();
+	}
 };
 
 Window_TbsAction.prototype.setActionTypeWindow = function(actionTypeWindow) {
@@ -1837,6 +1869,12 @@ Window_TbsAction.prototype.setTargetWindow = function(targetWindow) {
 Window_TbsAction.prototype.setActionInfoWindow = function(actionInfoWindow) {
 	if (this._actionInfoWindow !== actionInfoWindow) {
 		this._actionInfoWindow = actionInfoWindow;
+	}
+};
+
+Window_TbsAction.prototype.setActionLevelWindow = function(actionLevelWindow) {
+	if (this._actionLevelWindow !== actionLevelWindow) {
+		this._actionLevelWindow = actionLevelWindow;
 	}
 };
 
@@ -1866,41 +1904,102 @@ Window_TbsAction.prototype.isOnlyTargetSelf = function() {
 	return allies.length === 1 && enemies.length === 0 && this._tbsActor === allies[0];
 };
 
-Window_TbsAction.prototype.update = function() {
-    Window_Selectable.prototype.update.call(this);
-	if (!$gameMap.currentForce() || !$gameMap.currentForce().isParty || !this.isOpenAndActive()) { return; }
-	if(this._actionInfos && this._actionInfos.length > 0 && this.index() >= 0 && this.index() < this._actionInfos.length) {
-		$gameMap.setTbsSelectedAction(this._actionInfos[this.index()], this.index());
-		if (this._actionInfoWindow) {
-			this._actionInfoWindow.setActionInfo(this._actionInfos[this.index()]);
-			if(this._tbsActor) {
-				this._actionInfoWindow.setActor(this._tbsActor.battler);
+Window_TbsAction.prototype.updateActionLevelWindow = function(forceRecreate) {
+	var actionInfoGroup = this._actionInfoGroups[this.index()];
+	if (this._actionLevelWindow) {
+		if(forceRecreate || this._previousIndex != this.index()) {
+			var levelColors = [];
+			var i;
+			for(i = 0; i < actionInfoGroup.length; i++) {
+				if(!this.isActionEnabled(actionInfoGroup[i].actionInfo.action)) {
+					levelColors.push("gray");
+				} else if(this._actionTextColor[actionInfoGroup[i].actionIndex] == this.deathColor()) {
+					levelColors.push("red");
+				} else if(this._actionTextColor[actionInfoGroup[i].actionIndex] == this.crisisColor()) {
+					levelColors.push("yellow");
+				} else {
+					levelColors.push("white");
+				}
 			}
+			this._actionLevelWindow.setLevels(levelColors);
+			this._actionLevelWindow.move(
+				this._actionLevelWindow.x,
+				this.y + this.index() * this.lineHeight(),
+				this._actionLevelWindow.windowWidth(),
+				this._actionLevelWindow.windowHeight()
+			);
+			this._actionLevelWindow.createContents();
+			this._actionLevelWindow.select(0);
+			this._actionLevelWindow.refresh();
+			this.refresh(true);
 		}
-		if (this._targetWindow) {
-			this._targetWindow.setActionIndex(this.index());
-			var action = this._actionInfos[this.index()].action;
-			var allies = this._targetWindow.allies();
-			var enemies = this._targetWindow.enemies();
-			if((action.intendedTarget === "ally" && allies.length > 0)
-				|| (action.intendedTarget === "enemy" && enemies.length === 0)) {
-				this._targetWindow.showAllies();
-			} else {
-				this._targetWindow.showEnemies();
-			}
+		if(actionInfoGroup.length > 1) {
+			this._actionLevelWindow.show();
+			this._actionLevelWindow.move(
+				this._actionLevelWindow.x,
+				this.y + this.index() * this.lineHeight(),
+				this._actionLevelWindow.windowWidth(),
+				this._actionLevelWindow.windowHeight()
+			);
+			this._actionLevelWindow.createContents();
+			this._actionLevelWindow.refresh();
+		} else {
+			this._actionLevelWindow.hide();
 		}
 	}
 };
 
+Window_TbsAction.prototype.updateSelectedAction = function() {
+	var actionInfoGroup = this._actionInfoGroups[this.index()];
+	var indexInGroup = Math.max(0, this._actionLevelWindow && actionInfoGroup.length > 1 ? this._actionLevelWindow.index() : 0);
+	var actionInfo = actionInfoGroup[indexInGroup].actionInfo;
+	var actionIndex = actionInfoGroup[indexInGroup].actionIndex;
+	$gameMap.setTbsSelectedAction(actionInfo, actionIndex);
+	if (this._actionInfoWindow) {
+		this._actionInfoWindow.setActionInfo(actionInfo);
+		if(this._tbsActor) {
+			this._actionInfoWindow.setActor(this._tbsActor.battler);
+		}
+	}
+	if (this._targetWindow) {
+		this._targetWindow.setActionIndex(this.index());
+		var action = actionInfo.action;
+		var allies = this._targetWindow.allies();
+		var enemies = this._targetWindow.enemies();
+		if((action.intendedTarget === "ally" && allies.length > 0)
+			|| (action.intendedTarget === "enemy" && enemies.length === 0)) {
+			this._targetWindow.showAllies();
+		} else {
+			this._targetWindow.showEnemies();
+		}
+	}
+};
+
+Window_TbsAction.prototype.update = function() {
+    Window_Selectable.prototype.update.call(this);
+	if (!$gameMap.currentForce() || !$gameMap.currentForce().isParty || !this.isOpenAndActive()) {
+		this._previousIndex = this.index();
+		if(this._actionLevelWindow) {
+			this._actionLevelWindow.hide();
+		}
+		return;
+	}
+	if(this._actionInfoGroups && this._actionInfoGroups.length > 0 && this.index() >= 0 && this.index() < this._actionInfoGroups.length) {
+		this.updateActionLevelWindow();
+		this.updateSelectedAction();
+	}
+	this._previousIndex = this.index();
+};
+
 Window_TbsAction.prototype.makeItemList = function() {
-	this._actionInfos = [];
+	this._actionInfoGroups = [];
 	this._actionTextColor = [];
 	if (this._tbsActor) {
-		this._actionInfos = this._tbsActor.isParty ? $gameMap.getPartyActionInfos() : $gameMap.getEnemyActionInfos();
+		var actionInfos = this._tbsActor.isParty ? $gameMap.getPartyActionInfos() : $gameMap.getEnemyActionInfos();
 		
 		var i;
-		for(i = 0; i < this._actionInfos.length; i++) {
-			var action = this._actionInfos[i].action;
+		for(i = 0; i < actionInfos.length; i++) {
+			var action = actionInfos[i].action;
 			var allyAndEnemyTargets = $gameMap.getCurrentActorAlliesAndEnemiesInRange(i);
 			var allyTargets = allyAndEnemyTargets.allies;
 			var enemyTargets = allyAndEnemyTargets.enemies.filter(function (enemy) { return !enemy.battler.isDown(); });
@@ -1915,42 +2014,93 @@ Window_TbsAction.prototype.makeItemList = function() {
 			} else {
 				this._actionTextColor[i] = this.normalColor();
 			}
+			
+			if(action.actionGroupName === undefined) {
+				var actionInfoGroup = [];
+				var actionInfoGroupEntry = {};
+				actionInfoGroupEntry.actionInfo = actionInfos[i];
+				actionInfoGroupEntry.actionIndex = i;
+				actionInfoGroup.push(actionInfoGroupEntry);
+				this._actionInfoGroups[this._actionInfoGroups.length] = actionInfoGroup;
+			} else if(action.actionGroupLevel == 1) {
+				var actionInfoGroup = [];
+				var actionInfoGroupEntry = {};
+				actionInfoGroupEntry.actionInfo = actionInfos[i];
+				actionInfoGroupEntry.actionIndex = i;
+				actionInfoGroup.push(actionInfoGroupEntry);
+				var j;
+				for(j = 0; j < actionInfos.length; j++) {
+					var innerAction = actionInfos[j].action;
+					if(innerAction.actionGroupName === action.actionGroupName && innerAction.actionGroupLevel > 1) {
+						var innerActionInfoGroupEntry = {};
+						innerActionInfoGroupEntry.actionInfo = actionInfos[j];
+						innerActionInfoGroupEntry.actionIndex = i;
+						actionInfoGroup.push(innerActionInfoGroupEntry);
+					}
+				}
+				actionInfoGroup.sort(function(a, b) {
+					return b.actionInfo.action.actionGroupLevel - a.actionInfo.action.actionGroupLevel;
+				});
+				this._actionInfoGroups[this._actionInfoGroups.length] = actionInfoGroup;
+			}
 		};
+	}
+	
+	if (this._actionLevelWindow) {
+		this._actionLevelWindow.move(
+			this.x + this.windowWidth() - this.standardPadding()*(2/3),
+			this._actionLevelWindow.y,
+			this._actionLevelWindow.windowWidth(),
+			this._actionLevelWindow.windowHeight()
+		);
+		this._actionLevelWindow.createContents();
+		this._actionLevelWindow.refresh();
 	}
 	
 	if(this.index() < 0) {
 		this.select(0);
 	}
-	if(this.index() >= this._actionInfos.length) {
-		this.select(Math.max(0, this._actionInfos.length - 1));
+	if(this.index() >= this._actionInfoGroups.length) {
+		this.select(Math.max(0, this._actionInfoGroups.length - 1));
 	}
 };
 
 Window_TbsAction.prototype.maxItems = function() {
-	return this._actionInfos ? this._actionInfos.length : 1;
+	return this._actionInfoGroups ? this._actionInfoGroups.length : 1;
 };
 
 Window_TbsAction.prototype.drawItem = function(index) {
-    var actionInfo = this._actionInfos[index];
-	if (actionInfo && actionInfo.action) {
-		var action = actionInfo.action;
+    var actionInfoGroup = this._actionInfoGroups[index];
+	if (actionInfoGroup) {
+		var levelIndex = Math.max(0, this._actionLevelWindow && index == this.index() ? this._actionLevelWindow.index() : 0);
+		var action = actionInfoGroup[levelIndex].actionInfo.action;
+		var lowestAction = actionInfoGroup[actionInfoGroup.length-1].actionInfo.action;
+		var highestEnabledAction = lowestAction;
+		var i;
+		for(i = 0; i < actionInfoGroup.length; i++) {
+			if(this.isActionEnabled(actionInfoGroup[i].actionInfo.action)) {
+				highestEnabledAction = actionInfoGroup[i].actionInfo.action;
+				break;
+			}
+		}
 		var costWidth = this.costWidth();
 		
 		var iconBoxWidth = Window_Base._iconWidth;
 		this.resetTextColor();
 		
-		var iconIndex = this.iconIndexForAction(action);
-		var enabled = this.isEnabled(action);
+		var iconIndex = index == this.index() ? this.iconIndexForAction(action) : this.iconIndexForAction(highestEnabledAction);
+		var enabled = index == this.index() ? this.isActionEnabled(action) : this.isActionGroupEnabled(actionInfoGroup);
 		this.resetTextColor();
 		this.changePaintOpacity(enabled);
 		if(enabled) {
-			this.changeTextColor(this._actionTextColor[index]);
+			this.changeTextColor(this._actionTextColor[actionInfoGroup[levelIndex].actionIndex]);
 		}
 		this.drawIcon(iconIndex, this.textPadding(), this.lineHeight() * index + 2);
-		this.drawText(action.name, this.textPadding() * 2 + iconBoxWidth, this.lineHeight() * index);
-		if(action.stressCost !== undefined && action.stressCost > 0) {
+		this.drawText(lowestAction.name, this.textPadding() * 2 + iconBoxWidth, this.lineHeight() * index);
+		var stressCost = index == this.index() ? action.stressCost : highestEnabledAction.stressCost;
+		if(stressCost !== undefined && stressCost > 0) {
 			this.changeTextColor(this.crisisColor());
-			this.drawText(action.stressCost, this.textPadding(), this.lineHeight() * index,
+			this.drawText(stressCost, this.textPadding(), this.lineHeight() * index,
 				this.windowWidth() - this.standardPadding()*2 - this.textPadding()*2, "right");
 		}
 		this.resetTextColor();
@@ -1962,8 +2112,8 @@ Window_TbsAction.prototype.selectFirstEnabledItem = function() {
 	var selected = false;
 	var i;
 	for(i = 0; i < this.maxItems(); i++) {
-		var action = this._actionInfos[this.index()].action;
-		if(this.isEnabled(action) && this._actionTextColor[i] === this.normalColor()) {
+		var actionInfoGroup = this._actionInfoGroups[this.index()];
+		if(this.isActionGroupEnabled(actionInfoGroup) && this._actionTextColor[i] === this.normalColor()) {
 			this.select(i);
 			selected = true;
 			break;
@@ -1978,7 +2128,7 @@ Window_TbsAction.prototype.costWidth = function() {
     return this.textWidth('000');
 };
 
-Window_TbsAction.prototype.isEnabled = function(action) {
+Window_TbsAction.prototype.isActionEnabled = function(action) {
 	if(this._tbsActor && action) {
 		return (!action.cantUseHalfMove || $gameMap.tbsCurrentPositionIsFullMove())
 			&& (!action.cantUseFullMove || $gameMap.tbsCurrentPositionIsHalfMove());
@@ -1986,9 +2136,19 @@ Window_TbsAction.prototype.isEnabled = function(action) {
 	return false;
 };
 
+Window_TbsAction.prototype.isActionGroupEnabled = function(actionGroup) {
+	var i;
+	for(i = 0; i < actionGroup.length; i++) {
+		if(this.isActionEnabled(actionGroup[i].actionInfo.action)) {
+			return true;
+		}
+	}
+	return false;
+};
+
 Window_TbsAction.prototype.isCurrentItemEnabled = function() {
-	if(!this._actionInfos[this.index()]) { return false; }
-	return this.isEnabled(this._actionInfos[this.index()].action);
+	if(!this._actionInfoGroups[this.index()]) { return false; }
+	return this.isActionGroupEnabled(this._actionInfoGroups[this.index()]);
 };
 
 Window_TbsAction.prototype.shouldOpenActionTypeWindow = function(should) {
@@ -2012,7 +2172,10 @@ Window_TbsAction.prototype.open = function() {
 		this._actionInfoWindow.show();
 		this._actionInfoWindow.open();
 	}
-	this.update();
+	if(this._actionLevelWindow) {
+		this._actionLevelWindow.select(0);
+	}
+	this.updateActionLevelWindow(true);
 };
 
 Window_TbsAction.prototype.close = function() {
@@ -2071,7 +2234,83 @@ Window_TbsAction.prototype.selectLast = function() {
 };
 
 Window_TbsAction.prototype.actionInfo = function() {
-	return this._actionInfos && this.index() >= 0 ? this._actionInfos[this.index()] : null;
+	return
+		this._actionInfoGroups && this.index() >= 0 ?
+		this._actionInfoGroups[this.index()][this._actionInfoGroups[this.index()].length > 1 ? this._actionLevelWindow.index() : 0].actionInfo :
+		null;
+};
+
+//-----------------------------------------------------------------------------
+// Window_TbsActionLevel
+//
+// The window for selecting the level of an action with multiple power levels
+
+function Window_TbsActionLevel() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_TbsActionLevel.prototype = Object.create(Window_Selectable.prototype);
+Window_TbsActionLevel.prototype.constructor = Window_TbsAction;
+
+Window_TbsActionLevel.prototype.initialize = function() {
+	this._levelColors = [];
+    Window_Selectable.prototype.initialize.call(this, 0, 0, this.windowWidth(), this.windowHeight());
+};
+
+Window_TbsActionLevel.prototype.windowWidth = function() {
+	var levelCount = this._levelColors.length;
+	var levelString = levelCount+"";
+	return this.standardPadding()*2 + this.spacing()*(levelCount-1) + (levelString.length*14+this.textPadding()*2)*levelCount;
+};
+
+Window_TbsActionLevel.prototype.windowHeight = function() {
+	return this.fittingHeight(this.numVisibleRows());
+};
+
+Window_TbsActionLevel.prototype.numVisibleRows = function() {
+    return 1;
+};
+
+Window_TbsActionLevel.prototype.maxCols = function() {
+    return Math.max(1, this._levelColors.length);
+};
+
+Window_TbsActionLevel.prototype.maxItems = function() {
+	return this.maxCols();
+};
+
+Window_TbsActionLevel.prototype.itemTextAlign = function() {
+    return 'center';
+};
+
+Window_TbsActionLevel.prototype.setLevels = function(levels) {
+	this._levelColors = levels;
+	this.move(this.x, this.y, this.windowWidth(), this.windowHeight());
+	this.createContents();
+	this.refresh();
+};
+
+Window_TbsActionLevel.prototype.drawItem = function(index) {
+    this.resetTextColor();
+	this.changePaintOpacity(true);
+	if(this._levelColors[index] === 'yellow') {
+		this.changeTextColor(this.crisisColor());
+	} else if(this._levelColors[index] === 'red') {
+		this.changeTextColor(this.deathColor());
+	} else if(this._levelColors[index] === 'gray') {
+		this.changePaintOpacity(false);
+	}
+	var levelCount = this._levelColors.length;
+	var levelString = levelCount+"";
+    this.drawText(
+		(levelCount-index)+"",
+		this.textPadding()+(levelString.length*14+this.textPadding()*2+this.spacing())*index,
+		0,
+		levelString.length*14,
+		this.itemTextAlign()
+	);
+    this.resetTextColor();
+	this.changePaintOpacity(true);
 };
 
 //-----------------------------------------------------------------------------

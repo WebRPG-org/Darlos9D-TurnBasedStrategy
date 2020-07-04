@@ -540,6 +540,7 @@
 		this.createTbsActorWindow();
 		this.createTbsActionTypeWindow();
 		this.createTbsActionInfoWindow();
+		this.createTbsActionLevelWindow();
 		this.createTbsActionWindow();
 		this.createTbsTargetWindow();
 		this.createTbsTargetNameWindow();
@@ -637,6 +638,12 @@
 		this.addWindow(this._tbsActionInfoWindow);
 		this._tbsActionInfoWindow.hide();
 	};
+	
+	Scene_Map.prototype.createTbsActionLevelWindow = function() {
+		this._tbsActionLevelWindow = new Window_TbsActionLevel();
+		this.addWindow(this._tbsActionLevelWindow);
+		this._tbsActionLevelWindow.hide();
+	};
 
 	Scene_Map.prototype.createTbsActionWindow = function() {
 		this._tbsActionWindow = new Window_TbsAction(-Window_TbsActorStatus.prototype.standardPadding()*(2/3),
@@ -650,6 +657,7 @@
 		this._tbsActionTypeWindow.setActionWindow(this._tbsActionWindow);
 		this._tbsActionWindow.setActionTypeWindow(this._tbsActionTypeWindow);
 		this._tbsActionWindow.setActionInfoWindow(this._tbsActionInfoWindow);
+		this._tbsActionWindow.setActionLevelWindow(this._tbsActionLevelWindow);
 	};
 
 	Scene_Map.prototype.createTbsTargetWindow = function() {

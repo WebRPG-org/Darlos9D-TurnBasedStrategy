@@ -193,6 +193,8 @@ Action
 	"menuIcon": (integer),
 	"attackAndMove": true/false,
 	"skillRequirements": [(see "Skill Requirement" section)], (THIS IS AN ARRAY OF MORE THAN ONE SKILL REQUIREMENT!!!)
+	"actionGroupName": (string),
+	"actionGroupLevel": (integer),
 	"hitGroups": [{
 		"multiple": (integer),
 		"multipleDelay": (integer),
