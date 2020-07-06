@@ -261,20 +261,19 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 			this._battler.addCurrentlyOngoingAnim(currentlyOngoingAnim);
 		}
 		var ongoingAnimations = this._battler.ongoingAnimationsToReplay();
-		var that = this;
 		ongoingAnimations.forEach(function (anim) {
 			var data = anim.data;
 			var animation = $dataAnimations[data.animationId];
 			var mirror = data.mirror;
 			var delay = animation.position === 3 ? 0 : data.delay;
-			var sprite = that.startOngoingAnimation(animation, mirror, delay);
-			for (var i = 0; i < that._ongoingAnimationSprites.length; i++) {
-				var sprite = that._ongoingAnimationSprites[i];
-				sprite.visible = that._battler.isSpriteVisible();
+			var sprite = this.startOngoingAnimation(animation, mirror, delay);
+			for (var i = 0; i < this._ongoingAnimationSprites.length; i++) {
+				var sprite = this._ongoingAnimationSprites[i];
+				sprite.visible = this._battler.isSpriteVisible();
 			}
 			anim.time = animation.frames.length * sprite.getRate();
-			that._battler.addCurrentlyOngoingAnim(anim);
-		});
+			this._battler.addCurrentlyOngoingAnim(anim);
+		},this);
 	};
 	
 	Sprite_Battler.prototype.setupDamagePopup = function() {
@@ -610,17 +609,16 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 		$gamePlayer.followers().reverseEach(function(follower) {
 			this._characterSprites.push(new Sprite_Character(follower));
 		}, this);
-		var that = this;
 		this._characterSprites.push(new Sprite_Character($gamePlayer));
 		$gameMap.tbsForces().forEach(function (force) {
 			force.actors.forEach(function (actor) {
 				if(actor.chara) {
 					var sprite = new Sprite_Character(actor.chara);
-					that._characterSprites.push(sprite);
-					that._tbsCharacterSprites.push(sprite);
+					this._characterSprites.push(sprite);
+					this._tbsCharacterSprites.push(sprite);
 				}
-			});
-		});
+			},this);
+		},this);
 		for (var i = 0; i < this._characterSprites.length; i++) {
 			this._tilemap.addChild(this._characterSprites[i]);
 		}
@@ -632,13 +630,12 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 			this.clearTbsCharacters();
 		}
 		var charasToAdd = $gameTemp.tbsCharactersToAdd();
-		var that = this;
 		charasToAdd.forEach(function (chara) {
 			var sprite = new Sprite_Character(chara);
-			that._characterSprites.push(sprite);
-			that._tbsCharacterSprites.push(sprite);
-			that._tilemap.addChild(sprite);
-		});
+			this._characterSprites.push(sprite);
+			this._tbsCharacterSprites.push(sprite);
+			this._tilemap.addChild(sprite);
+		},this);
 		$gameTemp.clearTbsCharactersToAdd();
 		
 		if($gameTemp.shouldClearTbsAoeSprites()) {
@@ -648,10 +645,10 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 		var aoeSpritesToAdd = $gameTemp.tbsAoeSpritesToAdd();
 		aoeSpritesToAdd.forEach(function (aoeSprite) {
 			var sprite = new Sprite_Character(aoeSprite);
-			that._characterSprites.push(sprite);
-			that._tbsAoeSprites.push(sprite);
-			that._tilemap.addChild(sprite);
-		});
+			this._characterSprites.push(sprite);
+			this._tbsAoeSprites.push(sprite);
+			this._tilemap.addChild(sprite);
+		},this);
 		$gameTemp.clearTbsAoeSpritesToAdd();
 		
 		if($gameTemp.shouldClearTbsRangeTiles()) {
@@ -662,9 +659,9 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 		var rangeTilesToAdd = $gameTemp.tbsRangeTilesToAdd();
 		rangeTilesToAdd.forEach(function (tile) {
 			var sprite = new Sprite_TbsRange(tile.x, tile.y, tile.color);
-			that._rangeTileSprites.push(sprite);
-			that._tilemap.addChild(sprite);
-		});
+			this._rangeTileSprites.push(sprite);
+			this._tilemap.addChild(sprite);
+		},this);
 		if(rangeTilesToAdd.length > 0) {
 			$gameTemp.setRangedSpritesExist(true);
 		}
@@ -678,9 +675,9 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 		var damageSpritesToAdd = $gameTemp.tbsDamageSpritesToAdd();
 		damageSpritesToAdd.forEach(function (spriteToAdd) {
 			var sprite = new Sprite_TbsBodyPartDamage(spriteToAdd.x, spriteToAdd.y, spriteToAdd.position, spriteToAdd.damage);
-			that._bodyPartDamageSprites.push(sprite);
-			that._tilemap.addChild(sprite);
-		});
+			this._bodyPartDamageSprites.push(sprite);
+			this._tilemap.addChild(sprite);
+		},this);
 		if(damageSpritesToAdd.length > 0) {
 			$gameTemp.setDamageSpritesExist(true);
 		}
@@ -691,34 +688,30 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 	};
 	
 	Spriteset_Map.prototype.clearTbsCharacters = function() {
-		var that = this;
 		this._tbsCharacterSprites.forEach(function (sprite) {
-			that._tilemap.removeChild(sprite);
-		});
+			this._tilemap.removeChild(sprite);
+		},this);
 		this._tbsCharacterSprites = [];
 	};
 	
 	Spriteset_Map.prototype.clearTbsAoeSprites = function() {
-		var that = this;
 		this._tbsAoeSprites.forEach(function (sprite) {
-			that._tilemap.removeChild(sprite);
-		});
+			this._tilemap.removeChild(sprite);
+		},this);
 		this._tbsAoeSprites = [];
 	};
 	
 	Spriteset_Map.prototype.clearTbsRangeTiles = function() {
-		var that = this;
 		this._rangeTileSprites.forEach(function (tile) {
-			that._tilemap.removeChild(tile);
-		});
+			this._tilemap.removeChild(tile);
+		},this);
 		this._rangeTileSprites = [];
 	};
 	
 	Spriteset_Map.prototype.clearTbsDamageSprites = function() {
-		var that = this;
 		this._bodyPartDamageSprites.forEach(function (sprite) {
-			that._tilemap.removeChild(sprite);
-		});
+			this._tilemap.removeChild(sprite);
+		},this);
 		this._bodyPartDamageSprites = [];
 	};
 	

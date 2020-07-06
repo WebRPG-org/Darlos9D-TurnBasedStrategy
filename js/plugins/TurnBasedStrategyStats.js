@@ -107,10 +107,9 @@
 	
 	DataManager.sortActionsHits = function(actions) {
 		if(!actions) { return; }
-		var that = this;
 		actions.forEach(function (action) {
-			that.sortActionHits(action);
-		});
+			this.sortActionHits(action);
+		},this);
 	};
 	
 	DataManager.sortActionHits = function(action) {
@@ -676,10 +675,9 @@
 	
 	Game_BattlerBase.prototype.addTbsBuffs = function(buffs) {
 		if(buffs) {
-			var that = this;
 			buffs.forEach(function (buff) {
-				that.addTbsBuff(buff);
-			});
+				this.addTbsBuff(buff);
+			},this);
 		}
 	};
 	
@@ -1241,12 +1239,11 @@
 		
 		totalProtection = this.sumPartProtection(totalProtection, this.baseProtection(), bodyPart);
 		
-		var that = this;
 		this._tbsBuffs.forEach(function (buff) {
 			if(buff.protection) {
-				totalProtection = that.sumPartProtection(totalProtection, buff.protection, bodyPart);
+				totalProtection = this.sumPartProtection(totalProtection, buff.protection, bodyPart);
 			}
-		});
+		},this);
 		
 		var equips = this.equips();
 		if(equips && equips.length) {

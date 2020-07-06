@@ -974,12 +974,11 @@
 	};
 	
 	Game_Map.prototype.createTbsForces = function(pendingTbsForces) {
-		var that = this;
 		var forceId = -1;
 		var tbsForces = pendingTbsForces.map(function(pendingForce) {
 			forceId++;
-			return that.createTbsForce(pendingForce, forceId);
-		});
+			return this.createTbsForce(pendingForce, forceId);
+		},this);
 		return tbsForces;
 	};
 	
@@ -995,7 +994,6 @@
 		force.initiativeRoll.bonuses = 0;
 		
 		var index = 0;
-		var that = this;
 		pendingTbsForce.actors.forEach(function (pendingActor) {
 			var actor = {};
 			actor.startingX = pendingActor.startingX;
@@ -1007,7 +1005,7 @@
 				actor.battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(pendingActor.id));
 				actor.memberPosition = pendingActor.id;
 				if(actor.memberPosition === 0) {
-					that._tbsLeadCharacter = actor;
+					this._tbsLeadCharacter = actor;
 				}
 			} else {
 				actor.battler = new Game_Enemy(pendingActor.id);
@@ -1026,7 +1024,7 @@
 			actor.battler.setStress(0);
 			actor.battler.setRoundBuffs(0);
 			if(pendingActor.surprised) {
-				that._tbsSurpriseRoundJustStarted = true;
+				this._tbsSurpriseRoundJustStarted = true;
 			}
 			
 			this.stressFromDamage(actor.battler);
@@ -1498,7 +1496,6 @@
 			centerTarget = this._dummyTarget;
 			centerTarget.chara.setPosition($gamePlayer.x, $gamePlayer.y);
 		}
-		var that = this;
 		var processedHitGroups = BattleManager.processHitGroups(hitGroups);
 		processedHitGroups.forEach(function (processedHitGroup) {
 			var hitGroup = processedHitGroup.hitGroup;
@@ -1521,9 +1518,9 @@
 								targets.unshift(centerTarget);
 								continue;
 							}
-							var distance = that.actualDistance(x, y, centerPointX, centerPointY);
+							var distance = this.actualDistance(x, y, centerPointX, centerPointY);
 							if(distance <= aoeRange) {
-								var target = that.getTbsActorAtPosition(x, y);
+								var target = this.getTbsActorAtPosition(x, y);
 								if(target && targets.indexOf(target) === -1) {
 									targets.push(target);
 								}
@@ -1534,8 +1531,8 @@
 					targets.push(centerTarget);
 				}
 				outGroup.push(targets);
-			});
-		});
+			},this);
+		},this);
 		return targetsByHit;
 	};
 	
@@ -1543,7 +1540,6 @@
 		if(this._tbsAoeSprites.length > 0 || !this._tbsSelectedAction) { return; }
 		var hitGroups = this._tbsSelectedAction.hitGroups;
 		if(!hitGroups) { return; }
-		var that = this;
 		hitGroups.forEach(function (hitGroup) {
 			if(!hitGroup.hits || hitGroup.hits.length == 0) { return; }
 			hitGroup.hits.forEach(function (hit) {
@@ -1557,16 +1553,16 @@
 						var y;
 						for(y = centerPointY - checkBoxRange ; y <= centerPointY + checkBoxRange; y++) {
 							if((hit.ignoreCenter && x === centerPointX && y === centerPointY)
-								|| that.getExistingTbsTile(x, y, that._tbsAoeSprites)) { continue; }
-							var distance = that.actualDistance(x, y, centerPointX, centerPointY);
+								|| this.getExistingTbsTile(x, y, this._tbsAoeSprites)) { continue; }
+							var distance = this.actualDistance(x, y, centerPointX, centerPointY);
 							if(distance <= aoeRange) {
-								that._tbsAoeSprites.push($gameTemp.addTbsAoeSprite(x, y, hit.rangeType === "followUp"));
+								this._tbsAoeSprites.push($gameTemp.addTbsAoeSprite(x, y, hit.rangeType === "followUp"));
 							}
 						}
 					}
 				}
-			});
-		});
+			},this);
+		},this);
 	};
 	
 	Game_Map.prototype.clearTbsAoeSprites = function() {
@@ -2120,13 +2116,82 @@
 	
 	Game_Map.prototype.processQueuedActionsAtPositions = function() {
 		if(this._queuedActionLoops >= this._queuedActionLimit || !this._tbsQueuedActionsAtPositions || this._tbsQueuedActionsAtPositions.length === 0) { return; }
-		var i;
+		
 		while(this._queuedActionLoops < this._queuedActionLimit) {
 			var actionAtPosition = this._tbsQueuedActionsAtPositions.pop();
-			var actionRange = actionAtPosition.actionRange;
-			var actionTiles = actionAtPosition.actionTiles;
-			this._queuedActionLoops++;
-			this.checkActionTiles(actionAtPosition.x, actionAtPosition.y, false, false, actionRange, actionTiles, true);
+			var actionsAtPosition = [];
+			actionsAtPosition.push(actionAtPosition);
+			var longestRangedActionAtPos = undefined;
+			var longestRangedActionAtPosIndex = -1;
+			var longestRangedArcedActionAtPos = undefined;
+			var longestRangedArcedActionAtPosIndex = -1;
+			
+			var i;
+			for(i = this._tbsQueuedActionsAtPositions.length - 1; i >= 0; i--) {
+				var curActionAtPosition = this._tbsQueuedActionsAtPositions[i];
+				if(
+					curActionAtPosition.x != actionAtPosition.x ||
+					curActionAtPosition.y != actionAtPosition.y
+				) {
+					continue;
+				}
+				
+				actionsAtPosition.push(curActionAtPosition);
+				this._tbsQueuedActionsAtPositions.splice(i, 1);
+				
+				if(
+					curActionAtPosition.actionRange.arcedTrajectory && 
+					(
+						longestRangedArcedActionAtPos == undefined ||
+						(
+							longestRangedArcedActionAtPos.actionRange.range + (longestRangedArcedActionAtPos.actionRange.ignoreUserRange ? 0 : longestRangedArcedActionAtPos.actionRange.baseRange) <
+							curActionAtPosition.actionRange.range + (curActionAtPosition.actionRange.ignoreUserRange ? 0 : curActionAtPosition.actionRange.baseRange)
+						)
+					)
+				) {
+					longestRangedArcedActionAtPos = curActionAtPosition;
+					longestRangedArcedActionAtPosIndex = actionsAtPosition.length-1;
+				} else if (
+					!curActionAtPosition.actionRange.arcedTrajectory && 
+					(
+						longestRangedActionAtPos == undefined ||
+						(
+							longestRangedActionAtPos.actionRange.range + (longestRangedActionAtPos.actionRange.ignoreUserRange ? 0 : longestRangedActionAtPos.actionRange.baseRange) <
+							curActionAtPosition.actionRange.range + (curActionAtPosition.actionRange.ignoreUserRange ? 0 : curActionAtPosition.actionRange.baseRange)
+						)
+					)
+				) {
+					longestRangedActionAtPos = curActionAtPosition;
+					longestRangedActionAtPosIndex = actionsAtPosition.length-1;
+				}
+			}
+			
+			if(longestRangedActionAtPos) {
+				this.checkActionTiles(longestRangedActionAtPos.x, longestRangedActionAtPos.y, false, false, longestRangedActionAtPos.actionRange, longestRangedActionAtPos.actionTiles, true);
+			}
+			if(longestRangedArcedActionAtPos) {
+				this.checkActionTiles(longestRangedArcedActionAtPos.x, longestRangedArcedActionAtPos.y, false, false, longestRangedArcedActionAtPos.actionRange, longestRangedArcedActionAtPos.actionTiles, true);
+			}
+			
+			var actionAtPosIndex = 0;
+			actionsAtPosition.forEach(function (curActionAtPosition) {
+				if(
+					(curActionAtPosition.actionRange.arcedTrajectory && actionAtPosIndex == longestRangedArcedActionAtPosIndex) ||
+					(!curActionAtPosition.actionRange.arcedTrajectory && actionAtPosIndex == longestRangedActionAtPosIndex)
+				) { actionAtPosIndex++; return; }
+				
+				var actionAtPosToCopy = curActionAtPosition.actionRange.arcedTrajectory ? longestRangedArcedActionAtPos : longestRangedActionAtPos;
+				
+				actionAtPosToCopy.actionTiles.forEach(function (tileToCopy) {
+					if(
+						this.actualDistance(actionAtPosToCopy.x, actionAtPosToCopy.y, tileToCopy.x, tileToCopy.y) <=
+						curActionAtPosition.actionRange.range + (curActionAtPosition.actionRange.ignoreUserRange ? 0 : curActionAtPosition.actionRange.baseRange)
+					) { curActionAtPosition.actionTiles.push(tileToCopy); }
+				}, this);
+				
+				actionAtPosIndex++;
+			}, this);
+			
 			if(this._tbsQueuedActionsAtPositions.length == 0) {
 				break;
 			}
@@ -2139,20 +2204,108 @@
 			this.processQueuedActionsAtPositions();
 			return;
 		}
-		while(this._queuedActionLoops < this._queuedActionLimit) {
-			var actionInfo = this._tbsQueuedActions.pop();
-			var chara = this._tbsSelectedActor.chara;
+		
+		var actionIndex = 0;
+		var longestRangedAction = undefined;
+		var longestRangedActionIndex = -1;
+		var longestRangedArcedAction = undefined;
+		var longestRangedArcedActionIndex = -1;
+		var chara = this._tbsSelectedActor.chara;
+		
+		this._tbsQueuedActions.forEach(function (actionInfo) {
 			var action = actionInfo.action;
 			var actionRange = this.getLargestActionRange(action);
-			var actionTiles = [];
-			this._queuedActionLoops++;
-			this.checkActionTiles(chara.x, chara.y, action.cantUseHalfMove, action.cantUseFullMove, actionRange, actionTiles);
-			this._tbsActionsTiles[this._tbsActionsTiles.length] = actionTiles;
-			if(this._tbsQueuedActions.length == 0) {
-				this.processQueuedActionsAtPositions();
-				break;
+			if(actionRange.arcedTrajectory) {
+				if(longestRangedArcedAction == undefined) {
+					longestRangedArcedAction = action;
+					longestRangedArcedActionIndex = actionIndex;
+				} else {
+					var longestArcedActionRange = this.getLargestActionRange(longestRangedArcedAction);
+					if(
+						actionRange.range + (actionRange.ignoreUserRange ? 0 : actionRange.baseRange) >
+						longestArcedActionRange.range + (longestArcedActionRange.ignoreUserRange ? 0 : longestArcedActionRange.baseRange)
+					) {
+						longestRangedArcedAction = action;
+						longestRangedArcedActionIndex = actionIndex;
+					}
+				}
+			} else {
+				if(longestRangedAction == undefined) {
+					longestRangedAction = action;
+					longestRangedActionIndex = actionIndex;
+				} else {
+					var longestActionRange = this.getLargestActionRange(longestRangedAction);
+					if(
+						actionRange.range + (actionRange.ignoreUserRange ? 0 : actionRange.baseRange) >
+						longestActionRange.range + (longestActionRange.ignoreUserRange ? 0 : longestActionRange.baseRange)
+					) {
+						longestRangedAction = action;
+						longestRangedActionIndex = actionIndex;
+					}
+				}
 			}
+			actionIndex++;
+		}, this);
+		
+		actionIndex = this._tbsQueuedActions-1;
+		var longestActionRange = this.getLargestActionRange(longestRangedAction);
+		var longestActionTiles = [];
+		var longestArcedActionRange = this.getLargestActionRange(longestRangedArcedAction);
+		var longestArcedActionTiles = [];
+		if(longestRangedAction) {
+			this.checkActionTiles(chara.x, chara.y, longestRangedAction.cantUseHalfMove, longestRangedAction.cantUseFullMove, longestActionRange, longestActionTiles);
 		}
+		if(longestRangedArcedAction) {
+			this.checkActionTiles(chara.x, chara.y, longestRangedArcedAction.cantUseHalfMove, longestRangedArcedAction.cantUseFullMove, longestArcedActionRange, longestArcedActionTiles);
+		}
+		while(this._tbsQueuedActions.length > 0) {
+			var actionInfo = this._tbsQueuedActions.pop();
+			if(actionIndex == longestRangedActionIndex) {
+				this._tbsActionsTiles[this._tbsActionsTiles.length] = longestActionTiles;
+				actionIndex--;
+				return;
+			}
+			if(actionIndex == longestRangedArcedActionIndex) {
+				this._tbsActionsTiles[this._tbsActionsTiles.length] = longestArcedActionTiles;
+				actionIndex--;
+				return;
+			}
+			var action = actionInfo.action;
+			var actionRange = this.getLargestActionRange(action);
+			var totalRange = actionRange.range + (actionRange.ignoreUserRange ? 0 : actionRange.baseRange);
+			
+			var tilesToCopy = actionRange.arcedTrajectory ? longestArcedActionTiles : longestActionTiles;
+			
+			var actionTiles = [];
+			tilesToCopy.forEach(function (longestTile) {
+				if(this.actualDistance(chara.x, chara.y, longestTile.x, longestTile.y) <= totalRange) {
+					actionTiles.push(longestTile);
+				}
+			}, this);
+			this._tbsActionsTiles[this._tbsActionsTiles.length] = actionTiles;
+			if(!this._tbsSelectedActor.movedThisRound) {
+				var moveTiles = this._tbsMoveTiles;
+				if(longestRangedAction.cantUseHalfMove) {
+					moveTiles = this._tbsFullMoveTiles;
+				} else if(longestRangedAction.cantUseFullMove) {
+					moveTiles = this._tbsHalfMoveTiles;
+				}
+				moveTiles.forEach(function (moveTile) {
+					if(!this.getTbsActorAtPosition(moveTile.x, moveTile.y)) {
+						var actionAtPosition = {};
+						actionAtPosition.x = moveTile.x;
+						actionAtPosition.y = moveTile.y;
+						actionAtPosition.actionRange = actionRange;
+						actionAtPosition.actionTiles = actionTiles;
+						this._tbsQueuedActionsAtPositions.push(actionAtPosition);
+					}
+				},this);
+			}
+			
+			actionIndex--;
+		}
+		
+		this.processQueuedActionsAtPositions();
 	};
 	
 	Game_Map.prototype.updateBattlerStatus = function() {
@@ -2482,28 +2635,27 @@
 				} else if(actionWithTargets.selfTargetMoveType === "advance") {
 					var closestEnemy = undefined;
 					var shortesetDistance = -1;
-					var that = this;
 					enemies.forEach(function (enemy) {
 						if(!enemy.battler.isDown()) {
-							var distance = that.actualDistance(chara.x, chara.y, enemy.chara.x, enemy.chara.y);
+							var distance = this.actualDistance(chara.x, chara.y, enemy.chara.x, enemy.chara.y);
 							if(shortesetDistance === -1 || shortesetDistance > distance) {
 								shortesetDistance = distance;
 								closestEnemy = enemy;
 							}
 						}
-					});
+					},this);
 					if(closestEnemy) {
 						var closestTile = undefined;
 						shortesetDistance = -1;
 						this._tbsMoveTiles.forEach(function (tile) {
-							if(!that.getTbsActorAtPosition(tile.x, tile.y)) {
-								var distanceTwo = that.actualDistance(tile.x, tile.y, closestEnemy.chara.x, closestEnemy.chara.y);
+							if(!this.getTbsActorAtPosition(tile.x, tile.y)) {
+								var distanceTwo = this.actualDistance(tile.x, tile.y, closestEnemy.chara.x, closestEnemy.chara.y);
 								if(shortesetDistance == -1 || shortesetDistance > distanceTwo) {
 									shortesetDistance = distanceTwo;
 									closestTile = tile;
 								}
 							}
-						});
+						},this);
 						if(closestTile) {
 							this.setTbsActionTargetLocation(closestTile.x, closestTile.y);
 						}
@@ -2684,11 +2836,10 @@
 		if($gameTemp.isFreeToMakeRangeTiles()) {
 			var actionTiles = this._tbsActionsTiles[this._tbsSelectedActionIndex];
 			if(!actionTiles) { return; }
-			var that = this;
 			actionTiles.forEach(function (tile) {
-				if(that.getExistingTbsTile(tile.x, tile.y, $gameTemp.tbsRangeTilesToAdd())) { return; }
+				if(this.getExistingTbsTile(tile.x, tile.y, $gameTemp.tbsRangeTilesToAdd())) { return; }
 				$gameTemp.addTbsRangeTile(tile.x, tile.y, tile.centerMovePosition ? 'red' : 'white');
-			});
+			},this);
 		}
 	};
 	
@@ -2833,26 +2984,25 @@
 			if(tbsTargets.length > 0) {
 				BattleManager.initMembers();
 				var subjectRoundBuffs = 0;
-				var that = this;
 				var nonSkippedTargets = [];
 				tbsTargets.forEach(function (tbsTarget) {
 					var index = 0;
-					var processedHitGroups = BattleManager.processHitGroups(that._tbsSelectedActionInfo.action.hitGroups);
+					var processedHitGroups = BattleManager.processHitGroups(this._tbsSelectedActionInfo.action.hitGroups);
 					processedHitGroups.forEach(function (processedHitGroup) {
-						var rangedDistance = that.getRangedDistance();
-						var results = BattleManager.combatMath(that._tbsSelectedActor.battler, that._tbsSelectedActionInfo, processedHitGroup, tbsTarget.battler, tbsTargetsByHit, index, undefined, rangedDistance);
+						var rangedDistance = this.getRangedDistance();
+						var results = BattleManager.combatMath(this._tbsSelectedActor.battler, this._tbsSelectedActionInfo, processedHitGroup, tbsTarget.battler, tbsTargetsByHit, index, undefined, rangedDistance);
 						if(!results.skipTarget) {
 							nonSkippedTargets.push(tbsTarget);
-							BattleManager.applyActionResults(results, that._tbsSelectedActor.battler, tbsTarget.battler);
+							BattleManager.applyActionResults(results, this._tbsSelectedActor.battler, tbsTarget.battler);
 						}
 						subjectRoundBuffs += results.subjectRoundBuffs;
 						index++;
-					});
-				});
+					},this);
+				},this);
 				nonSkippedTargets.forEach(function (tbsTarget) {
 					tbsTarget.battler.setRoundBuffs(0);
 				});
-				that._tbsSelectedActor.battler.setRoundBuffs(subjectRoundBuffs);
+				this._tbsSelectedActor.battler.setRoundBuffs(subjectRoundBuffs);
 			}
 		}
 		if(this.isAnyTbsActionTargets(false)) {
@@ -3292,16 +3442,15 @@
 		var force = this._tbsForces[this._tbsSelectedActor.forceId];
 		var actionTiles = this._tbsActionsTiles[actionIndex];
 		if(!actionTiles) { return alliesAndEnemies; }
-		var that = this;
 		actionTiles.forEach(function (tile) {
-			var tbsActor = that.getTbsActorAtPosition(tile.x, tile.y);
+			var tbsActor = this.getTbsActorAtPosition(tile.x, tile.y);
 			if(!tbsActor) { return; }
 			if(force.enemyForceIds.indexOf(tbsActor.forceId) >= 0) {
-				that.insertOrderedByForce(tbsActor, enemies);
+				this.insertOrderedByForce(tbsActor, enemies);
 			} else {
-				that.insertOrderedByForce(tbsActor, allies);
+				this.insertOrderedByForce(tbsActor, allies);
 			}
-		});
+		},this);
 		return alliesAndEnemies;
 	};
 	
@@ -3339,6 +3488,7 @@
 			action.hitGroups.forEach(function (hitGroup) {
 				if(hitGroup.hits && hitGroup.hits.length > 0) {
 					hitGroup.hits.forEach(function (hit) {
+						this._queuedActionLoops++;
 						if(hit.rangeType && hit.rangeType === "followUp") { return; }
 						var hitRange = hit.range !== undefined ? hit.range : 0;
 						if(!rangeFound || hitRange > largestActionRange.range) {
@@ -3348,9 +3498,9 @@
 							largestActionRange.ignoreUserRange = hit.ignoreUserRange;
 							largestActionRange.arcedTrajectory = hit.arcedTrajectory;
 						}
-					});
+					},this);
 				}
-			});
+			},this);
 		}
 		largestActionRange.range /= 2;
 		return largestActionRange;
@@ -3367,7 +3517,6 @@
 	};
 	
 	Game_Map.prototype.checkActionTiles = function(x, y, cantUseHalfMove, cantUseFullMove, actionRange, actionTiles, treatAsMovedThisRound) {
-		var that = this;
 		this.getReachedActionTiles(
 			x,
 			y,
@@ -3385,16 +3534,15 @@
 				moveTiles = this._tbsHalfMoveTiles;
 			}
 			moveTiles.forEach(function (moveTile) {
-				this._queuedActionLoops++;
-				if(!that.getTbsActorAtPosition(moveTile.x, moveTile.y)) {
+				if(!this.getTbsActorAtPosition(moveTile.x, moveTile.y)) {
 					var actionAtPosition = {};
 					actionAtPosition.x = moveTile.x;
 					actionAtPosition.y = moveTile.y;
 					actionAtPosition.actionRange = actionRange;
 					actionAtPosition.actionTiles = actionTiles;
-					that._tbsQueuedActionsAtPositions.push(actionAtPosition);
+					this._tbsQueuedActionsAtPositions.push(actionAtPosition);
 				}
-			});
+			},this);
 		}
 	};
 	
@@ -3404,7 +3552,6 @@
 		for(; curY <= y+checkRadius; curY++){
 			var curX = x-checkRadius;
 			for(; curX <= x+checkRadius; curX++){
-				this._queuedActionLoops++;
 				if(this.tbsCursorRegions().length > 0 && this.tbsCursorRegions().indexOf(this.regionId(curX, curY)) < 0) { continue; }
 				if(curX < 0 || curY < 0 || curX >= this.width || curY >= this.height) { continue; }
 				var distance = this.actualDistance(x, y, curX, curY);
@@ -3539,7 +3686,6 @@
 			var i;
 			for(i = 0; i < this._tbsForces.length; i++) {
 				for(j = 0; j < this._tbsForces[i].actors.length; j++) {
-					this._queuedActionLoops++;
 					var chara = this._tbsForces[i].actors[j].chara;
 					if((startX == chara.x && startY == chara.y)
 						|| (passageType !== "walk" && passageType !== "fly" && 

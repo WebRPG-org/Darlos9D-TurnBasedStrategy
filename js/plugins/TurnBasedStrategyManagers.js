@@ -321,10 +321,9 @@ BattleManager.figureOutBattlerPositions = function() {
 			}
 		});
 		
-		var that = this;
 		this._tbsTargets.forEach(function (tbsTarget) {
 			var targetIsActor = false;
-			that._tbsActors.forEach(function (tbsActor) {
+			this._tbsActors.forEach(function (tbsActor) {
 				if(tbsTarget === tbsActor) {
 					targetIsActor = true;
 				}
@@ -338,7 +337,7 @@ BattleManager.figureOutBattlerPositions = function() {
 					tbsTarget.battler.setScreenPos(rightCenterX + offset.x, centerY + offset.y);
 				}
 			}
-		});
+		},this);
 	} else {
 		this._tbsActors.forEach(function (tbsActor) {
 			var offset = BattleManager.getBattleOffset(tbsActor.chara.x, tbsActor.chara.y, targetsCenterMapX, targetsCenterMapY, baseMapAngle);
@@ -346,10 +345,9 @@ BattleManager.figureOutBattlerPositions = function() {
 			tbsActor.battler.setScreenPos(centerX + offset.x, centerY + offset.y);
 		});
 		
-		var that = this;
 		this._tbsTargets.forEach(function (tbsTarget) {
 			var targetIsActor = false;
-			that._tbsActors.forEach(function (tbsActor) {
+			this._tbsActors.forEach(function (tbsActor) {
 				if(tbsTarget === tbsActor) {
 					targetIsActor = true;
 				}
@@ -359,7 +357,7 @@ BattleManager.figureOutBattlerPositions = function() {
 				tbsTarget.battler.setShouldMoveIn(false);
 				tbsTarget.battler.setScreenPos(centerX + offset.x, centerY + offset.y);
 			}
-		});
+		},this);
 	}
 	this._targetsOnLeft = targetsOnLeft;
 };
@@ -770,7 +768,6 @@ BattleManager.invokeNormalAction = function(subject, target, resultsPerGroup) {
 BattleManager.shouldSkipTarget = function(processedHitGroups, target, targetsByHit) {
 	var shouldSkip = true;
 	var hitGroupIndex = 0;
-	var that = this;
 	processedHitGroups.forEach(function (processedHitGroup) {
 		var hitGroup = processedHitGroup.hitGroup;
 		var battlersByHit = [];
@@ -781,7 +778,7 @@ BattleManager.shouldSkipTarget = function(processedHitGroups, target, targetsByH
 		for(i = 0; i < hitGroup.hits.length; i++) {
 			if(battlersByHit[i].indexOf(target) === -1) { continue; }
 			var hit = hitGroup.hits[i];
-			if((hit.rangeType === "followUp" && that._nonFollowupsAllDodged[hitGroupIndex])
+			if((hit.rangeType === "followUp" && this._nonFollowupsAllDodged[hitGroupIndex])
 				|| (hit.randomTarget && Math.random() < 0.5))
 			{
 				continue;
@@ -790,7 +787,7 @@ BattleManager.shouldSkipTarget = function(processedHitGroups, target, targetsByH
 			break;
 		}
 		hitGroupIndex++;
-	});
+	},this);
 	return shouldSkip;
 };
 

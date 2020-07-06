@@ -494,21 +494,20 @@
 			this._tbsBreadcrumbWindowFour.close();
 			this._tbsBreadcrumbWindowFour.setBreadcrumbInfo(undefined);
 			var windowNum = 5 - breadcrumbs.length;
-			var that = this;
 			breadcrumbs.forEach(function (breadcrumb) {
 				if(windowNum === 1) {
-					that._tbsBreadcrumbWindowOne.setBreadcrumbInfo(breadcrumb);
+					this._tbsBreadcrumbWindowOne.setBreadcrumbInfo(breadcrumb);
 				} else if(windowNum === 2) {
-					that._tbsBreadcrumbWindowTwo.setBreadcrumbInfo(breadcrumb);
+					this._tbsBreadcrumbWindowTwo.setBreadcrumbInfo(breadcrumb);
 				} else if(windowNum === 3) {
-					that._tbsBreadcrumbWindowThree.setBreadcrumbInfo(breadcrumb);
+					this._tbsBreadcrumbWindowThree.setBreadcrumbInfo(breadcrumb);
 				} else if(windowNum === 4) {
-					that._tbsBreadcrumbWindowFour.setBreadcrumbInfo(breadcrumb);
-					that._tbsBreadcrumbWindowFour.playSounds(true, that._tbsBattleJustStarted);
-					that._tbsBattleJustStarted = false;
+					this._tbsBreadcrumbWindowFour.setBreadcrumbInfo(breadcrumb);
+					this._tbsBreadcrumbWindowFour.playSounds(true, this._tbsBattleJustStarted);
+					this._tbsBattleJustStarted = false;
 				}
 				windowNum++;
-			});
+			},this);
 		}
 		this._oldBreadcrumbs = breadcrumbs;
 	};
