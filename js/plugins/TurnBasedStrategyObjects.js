@@ -1519,11 +1519,15 @@
 								continue;
 							}
 							var distance = this.actualDistance(x, y, centerPointX, centerPointY);
-							if(distance <= aoeRange) {
-								var target = this.getTbsActorAtPosition(x, y);
-								if(target && targets.indexOf(target) === -1) {
-									targets.push(target);
-								}
+							if(distance > aoeRange) {
+								continue;
+							}
+							var target = this.getTbsActorAtPosition(x, y);
+							if(!target || targets.indexOf(target) >= 0) {
+								continue;
+							}
+							if(!this.isTrajectoryObstructed(centerPointX, centerPointY, x, y, "thrown", true)) {
+								targets.push(target);
 							}
 						}
 					}
@@ -1555,7 +1559,10 @@
 							if((hit.ignoreCenter && x === centerPointX && y === centerPointY)
 								|| this.getExistingTbsTile(x, y, this._tbsAoeSprites)) { continue; }
 							var distance = this.actualDistance(x, y, centerPointX, centerPointY);
-							if(distance <= aoeRange) {
+							if(distance > aoeRange) {
+								continue;
+							}
+							if(!this.isTrajectoryObstructed(centerPointX, centerPointY, x, y, "thrown", true)) {
 								this._tbsAoeSprites.push($gameTemp.addTbsAoeSprite(x, y, hit.rangeType === "followUp"));
 							}
 						}
