@@ -1404,14 +1404,38 @@
 	Game_BattlerBase.prototype.applyHit = function(hit, bodyPart) {
 		if(!hit.heal || hit.heal.damage === undefined || hit.heal.damage <= 0) { return; }
 		
-		var tough = this.toughness();
-		this.adjustDamage("head", -tough);
-		this.adjustDamage("torso", -tough*2);
-		this.adjustDamage("leftArm", -tough);
-		this.adjustDamage("rightArm", -tough);
-		this.adjustDamage("leftLeg", -tough);
-		this.adjustDamage("rightLeg", -tough);
 		this.adjustDamage("core", -hit.heal.damage);
+		var tough = this.toughness();
+		
+		var partHealing = hit.heal.damage;
+		if(partHealing > 0) {
+			var partDamage = target.getDamage("head");
+			this.adjustDamage("head", partHealing > this.getDamage("head") ? this.getDamage("head") : partHealing);
+			partHealing -= partDamage;
+		}
+		if(partHealing > 0) {
+			var partDamage = target.getDamage("torso");
+			this.adjustDamage("torso", partHealing > this.getDamage("torso") ? this.getDamage("torso") : partHealing);
+			partHealing -= partDamage;
+		}
+		var limbLoops = 0;
+		var leg = Math.random() >= 0.5 ? "leftLeg" : "rightLeg";
+		while(partHealing > 0 && limbLoops < 2) {
+			var partDamage = target.getDamage(leg);
+			this.adjustDamage(leg, partHealing > this.getDamage(leg) ? this.getDamage(leg) : partHealing);
+			partHealing -= partDamage;
+			leg = leg === "leftLeg" ? "rightLeg" : "leftLeg";
+			limbLoops++;
+		}
+		limbLoops = 0;
+		var arm = Math.random() >= 0.5 ? "leftArm" : "rightArm";
+		while(partHealing > 0 && limbLoops < 2) {
+			var partDamage = target.getDamage(arm);
+			this.adjustDamage(arm, partHealing > this.getDamage(arm) ? this.getDamage(arm) : partHealing);
+			partHealing -= partDamage;
+			arm = arm === "leftArm" ? "rightArm" : "leftArm";
+			limbLoops++;
+		}
 	};
 	
 	//battler

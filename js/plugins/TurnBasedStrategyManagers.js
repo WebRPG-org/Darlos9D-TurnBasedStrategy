@@ -1583,21 +1583,42 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					results.heal.stress += heal.stress ;
 				}
 				if(heal.damage !== undefined) {
-					var tough = target.toughness();
-					results.heal.head += tough;
-					results.heal.torso += tough;
-					results.heal.leftArm += tough;
-					results.heal.rightArm += tough;
-					results.heal.leftLeg += tough;
-					results.heal.rightLeg += tough;
 					results.heal.core += heal.damage;
-					results.hit.head = true;
-					results.hit.torso = true;
-					results.hit.leftArm = true;
-					results.hit.rightArm = true;
-					results.hit.leftLeg = true;
-					results.hit.rightLeg = true;
-					results.stress.other += Math.floor(heal.damage / (tough/2));
+					var tough = target.toughness();
+					
+					var partHealing = heal.damage;
+					if(partHealing > 0) {
+						results.hit.head = true;
+						results.heal.head += partHealing > target.getDamage("head") ? target.getDamage("head") : partHealing;
+						results.stress.head += Math.floor((results.heal.head / (tough/2)) * 2);
+						partHealing -= target.getDamage("head");
+					}
+					if(partHealing > 0) {
+						results.hit.torso = true;
+						results.heal.torso += partHealing > target.getDamage("torso") ? target.getDamage("torso") : partHealing;
+						results.stress.torso += Math.floor(results.heal.torso / (tough/2));
+						partHealing -= target.getDamage("torso");
+					}
+					var limbLoops = 0;
+					var leg = Math.random() >= 0.5 ? "leftLeg" : "rightLeg";
+					while(partHealing > 0 && limbLoops < 2) {
+						results.hit[leg] = true;
+						results.heal[leg] += partHealing > target.getDamage(leg) ? target.getDamage(leg) : partHealing;
+						results.stress[leg] += Math.floor((results.heal[leg] / (tough/2)) * 2);
+						partHealing -= target.getDamage(leg);
+						leg = leg === "leftLeg" ? "rightLeg" : "leftLeg";
+						limbLoops++;
+					}
+					limbLoops = 0;
+					var arm = Math.random() >= 0.5 ? "leftArm" : "rightArm";
+					while(partHealing > 0 && limbLoops < 2) {
+						results.hit[arm] = true;
+						results.heal[arm] += partHealing > target.getDamage(arm) ? target.getDamage(arm) : partHealing;
+						results.stress[arm] += Math.floor(results.heal[arm] / (tough/2));
+						partHealing -= target.getDamage(arm);
+						arm = arm === "leftArm" ? "rightArm" : "leftArm";
+						limbLoops++;
+					}
 				}
 			}
 			var buffs = hit.buffs;
