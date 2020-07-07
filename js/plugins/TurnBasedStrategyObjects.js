@@ -3683,7 +3683,13 @@
 				if(firstTile.exitability[d][passageType] && firstTile.enterability[d][passageType]) { continue; }
 			}
 			
-			if(this.cohenSutherlandLineClipAndDraw(x0, y0, x1, y1, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1)) {
+			if(
+				this.cohenSutherlandLineClipAndDraw(x0, y0, x1, y1, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1) &&
+				this.cohenSutherlandLineClipAndDraw(x0-0.5, y0-0.5, x1-0.5, y1-0.5, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1) &&
+				this.cohenSutherlandLineClipAndDraw(x0+0.5, y0-0.5, x1+0.5, y1-0.5, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1) &&
+				this.cohenSutherlandLineClipAndDraw(x0-0.5, y0+0.5, x1-0.5, y1+0.5, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1) &&
+				this.cohenSutherlandLineClipAndDraw(x0+0.5, y0+0.5, x1+0.5, y1+0.5, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1)
+			) {
 				blockedByTerrain = true;
 				break;
 			}
@@ -3705,7 +3711,13 @@
 					{
 						continue;
 					}
-					if(this.cohenSutherlandLineClipAndDraw(x0, y0, x1, y1, chara.x, chara.y, chara.x+1, chara.y+1)) {
+					if(
+						this.cohenSutherlandLineClipAndDraw(x0, y0, x1, y1, chara.x, chara.y, chara.x+1, chara.y+1) &&
+						this.cohenSutherlandLineClipAndDraw(x0-0.5, y0-0.5, x1-0.5, y1-0.5, chara.x, chara.y, chara.x+1, chara.y+1) &&
+						this.cohenSutherlandLineClipAndDraw(x0+0.5, y0-0.5, x1+0.5, y1-0.5, chara.x, chara.y, chara.x+1, chara.y+1) &&
+						this.cohenSutherlandLineClipAndDraw(x0-0.5, y0+0.5, x1-0.5, y1+0.5, chara.x, chara.y, chara.x+1, chara.y+1) &&
+						this.cohenSutherlandLineClipAndDraw(x0+0.5, y0+0.5, x1+0.5, y1+0.5, chara.x, chara.y, chara.x+1, chara.y+1)
+					) {
 						return true;
 					}
 				}
