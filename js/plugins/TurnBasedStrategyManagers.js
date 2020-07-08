@@ -1066,7 +1066,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				hitResult.subjectStress = 0;
 				hitResult.targetStress = 0;
 				var cleaves = true;
-				if(hit.aoe !== undefined && hit.aoe > 0) {
+				if(hit.aoe !== undefined && hit.aoe > 0 && hit.aoeType !== "regularHit") {
 					if(isSolid || isFluid) {
 						cleaves = false;
 						hitResult.targetStress = 1;

@@ -226,6 +226,8 @@ Action
 			"rangeType": "self"/"melee"/"thrown"/"fired"/"mental",
 			"range": (integer),
 			"aoe": (integer),
+			"aoeType": "engulf"/"regularHit",
+			"randomTarget": true/false,
 			"ignoreCenter": true/false,
 			"ignoreUserRange": true/false,
                         "evasionPenalty": (integer),
