@@ -3737,6 +3737,8 @@
 		var BOTTOM = 4; // 0100
 		var TOP = 8;    // 1000
 		
+		//var cornerCheckThreshold = 0.001;
+		
 		// compute outcodes for P0, P1, and whatever point lies outside the clip rectangle
 		var outcode0 = this.computeOutCode(x0, y0, xmin, ymin, xmax, ymax);
 		var outcode1 = this.computeOutCode(x1, y1, xmin, ymin, xmax, ymax);
@@ -3753,7 +3755,27 @@
 				// or BOTTOM), so both must be outside window; exit loop (accept is false)
 				break;
 			} else {
-				// failed both tests, so calculate the line segment to clip
+				// failed both tests
+				// x0CornerCheck = Math.round(x0);
+				// y0CornerCheck = Math.round(y0);
+				// x1CornerCheck = Math.round(x1);
+				// y1CornerCheck = Math.round(y1);
+				// if (
+					// (Math.abs(x0CornerCheck-x0) <= cornerCheckThreshold && Math.abs(y0CornerCheck-y0) <= cornerCheckThreshold && (
+						// (x0CornerCheck == xmin && y0CornerCheck == ymin) || (x0CornerCheck == xmin && y0CornerCheck == ymax) ||
+						// (x0CornerCheck == xmax && y0CornerCheck == ymin) || (x0CornerCheck == xmax && y0CornerCheck == ymax)
+					// )) ||
+					// (Math.abs(x1CornerCheck-x1) <= cornerCheckThreshold && Math.abs(y1CornerCheck-y1) <= cornerCheckThreshold && (
+						// (x1CornerCheck == xmin && y1CornerCheck == ymin) || (x1CornerCheck == xmin && y1CornerCheck == ymax) ||
+						// (x1CornerCheck == xmax && y1CornerCheck == ymin) || (x1CornerCheck == xmax && y1CornerCheck == ymax)
+					// ))
+				// ) {
+					// // line is just a bit too close to a corner, so count it as a collision
+					// accept = true;
+					// break;
+				// }
+				
+				// calculate the line segment to clip
 				// from an outside point to an intersection with clip edge
 				var x;
 				var y;
