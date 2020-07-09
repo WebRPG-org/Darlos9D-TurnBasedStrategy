@@ -944,6 +944,18 @@ Window_ItemOption.prototype.processOk = function() {
     }
 };
 
+Window_ItemOption.prototype.processPageup = function() {
+    SoundManager.playCursor();
+    this.updateInputData();
+    this.callHandler('pageup');
+};
+
+Window_ItemOption.prototype.processPagedown = function() {
+    SoundManager.playCursor();
+    this.updateInputData();
+    this.callHandler('pagedown');
+};
+
 //-----------------------------------------------------------------------------
 // Window_YesNoConfirm
 //
@@ -2424,21 +2436,21 @@ Window_TbsTarget.prototype.hasAlliesOrEnemies = function() {
 	return this._allies.length > 0 || this._enemies.length > 0;
 };
 	
-Window_TbsTarget.prototype.processControl = function() {
+Window_TbsTarget.prototype.processPagedown = function() {
 	if(this.hasAlliesAndEnemies()) {
 		SoundManager.playCursor();
 		this.updateInputData();
-		this.callHandler('control');
+		this.callHandler('pagedown');
 	} else {
 		SoundManager.playBuzzer();
 	}
 };
 
-Window_TbsTarget.prototype.processShift = function() {
+Window_TbsTarget.prototype.processPageup = function() {
 	if(this.hasAlliesAndEnemies()) {
 		SoundManager.playCursor();
 		this.updateInputData();
-		this.callHandler('shift');
+		this.callHandler('pageup');
 	} else {
 		SoundManager.playBuzzer();
 	}
@@ -4719,18 +4731,6 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			}
 		}
 	};
-	
-	Window_Selectable.prototype.processControl = function() {
-		SoundManager.playCursor();
-		this.updateInputData();
-		this.callHandler('control');
-	};
-	
-	Window_Selectable.prototype.processShift = function() {
-		SoundManager.playCursor();
-		this.updateInputData();
-		this.callHandler('shift');
-	};
 
 	Window_Selectable.prototype.selectFirstEnabledItem = function() {
 		var selected = false;
@@ -5293,6 +5293,18 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		}
 	};
 	
+	Window_ItemList.prototype.processPageup = function() {
+		SoundManager.playCursor();
+		this.updateInputData();
+		this.callHandler('pageup');
+	};
+
+	Window_ItemList.prototype.processPagedown = function() {
+		SoundManager.playCursor();
+		this.updateInputData();
+		this.callHandler('pagedown');
+	};
+	
 	//skill type
 	Window_SkillType.prototype.update = function() {
 		Window_Command.prototype.update.call(this);
@@ -5663,6 +5675,18 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		var slotNum = index + this.slotsOffset();
 		return this._actor && this._actor.isEquipChangeOk(slotNum) && (slotNum !== 1 || !this._actor.equips()[0]
 			|| (this._actor.equips()[0].tbsStats.hands && this._actor.equips()[0].tbsStats.hands < 2));
+	};
+	
+	Window_EquipSlot.prototype.processPageup = function() {
+		SoundManager.playCursor();
+		this.updateInputData();
+		this.callHandler('pageup');
+	};
+
+	Window_EquipSlot.prototype.processPagedown = function() {
+		SoundManager.playCursor();
+		this.updateInputData();
+		this.callHandler('pagedown');
 	};
 	
 	//equip item

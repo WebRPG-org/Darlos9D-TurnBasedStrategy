@@ -664,8 +664,8 @@
 			-Window_TbsActorStatus.prototype.standardPadding()*(2/3));
 		this._tbsTargetWindow.setHandler('ok',     this.onTargetOk.bind(this));
 		this._tbsTargetWindow.setHandler('cancel',     this.onTargetCancel.bind(this));
-		this._tbsTargetWindow.setHandler('control',     this.onTargetSwitchGroups.bind(this));
-		this._tbsTargetWindow.setHandler('shift',     this.onTargetSwitchGroups.bind(this));
+		this._tbsTargetWindow.setHandler('pagedown',     this.onTargetSwitchGroups.bind(this));
+		this._tbsTargetWindow.setHandler('pageup',     this.onTargetSwitchGroups.bind(this));
 		this.addWindow(this._tbsTargetWindow);
 		this._tbsTargetWindow.hide();
 		this._tbsTargetWindow.close();
@@ -1261,8 +1261,8 @@
 		this._itemOptionsWindow.setHandler('give',    this.commandItemGive.bind(this));
 		this._itemOptionsWindow.setHandler('discard',    this.commandItemDiscard.bind(this));
 		this._itemOptionsWindow.setHandler('cancel',   this.commandItemCancel.bind(this));
-		this._itemOptionsWindow.setHandler('control', this.nextStatusPage.bind(this));
-		this._itemOptionsWindow.setHandler('shift',   this.prevStatusPage.bind(this));
+		this._itemOptionsWindow.setHandler('pagedown', this.nextStatusPage.bind(this));
+		this._itemOptionsWindow.setHandler('pageup',   this.prevStatusPage.bind(this));
 		this._itemOptionsWindow.hide();
 		this._itemOptionsWindow.deactivate();
 		this._itemWindow.setItemOptionsWindow(this._itemOptionsWindow);
@@ -1605,8 +1605,8 @@
 		this._slotWindow.setHelpWindow(this._helpWindow);
 		this._slotWindow.setHandler('ok',       this.onSlotOk.bind(this));
 		this._slotWindow.setHandler('cancel',   this.onSlotCancel.bind(this));
-		this._slotWindow.setHandler('control', this.nextStatusPage.bind(this));
-		this._slotWindow.setHandler('shift',   this.prevStatusPage.bind(this));
+		this._slotWindow.setHandler('pagedown', this.nextStatusPage.bind(this));
+		this._slotWindow.setHandler('pageup',   this.prevStatusPage.bind(this));
 		this.addWindow(this._slotWindow);
 	};
 	
@@ -1648,8 +1648,8 @@
 		this._itemWindow.setSlotWindow(this._slotWindow);
 		this._itemWindow.setHandler('ok',     this.onItemOk.bind(this));
 		this._itemWindow.setHandler('cancel', this.onItemCancel.bind(this));
-		this._itemWindow.setHandler('control', this.nextStatusPage.bind(this));
-		this._itemWindow.setHandler('shift',   this.prevStatusPage.bind(this));
+		this._itemWindow.setHandler('pagedown', this.nextStatusPage.bind(this));
+		this._itemWindow.setHandler('pageup',   this.prevStatusPage.bind(this));
 		this._commandWindow.setItemWindow(this._itemWindow);
 		this._slotWindow.setItemWindow(this._itemWindow);
 		this.addWindow(this._itemWindow);
