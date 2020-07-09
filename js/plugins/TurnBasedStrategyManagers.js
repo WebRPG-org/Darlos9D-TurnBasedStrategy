@@ -711,6 +711,7 @@ BattleManager.invokeNormalAction = function(subject, target, resultsPerGroup) {
 	totalResults.critical.leftLeg = false;
 	totalResults.critical.rightLeg = false;
 	totalResults.buffs = [];
+	totalResults.focus = 0;
 	totalResults.downed = false;
 	totalResults.revived = false;
 	resultsPerGroup.forEach(function (results) {
@@ -758,6 +759,7 @@ BattleManager.invokeNormalAction = function(subject, target, resultsPerGroup) {
 		totalResults.critical.leftLeg = results.critical.leftLeg ? true : totalResults.critical.leftLeg;
 		totalResults.critical.rightLeg = results.critical.rightLeg ? true : totalResults.critical.rightLeg;
 		totalResults.buffs = results.buffs.concat(results.buffs);
+		totalResults.focus += results.focus;
 		totalResults.downed = results.downed ? true : totalResults.downed;
 		totalResults.revived = results.revived ? true : totalResults.revived;
 		totalResults.dodged = results.dodged ? totalResults.dodged : false;
@@ -860,6 +862,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 	results.heal.rightHeld = 0;
 	results.heal.mind = 0;
 	results.heal.core = 0;
+	results.focus = 0;
 	results.dodged = true;
 	results.hit = {};
 	results.hit.leftHeld = false;
@@ -1687,6 +1690,12 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					}
 					results.buffs.push(newBuff);
 				});
+			}
+			if(hit.focus && hit.focus > 0) {
+				hitDodged = false;
+				results.dodged = false;
+				results.shouldPassTurn = false;
+				results.focus += hit.focus;
 			}
 			if(hit.rollInitiative) {
 				hitDodged = false;
@@ -2729,6 +2738,7 @@ BattleManager.applyActionResults = function(results, subject, target) {
 	if(this._shouldPassTurn) {
 		this._shouldPassTurn = results.shouldPassTurn;
 	}
+	target.adjustRoundBuffs(results.focus);
 };
 
 BattleManager.invokeCounterAttack = function(subject, target) {
