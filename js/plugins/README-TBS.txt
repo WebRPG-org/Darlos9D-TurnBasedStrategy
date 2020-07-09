@@ -21,6 +21,17 @@ Classes
 	"defenseAbility": (name of unique skill),
 	"reflexAbility": (name of unique skill),
 	"uniqueSkills": [(array of strings that are unique skill names)],
+	"skillPotentials": {
+		"meleeAcc": (integer),
+		"rangedAcc": (integer),
+		"mentalAcc": (integer),
+		"physEvade": (integer),
+		"tripEvade": (integer),
+		"mentalEvade": (integer),
+		"manualDex": (integer),
+		"perception": (integer),
+		(further entries corresponding to unique skills)
+	},
 	"startingSkills": {
 		"meleeAcc": (integer),
 		"rangedAcc": (integer),
@@ -31,7 +42,7 @@ Classes
 		"manualDex": (integer),
 		"perception": (integer),
 		(further entries corresponding to unique skills)
-	}
+	},
 	"protection": {(see "Protection" section)},
 	"attributes": [
 		{

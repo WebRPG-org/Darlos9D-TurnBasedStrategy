@@ -780,12 +780,12 @@
 	};
 	
 	Game_BattlerBase.prototype.skillUpgradeCost = function(skill) {
-		return Math.pow(this.skillPoints(skill)+1, 2)*100;
+		return Math.pow(Math.max(0, this.skillPoints(skill)-this.skillPotential(skill))+1, 2)*100;
 	};
 	
 	Game_BattlerBase.prototype.skillDowngradeCost = function(skill) {
 		var skillPoints = this.skillPoints(skill);
-		return skillPoints > 0 ? Math.pow(this.skillPoints(skill), 2)*100 : 0;;
+		return skillPoints > 0 ? Math.pow(Math.max(1, skillPoints-this.skillPotential(skill)), 2)*100 : 0;;
 	};
 	
 	Game_BattlerBase.prototype.skillXP = function() {
@@ -802,6 +802,10 @@
 	
 	Game_BattlerBase.prototype.adjustRespecXP = function(amount) {
 		this._respecXP = Math.max(0, this._respecXP + amount);
+	};
+	
+	Game_BattlerBase.prototype.skillPotential = function(skill) {
+		return 0;
 	};
 	
 	Game_BattlerBase.prototype.isDead = function() {
@@ -1636,6 +1640,23 @@
 		this._profile = actor.profile;
 		this._classId = actor.classId;
 		this._level = actor.initialLevel;
+		if(this.currentClass().tbsStats.startingSkills) {
+			for (const [skill, level] of Object.entries(this.currentClass().tbsStats.startingSkills)) {
+				this.setSkillPoints(skill, level);
+				var skillPotential = this.skillPotential(skill);
+				var respecXP = skillPotential >= level ? level * 100 : skillPotential * 100;
+				if(skillPotential >= level) {
+					this.adjustRespecXP(respecXP);
+					continue;
+				}
+				var skillLevel = 1;
+				while(skillLevel <= level - skillPotential) {
+					respecXP += Math.pow(skillLevel, 2) * 100;
+					skillLevel++;
+				}
+				this.adjustRespecXP(respecXP);
+			}
+		}
 		this.initImages();
 		this.initExp();
 		this.initSkills();
@@ -1643,6 +1664,10 @@
 		this.clearParamPlus();
 		this.recoverAll();
 		this.checkLearnedSkills();
+	};
+	
+	Game_Actor.prototype.skillPotential = function(skill) {
+		return this.currentClass().tbsStats.skillPotentials && this.currentClass().tbsStats.skillPotentials[skill] > 0 ? this.currentClass().tbsStats.skillPotentials[skill] : 0;
 	};
 	
 	Game_Actor.prototype.performDeflection = function() {
@@ -1673,11 +1698,6 @@
 	
 	Game_Actor.prototype.uniqueSkills = function() {
 		return this.currentClass().tbsStats.uniqueSkills;
-	};
-	
-	Game_Actor.prototype.totalSkill = function(skill) {
-		return (this.currentClass().tbsStats.startingSkills[skill] === undefined ? 0 : this.currentClass().tbsStats.startingSkills[skill])
-			+ this.skillPoints(skill) + this.getSkillBuff(skill);
 	};
 	
 	Game_Actor.prototype.defenseSkillName = function() {

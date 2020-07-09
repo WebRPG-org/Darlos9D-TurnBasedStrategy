@@ -3390,14 +3390,13 @@ Window_StatusSkills.prototype.drawParametersColumnTwo = function() {
 };
 
 Window_StatusSkills.prototype.drawSkillLevel = function(displayName, skill, x, y, width) {
+	if(this._actor.skillPotential(skill) > 0) {
+		this.drawIcon(87, x + width - 14*2 - this.textPadding()*2 - Window_Base._iconWidth, y);
+	}
 	this.changeTextColor(this.systemColor());
 	this.drawText(displayName, this.textPadding() + x, y, width - 14*7);
 	this.resetTextColor();
-	this.drawText(this._actor.totalSkill(skill), x + width - 14*5 - this.textPadding(), y, 14*2, 'right');
-	this.changePaintOpacity(false);
-	this.drawText(":", x + width - 14*3 - this.textPadding(), y, 14, 'right');
-	this.drawText(this._actor.skillPoints(skill), x + width - 14*2 - this.textPadding(), y, 14*2, 'right');
-	this.changePaintOpacity(true);
+	this.drawText(this._actor.totalSkill(skill), x + width - 14*2 - this.textPadding(), y, 14*2, 'right');
 };
 
 Window_StatusSkills.prototype.processPageup = function() {
