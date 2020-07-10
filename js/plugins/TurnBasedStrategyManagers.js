@@ -1582,33 +1582,103 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				hitDodged = false;
 				results.dodged = false;
 				results.shouldPassTurn = false;
-				if(heal.stress !== undefined) {
-					results.heal.stress += heal.stress ;
+				
+				var dicePool = {};
+				dicePool.skill = 0;
+				dicePool.expert = 0;
+				dicePool.buff = 0;
+				
+				var skillDiceReduction = hit.accuracyPenalty === undefined ? 0 : hit.accuracyPenalty;
+				
+				var testDiceReduction = hit.evasionPenalty === undefined ? 0 : hit.evasionPenalty;
+				dicePool.debuff = subjectStress + processedHitGroup.accuracyReduction + hitDamage.damageReduction + target.roundBuffs();
+				dicePool.buff = targetStress + subject.roundBuffs();
+				
+				if(hit.accuracyDropoffDistance !== undefined && rangedDistance !== undefined) {
+					var accuracyDropoff = (rangedDistance*2) / hit.accuracyDropoffDistance;
+					variance = Math.random() * accuracyDropoff;
+					dicePool.debuff += Math.floor(accuracyDropoff);
 				}
-				if(heal.damage !== undefined) {
-					results.heal.core += heal.damage;
+				
+				var parryable = false;
+				var accSkill = 0;
+				if(hit.ignoreUserAccuracy) {
+					accSkill = hit.accuracy == undefined ? 0 : hit.accuracy;
+					dicePool.buff -= subject.roundBuffs();
+				} else {
+					accSkill = subject.totalSkill("manualDex");
+				}
+				var abilitySkill = 0;
+				if(hit.abilitySkillUsed === undefined) {
+					abilitySkill = hit.abilitySkill === undefined ? 0 : hit.abilitySkill;
+				} else {
+					abilitySkill = subject.totalSkill(hit.abilitySkillUsed);
+				}
+				
+				dicePool.skill = accSkill > abilitySkill ? accSkill - abilitySkill : abilitySkill - accSkill;
+				dicePool.expert = accSkill > abilitySkill ? abilitySkill : accSkill;
+				
+				var skillDice = dicePool.skill;
+				dicePool.skill -= Math.min(dicePool.skill, skillDiceReduction);
+				skillDiceReduction -= skillDice;
+				if(skillDiceReduction > 0) {
+					dicePool.expert -= Math.min(dicePool.expert, skillDiceReduction);
+				}
+				
+				if(dicePool.skill <= 0 && dicePool.expert <= 0 && dicePool.buff <= 0) {
+					dicePool.buff = 1;
+				}
+				
+				if(heal.stress !== undefined && heal.stress > 0) {
+					var stressHealRoll = this.rollSkillDice(dicePool.skill, dicePool.expert, dicePool.buff);
+					var stressRoll = this.rollTestDice(0, 0, subject.stress());
+					
+					stressHealRoll.bonuses += stressHealRoll.rareBonuses * 2;
+					stressHealRoll.hits -= stressRoll.misses;
+					stressHealRoll.bonuses -= stressRoll.penalties;
+					
+					results.heal.stress += heal.stress + stressHealRoll.hits;
+				}
+				if(heal.damage !== undefined && heal.damage > 0) {
+					var healRoll = this.rollSkillDice(dicePool.skill, dicePool.expert, dicePool.buff);
+					var stressRoll = this.rollTestDice(0, 0, subject.stress());
+					
+					healRoll.bonuses += healRoll.rareBonuses * 2;
+					healRoll.hits -= stressRoll.misses;
+					healRoll.bonuses -= stressRoll.penalties;
+					
+					var healing = heal.damage + healRoll.hits;
+					
+					results.heal.core += healing;
 					var tough = target.toughness();
 					
-					var partHealing = heal.damage;
+					var partHealing = healing;
+					var stressReduction = healRoll.bonuses;
 					if(partHealing > 0) {
 						results.hit.head = true;
 						results.heal.head += partHealing > target.getDamage("head") ? target.getDamage("head") : partHealing;
-						results.stress.head += Math.floor((results.heal.head / (tough/2)) * 2);
+						var healStress = Math.floor((results.heal.head / (tough/2)) * 2);
+						results.stress.head += Math.max(0, healStress - stressReduction);
 						partHealing -= target.getDamage("head");
+						stressReduction = Math.max(0, stressReduction - healStress);
 					}
 					if(partHealing > 0) {
 						results.hit.torso = true;
 						results.heal.torso += partHealing > target.getDamage("torso") ? target.getDamage("torso") : partHealing;
-						results.stress.torso += Math.floor(results.heal.torso / (tough/2));
+						var healStress = Math.floor(results.heal.torso / (tough/2));
+						results.stress.torso += Math.max(0, healStress - stressReduction);
 						partHealing -= target.getDamage("torso");
+						stressReduction = Math.max(0, stressReduction - healStress);
 					}
 					var limbLoops = 0;
 					var leg = Math.random() >= 0.5 ? "leftLeg" : "rightLeg";
 					while(partHealing > 0 && limbLoops < 2) {
 						results.hit[leg] = true;
 						results.heal[leg] += partHealing > target.getDamage(leg) ? target.getDamage(leg) : partHealing;
-						results.stress[leg] += Math.floor((results.heal[leg] / (tough/2)) * 2);
+						var healStress = Math.floor((results.heal[leg] / (tough/2)) * 2);
+						results.stress[leg] += Math.max(0, healStress - stressReduction);
 						partHealing -= target.getDamage(leg);
+						stressReduction = Math.max(0, stressReduction - healStress);
 						leg = leg === "leftLeg" ? "rightLeg" : "leftLeg";
 						limbLoops++;
 					}
@@ -1617,8 +1687,10 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					while(partHealing > 0 && limbLoops < 2) {
 						results.hit[arm] = true;
 						results.heal[arm] += partHealing > target.getDamage(arm) ? target.getDamage(arm) : partHealing;
-						results.stress[arm] += Math.floor(results.heal[arm] / (tough/2));
-						partHealing -= target.getDamage(arm);
+						var healStress = Math.floor(results.heal[arm] / (tough/2));
+						results.stress[arm] += Math.max(0, healStress - stressReduction);
+						partHealing -= target.getDamage(leg);
+						stressReduction = Math.max(0, stressReduction - healStress);
 						arm = arm === "leftArm" ? "rightArm" : "leftArm";
 						limbLoops++;
 					}
@@ -1695,7 +1767,61 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				hitDodged = false;
 				results.dodged = false;
 				results.shouldPassTurn = false;
-				results.focus += hit.focus;
+				
+				var dicePool = {};
+				dicePool.skill = 0;
+				dicePool.expert = 0;
+				dicePool.buff = 0;
+				
+				var skillDiceReduction = hit.accuracyPenalty === undefined ? 0 : hit.accuracyPenalty;
+				
+				var testDiceReduction = hit.evasionPenalty === undefined ? 0 : hit.evasionPenalty;
+				dicePool.debuff = subjectStress + processedHitGroup.accuracyReduction + hitDamage.damageReduction + target.roundBuffs();
+				dicePool.buff = targetStress + subject.roundBuffs();
+				
+				if(hit.accuracyDropoffDistance !== undefined && rangedDistance !== undefined) {
+					var accuracyDropoff = (rangedDistance*2) / hit.accuracyDropoffDistance;
+					variance = Math.random() * accuracyDropoff;
+					dicePool.debuff += Math.floor(accuracyDropoff);
+				}
+				
+				var parryable = false;
+				var accSkill = 0;
+				if(hit.ignoreUserAccuracy) {
+					accSkill = hit.accuracy == undefined ? 0 : hit.accuracy;
+					dicePool.buff -= subject.roundBuffs();
+				} else {
+					accSkill = subject.totalSkill("manualDex");
+				}
+				var abilitySkill = 0;
+				if(hit.abilitySkillUsed === undefined) {
+					abilitySkill = hit.abilitySkill === undefined ? 0 : hit.abilitySkill;
+				} else {
+					abilitySkill = subject.totalSkill(hit.abilitySkillUsed);
+				}
+				
+				dicePool.skill = accSkill > abilitySkill ? accSkill - abilitySkill : abilitySkill - accSkill;
+				dicePool.expert = accSkill > abilitySkill ? abilitySkill : accSkill;
+				
+				var skillDice = dicePool.skill;
+				dicePool.skill -= Math.min(dicePool.skill, skillDiceReduction);
+				skillDiceReduction -= skillDice;
+				if(skillDiceReduction > 0) {
+					dicePool.expert -= Math.min(dicePool.expert, skillDiceReduction);
+				}
+				
+				if(dicePool.skill <= 0 && dicePool.expert <= 0 && dicePool.buff <= 0) {
+					dicePool.buff = 1;
+				}
+				
+				var focusGainRoll = this.rollSkillDice(dicePool.skill, dicePool.expert, dicePool.buff);
+				var stressRoll = this.rollTestDice(0, 0, subject.stress());
+				
+				focusGainRoll.bonuses += focusGainRoll.rareBonuses * 2;
+				focusGainRoll.hits -= stressRoll.misses;
+				focusGainRoll.bonuses -= stressRoll.penalties;
+				
+				results.focus += hit.focus + focusGainRoll.hits;
 			}
 			if(hit.rollInitiative) {
 				hitDodged = false;
