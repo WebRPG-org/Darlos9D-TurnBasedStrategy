@@ -1942,5 +1942,12 @@
 		this._statusAttributesListWindow.deactivate();
 		this._statusAttributeDescriptionWindow.hide();
 	};
+	
+	// name
+	Scene_Name.prototype.onInputOk = function() {
+		this._actor.setName(this._editWindow.name());
+		this._actor.setNickname(this._editWindow.name());
+		this.popScene();
+	};
 })();
  
