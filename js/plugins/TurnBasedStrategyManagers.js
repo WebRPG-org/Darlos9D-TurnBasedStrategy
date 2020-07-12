@@ -937,7 +937,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 			if(battlersByHit[i].indexOf(target) === -1) { continue; }
 			var hit = hitGroup.hits[i];
 			if((hit.rangeType === "followUp" && this._nonFollowupsAllDodged[hitGroupIndex])
-				|| (hit.randomTarget && Math.random() < 0.5))
+				|| (hit.randomTarget && Math.random() < 0.2))
 			{
 				continue;
 			}

@@ -2340,8 +2340,8 @@
 					if(actor.chara.isMoving() || actor.chara.x !== actor.startingX || actor.chara.y !== actor.startingY) {
 						nobodyMoved = false;
 						if(!actor.chara.isMoving()) {
-							direction = actor.chara.findDirectionTo(actor.startingX, actor.startingY);
-							actor.chara.moveStraight(direction);
+							direction = actor.chara.findDirectionTo(actor.startingX, actor.startingY, actor.battler.isFlying() ? "fly" : undefined);
+							actor.chara.moveStraight(direction, actor.battler.isFlying() ? "fly" : undefined);
 						}
 					}
 				});
@@ -2755,8 +2755,8 @@
 				this.calculateMoveDestinationForAction();
 			}
 			if(this._tbsActionMoveDestinationX !== -1 && (this._tbsActionMoveDestinationX !== chara.x || this._tbsActionMoveDestinationY !== chara.y)) {
-				var direction = chara.findDirectionTo(this._tbsActionMoveDestinationX, this._tbsActionMoveDestinationY);
-				chara.moveStraight(direction);
+				var direction = chara.findDirectionTo(this._tbsActionMoveDestinationX, this._tbsActionMoveDestinationY, this._tbsSelectedActor.battler.isFlying() ? "fly" : undefined);
+				chara.moveStraight(direction, this._tbsSelectedActor.battler.isFlying() ? "fly" : undefined);
 				$gamePlayer.setNextFrameMoveDirection(direction);
 				return;
 			}
@@ -2795,8 +2795,8 @@
 			|| chara.x !== this._tbsManualMoveStartX
 			|| chara.y !== this._tbsManualMoveStartY) {
 			if(!chara.isMoving()) {
-				var direction = chara.findDirectionTo(this._tbsManualMoveStartX, this._tbsManualMoveStartY);
-				chara.moveStraight(direction);
+				var direction = chara.findDirectionTo(this._tbsManualMoveStartX, this._tbsManualMoveStartY, this._tbsSelectedActor.battler.isFlying() ? "fly" : undefined);
+				chara.moveStraight(direction, this._tbsSelectedActor.battler.isFlying() ? "fly" : undefined);
 				$gamePlayer.setNextFrameMoveDirection(direction);
 			}
 			return;
@@ -2902,8 +2902,8 @@
 			$gamePlayer.setTbsFollowingCharacter(true);
 			$gamePlayer.setTbsShowCursor(false);
 			$gamePlayer.refresh();
-			var direction = chara.findDirectionTo(this._tbsActionMoveDestinationX, this._tbsActionMoveDestinationY);
-			chara.moveStraight(direction);
+			var direction = chara.findDirectionTo(this._tbsActionMoveDestinationX, this._tbsActionMoveDestinationY, this._tbsSelectedActor.battler.isFlying() ? "fly" : undefined);
+			chara.moveStraight(direction, this._tbsSelectedActor.battler.isFlying() ? "fly" : undefined);
 			$gamePlayer.setNextFrameMoveDirection(direction);
 			return;
 		}
@@ -3115,8 +3115,8 @@
 			|| chara.x !== this._tbsManualMoveStartX
 			|| chara.y !== this._tbsManualMoveStartY) {
 			if(!chara.isMoving()) {
-				var direction = chara.findDirectionTo(this._tbsManualMoveStartX, this._tbsManualMoveStartY);
-				chara.moveStraight(direction);
+				var direction = chara.findDirectionTo(this._tbsManualMoveStartX, this._tbsManualMoveStartY, this._tbsSelectedActor.battler.isFlying() ? "fly" : undefined);
+				chara.moveStraight(direction, this._tbsSelectedActor.battler.isFlying() ? "fly" : undefined);
 				$gamePlayer.setNextFrameMoveDirection(direction);
 			}
 			return;
@@ -3161,8 +3161,8 @@
 					if(actor.chara.isMoving() || actor.chara.x !== leadChara.x || actor.chara.y !== leadChara.y) {
 						nobodyMoved = false;
 						if(!actor.chara.isMoving()) {
-							direction = actor.chara.findDirectionTo(leadChara.x, leadChara.y);
-							actor.chara.moveStraight(direction);
+							direction = actor.chara.findDirectionTo(leadChara.x, leadChara.y, actor.battler.isFlying() ? "fly" : undefined);
+							actor.chara.moveStraight(direction, actor.battler.isFlying() ? "fly" : undefined);
 						}
 					}
 				});
@@ -4295,6 +4295,46 @@
 		}
 	};
 	
+	Game_CharacterBase.prototype.canPass = function(x, y, d, passageType) {
+		var x2 = $gameMap.roundXWithDirection(x, d);
+		var y2 = $gameMap.roundYWithDirection(y, d);
+		if (!$gameMap.isValid(x2, y2)) {
+			return false;
+		}
+		if (this.isThrough() || this.isDebugThrough()) {
+			return true;
+		}
+		if (!this.isMapPassable(x, y, d, passageType)) {
+			return false;
+		}
+		if (this.isCollidedWithCharacters(x2, y2)) {
+			return false;
+		}
+		return true;
+	};
+	
+	Game_CharacterBase.prototype.isMapPassable = function(x, y, d, passageType) {
+		var x2 = $gameMap.roundXWithDirection(x, d);
+		var y2 = $gameMap.roundYWithDirection(y, d);
+		var d2 = this.reverseDir(d);
+		return $gameMap.isPassable(x, y, d, passageType) && $gameMap.isPassable(x2, y2, d2, passageType);
+	};
+	
+	Game_CharacterBase.prototype.moveStraight = function(d, passageType) {
+		this.setMovementSuccess(this.canPass(this._x, this._y, d, passageType));
+		if (this.isMovementSucceeded()) {
+			this.setDirection(d);
+			this._x = $gameMap.roundXWithDirection(this._x, d);
+			this._y = $gameMap.roundYWithDirection(this._y, d);
+			this._realX = $gameMap.xWithDirection(this._x, this.reverseDir(d));
+			this._realY = $gameMap.yWithDirection(this._y, this.reverseDir(d));
+			this.increaseSteps();
+		} else {
+			this.setDirection(d);
+			this.checkEventTriggerTouchFront(d);
+		}
+	};
+	
 	//character
 	Game_Character.prototype.turnTowardLocation = function(x, y) {
 		var sx = this.deltaXFrom(x);
@@ -4304,6 +4344,120 @@
 		} else if (sy !== 0) {
 			this.setDirection(sy > 0 ? 8 : 2);
 		}
+	};
+	
+	Game_Character.prototype.findDirectionTo = function(goalX, goalY, passageType) {
+		var searchLimit = this.searchLimit();
+		var mapWidth = $gameMap.width();
+		var nodeList = [];
+		var openList = [];
+		var closedList = [];
+		var start = {};
+		var best = start;
+
+		if (this.x === goalX && this.y === goalY) {
+			return 0;
+		}
+
+		start.parent = null;
+		start.x = this.x;
+		start.y = this.y;
+		start.g = 0;
+		start.f = $gameMap.distance(start.x, start.y, goalX, goalY);
+		nodeList.push(start);
+		openList.push(start.y * mapWidth + start.x);
+
+		while (nodeList.length > 0) {
+			var bestIndex = 0;
+			for (var i = 0; i < nodeList.length; i++) {
+				if (nodeList[i].f < nodeList[bestIndex].f) {
+					bestIndex = i;
+				}
+			}
+
+			var current = nodeList[bestIndex];
+			var x1 = current.x;
+			var y1 = current.y;
+			var pos1 = y1 * mapWidth + x1;
+			var g1 = current.g;
+
+			nodeList.splice(bestIndex, 1);
+			openList.splice(openList.indexOf(pos1), 1);
+			closedList.push(pos1);
+
+			if (current.x === goalX && current.y === goalY) {
+				best = current;
+				goaled = true;
+				break;
+			}
+
+			if (g1 >= searchLimit) {
+				continue;
+			}
+
+			for (var j = 0; j < 4; j++) {
+				var direction = 2 + j * 2;
+				var x2 = $gameMap.roundXWithDirection(x1, direction);
+				var y2 = $gameMap.roundYWithDirection(y1, direction);
+				var pos2 = y2 * mapWidth + x2;
+
+				if (closedList.contains(pos2)) {
+					continue;
+				}
+				if (!this.canPass(x1, y1, direction, passageType)) {
+					continue;
+				}
+
+				var g2 = g1 + 1;
+				var index2 = openList.indexOf(pos2);
+
+				if (index2 < 0 || g2 < nodeList[index2].g) {
+					var neighbor;
+					if (index2 >= 0) {
+						neighbor = nodeList[index2];
+					} else {
+						neighbor = {};
+						nodeList.push(neighbor);
+						openList.push(pos2);
+					}
+					neighbor.parent = current;
+					neighbor.x = x2;
+					neighbor.y = y2;
+					neighbor.g = g2;
+					neighbor.f = g2 + $gameMap.distance(x2, y2, goalX, goalY);
+					if (!best || neighbor.f - neighbor.g < best.f - best.g) {
+						best = neighbor;
+					}
+				}
+			}
+		}
+
+		var node = best;
+		while (node.parent && node.parent !== start) {
+			node = node.parent;
+		}
+
+		var deltaX1 = $gameMap.deltaX(node.x, start.x);
+		var deltaY1 = $gameMap.deltaY(node.y, start.y);
+		if (deltaY1 > 0) {
+			return 2;
+		} else if (deltaX1 < 0) {
+			return 4;
+		} else if (deltaX1 > 0) {
+			return 6;
+		} else if (deltaY1 < 0) {
+			return 8;
+		}
+
+		var deltaX2 = this.deltaXFrom(goalX);
+		var deltaY2 = this.deltaYFrom(goalY);
+		if (Math.abs(deltaX2) > Math.abs(deltaY2)) {
+			return deltaX2 > 0 ? 4 : 6;
+		} else if (deltaY2 !== 0) {
+			return deltaY2 > 0 ? 8 : 2;
+		}
+
+		return 0;
 	};
 	
 	//player
@@ -4345,6 +4499,13 @@
 			this.setImage(characterName, characterIndex);
 		}
 		this._followers.refresh();
+	};
+	
+	Game_Player.prototype.moveStraight = function(d, passageType) {
+		if (this.canPass(this.x, this.y, d, passageType)) {
+			this._followers.updateMove();
+		}
+		Game_Character.prototype.moveStraight.call(this, d, passageType);
 	};
 	
 	Game_Player.prototype.isDashing = function() {
