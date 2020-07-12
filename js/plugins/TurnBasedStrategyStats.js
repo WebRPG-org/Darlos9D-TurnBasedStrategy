@@ -1640,6 +1640,8 @@
 		this._profile = actor.profile;
 		this._classId = actor.classId;
 		this._level = actor.initialLevel;
+		this._skillXP = 0;
+		this._respecXP = 0;
 		if(this.currentClass().tbsStats.startingSkills) {
 			for (const [skill, level] of Object.entries(this.currentClass().tbsStats.startingSkills)) {
 				this.setSkillPoints(skill, level);

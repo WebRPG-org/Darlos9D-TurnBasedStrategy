@@ -1591,7 +1591,8 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				var skillDiceReduction = hit.accuracyPenalty === undefined ? 0 : hit.accuracyPenalty;
 				
 				var testDiceReduction = hit.evasionPenalty === undefined ? 0 : hit.evasionPenalty;
-				dicePool.debuff = subjectStress + processedHitGroup.accuracyReduction + hitDamage.damageReduction + target.roundBuffs();
+				var hitSupport = this.getCompleteSupport(subject, actionInfo, hit);
+				dicePool.debuff = subjectStress + processedHitGroup.accuracyReduction + hitSupport.supportReduction + target.roundBuffs();
 				dicePool.buff = targetStress + subject.roundBuffs();
 				
 				if(hit.accuracyDropoffDistance !== undefined && rangedDistance !== undefined) {
@@ -1629,7 +1630,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					dicePool.buff = 1;
 				}
 				
-				if(heal.stress !== undefined && heal.stress > 0) {
+				if(hitSupport.stress !== undefined) {
 					var stressHealRoll = this.rollSkillDice(dicePool.skill, dicePool.expert, dicePool.buff);
 					var stressRoll = this.rollTestDice(0, 0, subject.stress());
 					
@@ -1637,9 +1638,9 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					stressHealRoll.hits -= stressRoll.misses;
 					stressHealRoll.bonuses -= stressRoll.penalties;
 					
-					results.heal.stress += heal.stress + stressHealRoll.hits;
+					results.heal.stress += hitSupport.stress + stressHealRoll.hits;
 				}
-				if(heal.damage !== undefined && heal.damage > 0) {
+				if(hitSupport.damage !== undefined) {
 					var healRoll = this.rollSkillDice(dicePool.skill, dicePool.expert, dicePool.buff);
 					var stressRoll = this.rollTestDice(0, 0, subject.stress());
 					
@@ -1647,7 +1648,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					healRoll.hits -= stressRoll.misses;
 					healRoll.bonuses -= stressRoll.penalties;
 					
-					var healing = heal.damage + healRoll.hits;
+					var healing = hitSupport.damage + healRoll.hits;
 					
 					results.heal.core += healing;
 					var tough = target.toughness();
@@ -1763,7 +1764,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					results.buffs.push(newBuff);
 				});
 			}
-			if(hit.focus && hit.focus > 0) {
+			if(hit.focus !== undefined) {
 				hitDodged = false;
 				results.dodged = false;
 				results.shouldPassTurn = false;
@@ -1776,7 +1777,8 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				var skillDiceReduction = hit.accuracyPenalty === undefined ? 0 : hit.accuracyPenalty;
 				
 				var testDiceReduction = hit.evasionPenalty === undefined ? 0 : hit.evasionPenalty;
-				dicePool.debuff = subjectStress + processedHitGroup.accuracyReduction + hitDamage.damageReduction + target.roundBuffs();
+				var hitSupport = this.getCompleteSupport(subject, actionInfo, hit);
+				dicePool.debuff = subjectStress + processedHitGroup.accuracyReduction + hitSupport.supportReduction + target.roundBuffs();
 				dicePool.buff = targetStress + subject.roundBuffs();
 				
 				if(hit.accuracyDropoffDistance !== undefined && rangedDistance !== undefined) {
@@ -1814,14 +1816,16 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					dicePool.buff = 1;
 				}
 				
-				var focusGainRoll = this.rollSkillDice(dicePool.skill, dicePool.expert, dicePool.buff);
-				var stressRoll = this.rollTestDice(0, 0, subject.stress());
-				
-				focusGainRoll.bonuses += focusGainRoll.rareBonuses * 2;
-				focusGainRoll.hits -= stressRoll.misses;
-				focusGainRoll.bonuses -= stressRoll.penalties;
-				
-				results.focus += hit.focus + focusGainRoll.hits;
+				if(hitSupport.focus !== undefined) {
+					var focusGainRoll = this.rollSkillDice(dicePool.skill, dicePool.expert, dicePool.buff);
+					var stressRoll = this.rollTestDice(0, 0, subject.stress());
+					
+					focusGainRoll.bonuses += focusGainRoll.rareBonuses * 2;
+					focusGainRoll.hits -= stressRoll.misses;
+					focusGainRoll.bonuses -= stressRoll.penalties;
+					
+					results.focus += hitSupport.focus + focusGainRoll.hits;
+				}
 			}
 			if(hit.rollInitiative) {
 				hitDodged = false;
@@ -2182,6 +2186,50 @@ BattleManager.getCompleteDamage = function(subject, actionInfo, hit) {
 	completeDamage.corrosion = damage.corrosion !== undefined ? damage.corrosion - damageReduction : undefined;
 	completeDamage.psychic = damage.psychic !== undefined ? damage.psychic - damageReduction : undefined;
 	return completeDamage;
+};
+
+BattleManager.getCompleteSupport = function(subject, actionInfo, hit) {
+	var heal = hit.heal;
+	var focus = hit.focus;
+	var completeSupport = {};
+	if(!heal) {
+		heal = {};
+	}
+	var actualUsedParts = this.getUsedParts(subject, actionInfo, hit);
+	var supportReduction = 0;
+	if(subject && actualUsedParts.length > 0) {
+		var denom = actualUsedParts.length;
+		var numer = 0;
+		var tough = subject.toughness();
+		if(actualUsedParts.indexOf("mind") >= 0) {
+			numer += subject.getDamage("mind") >= tough ? 3 : (subject.getDamage("mind") >= tough/2 ? 1 : 0);
+		}
+		if(actualUsedParts.indexOf("head") >= 0) {
+			numer += subject.getDamage("head") >= tough ? 3 : (subject.getDamage("head") >= tough/2 ? 1 : 0);
+		}
+		if(actualUsedParts.indexOf("torso") >= 0) {
+			numer += subject.getDamage("torso") >= tough*2 ? 3 : (subject.getDamage("torso") >= tough ? 1 : 0);
+		}
+		if(actualUsedParts.indexOf("leftArm") >= 0) {
+			numer += subject.getDamage("leftArm") >= tough ? 3 : (subject.getDamage("leftArm") >= tough/2 ? 1 : 0);
+		}
+		if(actualUsedParts.indexOf("rightArm") >= 0) {
+			numer += subject.getDamage("rightArm") >= tough ? 3 : (subject.getDamage("rightArm") >= tough/2 ? 1 : 0);
+		}
+		if(actualUsedParts.indexOf("leftLeg") >= 0) {
+			numer += subject.getDamage("leftLeg") >= tough ? 3 : (subject.getDamage("leftLeg") >= tough/2 ? 1 : 0);
+		}
+		if(actualUsedParts.indexOf("rightLeg") >= 0) {
+			numer += subject.getDamage("rightLeg") >= tough ? 3 : (subject.getDamage("rightLeg") >= tough/2 ? 1 : 0);
+		}
+		supportReduction = Math.floor(numer / denom);
+	}
+	
+	completeSupport.supportReduction = supportReduction;
+	completeSupport.stress = heal.stress !== undefined ? heal.stress - supportReduction : undefined;
+	completeSupport.damage = heal.damage !== undefined ? heal.damage - supportReduction : undefined;
+	completeSupport.focus = focus !== undefined ? focus - supportReduction : undefined;
+	return completeSupport;
 };
 
 BattleManager.calculateSinglePartHit = function(hitResult, dicePool, parryable, hardToHit) {
