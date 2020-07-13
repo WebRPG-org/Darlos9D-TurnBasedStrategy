@@ -76,8 +76,12 @@
 		var needToClearMessages = $gameMap.needToClearMessageWindows();
 		var waitingOn = false;
 		var closeablesRemaining = false;
+		var highestInfoY = undefined;
 		this._infoWindows.forEach(function (curWindow) {
 			if(curWindow.isClosed() || curWindow.isClosing()) {
+				if(curWindow.isClosing() && (highestInfoY == undefined || curWindow.y < highestInfoY)) {
+					highestInfoY = curWindow.y;
+				}
 				return;
 			}
 			if(curWindow.isCloseable()) {
@@ -91,7 +95,16 @@
 				curWindow.countDown();
 			}
 			if(curWindow.isWaitOn()) { waitingOn = true; }
+			if(highestInfoY == undefined || curWindow.y < highestInfoY) {
+				highestInfoY = curWindow.y;
+			}
 		});
+		if(highestInfoY !== undefined && highestInfoY > 0) {
+			this._infoWindows.forEach(function (curWindow) {
+				if(curWindow.isClosed()) { return; }
+				curWindow.y -= highestInfoY + curWindow.standardPadding()*(2/3);
+			});
+		}
 		this._messageWindows.forEach(function (curWindow) {
 			if(curWindow.isClosed() || curWindow.isClosing()) {
 				return;
@@ -127,7 +140,7 @@
 	
 	Scene_Map.prototype.createNewMessageWindow = function(message) {
 		if(!message || !message.text || message.text.length <= 0) { return; }
-		var windowToUse;
+		var windowToUse = undefined;
 		var i;
 		var indexToUse = 0;
 		if(message.type === "infoLog") {
@@ -192,7 +205,7 @@
 				if(indexToUse != j && this._infoWindows[j].isInfoLog() 
 					&& (this._infoWindows[j].isOpen() || this._infoWindows[j].isOpening()))
 				{
-					this._infoWindows[j].y += windowToUse.height - windowToUse.standardPadding()*(2/3);
+					windowToUse.y += this._infoWindows[j].height - this._infoWindows[j].standardPadding()*(2/3);
 				}
 			}
 		}
