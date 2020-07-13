@@ -595,6 +595,8 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 		this._rangeTileSprites = [];
 		this._bodyPartDamageSprites = [];
 		this._tbsAoeSprites = [];
+		this._tbsAoeSpritesToDelete = [];
+		this._tbsAoeSpritesDeleteNextFrame = false;
 	};
 	
 	Spriteset_Map.prototype.createCharacters = function() {
@@ -638,9 +640,17 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 		},this);
 		$gameTemp.clearTbsCharactersToAdd();
 		
+		if(this._tbsAoeSpritesDeleteNextFrame) {
+			this.clearTbsAoeSprites();
+			this._tbsAoeSpritesDeleteNextFrame = false;
+		}
 		if($gameTemp.shouldClearTbsAoeSprites()) {
 			$gameTemp.setShouldClearTbsAoeSprites(false);
-			this.clearTbsAoeSprites();
+			this._tbsAoeSpritesToDelete = [];
+			this._tbsAoeSprites.forEach(function (sprite) {
+				this._tbsAoeSpritesToDelete.push(sprite);
+			},this);
+			this._tbsAoeSpritesDeleteNextFrame = true;
 		}
 		var aoeSpritesToAdd = $gameTemp.tbsAoeSpritesToAdd();
 		aoeSpritesToAdd.forEach(function (aoeSprite) {
@@ -695,10 +705,11 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 	};
 	
 	Spriteset_Map.prototype.clearTbsAoeSprites = function() {
-		this._tbsAoeSprites.forEach(function (sprite) {
+		this._tbsAoeSpritesToDelete.forEach(function (sprite) {
 			this._tilemap.removeChild(sprite);
 		},this);
-		this._tbsAoeSprites = [];
+		this._tbsAoeSprites.splice(0, this._tbsAoeSpritesToDelete.length);
+		this._tbsAoeSpritesToDelete = [];
 	};
 	
 	Spriteset_Map.prototype.clearTbsRangeTiles = function() {
