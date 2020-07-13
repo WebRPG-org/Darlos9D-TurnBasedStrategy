@@ -51,8 +51,8 @@ Classes
 			"skillRequirements": [(see "Skill Requirement" section)], (THIS IS AN ARRAY OF MORE THAN ONE SKILL REQUIREMENT!!!)
 			"strength": (integer),
 			"toughness": (integer),
-			"movement": (integer),
-			"reach": (integer),
+			"movement": (integer)(double the number of squares ingame),
+			"reach": (integer)(double the number of squares ingame),
 			"incremental": true/false
 		}
 	]
@@ -235,8 +235,8 @@ Action
 			"secondaryMissAnimation": (animation name),
 			"secondaryAnimation": (animation name),
 			"rangeType": "self"/"melee"/"thrown"/"fired"/"mental",
-			"range": (integer),
-			"aoe": (integer),
+			"range": (integer)(double the number of squares ingame),
+			"aoe": (integer)(double the number of squares ingame),
 			"aoeType": "engulf"/"regularHit",
 			"arcedTrajectory": true/false,
 			"randomTarget": true/false,

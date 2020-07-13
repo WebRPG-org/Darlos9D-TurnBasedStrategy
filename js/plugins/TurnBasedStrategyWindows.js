@@ -4298,13 +4298,17 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 				this.drawIcon(rangeTypeIconId, nameOffset, lineHeight);
 				var hitRange = hits[i].range !== undefined ? hits[i].range : 0;
 				hitRange += hits[i].ignoreUserRange || !actor ? 0 : actor.baseRange();
-				var range = hitRange;
-				this.drawText(!rangeIsSelf && range > 0 ? range : "-", nameOffset - 38, lineHeight, 100, 'right');
+				var range = hitRange / 2;
+				var flooredRange = Math.floor(range);
+				this.drawText(!rangeIsSelf && range > 0 ? flooredRange + (range > flooredRange ? "½" : "") : "-", nameOffset - 38, lineHeight, 100, 'right');
 				var accuracy = hits[i].evasionPenalty !== undefined ? hits[i].evasionPenalty : 0;
 				accuracy += hits[i].accuracy !== undefined ? hits[i].accuracy : 0;
 				accuracy -= hits[i].accuracyPenalty !== undefined ? hits[i].accuracyPenalty : 0;
 				this.drawText((hits[i].damage || hits[i].debuffs) && accuracy > 0 ? accuracy : "-", nameOffset + 8, lineHeight, 100, 'right');
-				this.drawText(hits[i].aoe > 0 ? hits[i].aoe : "-", nameOffset + 124, lineHeight, 100, 'right');
+				var hitAoe = hits[i].aoe !== undefined ? hits[i].aoe : 0;
+				var aoe = hitAoe / 2;
+				var flooredAoe = Math.floor(aoe);
+				this.drawText(aoe > 0 ? flooredAoe + (aoe > flooredAoe ? "½" : "") : "-", nameOffset + 124, lineHeight, 100, 'right');
 				
 				if(i === 0 && n === 0) {
 					if(actor) {
