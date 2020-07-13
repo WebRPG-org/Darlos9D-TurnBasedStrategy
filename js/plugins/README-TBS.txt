@@ -238,6 +238,7 @@ Action
 			"range": (integer),
 			"aoe": (integer),
 			"aoeType": "engulf"/"regularHit",
+			"arcedTrajectory": true/false,
 			"randomTarget": true/false,
 			"ignoreCenter": true/false,
 			"ignoreUserRange": true/false,
@@ -249,7 +250,9 @@ Action
 			"ignoreUserStrength": true/false,
                         "abilitySkill": (skill name),
                         "evadedBy": "defense"/"reflex",
-			"multipleHits": (integer),
+			"multiple": (integer),
+        		"multipleDelay": (integer),
+        		"accuracyDegradation": (integer),
 			"usesParts": [
 				(entries can be "head", "torso", "mind", "bestLimb", and "equippedOn")
 			],
