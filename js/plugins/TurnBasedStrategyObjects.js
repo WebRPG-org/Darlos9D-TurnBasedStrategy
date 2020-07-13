@@ -3688,11 +3688,16 @@
 				if(firstTile.exitability[d][passageType] && firstTile.enterability[d][passageType]) { continue; }
 			}
 			
-			blockedByTerrain.middle = blockedByTerrain.middle ? true : this.cohenSutherlandLineClipAndDraw(x0, y0, x1, y1, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1);
-			blockedByTerrain.upperLeft = passageType == "walk" || passageType == "fly" || blockedByTerrain.upperLeft ? true : this.cohenSutherlandLineClipAndDraw(x0-0.5, y0-0.5, x1-0.5, y1-0.5, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1);
-			blockedByTerrain.upperRight = passageType == "walk" || passageType == "fly" || blockedByTerrain.upperRight ? true : this.cohenSutherlandLineClipAndDraw(x0+0.5, y0-0.5, x1+0.5, y1-0.5, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1);
-			blockedByTerrain.lowerLeft = passageType == "walk" || passageType == "fly" || blockedByTerrain.lowerLeft ? true : this.cohenSutherlandLineClipAndDraw(x0-0.5, y0+0.5, x1-0.5, y1+0.5, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1);
-			blockedByTerrain.lowerRight = passageType == "walk" || passageType == "fly" || blockedByTerrain.lowerRight ? true : this.cohenSutherlandLineClipAndDraw(x0+0.5, y0+0.5, x1+0.5, y1+0.5, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1);
+			blockedByTerrain.middle = blockedByTerrain.middle ? true :
+				this.cohenSutherlandLineClipAndDraw(x0, y0, x1, y1, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1);
+			blockedByTerrain.upperLeft = passageType == "walk" || passageType == "fly" || blockedByTerrain.upperLeft ? true :
+				this.cohenSutherlandLineClipAndDraw(x0-0.49, y0-0.49, x1-0.49, y1-0.49, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1);
+			blockedByTerrain.upperRight = passageType == "walk" || passageType == "fly" || blockedByTerrain.upperRight ? true :
+				this.cohenSutherlandLineClipAndDraw(x0+0.49, y0-0.49, x1+0.49, y1-0.49, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1);
+			blockedByTerrain.lowerLeft = passageType == "walk" || passageType == "fly" || blockedByTerrain.lowerLeft ? true :
+				this.cohenSutherlandLineClipAndDraw(x0-0.49, y0+0.49, x1-0.49, y1+0.49, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1);
+			blockedByTerrain.lowerRight = passageType == "walk" || passageType == "fly" || blockedByTerrain.lowerRight ? true :
+				this.cohenSutherlandLineClipAndDraw(x0+0.49, y0+0.49, x1+0.49, y1+0.49, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1);
 			
 			if(
 				blockedByTerrain.middle &&
@@ -3728,12 +3733,23 @@
 						continue;
 					}
 					
+					blockedByTerrain.middle = blockedByTerrain.middle ? true :
+						this.cohenSutherlandLineClipAndDraw(x0, y0, x1, y1, chara.x, chara.y, chara.x+1, chara.y+1);
+					blockedByTerrain.upperLeft = passageType == "walk" || passageType == "fly" || blockedByTerrain.upperLeft ? true :
+						this.cohenSutherlandLineClipAndDraw(x0-0.49, y0-0.49, x1-0.49, y1-0.49, chara.x, chara.y, chara.x+1, chara.y+1)
+					blockedByTerrain.upperRight = passageType == "walk" || passageType == "fly" || blockedByTerrain.upperRight ? true :
+						this.cohenSutherlandLineClipAndDraw(x0+0.49, y0-0.49, x1+0.49, y1-0.49, chara.x, chara.y, chara.x+1, chara.y+1)
+					blockedByTerrain.lowerLeft = passageType == "walk" || passageType == "fly" || blockedByTerrain.lowerLeft ? true :
+						this.cohenSutherlandLineClipAndDraw(x0-0.49, y0+0.49, x1-0.49, y1+0.49, chara.x, chara.y, chara.x+1, chara.y+1)
+					blockedByTerrain.lowerRight = passageType == "walk" || passageType == "fly" || blockedByTerrain.lowerRight ? true :
+						this.cohenSutherlandLineClipAndDraw(x0+0.49, y0+0.49, x1+0.49, y1+0.49, chara.x, chara.y, chara.x+1, chara.y+1)
+					
 					if(
-						(blockedByTerrain.middle || this.cohenSutherlandLineClipAndDraw(x0, y0, x1, y1, chara.x, chara.y, chara.x+1, chara.y+1)) &&
-						(blockedByTerrain.upperLeft || this.cohenSutherlandLineClipAndDraw(x0-0.5, y0-0.5, x1-0.5, y1-0.5, chara.x, chara.y, chara.x+1, chara.y+1)) &&
-						(blockedByTerrain.upperRight || this.cohenSutherlandLineClipAndDraw(x0+0.5, y0-0.5, x1+0.5, y1-0.5, chara.x, chara.y, chara.x+1, chara.y+1)) &&
-						(blockedByTerrain.lowerLeft || this.cohenSutherlandLineClipAndDraw(x0-0.5, y0+0.5, x1-0.5, y1+0.5, chara.x, chara.y, chara.x+1, chara.y+1)) &&
-						(blockedByTerrain.lowerRight || this.cohenSutherlandLineClipAndDraw(x0+0.5, y0+0.5, x1+0.5, y1+0.5, chara.x, chara.y, chara.x+1, chara.y+1))
+						blockedByTerrain.middle &&
+						blockedByTerrain.upperLeft &&
+						blockedByTerrain.upperRight &&
+						blockedByTerrain.lowerLeft &&
+						blockedByTerrain.lowerRight
 					) {
 						return true;
 					}

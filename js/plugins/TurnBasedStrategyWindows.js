@@ -4349,6 +4349,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 				var damage = hits[i].damage;
 				var heal = hits[i].heal;
 				var buffs = hits[i].buffs;
+				var focusAmount = hits[i].focus;
 				if(!damage && !heal && !buffs) {
 					this.drawText("-", nameOffset + 78, lineHeight, 100, 'right');
 					this.drawText("-", nameOffset + 124, lineHeight, 100, 'right');
@@ -4377,6 +4378,9 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 					if(heal) {
 						damageLineOffset += this.drawHeal(heal.stress*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("healStress")) ? 1 : 0;
 						damageLineOffset += this.drawHeal(heal.damage*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("healBody")) ? 1 : 0;
+					}
+					if(focusAmount) {
+						damageLineOffset += this.drawHeal(focusAmount*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("focus")) ? 1 : 0;
 					}
 					if(buffs) {
 						var j;
@@ -4513,6 +4517,8 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			case "healStress":     	return  80; break;
 			case "healBody":       	return  84; break;
 			case "healMind":       	return  72; break;
+			
+			case "focus":			return	72; break;
 			
 			case "self":           	return  75; break;
 			case "melee":          	return  97; break;
