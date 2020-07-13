@@ -1638,7 +1638,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					stressHealRoll.hits -= stressRoll.misses;
 					stressHealRoll.bonuses -= stressRoll.penalties;
 					
-					results.heal.stress += hitSupport.stress + stressHealRoll.hits;
+					results.heal.stress += Math.max(0, hitSupport.stress + stressHealRoll.hits);
 				}
 				if(hitSupport.damage !== undefined) {
 					var healRoll = this.rollSkillDice(dicePool.skill, dicePool.expert, dicePool.buff);
@@ -1648,7 +1648,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					healRoll.hits -= stressRoll.misses;
 					healRoll.bonuses -= stressRoll.penalties;
 					
-					var healing = hitSupport.damage + healRoll.hits;
+					var healing = Math.max(0, hitSupport.damage + healRoll.hits);
 					
 					results.heal.core += healing;
 					var tough = target.toughness();
@@ -1824,7 +1824,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					focusGainRoll.hits -= stressRoll.misses;
 					focusGainRoll.bonuses -= stressRoll.penalties;
 					
-					results.focus += hitSupport.focus + focusGainRoll.hits;
+					results.focus += Math.max(0, hitSupport.focus + focusGainRoll.hits);
 				}
 			}
 			if(hit.rollInitiative) {
