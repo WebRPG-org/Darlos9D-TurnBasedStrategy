@@ -1813,18 +1813,16 @@ Window_TbsAction.prototype.windowWidth = function() {
 	if(this._actionInfoGroups.length > 0) {
 		var longestLength = 0;
 		this._actionInfoGroups.forEach(function (actionInfoGroup) {
-			var thisLength = actionInfoGroup[actionInfoGroup.length-1].actionInfo.action.name.length;
-			var i;
-			for(i = 0; i < actionInfoGroup.length; i++) {
-				var actionInfo = actionInfoGroup[i].actionInfo;
+			actionInfoGroup.forEach(function (actionInfoGroupEntry) {
+				var actionInfo = actionInfoGroupEntry.actionInfo;
+				var thisLength = actionInfo.action.name.length;
 				if(actionInfo.action.stressCost !== undefined && actionInfo.action.stressCost > 0) {
 					thisLength += 3;
-					break;
 				}
-			}
-			if(longestLength < thisLength) {
-				longestLength = thisLength;
-			}
+				if(longestLength < thisLength) {
+					longestLength = thisLength;
+				}
+			});
 		});
 		return this.standardPadding() * 2 + longestLength * 14 + Window_Base._iconWidth + this.textPadding() * 3;
 	} else {
@@ -1920,20 +1918,23 @@ Window_TbsAction.prototype.updateActionLevelWindow = function(forceRecreate) {
 	var actionInfoGroup = this._actionInfoGroups[this.index()];
 	if (this._actionLevelWindow) {
 		if(forceRecreate || this._previousIndex != this.index()) {
-			var levelColors = [];
+			var levels = [];
 			var i;
 			for(i = 0; i < actionInfoGroup.length; i++) {
+				var level = {};
+				level.number = actionInfoGroup[i].actionInfo.action.actionGroupLevel;
 				if(!this.isActionEnabled(actionInfoGroup[i].actionInfo.action)) {
-					levelColors.push("gray");
+					level.color = "gray";
 				} else if(this._actionTextColor[actionInfoGroup[i].actionIndex] == this.deathColor()) {
-					levelColors.push("red");
+					level.color = "red";
 				} else if(this._actionTextColor[actionInfoGroup[i].actionIndex] == this.crisisColor()) {
-					levelColors.push("yellow");
+					level.color = "yellow";
 				} else {
-					levelColors.push("white");
+					level.color = "white";
 				}
+				levels.push(level);
 			}
-			this._actionLevelWindow.setLevels(levelColors);
+			this._actionLevelWindow.setLevels(levels);
 			this._actionLevelWindow.move(
 				this._actionLevelWindow.x,
 				this.y + this.index() * this.lineHeight(),
@@ -1974,7 +1975,7 @@ Window_TbsAction.prototype.updateSelectedAction = function() {
 		}
 	}
 	if (this._targetWindow) {
-		this._targetWindow.setActionIndex(this.index());
+		this._targetWindow.setActionIndex(actionIndex);
 		var action = actionInfo.action;
 		var allies = this._targetWindow.allies();
 		var enemies = this._targetWindow.enemies();
@@ -2006,6 +2007,7 @@ Window_TbsAction.prototype.update = function() {
 Window_TbsAction.prototype.makeItemList = function() {
 	this._actionInfoGroups = [];
 	this._actionTextColor = [];
+	var handledGroupNames = [];
 	if (this._tbsActor) {
 		var actionInfos = this._tbsActor.isParty ? $gameMap.getPartyActionInfos() : $gameMap.getEnemyActionInfos();
 		
@@ -2034,19 +2036,23 @@ Window_TbsAction.prototype.makeItemList = function() {
 				actionInfoGroupEntry.actionIndex = i;
 				actionInfoGroup.push(actionInfoGroupEntry);
 				this._actionInfoGroups[this._actionInfoGroups.length] = actionInfoGroup;
-			} else if(action.actionGroupLevel == 1) {
+			} else if(handledGroupNames.indexOf(action.actionGroupName) == -1) {
+				handledGroupNames.push(action.actionGroupName);
+				var handledLevels = [];
 				var actionInfoGroup = [];
 				var actionInfoGroupEntry = {};
 				actionInfoGroupEntry.actionInfo = actionInfos[i];
 				actionInfoGroupEntry.actionIndex = i;
 				actionInfoGroup.push(actionInfoGroupEntry);
+				handledLevels.push(action.actionGroupLevel);
 				var j;
 				for(j = 0; j < actionInfos.length; j++) {
 					var innerAction = actionInfos[j].action;
-					if(innerAction.actionGroupName === action.actionGroupName && innerAction.actionGroupLevel > 1) {
+					if(handledLevels.indexOf(innerAction.actionGroupLevel) >= 0) { continue; }
+					if(innerAction.actionGroupName === action.actionGroupName) {
 						var innerActionInfoGroupEntry = {};
 						innerActionInfoGroupEntry.actionInfo = actionInfos[j];
-						innerActionInfoGroupEntry.actionIndex = i;
+						innerActionInfoGroupEntry.actionIndex = j;
 						actionInfoGroup.push(innerActionInfoGroupEntry);
 					}
 				}
@@ -2086,8 +2092,7 @@ Window_TbsAction.prototype.drawItem = function(index) {
 	if (actionInfoGroup) {
 		var levelIndex = Math.max(0, this._actionLevelWindow && index == this.index() ? this._actionLevelWindow.index() : 0);
 		var action = actionInfoGroup[levelIndex].actionInfo.action;
-		var lowestAction = actionInfoGroup[actionInfoGroup.length-1].actionInfo.action;
-		var highestEnabledAction = lowestAction;
+		var highestEnabledAction = actionInfoGroup[actionInfoGroup.length-1].actionInfo.action;
 		var i;
 		for(i = 0; i < actionInfoGroup.length; i++) {
 			if(this.isActionEnabled(actionInfoGroup[i].actionInfo.action)) {
@@ -2100,6 +2105,7 @@ Window_TbsAction.prototype.drawItem = function(index) {
 		var iconBoxWidth = Window_Base._iconWidth;
 		this.resetTextColor();
 		
+		var name = index == this.index() ? action.name : highestEnabledAction.name;
 		var iconIndex = index == this.index() ? this.iconIndexForAction(action) : this.iconIndexForAction(highestEnabledAction);
 		var enabled = index == this.index() ? this.isActionEnabled(action) : this.isActionGroupEnabled(actionInfoGroup);
 		this.resetTextColor();
@@ -2108,7 +2114,7 @@ Window_TbsAction.prototype.drawItem = function(index) {
 			this.changeTextColor(this._actionTextColor[actionInfoGroup[levelIndex].actionIndex]);
 		}
 		this.drawIcon(iconIndex, this.textPadding(), this.lineHeight() * index + 2);
-		this.drawText(lowestAction.name, this.textPadding() * 2 + iconBoxWidth, this.lineHeight() * index);
+		this.drawText(name, this.textPadding() * 2 + iconBoxWidth, this.lineHeight() * index);
 		var stressCost = index == this.index() ? action.stressCost : highestEnabledAction.stressCost;
 		if(stressCost !== undefined && stressCost > 0) {
 			this.changeTextColor(this.crisisColor());
@@ -2125,7 +2131,7 @@ Window_TbsAction.prototype.selectFirstEnabledItem = function() {
 	var i;
 	for(i = 0; i < this.maxItems(); i++) {
 		var actionInfoGroup = this._actionInfoGroups[this.index()];
-		if(this.isActionGroupEnabled(actionInfoGroup) && this._actionTextColor[i] === this.normalColor()) {
+		if(this.isActionGroupEnabled(actionInfoGroup)) {
 			this.select(i);
 			selected = true;
 			break;
@@ -2265,12 +2271,12 @@ Window_TbsActionLevel.prototype = Object.create(Window_Selectable.prototype);
 Window_TbsActionLevel.prototype.constructor = Window_TbsAction;
 
 Window_TbsActionLevel.prototype.initialize = function() {
-	this._levelColors = [];
+	this._levels = [];
     Window_Selectable.prototype.initialize.call(this, 0, 0, this.windowWidth(), this.windowHeight());
 };
 
 Window_TbsActionLevel.prototype.windowWidth = function() {
-	var levelCount = this._levelColors.length;
+	var levelCount = this._levels.length;
 	var levelString = levelCount+"";
 	return this.standardPadding()*2 + this.spacing()*(levelCount-1) + (levelString.length*14+this.textPadding()*2)*levelCount;
 };
@@ -2284,7 +2290,7 @@ Window_TbsActionLevel.prototype.numVisibleRows = function() {
 };
 
 Window_TbsActionLevel.prototype.maxCols = function() {
-    return Math.max(1, this._levelColors.length);
+    return Math.max(1, this._levels.length);
 };
 
 Window_TbsActionLevel.prototype.maxItems = function() {
@@ -2296,26 +2302,26 @@ Window_TbsActionLevel.prototype.itemTextAlign = function() {
 };
 
 Window_TbsActionLevel.prototype.setLevels = function(levels) {
-	this._levelColors = levels;
+	this._levels = levels;
 	this.move(this.x, this.y, this.windowWidth(), this.windowHeight());
 	this.createContents();
 	this.refresh();
 };
 
 Window_TbsActionLevel.prototype.drawItem = function(index) {
+	if(index < 0 || index >= this._levels.length) { return; }
     this.resetTextColor();
 	this.changePaintOpacity(true);
-	if(this._levelColors[index] === 'yellow') {
+	if(this._levels[index].color === 'yellow') {
 		this.changeTextColor(this.crisisColor());
-	} else if(this._levelColors[index] === 'red') {
+	} else if(this._levels[index].color === 'red') {
 		this.changeTextColor(this.deathColor());
-	} else if(this._levelColors[index] === 'gray') {
+	} else if(this._levels[index].color === 'gray') {
 		this.changePaintOpacity(false);
 	}
-	var levelCount = this._levelColors.length;
-	var levelString = levelCount+"";
+	var levelString = this._levels[index].number+"";
     this.drawText(
-		(levelCount-index)+"",
+		levelString,
 		this.textPadding()+(levelString.length*14+this.textPadding()*2+this.spacing())*index,
 		0,
 		levelString.length*14,
@@ -4354,7 +4360,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 				var heal = hits[i].heal;
 				var buffs = hits[i].buffs;
 				var focusAmount = hits[i].focus;
-				if(!damage && !heal && !buffs) {
+				if(damage == undefined && heal == undefined && buffs == undefined && focusAmount == undefined) {
 					this.drawText("-", nameOffset + 78, lineHeight, 100, 'right');
 					this.drawText("-", nameOffset + 124, lineHeight, 100, 'right');
 				} else {
@@ -4362,7 +4368,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 					if(hits[i].multipleHits !== undefined) {
 						multipleHits = hits[i].multipleHits;
 					}
-					if(damage) {
+					if(damage !== undefined) {
 						var hitDamage = BattleManager.getCompleteDamage(actor, actionInfo, hits[i]);
 						
 						damageLineOffset += this.drawDamageForType(hitDamage.trip*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("trip"));
@@ -4379,14 +4385,14 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 						damageLineOffset += this.drawDamageForType(hitDamage.lightning*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("conducted"));
 						//damageLineOffset += this.drawDamage(hitDamage.psychic*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("psychic")) ? 1 : 0;
 					}
-					if(heal) {
+					if(heal !== undefined) {
 						damageLineOffset += this.drawHeal(heal.stress*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("healStress")) ? 1 : 0;
 						damageLineOffset += this.drawHeal(heal.damage*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("healBody")) ? 1 : 0;
 					}
-					if(focusAmount) {
+					if(focusAmount !== undefined) {
 						damageLineOffset += this.drawHeal(focusAmount*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("focus")) ? 1 : 0;
 					}
-					if(buffs) {
+					if(buffs !== undefined) {
 						var j;
 						for(j = 0; j < buffs.length; j++) {
 							var prot = buffs[j].protection;
@@ -4518,11 +4524,11 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			case "conducted":		return  66; break;
 			case "psychic":        	return  71; break;
 			
-			case "healStress":     	return  80; break;
-			case "healBody":       	return  84; break;
+			case "healStress":     	return  70; break;
+			case "healBody":       	return  72; break;
 			case "healMind":       	return  72; break;
 			
-			case "focus":			return	72; break;
+			case "focus":			return	80; break;
 			
 			case "self":           	return  75; break;
 			case "melee":          	return  97; break;
