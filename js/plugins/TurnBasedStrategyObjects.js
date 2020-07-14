@@ -277,8 +277,8 @@
 		$gameTemp.addTbsPartyMember(forceId, partyId, startingX, startingY);
 	};
 	
-	Game_System.prototype.addTbsEnemy = function(forceId, enemyId, startingX, startingY, label, labelType) {
-		$gameTemp.addTbsEnemy(forceId, enemyId, startingX, startingY, label, labelType);
+	Game_System.prototype.addTbsEnemy = function(forceId, enemyId, startingX, startingY, surprised, label, labelType) {
+		$gameTemp.addTbsEnemy(forceId, enemyId, startingX, startingY, surprised, label, labelType);
 	};
 	
 	Game_System.prototype.setTbsForceEnemyForce = function(forceId, enemyForceId) {

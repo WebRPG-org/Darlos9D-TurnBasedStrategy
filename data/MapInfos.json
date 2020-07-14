@@ -13,7 +13,7 @@ null,
 {"id":11,"expanded":false,"name":"Sewers","order":11,"parentId":8,"scrollX":1906.6666666666667,"scrollY":4425.333333333333},
 {"id":12,"expanded":false,"name":"BattleRoom","order":12,"parentId":8,"scrollX":4259.333333333333,"scrollY":4498},
 {"id":13,"expanded":true,"name":"Overworld","order":13,"parentId":0,"scrollX":4952,"scrollY":6642.666666666667},
-{"id":14,"expanded":false,"name":"Party Creation Room","order":14,"parentId":13,"scrollX":1081.3333333333333,"scrollY":1017.3333333333334},
-{"id":15,"expanded":true,"name":"Seaside Passage","order":15,"parentId":13,"scrollX":1448,"scrollY":1348},
-{"id":16,"expanded":false,"name":"Seaside Passage B1","order":16,"parentId":15,"scrollX":1081.3333333333333,"scrollY":1004}
+{"id":14,"expanded":false,"name":"Party Creation Room","order":14,"parentId":13,"scrollX":1081.3333333333333,"scrollY":624},
+{"id":15,"expanded":true,"name":"Seaside Passage","order":15,"parentId":13,"scrollX":2687.1111111111113,"scrollY":719.1111111111111},
+{"id":16,"expanded":false,"name":"Seaside Passage B1","order":16,"parentId":15,"scrollX":2076.4444444444443,"scrollY":2448.8888888888887}
 ]
