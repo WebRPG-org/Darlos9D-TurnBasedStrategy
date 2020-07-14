@@ -1895,6 +1895,8 @@
 				this.clearTbsActionMoveDestination();
 				this.clearTbsActionTargetPart();
 				this.setBreadcrumbStage("none");
+				this._tbsForces = [];
+				this._tbsOrderedForces = [];
 				SceneManager.goto(Scene_Gameover);
 				break;
 			default:
@@ -3170,6 +3172,7 @@
 		});
 		if(nobodyMoved) {
 			this._tbsForces = [];
+			this._tbsOrderedForces = [];
 			this._tbsLeadCharacter = undefined;
 			$gamePlayer.setDirection(2);
 			$gamePlayer.followers().forEach(function (follower) {
