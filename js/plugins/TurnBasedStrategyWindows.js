@@ -48,8 +48,9 @@ Window_ConcurrentWindow.prototype.initialize = function() {
 Window_ConcurrentWindow.prototype.windowWidth = function() {
 	var textLength = 0;
 	this._text.forEach(function (textRow) {
-		textLength = textRow.length > textLength ? textRow.length : textLength;
-	});
+		var textRowLength = this.getTextRowLength(textRow);
+		textLength = textRowLength > textLength ? textRowLength : textLength;
+	}, this);
 	return textLength*14 + this.standardPadding()*2 + this.textPadding()*2;
 };
 
@@ -75,7 +76,7 @@ Window_ConcurrentWindow.prototype.setupAndShow = function(
 	this._textLength = 0;
 	this._soundTimer = 0;
 	text.forEach(function (textRow) {
-		this._textLength += textRow.length;
+		this._textLength += this.getTextRowLength(textRow);
 	}, this);
 	
 	this._curTextLength = type !== "message" ? this._textLength : 0;
@@ -126,16 +127,120 @@ Window_ConcurrentWindow.prototype.drawCurrentText = function() {
 	var charactersDrawn = 0;
 	var i;
 	for(i = 0; i < this._text.length; i++) {
-		var textRow = this._text[i];
-		if(charactersDrawn + textRow.length > this._curTextLength) {
-			textRow = textRow.slice(0, this._curTextLength - charactersDrawn);
+		var limitReached = false;
+		var textRowSegments = this.getTextRowSegments(this._text[i]);
+		var segmentPosition = 0;
+		for(j = 0; j < textRowSegments.length; j++) {
+			var textRowSegment = textRowSegments[j];
+			if(textRowSegment.type === "string") {
+				var segmentText = textRowSegment.value;
+				if(charactersDrawn + segmentPosition + segmentText.length > this._curTextLength) {
+					segmentText = segmentText.slice(0, this._curTextLength - (charactersDrawn + segmentPosition));
+					limitReached = true;
+				}
+				this.drawText(segmentText, this.textPadding()+segmentPosition*14, this.lineHeight()*i, segmentText.length*14);
+				segmentPosition += segmentText.length;
+				if(limitReached) { break; }
+			} else if(textRowSegment.type === "icon") {
+				if(charactersDrawn + segmentPosition + 3 > this._curTextLength) {
+					limitReached = true;
+					break;
+				}
+				this.drawIcon(
+					textRowSegment.value,
+					this.textPadding() + segmentPosition * 14 + Math.floor((14 * 3 - Window_Base._iconWidth) / 2),
+					this.lineHeight()*i
+				);
+				segmentPosition += 3;
+			}
 		}
-		this.drawText(textRow, this.textPadding(), this.lineHeight()*i, textRow.length*14);
-		if(charactersDrawn + textRow.length > this._curTextLength) {
-			break;
-		}
-		charactersDrawn += textRow.length;
+		if(limitReached) { break; }
+		charactersDrawn += segmentPosition;
 	}
+};
+
+Window_ConcurrentWindow.prototype.getTextRowLength = function(textRow) {
+	var rowLength = 0;
+	for(let i = 0; i < textRow.length; i++) {
+		rowLength++;
+		if(
+			textRow[i] === "\\" &&
+			i+1 < textRow.length &&
+			textRow[i+1] === "I" &&
+			i+2 < textRow.length &&
+			textRow[i+2] >= '0' &&textRow[i+2] <= '9'
+		) {
+			rowLength += 2;
+			i = i+2;
+			var endOfControlFound = false;
+			for(let j = i+1; j < textRow.length; j++) {
+				if(textRow[j] >= '0' &&textRow[j] <= '9') {
+					continue;
+				}
+				i = j-1;
+				endOfControlFound = true;
+				break;
+			}
+			if(!endOfControlFound) {
+				break;
+			}
+		}
+	}
+	return rowLength;
+};
+
+Window_ConcurrentWindow.prototype.getTextRowSegments = function(textRow) {
+	var textRowSegments = [];
+	var stringSegment = "";
+	for(let i = 0; i < textRow.length; i++) {
+		if(
+			textRow[i] === "\\" &&
+			i+1 < textRow.length &&
+			textRow[i+1] === "I" &&
+			i+2 < textRow.length &&
+			textRow[i+2] >= '0' &&textRow[i+2] <= '9'
+		) {
+			if(stringSegment.length > 0) {
+				var stringSegmentObject = {};
+				stringSegmentObject.type = "string";
+				stringSegmentObject.value = stringSegment;
+				textRowSegments.push(stringSegmentObject);
+				stringSegment = "";
+			}
+			var iconSegment = textRow[i+2]+"";
+			i = i+2;
+			var endOfControlFound = false;
+			for(let j = i+1; j < textRow.length; j++) {
+				if(textRow[j] >= '0' &&textRow[j] <= '9') {
+					iconSegment += textRow[j];
+					continue;
+				}
+				var iconSegmentObject = {};
+				iconSegmentObject.type = "icon";
+				iconSegmentObject.value = parseInt(iconSegment);
+				textRowSegments.push(iconSegmentObject); 
+				i = j-1;
+				endOfControlFound = true;
+				break;
+			}
+			if(!endOfControlFound) {
+				var iconSegmentObject = {};
+				iconSegmentObject.type = "icon";
+				iconSegmentObject.value = parseInt(iconSegment);
+				textRowSegments.push(iconSegmentObject); 
+				break;
+			}
+		} else {
+			stringSegment += textRow[i];
+		}
+	}
+	if(stringSegment.length > 0) {
+		var stringSegmentObject = {};
+		stringSegmentObject.type = "string";
+		stringSegmentObject.value = stringSegment;
+		textRowSegments.push(stringSegmentObject);
+	}
+	return textRowSegments;
 };
 
 Window_ConcurrentWindow.prototype.absoluteReposition = function() {
