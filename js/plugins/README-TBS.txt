@@ -198,6 +198,7 @@ Action
 	"type": "attack"/"item"/"technique",
 	"intendedTarget": "enemy"/"ally",
 	"skipBattleScene": true/false,
+        "minorAction": true/false,
 	"stressCost": (integer),
 	"description": (string),
 	"consumesItem": true/false,
