@@ -1397,7 +1397,8 @@
 	Game_BattlerBase.prototype.isHitValid = function(hit) {
 		if(!hit.heal || hit.heal.damage === undefined || hit.heal.damage <= 0) { return false; }
 			
-		return this.getDamage("head") > 0 ||
+		return this.getDamage("core") > 0 ||
+			this.getDamage("head") > 0 ||
 			this.getDamage("torso") > 0 ||
 			this.getDamage("leftArm") > 0 ||
 			this.getDamage("rightArm") > 0 ||
@@ -1414,19 +1415,19 @@
 		var partHealing = hit.heal.damage;
 		if(partHealing > 0) {
 			var partDamage = this.getDamage("head");
-			this.adjustDamage("head", partHealing > this.getDamage("head") ? this.getDamage("head") : partHealing);
+			this.adjustDamage("head", partHealing > this.getDamage("head") ? -this.getDamage("head") : -partHealing);
 			partHealing -= partDamage;
 		}
 		if(partHealing > 0) {
 			var partDamage = this.getDamage("torso");
-			this.adjustDamage("torso", partHealing > this.getDamage("torso") ? this.getDamage("torso") : partHealing);
+			this.adjustDamage("torso", partHealing > this.getDamage("torso") ? -this.getDamage("torso") : -partHealing);
 			partHealing -= partDamage;
 		}
 		var limbLoops = 0;
 		var leg = Math.random() >= 0.5 ? "leftLeg" : "rightLeg";
 		while(partHealing > 0 && limbLoops < 2) {
 			var partDamage = this.getDamage(leg);
-			this.adjustDamage(leg, partHealing > this.getDamage(leg) ? this.getDamage(leg) : partHealing);
+			this.adjustDamage(leg, partHealing > this.getDamage(leg) ? -this.getDamage(leg) : -partHealing);
 			partHealing -= partDamage;
 			leg = leg === "leftLeg" ? "rightLeg" : "leftLeg";
 			limbLoops++;
@@ -1435,7 +1436,7 @@
 		var arm = Math.random() >= 0.5 ? "leftArm" : "rightArm";
 		while(partHealing > 0 && limbLoops < 2) {
 			var partDamage = this.getDamage(arm);
-			this.adjustDamage(arm, partHealing > this.getDamage(arm) ? this.getDamage(arm) : partHealing);
+			this.adjustDamage(arm, partHealing > this.getDamage(arm) ? -this.getDamage(arm) : -partHealing);
 			partHealing -= partDamage;
 			arm = arm === "leftArm" ? "rightArm" : "leftArm";
 			limbLoops++;
