@@ -63,6 +63,7 @@
 		actor.id = partyId;
 		actor.startingX = startingX;
 		actor.startingY = startingY;
+		actor.patient = false;
 		actor.surprised = surprised;
 		actor.label = label;
 		actor.labelType = labelType;
@@ -70,7 +71,7 @@
 		this._pendingTbsForces[forceId].actors.push(actor);
 	};
 	
-	Game_Temp.prototype.addTbsEnemy = function(forceId, enemyId, startingX, startingY, surprised, label, labelType) {
+	Game_Temp.prototype.addTbsEnemy = function(forceId, enemyId, startingX, startingY, patient, surprised, label, labelType) {
 		this.makeSureForceExists(forceId, false);
 		
 		if(this._pendingTbsForces[forceId].isParty) { return; }
@@ -83,6 +84,7 @@
 		actor.id = enemyId;
 		actor.startingX = startingX;
 		actor.startingY = startingY;
+		actor.patient = patient;
 		actor.surprised = surprised;
 		actor.label = label;
 		actor.labelType = labelType;
@@ -277,8 +279,8 @@
 		$gameTemp.addTbsPartyMember(forceId, partyId, startingX, startingY);
 	};
 	
-	Game_System.prototype.addTbsEnemy = function(forceId, enemyId, startingX, startingY, surprised, label, labelType) {
-		$gameTemp.addTbsEnemy(forceId, enemyId, startingX, startingY, surprised, label, labelType);
+	Game_System.prototype.addTbsEnemy = function(forceId, enemyId, startingX, startingY, patient, surprised, label, labelType) {
+		$gameTemp.addTbsEnemy(forceId, enemyId, startingX, startingY, patient, surprised, label, labelType);
 	};
 	
 	Game_System.prototype.setTbsForceEnemyForce = function(forceId, enemyForceId) {
@@ -998,6 +1000,7 @@
 			var actor = {};
 			actor.startingX = pendingActor.startingX;
 			actor.startingY = pendingActor.startingY;
+			actor.patient = pendingActor.patient;
 			actor.forceId = forceId;
 			actor.isParty = force.isParty;
 			actor.orderNum = index;
@@ -2574,6 +2577,15 @@
 			this.setTbsActionTargetPart("vital");
 			
 			if(finalTarget === this._tbsSelectedActor) {
+				if(this._tbsSelectedActor.patient) {
+					for(let m = 0; m < actionsWithTargets.length; m++) {
+						if(actionsWithTargets[m].targets.length > 1 || actionsWithTargets[m].targets[0] !== this._tbsSelectedActor) {
+							break;
+						}
+						return;
+					}
+				}
+			
 				var enemies = [];
 				var curForce = this.currentForce();
 				for(i = 0; i < this._tbsForces.length; i++) {
