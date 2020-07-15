@@ -363,19 +363,19 @@
 						this._tbsTargetNameWindow.close();
 						var selectedTarget = $gameMap.getTbsActorAtPosition($gamePlayer.x, $gamePlayer.y);
 						var actionInfo = $gameMap.getTbsSelectedActionInfo();
-						if(selectedTarget && (actionInfo.canTargetBodyPart || (actionInfo.canTargetDownedBodyPart && selectedTarget.battler.isDown()))) {
-							this._tbsTargetPartWindow.refreshWindowContents();
-							this._tbsTargetPartWindow.show();
-							this._tbsTargetPartWindow.open();
-							this._tbsTargetPartWindow.activate();
-							this._tbsTargetPartFromManualTarget = true;
-							$gameMap.setTbsTurnMode("selectTargetPart");
-							$gameMap.setBreadcrumbStage("target");
-						} else {
+						//if(selectedTarget && (actionInfo.canTargetBodyPart || (actionInfo.canTargetDownedBodyPart && selectedTarget.battler.isDown()))) {
+						//	this._tbsTargetPartWindow.refreshWindowContents();
+						//	this._tbsTargetPartWindow.show();
+						//	this._tbsTargetPartWindow.open();
+						//	this._tbsTargetPartWindow.activate();
+						//	this._tbsTargetPartFromManualTarget = true;
+						//	$gameMap.setTbsTurnMode("selectTargetPart");
+						//	$gameMap.setBreadcrumbStage("target");
+						//} else {
 							this._tbsActorStatusWindow.setTbsActor(undefined);
 							this._tbsActorStatusWindow.close();
 							$gameMap.setTbsTurnMode("executeAction");
-						}
+						//}
 					}
 				}
 			} else if(this.isCancellingWhileControllingCursor()) {

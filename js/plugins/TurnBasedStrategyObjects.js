@@ -1070,10 +1070,10 @@
 		actor.battler.setRoundBuffs(0);
 		if(actor.canActThisRound) {
 			var perception = actor.battler.totalSkill("perception");
-			var reflex = actor.battler.reflexSkill();
+			var defense = actor.battler.defenseSkill();
 			var stress = actor.battler.stress();
-			var skillDice = perception > reflex ? perception - reflex : reflex - perception;
-			var expertDice = perception > reflex ? reflex : perception;
+			var skillDice = perception > defense ? perception - defense : defense - perception;
+			var expertDice = perception > defense ? defense : perception;
 			var buffDice = roundBuffs;
 			var debuffDice = stress;
 			var initiativeRoll = BattleManager.rollSkillDice(skillDice, expertDice, buffDice);
@@ -2510,12 +2510,7 @@
 					actionsByPriority[priority].push(actionByPriority);
 				}
 				
-				for(i = highestPriority; i >= 0; i--) {
-					var thisPrioritysActions = actionsByPriority[i];
-					if(!thisPrioritysActions) { continue; }
-					this.selectEnemyActionAndTarget(thisPrioritysActions);
-					if(this._tbsSelectedAction) { break; }
-				}
+				this.selectEnemyActionAndTarget(actionsByPriority, highestPriority);
 				
 				if(this._tbsSelectedAction) {
 					
@@ -2537,35 +2532,43 @@
 		}
 	};
 	
-	Game_Map.prototype.selectEnemyActionAndTarget = function(actionsWithIndicies) {
-		if(!actionsWithIndicies || actionsWithIndicies.length === 0) {
-			return ;
-		}
-		var actionsWithTargets = [];
-		var i;
-		for(i = 0; i < actionsWithIndicies.length; i++) {
-			var actionWithIndex = actionsWithIndicies[i];
-			var actionInfo = actionWithIndex.actionInfo;
-			var action = actionInfo.action;
-			var actionIndex = actionWithIndex.index;
-			var targets = [];
-			var alliesAndEnemies = this.getCurrentActorAlliesAndEnemiesInRange(actionIndex);
-			if(action.intendedTarget === "ally") {
-				targets = alliesAndEnemies.allies;
-			} else if(action.intendedTarget === "enemy") {
-				targets = alliesAndEnemies.enemies.filter(function (enemy) { return !enemy.battler.isDown(); });
+	Game_Map.prototype.selectEnemyActionAndTarget = function(actionsByPriority, highestPriority) {
+		var actionsWithTargetsByPriority = [];
+		for(let i = highestPriority; i >= 0; i--) {
+			var actionsWithIndicies = actionsByPriority[i];
+			if(!actionsWithIndicies) { continue; }
+			var actionsWithTargets = [];
+			for(let j = 0; j < actionsWithIndicies.length; j++) {
+				var actionWithIndex = actionsWithIndicies[j];
+				var actionInfo = actionWithIndex.actionInfo;
+				var action = actionInfo.action;
+				var actionIndex = actionWithIndex.index;
+				var targets = [];
+				var alliesAndEnemies = this.getCurrentActorAlliesAndEnemiesInRange(actionIndex);
+				if(action.intendedTarget === "ally") {
+					targets = alliesAndEnemies.allies;
+				} else if(action.intendedTarget === "enemy") {
+					targets = alliesAndEnemies.enemies.filter(function (enemy) { return !enemy.battler.isDown(); });
+				}
+				if(targets.length > 0) {
+					var actionWithTargets = {};
+					actionWithTargets.actionInfo = actionInfo;
+					actionWithTargets.targets = targets;
+					actionWithTargets.index = actionIndex;
+					actionWithTargets.selfTargetMoveType = actionWithIndex.selfTargetMoveType;
+					actionsWithTargets.push(actionWithTargets);
+				}
 			}
-			if(targets.length > 0) {
-				var actionWithTargets = {};
-				actionWithTargets.actionInfo = actionInfo;
-				actionWithTargets.targets = targets;
-				actionWithTargets.index = actionIndex;
-				actionWithTargets.selfTargetMoveType = actionWithIndex.selfTargetMoveType;
-				actionsWithTargets.push(actionWithTargets);
+			actionsWithTargetsByPriority[i] = actionsWithTargets;
+			if(actionsWithTargets.length > 0 && !this._tbsSelectedActor.patient) {
+				break;
 			}
 		}
 		
-		if(actionsWithTargets.length > 0) {
+		for(let i = highestPriority; i >= 0; i--) {
+			var actionsWithTargets = actionsWithTargetsByPriority[i];
+			if(!actionsWithTargets || actionsWithTargets.length == 0) { continue; }
+			
 			var randomActionIndex = this.getRandomInt(actionsWithTargets.length);
 			var actionWithTargets = actionsWithTargets[randomActionIndex];
 			this.setTbsSelectedAction(actionWithTargets.actionInfo, actionWithTargets.index);
@@ -2578,19 +2581,27 @@
 			
 			if(finalTarget === this._tbsSelectedActor) {
 				if(this._tbsSelectedActor.patient) {
-					for(let m = 0; m < actionsWithTargets.length; m++) {
-						if(actionsWithTargets[m].targets.length > 1 || actionsWithTargets[m].targets[0] !== this._tbsSelectedActor) {
+					for(let j = 0; j <= i; j++) {
+						if(!actionsWithTargetsByPriority[j] || actionsWithTargetsByPriority.length[j] == 0) { continue; }
+						var actionWithOtherTargetsFound = false;
+						for(let k = 0; k < actionsWithTargetsByPriority[j].length; k++) {
+							if(actionsWithTargetsByPriority[j][k].targets.length > 1 || actionsWithTargetsByPriority[j][k].targets[0] !== this._tbsSelectedActor) {
+								actionWithOtherTargetsFound = true;
+								break;
+							}
+							return;
+						}
+						if(actionWithOtherTargetsFound) {
 							break;
 						}
-						return;
 					}
 				}
 			
 				var enemies = [];
 				var curForce = this.currentForce();
-				for(i = 0; i < this._tbsForces.length; i++) {
-					if(curForce.enemyForceIds.indexOf(i) >= 0) {
-						enemies = enemies.concat(this._tbsForces[i].actors);
+				for(let j = 0; j < this._tbsForces.length; j++) {
+					if(curForce.enemyForceIds.indexOf(j) >= 0) {
+						enemies = enemies.concat(this._tbsForces[j].actors);
 					}
 				}
 				var chara = this._tbsSelectedActor.chara;
@@ -2683,6 +2694,7 @@
 					}
 				}
 			}
+			break;
 		}
 	};
 	
