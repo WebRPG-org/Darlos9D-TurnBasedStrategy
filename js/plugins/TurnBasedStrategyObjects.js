@@ -1181,7 +1181,7 @@
 			}
 			if((this._displayX !== focusX || this._displayY !== focusY)
 				&& this._cameraFocusDirection === undefined) {
-				this._cameraFocusDirection = this.findDirection(this._displayX, this._displayY, focusX, focusY);
+				this._cameraFocusDirection = this.findDirection(this._displayX, this._displayY, focusX, focusY, "camera");
 			}
 			if(this._cameraFocusDirection !== undefined) {
 				this.doScroll(this._cameraFocusDirection, this.scrollDistance());
@@ -1304,9 +1304,9 @@
 		}
 	};
 	
-	Game_Map.prototype.findDirection = function(startX, startY, goalX, goalY) {
+	Game_Map.prototype.findDirection = function(startX, startY, goalX, goalY, passageType) {
 		var searchLimit = this.searchLimit();
-		var mapWidth = $gameMap.width();
+		var mapWidth = this.width();
 		var nodeList = [];
 		var openList = [];
 		var closedList = [];
@@ -1321,7 +1321,7 @@
 		start.x = startX;
 		start.y = startY;
 		start.g = 0;
-		start.f = $gameMap.distance(start.x, start.y, goalX, goalY);
+		start.f = this.distance(start.x, start.y, goalX, goalY);
 		nodeList.push(start);
 		openList.push(start.y * mapWidth + start.x);
 
@@ -1355,11 +1355,14 @@
 
 			for (var j = 0; j < 4; j++) {
 				var direction = 2 + j * 2;
-				var x2 = $gameMap.roundXWithDirection(x1, direction);
-				var y2 = $gameMap.roundYWithDirection(y1, direction);
+				var x2 = this.roundXWithDirection(x1, direction);
+				var y2 = this.roundYWithDirection(y1, direction);
 				var pos2 = y2 * mapWidth + x2;
 
 				if (closedList.contains(pos2)) {
+					continue;
+				}
+				if (passageType !== "camera" && !this.canPass(x1, y1, direction, passageType)) {
 					continue;
 				}
 
@@ -1379,7 +1382,7 @@
 					neighbor.x = x2;
 					neighbor.y = y2;
 					neighbor.g = g2;
-					neighbor.f = g2 + $gameMap.distance(x2, y2, goalX, goalY);
+					neighbor.f = g2 + this.distance(x2, y2, goalX, goalY);
 					if (!best || neighbor.f - neighbor.g < best.f - best.g) {
 						best = neighbor;
 					}
@@ -1392,8 +1395,8 @@
 			node = node.parent;
 		}
 
-		var deltaX1 = $gameMap.deltaX(node.x, start.x);
-		var deltaY1 = $gameMap.deltaY(node.y, start.y);
+		var deltaX1 = this.deltaX(node.x, start.x);
+		var deltaY1 = this.deltaY(node.y, start.y);
 		if (deltaY1 > 0) {
 			return 2;
 		} else if (deltaX1 < 0) {
@@ -1404,8 +1407,8 @@
 			return 8;
 		}
 
-		var deltaX2 = this.deltaX(start.x, goalX);
-		var deltaY2 = this.deltaY(start.y, goalY);
+		var deltaX2 = this.deltaX(startX, goalX);
+		var deltaY2 = this.deltaY(startY, goalY);
 		if (Math.abs(deltaX2) > Math.abs(deltaY2)) {
 			return deltaX2 > 0 ? 4 : 6;
 		} else if (deltaY2 !== 0) {
@@ -1415,8 +1418,49 @@
 		return 0;
 	};
 	
+	Game_Map.prototype.canPass = function(x, y, d, passageType) {
+		var x2 = this.roundXWithDirection(x, d);
+		var y2 = this.roundYWithDirection(y, d);
+		if (!this.isValid(x2, y2)) {
+			return false;
+		}
+		if (!this.isMapPassable(x, y, d, passageType)) {
+			return false;
+		}
+		if (this.isCollidedWithCharacters(x2, y2)) {
+			return false;
+		}
+		return true;
+	};
+	
+	Game_Map.prototype.isMapPassable = function(x, y, d, passageType) {
+		var x2 = this.roundXWithDirection(x, d);
+		var y2 = this.roundYWithDirection(y, d);
+		var d2 = this.reverseDir(d);
+		return this.isPassable(x, y, d, passageType) && this.isPassable(x2, y2, d2, passageType);
+	};
+	
+	Game_Map.prototype.reverseDir = function(d) {
+		return 10 - d;
+	};
+	
+	Game_Map.prototype.isCollidedWithCharacters = function(x, y) {
+		return this.isCollidedWithEvents(x, y) || this.isCollidedWithVehicles(x, y);
+	};
+
+	Game_Map.prototype.isCollidedWithEvents = function(x, y) {
+		var events = this.eventsXyNt(x, y);
+		return events.some(function(event) {
+			return event.isNormalPriority();
+		});
+	};
+
+	Game_Map.prototype.isCollidedWithVehicles = function(x, y) {
+		return this.boat().posNt(x, y) || this.ship().posNt(x, y);
+	};
+	
 	Game_Map.prototype.searchLimit = function() {
-		return 12;
+		return 50;
 	};
 	
 	Game_Map.prototype.setTbsSelectedActor = function(tbsActor) {
@@ -2677,25 +2721,48 @@
 						}
 					},this);
 					if(closestEnemy) {
-						var closestTile = undefined;
-						shortesetDistance = -1;
-						this._tbsMoveTiles.forEach(function (tile) {
-							if(!this.getTbsActorAtPosition(tile.x, tile.y)) {
-								var distanceTwo = this.actualDistance(tile.x, tile.y, closestEnemy.chara.x, closestEnemy.chara.y);
-								if(shortesetDistance == -1 || shortesetDistance > distanceTwo) {
-									shortesetDistance = distanceTwo;
-									closestTile = tile;
-								}
-							}
-						},this);
-						if(closestTile) {
-							this.setTbsActionTargetLocation(closestTile.x, closestTile.y);
+						var moveTile = this.getClosestMoveTileToTarget(chara.x, chara.y, closestEnemy.chara.x, closestEnemy.chara.y, this._tbsSelectedActor.battler.isFlying() ? "fly" : undefined);
+						if(moveTile) {
+							this.setTbsActionTargetLocation(moveTile.x, moveTile.y);
 						}
 					}
 				}
 			}
 			break;
 		}
+	};
+	
+	Game_Map.prototype.getClosestMoveTileToTarget = function(startX, startY, targetX, targetY, passageType) {
+		var curCheckX = startX;
+		var curCheckY = startY;
+		
+		while(true) {
+			var direction = this.findDirection(curCheckX, curCheckY, targetX, targetY, passageType);
+			if(direction == 0) {
+				if(curCheckX == startX && curCheckY == startY) {
+					return undefined;
+				}
+				return this.getExistingTbsTile(curCheckX, curCheckY, this._tbsMoveTiles);
+			}
+			var newCheckX = curCheckX;
+			var newCheckY = curCheckY;
+			if(direction <= 3) {
+				newCheckY++;
+			} else if(direction >= 7) {
+				newCheckY--;
+			}
+			if((direction - 1) % 3 == 0) {
+				newCheckX--;
+			} else if(direction % 3 == 0) {
+				newCheckX++;
+			}
+			if((newCheckX == targetX && newCheckY == targetY) || !this.getExistingTbsTile(newCheckX, newCheckY, this._tbsMoveTiles)) {
+				return this.getExistingTbsTile(curCheckX, curCheckY, this._tbsMoveTiles);
+			}
+			curCheckX = newCheckX;
+			curCheckY = newCheckY;
+		}
+		return undefined;
 	};
 	
 	Game_Map.prototype.updateTbsMovementRangeField = function() {
