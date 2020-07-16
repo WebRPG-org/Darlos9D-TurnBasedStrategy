@@ -1090,7 +1090,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 							hitResult.targetStress = 1;
 							hitResult[this._tbsTargetPart] = this.calculateSinglePartHit(hitResult, dicePool, parryable, this._tbsTargetPart === "head");
 						} else {
-							var targetingMobility = this._tbsTargetPart === "mobility";
+							var targetingMobility = hit.targetMobility;
 							var defendingWithLegs = target.limbsType() === "winged" && target.isFlying();
 							var leftDefendingLimbProt = defendingWithLegs ? targetLeftLegProt : targetLeftArmProt;
 							var rightDefendingLimbProt = defendingWithLegs ? targetRightLegProt : targetRightArmProt;

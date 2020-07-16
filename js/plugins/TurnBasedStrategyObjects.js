@@ -2618,9 +2618,6 @@
 			var finalTarget = actionWithTargets.targets[randomTargetIndex];
 			this.setTbsActionTargetLocation(finalTarget.chara.x, finalTarget.chara.y);
 			
-			//TODO: set this to mobility for attacks designed to target mobility
-			this.setTbsActionTargetPart("vital");
-			
 			if(finalTarget === this._tbsSelectedActor) {
 				if(this._tbsSelectedActor.patient) {
 					for(let j = 0; j <= i; j++) {

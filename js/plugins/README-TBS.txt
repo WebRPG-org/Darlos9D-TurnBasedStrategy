@@ -241,6 +241,7 @@ Action
 			"aoeType": "engulf"/"regularHit",
 			"arcedTrajectory": true/false,
 			"randomTarget": true/false,
+                        "targetMobility": true/false,
 			"ignoreCenter": true/false,
 			"ignoreUserRange": true/false,
                         "evasionPenalty": (integer),
