@@ -15,5 +15,5 @@ null,
 {"id":13,"expanded":true,"name":"Overworld","order":13,"parentId":0,"scrollX":4952,"scrollY":6642.666666666667},
 {"id":14,"expanded":false,"name":"Party Creation Room","order":14,"parentId":13,"scrollX":1081.3333333333333,"scrollY":741.3333333333334},
 {"id":15,"expanded":true,"name":"Seaside Passage","order":15,"parentId":13,"scrollX":3718.6666666666665,"scrollY":1713.3333333333333},
-{"id":16,"expanded":false,"name":"Seaside Passage B1","order":16,"parentId":15,"scrollX":2194.6666666666665,"scrollY":2298.6666666666665}
+{"id":16,"expanded":false,"name":"Seaside Passage B1","order":16,"parentId":15,"scrollX":2184,"scrollY":2288}
 ]

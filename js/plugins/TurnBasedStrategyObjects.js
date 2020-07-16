@@ -3664,7 +3664,7 @@
 	};
 	
 	Game_Map.prototype.isTrajectoryObstructed = function(startX, startY, endX, endY, passageType, arcedTrajectory) {
-		var d = 5;
+		var d = 0;
 		if(endX > startX) {
 			if(endY > startY) {
 				d = 3;
@@ -3689,7 +3689,7 @@
 			}
 		}
 		
-		if(d == 5) { return false; }
+		if(d == 0) { return false; }
 		
 		var x0 = startX + 0.5;
 		var y0 = startY + 0.5;
@@ -3704,9 +3704,18 @@
 		blockedByTerrain.lowerRight = false;
 		var tileRuns = this._tileRuns;
 		for(i = 0; i < tileRuns.length; i++) {
-			this._queuedActionLoops++;
 			var firstTile = tileRuns[i][0];
 			var lastTile = tileRuns[i][tileRuns[i].length-1];
+			
+			if(
+				((d == 4 || d == 7 || d == 8 || d == 9 || d == 6) & (firstTile.y > startY || lastTile.y < endY)) ||
+				((d == 8 || d == 9 || d == 6 || d == 3 || d == 2) & (lastTile.x < startX || firstTile.x > endX)) ||
+				((d == 6 || d == 3 || d == 2 || d == 1 || d == 4) & (lastTile.y < startY || firstTile.y > endY)) ||
+				((d == 2 || d == 1 || d == 4 || d == 7 || d == 8) & (firstTile.x > startX || lastTile.x < endX))
+			) {
+				this._queuedActionLoops++; continue;
+			}
+			
 			var startAtEdge = false;
 			var endAtEdge = false;
 			if(d == 1) {
@@ -3770,23 +3779,23 @@
 			if(startAtEdge && endAtEdge) {
 				//technically the start and end tiles would have to be one in the same, here
 			} else if(startAtEdge) {
-				if(firstTile.exitability[d][passageType]) { continue; }
+				if(firstTile.exitability[d][passageType]) { this._queuedActionLoops++; continue; }
 			} else if(endAtEdge) {
-				if(firstTile.enterability[d][passageType]) { continue; }
+				if(firstTile.enterability[d][passageType]) { this._queuedActionLoops++; continue; }
 			} else {
-				if(firstTile.exitability[d][passageType] && firstTile.enterability[d][passageType]) { continue; }
+				if(firstTile.exitability[d][passageType] && firstTile.enterability[d][passageType]) { this._queuedActionLoops++; continue; }
 			}
 			
 			blockedByTerrain.middle = blockedByTerrain.middle ? true :
 				this.cohenSutherlandLineClipAndDraw(x0, y0, x1, y1, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1);
 			blockedByTerrain.upperLeft = passageType == "walk" || passageType == "fly" || blockedByTerrain.upperLeft ? true :
-				this.cohenSutherlandLineClipAndDraw(x0-0.49, y0-0.49, x1-0.49, y1-0.49, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1);
+				this.cohenSutherlandLineClipAndDraw(x0-0.5, y0-0.5, x1-0.5, y1-0.5, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1);
 			blockedByTerrain.upperRight = passageType == "walk" || passageType == "fly" || blockedByTerrain.upperRight ? true :
-				this.cohenSutherlandLineClipAndDraw(x0+0.49, y0-0.49, x1+0.49, y1-0.49, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1);
+				this.cohenSutherlandLineClipAndDraw(x0+0.5, y0-0.5, x1+0.5, y1-0.5, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1);
 			blockedByTerrain.lowerLeft = passageType == "walk" || passageType == "fly" || blockedByTerrain.lowerLeft ? true :
-				this.cohenSutherlandLineClipAndDraw(x0-0.49, y0+0.49, x1-0.49, y1+0.49, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1);
+				this.cohenSutherlandLineClipAndDraw(x0-0.5, y0+0.5, x1-0.5, y1+0.5, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1);
 			blockedByTerrain.lowerRight = passageType == "walk" || passageType == "fly" || blockedByTerrain.lowerRight ? true :
-				this.cohenSutherlandLineClipAndDraw(x0+0.49, y0+0.49, x1+0.49, y1+0.49, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1);
+				this.cohenSutherlandLineClipAndDraw(x0+0.5, y0+0.5, x1+0.5, y1+0.5, firstTile.x, firstTile.y, lastTile.x+1, lastTile.y+1);
 			
 			if(
 				blockedByTerrain.middle &&
@@ -3810,6 +3819,14 @@
 			for(i = 0; i < this._tbsForces.length; i++) {
 				for(j = 0; j < this._tbsForces[i].actors.length; j++) {
 					var chara = this._tbsForces[i].actors[j].chara;
+					if(
+						((d == 4 || d == 7 || d == 8 || d == 9 || d == 6) & (chara.y > startY || chara.y < endY)) ||
+						((d == 8 || d == 9 || d == 6 || d == 3 || d == 2) & (chara.x < startX || chara.x > endX)) ||
+						((d == 6 || d == 3 || d == 2 || d == 1 || d == 4) & (chara.y < startY || chara.y > endY)) ||
+						((d == 2 || d == 1 || d == 4 || d == 7 || d == 8) & (chara.x > startX || chara.x < endX))
+					) {
+						this._queuedActionLoops++; continue;
+					}
 					if((startX == chara.x && startY == chara.y)
 						|| (passageType !== "walk" && passageType !== "fly" && 
 							((endX == chara.x && endY == chara.y) || arcedTrajectory ||
@@ -3819,19 +3836,19 @@
 							&& (this._tbsSelectedActor.forceId == i
 								|| this._tbsForces[i].allyForceIds.indexOf(this._tbsSelectedActor.forceId) >= 0)))
 					{
-						continue;
+						this._queuedActionLoops++; continue;
 					}
 					
 					blockedByTerrain.middle = blockedByTerrain.middle ? true :
 						this.cohenSutherlandLineClipAndDraw(x0, y0, x1, y1, chara.x, chara.y, chara.x+1, chara.y+1);
 					blockedByTerrain.upperLeft = passageType == "walk" || passageType == "fly" || blockedByTerrain.upperLeft ? true :
-						this.cohenSutherlandLineClipAndDraw(x0-0.49, y0-0.49, x1-0.49, y1-0.49, chara.x, chara.y, chara.x+1, chara.y+1)
+						this.cohenSutherlandLineClipAndDraw(x0-0.5, y0-0.5, x1-0.5, y1-0.5, chara.x, chara.y, chara.x+1, chara.y+1)
 					blockedByTerrain.upperRight = passageType == "walk" || passageType == "fly" || blockedByTerrain.upperRight ? true :
-						this.cohenSutherlandLineClipAndDraw(x0+0.49, y0-0.49, x1+0.49, y1-0.49, chara.x, chara.y, chara.x+1, chara.y+1)
+						this.cohenSutherlandLineClipAndDraw(x0+0.5, y0-0.5, x1+0.5, y1-0.5, chara.x, chara.y, chara.x+1, chara.y+1)
 					blockedByTerrain.lowerLeft = passageType == "walk" || passageType == "fly" || blockedByTerrain.lowerLeft ? true :
-						this.cohenSutherlandLineClipAndDraw(x0-0.49, y0+0.49, x1-0.49, y1+0.49, chara.x, chara.y, chara.x+1, chara.y+1)
+						this.cohenSutherlandLineClipAndDraw(x0-0.5, y0+0.5, x1-0.5, y1+0.5, chara.x, chara.y, chara.x+1, chara.y+1)
 					blockedByTerrain.lowerRight = passageType == "walk" || passageType == "fly" || blockedByTerrain.lowerRight ? true :
-						this.cohenSutherlandLineClipAndDraw(x0+0.49, y0+0.49, x1+0.49, y1+0.49, chara.x, chara.y, chara.x+1, chara.y+1)
+						this.cohenSutherlandLineClipAndDraw(x0+0.5, y0+0.5, x1+0.5, y1+0.5, chara.x, chara.y, chara.x+1, chara.y+1)
 					
 					if(
 						blockedByTerrain.middle &&
