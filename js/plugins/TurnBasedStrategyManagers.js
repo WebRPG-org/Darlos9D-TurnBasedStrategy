@@ -157,7 +157,6 @@ BattleManager.setup = function(
 	this._tbsTargetPart = tbsTargetPart;
     this._canEscape = false;
     this._canLose = false;
-	this._shouldPassTurn = true;
 	this._actionFinished = false;
 	this._rangedDistance = rangedDistance;
 	this._processedHitGroups = this.processHitGroups(this._tbsActionInfo.action.hitGroups);
@@ -198,7 +197,6 @@ BattleManager.initMembers = function() {
     this._escapeRatio = 0;
     this._escaped = false;
     this._rewards = {};
-	this._shouldPassTurn = true;
 	this._curWindowTarget = null;
 	this._switchTargetTime = 30;
 	this._curSwitchTargetTime = -1;
@@ -636,7 +634,6 @@ BattleManager.endAction = function() {
     this._logWindow.endAction(this._subject.battler);
     this._phase = 'turn';
 	this._actionFinished = true;
-	$gameMap.setShouldPassTurn(this._shouldPassTurn);
 };
 
 BattleManager.invokeAction = function(subject, target, resultsPerGroup) {
@@ -885,7 +882,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 	results.buffs = [];
 	results.downed = false;
 	results.revived = false;
-	results.shouldPassTurn = true;
 	results.initialAnimationIds = [];
 	results.secondaryInitialAnimationIds = [];
 	results.animationIds = [];
@@ -924,7 +920,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				}
 			}
 		}
-		results.shouldPassTurn = false;
 		return results;
 	}
 	for(i = 0; i < hitGroup.hits.length; i++) {
@@ -1209,9 +1204,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 							results.stress.head += damageResult.stress;
 							results.damage.head += damageResult.damage;
 							results.critical.head = damageResult.critical ? true : results.critical.head;
-							if(damageResult.stress > 0 || damageResult.damage > 0) {
-								results.shouldPassTurn = false;
-							}
 							if(damageResult.shouldConduct) {
 								var conductResults = this.conductMath(target, damageResult, "head");
 								results.stress.torso += conductResults.stress.torso;
@@ -1255,9 +1247,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 							results.stress.torso += damageResult.stress;
 							results.damage.torso += damageResult.damage;
 							results.critical.torso = damageResult.critical ? true : results.critical.torso;
-							if(damageResult.stress > 0 || damageResult.damage > 0) {
-								results.shouldPassTurn = false;
-							}
 							if(damageResult.shouldConduct) {
 								var conductResults = this.conductMath(target, damageResult, "torso");
 								results.stress.leftArm += conductResults.stress.leftArm;
@@ -1296,9 +1285,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 							results.stress.leftArm += damageResult.stress;
 							results.damage.leftArm += damageResult.damage;
 							results.critical.leftArm = damageResult.critical ? true : results.critical.leftArm;
-							if(damageResult.stress > 0 || damageResult.damage > 0) {
-								results.shouldPassTurn = false;
-							}
 							if(target.limbsType() !== "winged" || !target.isFlying() && results.shouldCleave) {
 								var cleaveResults = this.cleaveMath(subject, actionInfo, hit, processedHitGroup.accuracyReduction, target, targetsByHit, hitGroupIndex, damageResult, "vitalOnly", rangedDistance);
 								results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
@@ -1341,9 +1327,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 							results.stress.rightArm += damageResult.stress;
 							results.damage.rightArm += damageResult.damage;
 							results.critical.rightArm = damageResult.critical ? true : results.critical.rightArm;
-							if(damageResult.stress > 0 || damageResult.damage > 0) {
-								results.shouldPassTurn = false;
-							}
 							if(target.limbsType() !== "winged" || !target.isFlying() && results.shouldCleave) {
 								var cleaveResults = this.cleaveMath(subject, actionInfo, hit, processedHitGroup.accuracyReduction, target, targetsByHit, hitGroupIndex, damageResult, "vitalOnly", rangedDistance);
 								results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
@@ -1386,9 +1369,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 							results.stress.leftLeg += damageResult.stress;
 							results.damage.leftLeg += damageResult.damage;
 							results.critical.leftLeg = damageResult.critical ? true : results.critical.leftLeg;
-							if(damageResult.stress > 0 || damageResult.damage > 0) {
-								results.shouldPassTurn = false;
-							}
 							if(target.limbsType() === "winged" && target.isFlying() && results.shouldCleave) {
 								var cleaveResults = this.cleaveMath(subject, actionInfo, hit, processedHitGroup.accuracyReduction, target, targetsByHit, hitGroupIndex, damageResult, "vitalOnly", rangedDistance);
 								results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
@@ -1413,9 +1393,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 							results.stress.rightLeg += damageResult.stress;
 							results.damage.rightLeg += damageResult.damage;
 							results.critical.rightLeg = damageResult.critical ? true : results.critical.rightLeg;
-							if(damageResult.stress > 0 || damageResult.damage > 0) {
-								results.shouldPassTurn = false;
-							}
 							if(target.limbsType() === "winged" && target.isFlying() && results.shouldCleave) {
 								var cleaveResults = this.cleaveMath(subject, actionInfo, hit, processedHitGroup.accuracyReduction, target, targetsByHit, hitGroupIndex, damageResult, "vitalOnly", rangedDistance);
 								results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
@@ -1438,9 +1415,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 								false
 							);
 							results.stress.leftHeld += damageResult.stress;
-							if(damageResult.stress > 0 || damageResult.damage > 0) {
-								results.shouldPassTurn = false;
-							}
 							if(results.shouldCleave) {
 								var cleaveResults = this.cleaveMath(subject, actionInfo, hit, processedHitGroup.accuracyReduction, target, targetsByHit, hitGroupIndex, damageResult, "limbsAndVital", rangedDistance);
 								results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
@@ -1503,9 +1477,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 								false
 							);
 							results.stress.rightHeld += damageResult.stress;
-							if(damageResult.stress > 0 || damageResult.damage > 0) {
-								results.shouldPassTurn = false;
-							}
 							if(results.shouldCleave) {
 								var cleaveResults = this.cleaveMath(subject, actionInfo, hit, processedHitGroup.accuracyReduction, target, targetsByHit, hitGroupIndex, damageResult, "limbsAndVital", rangedDistance);
 								results.hit.torso = cleaveResults.hit.torso ? true : results.hit.torso;
@@ -1568,9 +1539,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 						results.stress.mind += damageResult.stress;
 						results.damage.mind += damageResult.damage;
 						results.critical.mind = damageResult.critical ? true : results.critical.mind;
-						if(damageResult.stress > 0 || damageResult.damage > 0) {
-							results.shouldPassTurn = false;
-						}
 					}
 					hitDodged = false;
 					results.dodged = false;
@@ -1581,7 +1549,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 			if(heal) {
 				hitDodged = false;
 				results.dodged = false;
-				results.shouldPassTurn = false;
 				
 				var dicePool = {};
 				dicePool.skill = 0;
@@ -1702,7 +1669,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				buffs.forEach(function (buff) {
 					hitDodged = false;
 					results.dodged = false;
-					results.shouldPassTurn = false;
 					var newBuff = {};
 					newBuff.duration = buff.duration === undefined ? 1 : buff.duration;
 					newBuff.iconId = buff.iconId === undefined ? 0 : buff.iconId;
@@ -1767,7 +1733,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 			if(hit.focus !== undefined) {
 				hitDodged = false;
 				results.dodged = false;
-				results.shouldPassTurn = false;
 				
 				var dicePool = {};
 				dicePool.skill = 0;
@@ -1830,7 +1795,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 			if(hit.rollInitiative) {
 				hitDodged = false;
 				results.dodged = false;
-				results.shouldPassTurn = false;
 				var stressRecovery = subject.stressRecovery();
 				var perception = subject.totalSkill("perception");
 				var defense = subject.defenseSkill();
@@ -2909,9 +2873,6 @@ BattleManager.applyActionResults = function(results, subject, target) {
 		}
 	}
 	target.addTbsBuffs(results.buffs);
-	if(this._shouldPassTurn) {
-		this._shouldPassTurn = results.shouldPassTurn;
-	}
 	target.adjustRoundBuffs(results.focus);
 };
 
