@@ -494,10 +494,10 @@ Window_ItemStatusBase.prototype.drawActions = function() {
 		}
 		this.changeTextColor(this.systemColor());
 		this.drawText("Action", 0, 0);
-		this.drawText("Pw", 254 + Window_Base._iconWidth, 0);
-		this.drawText("Rn", 254 + Window_Base._iconWidth*2 + 14*3, 0);
-		this.drawText("AE", 254 + Window_Base._iconWidth*2 + 14*6, 0);
-		this.drawText("Ac", 254 + Window_Base._iconWidth*2 + 14*9, 0);
+		this.drawText("Pw", this.nameOffset() + Window_Base._iconWidth, 0);
+		this.drawText("Rn", this.nameOffset() + Window_Base._iconWidth*2 + 14*3, 0);
+		this.drawText("AE", this.nameOffset() + Window_Base._iconWidth*2 + 14*6, 0);
+		this.drawText("Ac", this.nameOffset() + Window_Base._iconWidth*2 + 14*9, 0);
 		this.resetTextColor();
 		var lineOffset = 0;
 		var i;
@@ -513,7 +513,7 @@ Window_ItemStatusBase.prototype.drawSkillRequirements = function() {
 		var actions = item.actions();
 		this.changeTextColor(this.systemColor());
 		this.drawText("Action", 0, 0);
-		this.drawText("Skill Required", 254, 0);
+		this.drawText("Skill Required", this.nameOffset(), 0);
 		this.resetTextColor();
 		if(!actions) { return; }
 		var lineOffset = 0;
@@ -602,16 +602,17 @@ Window_ItemStatusBase.prototype.drawProtection = function() {
 	var typesX = 82;
 	var typesRightAlignX = 10;
 	var typesWidth = 46;
+	var armorSeparation = this.armorSeparation();
 	
-	this.drawIcon(this.getIconIdFor("solidDefense"), 	typesX, 					0);
-	this.drawIcon(this.getIconIdFor("fluidDefense"), 	typesX + typesWidth, 		0);
-	this.drawIcon(this.getIconIdFor("blunt"),			typesX + typesWidth * 2, 	0);
-	this.drawIcon(this.getIconIdFor("cut"), 			typesX + typesWidth * 3, 	0);
-	this.drawIcon(this.getIconIdFor("bullet"), 			typesX + typesWidth * 4, 	0);
-	this.drawIcon(this.getIconIdFor("fire"), 			typesX + typesWidth * 5, 	0);
-	this.drawIcon(this.getIconIdFor("ice"), 			typesX + typesWidth * 6, 	0);
-	this.drawIcon(this.getIconIdFor("corrosion"), 		typesX + typesWidth * 7, 	0);
-	this.drawIcon(this.getIconIdFor("conducted"), 		typesX + typesWidth * 8, 	0);
+	this.drawIcon(this.getIconIdFor("solidDefense"), 	typesX, 									0);
+	this.drawIcon(this.getIconIdFor("fluidDefense"), 	typesX + typesWidth, 						0);
+	this.drawIcon(this.getIconIdFor("blunt"),			typesX + typesWidth * 2 + armorSeparation, 	0);
+	this.drawIcon(this.getIconIdFor("cut"), 			typesX + typesWidth * 3 + armorSeparation, 	0);
+	this.drawIcon(this.getIconIdFor("bullet"), 			typesX + typesWidth * 4 + armorSeparation, 	0);
+	this.drawIcon(this.getIconIdFor("fire"), 			typesX + typesWidth * 5 + armorSeparation, 	0);
+	this.drawIcon(this.getIconIdFor("ice"), 			typesX + typesWidth * 6 + armorSeparation, 	0);
+	this.drawIcon(this.getIconIdFor("corrosion"), 		typesX + typesWidth * 7 + armorSeparation, 	0);
+	this.drawIcon(this.getIconIdFor("conducted"), 		typesX + typesWidth * 8 + armorSeparation, 	0);
 	
 	this.drawPhysProtection("R Wpn", rightHeldProtTemp, rightHeldProt, typesRightAlignX, typesWidth, this.lineHeight());
 	this.drawPhysProtection("L Wpn", leftHeldProtTemp, leftHeldProt, typesRightAlignX, typesWidth, this.lineHeight() * 2);
@@ -710,6 +711,7 @@ Window_ItemStatusBase.prototype.getCompleteTypeProtection = function(input) {
 Window_ItemStatusBase.prototype.drawPhysProtection = function(partName, protection, oldProtection, typeX, typeWidth, lineHeight) {
 	this.changeTextColor(this.systemColor());
 	this.drawText(partName, 0, lineHeight);
+	var armorSeparation = this.armorSeparation();
 	
 	this.setTextColorForComparison(protection.defense.solid, oldProtection.defense.solid);
 	this.drawText(protection.defense.solid > 0 ? protection.defense.solid : "-", typeX, lineHeight, 100, 'right');
@@ -718,27 +720,31 @@ Window_ItemStatusBase.prototype.drawPhysProtection = function(partName, protecti
 	this.drawText(protection.defense.fluid > 0 ? protection.defense.fluid : "-", typeX + typeWidth, lineHeight, 100, 'right');
 	
 	this.setTextColorForComparison(protection.armor.blunt, oldProtection.armor.blunt);
-	this.drawText(protection.armor.blunt > 0 ? protection.armor.blunt : "-", typeX + typeWidth * 2, lineHeight, 100, 'right');
+	this.drawText(protection.armor.blunt > 0 ? protection.armor.blunt : "-", typeX + typeWidth * 2 + armorSeparation, lineHeight, 100, 'right');
 	
 	this.setTextColorForComparison(protection.armor.cut, oldProtection.armor.cut);
-	this.drawText(protection.armor.cut > 0 ? protection.armor.cut : "-", typeX + typeWidth * 3, lineHeight, 100, 'right');
+	this.drawText(protection.armor.cut > 0 ? protection.armor.cut : "-", typeX + typeWidth * 3 + armorSeparation, lineHeight, 100, 'right');
 	
 	this.setTextColorForComparison(protection.armor.bullet, oldProtection.armor.bullet);
-	this.drawText(protection.armor.bullet > 0 ? protection.armor.bullet : "-", typeX + typeWidth * 4, lineHeight, 100, 'right');
+	this.drawText(protection.armor.bullet > 0 ? protection.armor.bullet : "-", typeX + typeWidth * 4 + armorSeparation, lineHeight, 100, 'right');
 	
 	this.setTextColorForComparison(protection.armor.fire, oldProtection.armor.fire);
-	this.drawText(protection.armor.fire > 0 ? protection.armor.fire : "-", typeX + typeWidth * 5, lineHeight, 100, 'right');
+	this.drawText(protection.armor.fire > 0 ? protection.armor.fire : "-", typeX + typeWidth * 5 + armorSeparation, lineHeight, 100, 'right');
 	
 	this.setTextColorForComparison(protection.armor.ice, oldProtection.armor.ice);
-	this.drawText(protection.armor.ice > 0 ? protection.armor.ice : "-", typeX + typeWidth * 6, lineHeight, 100, 'right');
+	this.drawText(protection.armor.ice > 0 ? protection.armor.ice : "-", typeX + typeWidth * 6 + armorSeparation, lineHeight, 100, 'right');
 	
 	this.setTextColorForComparison(protection.armor.corrosion, oldProtection.armor.corrosion);
-	this.drawText(protection.armor.corrosion > 0 ? protection.armor.corrosion : "-", typeX + typeWidth * 7, lineHeight, 100, 'right');
+	this.drawText(protection.armor.corrosion > 0 ? protection.armor.corrosion : "-", typeX + typeWidth * 7 + armorSeparation, lineHeight, 100, 'right');
 	
 	this.setTextColorForComparison(protection.armor.conducted, oldProtection.armor.conducted);
-	this.drawText(protection.armor.conducted > 0 ? protection.armor.conducted : "-", typeX + typeWidth * 8, lineHeight, 100, 'right');
+	this.drawText(protection.armor.conducted > 0 ? protection.armor.conducted : "-", typeX + typeWidth * 8 + armorSeparation, lineHeight, 100, 'right');
 	
 	this.resetTextColor();
+};
+
+Window_ItemStatusBase.prototype.armorSeparation = function() {
+	return 44;
 };
 
 Window_ItemStatusBase.prototype.setTextColorForComparison = function(newValue, oldValue) {
@@ -758,7 +764,7 @@ Window_ItemStatusBase.prototype.drawEquipDescription = function() {
 };
 
 Window_ItemStatusBase.prototype.drawTabs = function() {
-	var tabsX = 342;
+	var tabsX = 398;
 	
 	if(this._statusPage !== "actions") {
 		this.changePaintOpacity(false);
@@ -769,19 +775,19 @@ Window_ItemStatusBase.prototype.drawTabs = function() {
 	if(this._statusPage !== "skillRequirements") {
 		this.changePaintOpacity(false);
 	}
-	this.drawIcon(this.getIconIdFor("skill"), tabsX + this.lineHeight(), this.lineHeight() * 9);
+	this.drawIcon(this.getIconIdFor("skill"), tabsX + Window_Base._iconWidth, this.lineHeight() * 9);
 	this.changePaintOpacity(true);
 	
 	if(this._statusPage !== "protection") {
 		this.changePaintOpacity(false);
 	}
-	this.drawIcon(this.getIconIdFor("solidDefense"), tabsX + this.lineHeight() * 2, this.lineHeight() * 9);
+	this.drawIcon(this.getIconIdFor("solidDefense"), tabsX + Window_Base._iconWidth * 2, this.lineHeight() * 9);
 	this.changePaintOpacity(true);
 	
 	if(this._statusPage !== "description") {
 		this.changePaintOpacity(false);
 	}
-	this.drawIcon(this.getIconIdFor("knowledge"), tabsX + this.lineHeight() * 3, this.lineHeight() * 9);
+	this.drawIcon(this.getIconIdFor("knowledge"), tabsX + Window_Base._iconWidth * 3, this.lineHeight() * 9);
 	this.changePaintOpacity(true);
 };
 
@@ -809,7 +815,7 @@ Window_ItemStatus.prototype.initialize = function(x, y) {
 };
 
 Window_ItemStatus.prototype.windowWidth = function() {
-    return Graphics.boxWidth - 298;
+    return Graphics.boxWidth - Window_SkillActionInfo.prototype.windowWidth();;
 };
 
 Window_ItemStatus.prototype.windowHeight = function() {
@@ -900,7 +906,7 @@ Window_ItemOption.prototype.initialize = function(x, y) {
 };
 
 Window_ItemOption.prototype.windowWidth = function() {
-    return Graphics.boxWidth - Window_ItemStatus.prototype.windowWidth();
+    return Window_SkillActionInfo.prototype.windowWidth();
 };
 
 Window_ItemOption.prototype.setActor = function(actor) {
@@ -1239,7 +1245,7 @@ Window_SkillActionInfo.prototype.initialize = function(y) {
 };
 
 Window_SkillActionInfo.prototype.windowWidth = function() {
-	return 298;
+	return this.standardPadding()*2 + Window_Base._iconWidth*2 + 14*11;
 };
 
 Window_SkillActionInfo.prototype.windowHeight = function() {
@@ -1286,7 +1292,7 @@ Window_SkillActionInfo.prototype.drawSkillActionInfo = function() {
 	if(this._actionInfo.sourceEquip) {
 		this.drawText("Source:", 0, this.lineHeight() * (this.numVisibleRows() - 2));
 		var rect = this.itemRectForText(this.numVisibleRows() - 1);
-		this.drawItemName(this._actionInfo.sourceEquip, 0, rect.y, this.windowWidth() - this.lineHeight());
+		this.drawItemName(this._actionInfo.sourceEquip, 0, rect.y, Window_Base._iconWidth*2 + 14*11);
 	}
 };
  
@@ -1843,7 +1849,7 @@ Window_TbsActionInfo.prototype.initialize = function(x, y) {
 };
 
 Window_TbsActionInfo.prototype.windowWidth = function() {
-	return 298;
+	return this.standardPadding()*2 + Window_Base._iconWidth*2 + 14*11;
 };
 
 Window_TbsActionInfo.prototype.windowHeight = function() {
@@ -1890,7 +1896,7 @@ Window_TbsActionInfo.prototype.drawSkillActionInfo = function() {
 	if(this._actionInfo.sourceEquip) {
 		this.drawText("Source:", 0, this.lineHeight() * (this.numVisibleRows() - 2));
 		var rect = this.itemRectForText(this.numVisibleRows() - 1);
-		this.drawItemName(this._actionInfo.sourceEquip, 0, rect.y, this.windowWidth() - this.lineHeight());
+		this.drawItemName(this._actionInfo.sourceEquip, 0, rect.y, Window_Base._iconWidth*2 + 14*11);
 	}
 };
 
@@ -4336,8 +4342,8 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		if(actionIndex === undefined) { actionIndex = 0; }
 		if(lineOffset === undefined) { lineOffset = 0; }
 		
-		var nameOffset = drawName ? 254 : 0;
-		var skillsPosition = nameOffset + 182;
+		var nameOffset = drawName ? this.nameOffset() : 0;
+		var skillsPosition = nameOffset + 175;
 		var characterWidth = 14;
 		
 		var reqs = action.skillRequirements;
@@ -4385,13 +4391,17 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		return reqs.length > 1 ? reqs.length - 1 : 0; 
 	};
 	
+	Window_Base.prototype.nameOffset = function() {
+		return 308;
+	};
+	
 	Window_Base.prototype.drawActionInfo = function(actionInfo, actionIndex, lineOffset, drawName, actor) {
 		if(!actionInfo || !actionInfo.action) { return 0; }
 		if(actionIndex === undefined) { actionIndex = 0; }
 		if(lineOffset === undefined) { lineOffset = 0; }
 		
 		var action = actionInfo.action;
-		var nameOffset = drawName ? 254 : 0;
+		var nameOffset = drawName ? this.nameOffset() : 0;
 		var curLineOffset = lineOffset;
 		var hitGroups = action.hitGroups;
 		var reqLacked = false;
@@ -5655,7 +5665,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_EquipSlot.prototype.windowWidth = function() {
-		return 298;
+		return Window_SkillActionInfo.prototype.windowWidth();
 	};
 
 	Window_EquipSlot.prototype.windowHeight = function() {
