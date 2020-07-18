@@ -16,7 +16,7 @@ null,
 {"id":14,"expanded":false,"name":"Party Creation Room","order":14,"parentId":13,"scrollX":1081.3333333333333,"scrollY":1017.3333333333334},
 {"id":15,"expanded":true,"name":"Seaside Passage","order":15,"parentId":13,"scrollX":3718.6666666666665,"scrollY":4196},
 {"id":16,"expanded":false,"name":"Seaside Passage B1","order":16,"parentId":15,"scrollX":2184,"scrollY":1814.6666666666667},
-{"id":17,"expanded":true,"name":"Fake Overworld","order":17,"parentId":13,"scrollX":5174.666666666667,"scrollY":6334.666666666667},
+{"id":17,"expanded":true,"name":"Fake Overworld","order":17,"parentId":13,"scrollX":5174.666666666667,"scrollY":6628},
 {"id":18,"expanded":false,"name":"Castle Town","order":18,"parentId":17,"scrollX":1092,"scrollY":614.6666666666666},
 {"id":19,"expanded":false,"name":"Castle","order":19,"parentId":17,"scrollX":1092,"scrollY":614.6666666666666},
 {"id":20,"expanded":false,"name":"Bridge","order":20,"parentId":17,"scrollX":1081.3333333333333,"scrollY":1257.3333333333333}

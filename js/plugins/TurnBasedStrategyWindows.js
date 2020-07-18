@@ -494,10 +494,10 @@ Window_ItemStatusBase.prototype.drawActions = function() {
 		}
 		this.changeTextColor(this.systemColor());
 		this.drawText("Action", 0, 0);
-		this.drawText("Rn", 288, 0);
-		this.drawText("Ac", 334, 0);
-		this.drawText("Pw", 404, 0);
-		this.drawText("AE", 450, 0);
+		this.drawText("Pw", 254 + Window_Base._iconWidth, 0);
+		this.drawText("Rn", 254 + Window_Base._iconWidth*2 + 14*3, 0);
+		this.drawText("AE", 254 + Window_Base._iconWidth*2 + 14*6, 0);
+		this.drawText("Ac", 254 + Window_Base._iconWidth*2 + 14*9, 0);
 		this.resetTextColor();
 		var lineOffset = 0;
 		var i;
@@ -1275,10 +1275,10 @@ Window_SkillActionInfo.prototype.drawSkillActionInfo = function() {
 	if(!this._actionInfo) { return; }
 	
 	this.changeTextColor(this.systemColor());
-	this.drawText("Rn", 34, 0);
-	this.drawText("Ac", 80, 0);
-	this.drawText("Pw", 150, 0);
-	this.drawText("AE", 196, 0);
+	this.drawText("Pw", Window_Base._iconWidth, 0);
+	this.drawText("Rn", Window_Base._iconWidth*2 + 14*3, 0);
+	this.drawText("AE", Window_Base._iconWidth*2 + 14*6, 0);
+	this.drawText("Ac", Window_Base._iconWidth*2 + 14*9, 0);
 	this.resetTextColor();
 	
 	this.drawActionInfo(this._actionInfo, undefined, undefined, undefined, this._actor);
@@ -1879,10 +1879,10 @@ Window_TbsActionInfo.prototype.drawSkillActionInfo = function() {
 	if(!this._actionInfo) { return; }
 	
 	this.changeTextColor(this.systemColor());
-	this.drawText("Rn", 34, 0);
-	this.drawText("Ac", 80, 0);
-	this.drawText("Pw", 150, 0);
-	this.drawText("AE", 196, 0);
+	this.drawText("Pw", Window_Base._iconWidth, 0);
+	this.drawText("Rn", Window_Base._iconWidth*2 + 14*3, 0);
+	this.drawText("AE", Window_Base._iconWidth*2 + 14*6, 0);
+	this.drawText("Ac", Window_Base._iconWidth*2 + 14*9, 0);
 	this.resetTextColor();
 	
 	this.drawActionInfo(this._actionInfo, undefined, undefined, undefined, this._actor);
@@ -4396,30 +4396,28 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		var hitGroups = action.hitGroups;
 		var reqLacked = false;
 		if(!hitGroups) { return 0; }
-		var n;
-		for(n = 0; n < hitGroups.length; n++) {
+		for(let n = 0; n < hitGroups.length; n++) {
 			var hits = hitGroups[n].hits;
 			if(!hits) { continue; }
-			var i;
-			for(i = 0; i < hits.length; i++) {
+			for(let i = 0; i < hits.length; i++) {
 				var lineHeight = this.lineHeight() * (actionIndex + n + 1 + curLineOffset);
 				
 				var rangeTypeIconId = hits[i].rangeType ? this.getIconIdFor(hits[i].rangeType) : 0;
 				var rangeIsSelf = hits[i].rangeType && hits[i].rangeType === "self";
-				this.drawIcon(rangeTypeIconId, nameOffset, lineHeight);
+				this.drawIcon(rangeTypeIconId, nameOffset + Window_Base._iconWidth + 14*3, lineHeight);
 				var hitRange = hits[i].range !== undefined ? hits[i].range : 0;
 				hitRange += hits[i].ignoreUserRange || !actor ? 0 : actor.baseRange();
 				var range = hitRange / 2;
 				var flooredRange = Math.floor(range);
-				this.drawText(!rangeIsSelf && range > 0 ? flooredRange + (range > flooredRange ? "½" : "") : "-", nameOffset - 38, lineHeight, 100, 'right');
+				this.drawText(!rangeIsSelf && range > 0 ? flooredRange + (range > flooredRange ? "½" : "") : "-", nameOffset + Window_Base._iconWidth*2 + 14*3, lineHeight, 14*2, 'right');
 				var accuracy = hits[i].evasionPenalty !== undefined ? hits[i].evasionPenalty : 0;
 				accuracy += hits[i].accuracy !== undefined ? hits[i].accuracy : 0;
 				accuracy -= hits[i].accuracyPenalty !== undefined ? hits[i].accuracyPenalty : 0;
-				this.drawText((hits[i].damage || hits[i].debuffs) && accuracy > 0 ? accuracy : "-", nameOffset + 8, lineHeight, 100, 'right');
+				this.drawText((hits[i].damage || hits[i].debuffs) && accuracy > 0 ? accuracy : "-", nameOffset + Window_Base._iconWidth*2 + 14*9, lineHeight, 14*2, 'right');
 				var hitAoe = hits[i].aoe !== undefined ? hits[i].aoe : 0;
 				var aoe = hitAoe / 2;
 				var flooredAoe = Math.floor(aoe);
-				this.drawText(aoe > 0 ? flooredAoe + (aoe > flooredAoe ? "½" : "") : "-", nameOffset + 124, lineHeight, 100, 'right');
+				this.drawText(aoe > 0 ? flooredAoe + (aoe > flooredAoe ? "½" : "") : "-", nameOffset + Window_Base._iconWidth*2 + 14*6, lineHeight, 14*2, 'right');
 				
 				if(i === 0 && n === 0) {
 					if(actor) {
@@ -4466,8 +4464,8 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 				var buffs = hits[i].buffs;
 				var focusAmount = hits[i].focus;
 				if(damage == undefined && heal == undefined && buffs == undefined && focusAmount == undefined) {
-					this.drawText("-", nameOffset + 78, lineHeight, 100, 'right');
-					this.drawText("-", nameOffset + 124, lineHeight, 100, 'right');
+					this.drawText("-", nameOffset + Window_Base._iconWidth, lineHeight, 14*2, 'right');
+					this.drawText("-", nameOffset + Window_Base._iconWidth, lineHeight, 14*2, 'right');
 				} else {
 					var multipleHits = 1;
 					if(hits[i].multipleHits !== undefined) {
@@ -4537,8 +4535,8 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	Window_Base.prototype.drawDamage = function(power, drawName, nameOffset, lineHeight, lineOffset, reqLacked, iconId) {
 		if(power !== undefined && !isNaN(power)) {
-			this.drawIcon(iconId, nameOffset + 116, lineHeight + this.lineHeight() * lineOffset);
-			this.drawText(power, nameOffset + 78, lineHeight + this.lineHeight() * lineOffset, 100, 'right');
+			this.drawIcon(iconId, nameOffset, lineHeight + this.lineHeight() * lineOffset);
+			this.drawText(power, nameOffset + Window_Base._iconWidth, lineHeight + this.lineHeight() * lineOffset, 14*2, 'right');
 			if(drawName && lineOffset > 0) {
 				if(reqLacked) {
 					this.changeTextColor(this.deathColor());
@@ -4553,9 +4551,9 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	Window_Base.prototype.drawHeal = function(heal, drawName, nameOffset, lineHeight, lineOffset, reqLacked, iconId) {
 		if(heal !== undefined && !isNaN(heal)) {
-			this.drawIcon(iconId, nameOffset + 116, lineHeight + this.lineHeight() * lineOffset);
+			this.drawIcon(iconId, nameOffset, lineHeight + this.lineHeight() * lineOffset);
 			var power = heal !== undefined ? heal : 0;
-			this.drawText(power > 0 ? (power >= 100 ? "**" : power) : "-", nameOffset + 78, lineHeight + this.lineHeight() * lineOffset, 100, 'right');
+			this.drawText(power > 0 ? (power >= 100 ? "**" : power) : "-", nameOffset + Window_Base._iconWidth, lineHeight + this.lineHeight() * lineOffset, 14*2, 'right');
 			if(drawName && lineOffset > 0) {
 				if(reqLacked) {
 					this.changeTextColor(this.deathColor());
