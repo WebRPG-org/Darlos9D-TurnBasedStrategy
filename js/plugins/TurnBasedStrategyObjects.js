@@ -1924,10 +1924,6 @@
 						actor.suffixWindow == undefined;
 					}, this)
 				}, this);
-				this._tbsMoveTiles = [];
-				this._tbsHalfMoveTiles = [];
-				this._tbsFullMoveTiles = [];
-				this._tbsActionsTiles = [];
 				this.setTbsSelectedActor(undefined);
 				this.clearTbsManualMoveStart();
 				this.setTbsSelectedActionType(-1);
@@ -1938,6 +1934,22 @@
 				this.setBreadcrumbStage("none");
 				this._tbsForces = [];
 				this._tbsOrderedForces = [];
+				this._tbsMoveTiles = [];
+				this._tbsHalfMoveTiles = [];
+				this._tbsFullMoveTiles = [];
+				this._tbsActionsTiles = [];
+				this._tbsSelectedActor = undefined;
+				this._tbsSelectedAction = undefined;
+				this._tbsActionTargetPart = undefined;
+				this._tbsBreadcrumbs = [];
+				this._cameraFocusX = undefined;
+				this._cameraFocusY = undefined;
+				this._cameraFocusDirection = undefined;
+				this._cameraFocusResetToPlayer = undefined;
+				this._resetCameraAfterBattle = undefined;
+				this._tbsCursorRegions = [];
+				this._tileRuns = [];
+				this._pendingMessages = [];
 				SceneManager.goto(Scene_Gameover);
 				break;
 			default:
@@ -3259,6 +3271,22 @@
 		if(nobodyMoved) {
 			this._tbsForces = [];
 			this._tbsOrderedForces = [];
+			this._tbsMoveTiles = [];
+			this._tbsHalfMoveTiles = [];
+			this._tbsFullMoveTiles = [];
+			this._tbsActionsTiles = [];
+			this._tbsSelectedActor = undefined;
+			this._tbsSelectedAction = undefined;
+			this._tbsActionTargetPart = undefined;
+			this._tbsBreadcrumbs = [];
+			this._cameraFocusX = undefined;
+			this._cameraFocusY = undefined;
+			this._cameraFocusDirection = undefined;
+			this._cameraFocusResetToPlayer = undefined;
+			this._resetCameraAfterBattle = undefined;
+			this._tbsCursorRegions = [];
+			this._tileRuns = [];
+			this._pendingMessages = [];
 			this._tbsLeadCharacter = undefined;
 			$gamePlayer.setDirection(2);
 			$gamePlayer.followers().forEach(function (follower) {

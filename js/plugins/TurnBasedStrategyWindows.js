@@ -5017,7 +5017,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_ItemList.prototype.isEnabled = function(item) {
-		return this._actor || $gameSystem.isSaveEnabled();
+		return this._actor || item.itypeId === 2 || $gameSystem.isSaveEnabled();
 	};
 	
 	Window_ItemList.prototype.makeItemList = function() {
