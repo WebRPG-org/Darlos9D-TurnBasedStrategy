@@ -1406,40 +1406,86 @@
 			this.getDamage("rightLeg") > 0;
 	};
 	
-	Game_BattlerBase.prototype.applyHit = function(hit, bodyPart) {
+	Game_BattlerBase.prototype.applyHit = function(user, actionInfo, hit) {
 		if(!hit.heal || hit.heal.damage === undefined || hit.heal.damage <= 0) { return; }
 		
-		this.adjustDamage("core", -hit.heal.damage);
-		var tough = this.toughness();
+		var dicePool = {};
+		dicePool.skill = 0;
+		dicePool.expert = 0;
+		dicePool.buff = 0;
 		
-		var partHealing = hit.heal.damage;
-		if(partHealing > 0) {
-			var partDamage = this.getDamage("head");
-			this.adjustDamage("head", partHealing > this.getDamage("head") ? -this.getDamage("head") : -partHealing);
-			partHealing -= partDamage;
+		var skillDiceReduction = hit.accuracyPenalty === undefined ? 0 : hit.accuracyPenalty;
+		
+		var testDiceReduction = hit.evasionPenalty === undefined ? 0 : hit.evasionPenalty;
+		var hitSupport = BattleManager.getCompleteSupport(user, actionInfo, hit);
+		dicePool.debuff = hitSupport.supportReduction;
+		
+		var accSkill = 0;
+		if(hit.ignoreUserAccuracy) {
+			accSkill = hit.accuracy == undefined ? 0 : hit.accuracy;
+		} else {
+			accSkill = user.totalSkill("manualDex");
 		}
-		if(partHealing > 0) {
-			var partDamage = this.getDamage("torso");
-			this.adjustDamage("torso", partHealing > this.getDamage("torso") ? -this.getDamage("torso") : -partHealing);
-			partHealing -= partDamage;
+		var abilitySkill = 0;
+		if(hit.abilitySkillUsed === undefined) {
+			abilitySkill = hit.abilitySkill === undefined ? 0 : hit.abilitySkill;
+		} else {
+			abilitySkill = user.totalSkill(hit.abilitySkillUsed);
 		}
-		var limbLoops = 0;
-		var leg = Math.random() >= 0.5 ? "leftLeg" : "rightLeg";
-		while(partHealing > 0 && limbLoops < 2) {
-			var partDamage = this.getDamage(leg);
-			this.adjustDamage(leg, partHealing > this.getDamage(leg) ? -this.getDamage(leg) : -partHealing);
-			partHealing -= partDamage;
-			leg = leg === "leftLeg" ? "rightLeg" : "leftLeg";
-			limbLoops++;
+		
+		dicePool.skill = accSkill > abilitySkill ? accSkill - abilitySkill : abilitySkill - accSkill;
+		dicePool.expert = accSkill > abilitySkill ? abilitySkill : accSkill;
+		
+		var skillDice = dicePool.skill;
+		dicePool.skill -= Math.min(dicePool.skill, skillDiceReduction);
+		skillDiceReduction -= skillDice;
+		if(skillDiceReduction > 0) {
+			dicePool.expert -= Math.min(dicePool.expert, skillDiceReduction);
 		}
-		limbLoops = 0;
-		var arm = Math.random() >= 0.5 ? "leftArm" : "rightArm";
-		while(partHealing > 0 && limbLoops < 2) {
-			var partDamage = this.getDamage(arm);
-			this.adjustDamage(arm, partHealing > this.getDamage(arm) ? -this.getDamage(arm) : -partHealing);
-			partHealing -= partDamage;
-			arm = arm === "leftArm" ? "rightArm" : "leftArm";
-			limbLoops++;
+		
+		if(dicePool.skill <= 0 && dicePool.expert <= 0 && dicePool.buff <= 0) {
+			dicePool.buff = 1;
+		}
+		
+		if(hitSupport.damage !== undefined) {
+			var healRoll = BattleManager.rollSkillDice(dicePool.skill, dicePool.expert, dicePool.buff);
+			
+			healRoll.bonuses += healRoll.rareBonuses * 2;
+			
+			var healing = Math.max(0, hitSupport.damage + healRoll.hits);
+			
+			this.adjustDamage("core", -healing);
+			var tough = this.toughness();
+			
+			var partHealing = healing;
+			if(partHealing > 0) {
+				var newPartHealing = partHealing - this.getDamage("head");
+				this.adjustDamage("head", partHealing > this.getDamage("head") ? -this.getDamage("head") : -partHealing);
+				partHealing = newPartHealing;
+			}
+			if(partHealing > 0) {
+				var newPartHealing = partHealing - this.getDamage("torso");
+				this.adjustDamage("head", partHealing > this.getDamage("torso") ? -this.getDamage("torso") : -partHealing);
+				partHealing = newPartHealing;
+			}
+			var limbLoops = 0;
+			var leg = Math.random() >= 0.5 ? "leftLeg" : "rightLeg";
+			while(partHealing > 0 && limbLoops < 2) {
+				var newPartHealing = partHealing - this.getDamage(leg);
+				this.adjustDamage(leg, partHealing > this.getDamage(leg) ? -this.getDamage(leg) : -partHealing);
+				partHealing = newPartHealing;
+				leg = leg === "leftLeg" ? "rightLeg" : "leftLeg";
+				limbLoops++;
+			}
+			limbLoops = 0;
+			var arm = Math.random() >= 0.5 ? "leftArm" : "rightArm";
+			while(partHealing > 0 && limbLoops < 2) {
+				var newPartHealing = partHealing - this.getDamage(arm);
+				this.adjustDamage(arm, partHealing > this.getDamage(arm) ? -this.getDamage(arm) : -partHealing);
+				partHealing = newPartHealing;
+				arm = arm === "leftArm" ? "rightArm" : "leftArm";
+				limbLoops++;
+			}
 		}
 	};
 	

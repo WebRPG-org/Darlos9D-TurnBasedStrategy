@@ -1559,8 +1559,8 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				
 				var testDiceReduction = hit.evasionPenalty === undefined ? 0 : hit.evasionPenalty;
 				var hitSupport = this.getCompleteSupport(subject, actionInfo, hit);
-				dicePool.debuff = subjectStress + processedHitGroup.accuracyReduction + hitSupport.supportReduction + target.roundBuffs();
-				dicePool.buff = targetStress + subject.roundBuffs();
+				dicePool.debuff = subjectStress + processedHitGroup.accuracyReduction + hitSupport.supportReduction;
+				dicePool.buff = subject.roundBuffs() + target.roundBuffs();
 				
 				if(hit.accuracyDropoffDistance !== undefined && rangedDistance !== undefined) {
 					var accuracyDropoff = (rangedDistance*2) / hit.accuracyDropoffDistance;
@@ -1568,7 +1568,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					dicePool.debuff += Math.floor(accuracyDropoff);
 				}
 				
-				var parryable = false;
 				var accSkill = 0;
 				if(hit.ignoreUserAccuracy) {
 					accSkill = hit.accuracy == undefined ? 0 : hit.accuracy;
@@ -1743,8 +1742,8 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				
 				var testDiceReduction = hit.evasionPenalty === undefined ? 0 : hit.evasionPenalty;
 				var hitSupport = this.getCompleteSupport(subject, actionInfo, hit);
-				dicePool.debuff = subjectStress + processedHitGroup.accuracyReduction + hitSupport.supportReduction + target.roundBuffs();
-				dicePool.buff = targetStress + subject.roundBuffs();
+				dicePool.debuff = subjectStress + processedHitGroup.accuracyReduction + hitSupport.supportReduction;
+				dicePool.buff = subject.roundBuffs() + target.roundBuffs();
 				
 				if(hit.accuracyDropoffDistance !== undefined && rangedDistance !== undefined) {
 					var accuracyDropoff = (rangedDistance*2) / hit.accuracyDropoffDistance;
@@ -1752,7 +1751,6 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					dicePool.debuff += Math.floor(accuracyDropoff);
 				}
 				
-				var parryable = false;
 				var accSkill = 0;
 				if(hit.ignoreUserAccuracy) {
 					accSkill = hit.accuracy == undefined ? 0 : hit.accuracy;

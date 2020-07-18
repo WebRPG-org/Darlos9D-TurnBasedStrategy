@@ -1166,7 +1166,7 @@
 				if(!hitGroup.hits || hitGroup.hits.length == 0) { return; }
 				hitGroup.hits.forEach(function (hit) {
 					if(target.isHitValid(hit)) {
-						target.applyHit(hit, this._actorBodyPart);
+						target.applyHit(this.user(), actionInfo, hit);
 					}
 				}, this);
 			}, this);
