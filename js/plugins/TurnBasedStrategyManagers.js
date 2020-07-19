@@ -2088,21 +2088,29 @@ BattleManager.getUsedParts = function(subject, actionInfo, hit) {
 BattleManager.getBestLimb = function(subject, hit) {
 	var usesParts = hit.usesParts;
 	if(!usesParts) { return undefined; }
+	var hasBluntDamage = hit.damage && hit.damage.blunt !== undefined;
 	if(usesParts.indexOf("bestLimb") >= 0) {
-		var leftArmPower = Math.floor(subject.protection("leftArm").armor.cut / 4);
-		var rightArmPower = Math.floor(subject.protection("rightArm").armor.cut / 4);
-		var leftLegPower = Math.floor(subject.protection("leftLeg").armor.cut / 4);
-		var rightLegPower = Math.floor(subject.protection("rightLeg").armor.cut / 4);
-		var highestPower = leftArmPower;
-		highestPower = rightArmPower > highestPower ? rightArmPower : highestPower;
-		highestPower = leftLegPower > highestPower ? leftLegPower : highestPower;
-		highestPower = rightLegPower > highestPower ? rightLegPower : highestPower;
-		
 		var limbArray = [];
-		if(leftArmPower == highestPower) { limbArray.push("leftArm"); }
-		if(rightArmPower == highestPower) { limbArray.push("rightArm"); }
-		if(leftLegPower == highestPower) { limbArray.push("leftLeg"); }
-		if(rightLegPower == highestPower) { limbArray.push("rightLeg"); }
+		if(hasBluntDamage) {
+			var leftArmPower = Math.floor(subject.protection("leftArm").armor.cut / 4);
+			var rightArmPower = Math.floor(subject.protection("rightArm").armor.cut / 4);
+			var leftLegPower = Math.floor(subject.protection("leftLeg").armor.cut / 4);
+			var rightLegPower = Math.floor(subject.protection("rightLeg").armor.cut / 4);
+			var highestPower = leftArmPower;
+			highestPower = rightArmPower > highestPower ? rightArmPower : highestPower;
+			highestPower = leftLegPower > highestPower ? leftLegPower : highestPower;
+			highestPower = rightLegPower > highestPower ? rightLegPower : highestPower;
+			
+			if(leftArmPower == highestPower) { limbArray.push("leftArm"); }
+			if(rightArmPower == highestPower) { limbArray.push("rightArm"); }
+			if(leftLegPower == highestPower) { limbArray.push("leftLeg"); }
+			if(rightLegPower == highestPower) { limbArray.push("rightLeg"); }
+		} else {
+			limbArray.push("leftArm");
+			limbArray.push("rightArm");
+			limbArray.push("leftLeg");
+			limbArray.push("rightLeg");
+		}
 		
 		var lowestDamage = undefined;
 		for(let i = 0; i < limbArray.length; i++) {
@@ -2123,14 +2131,16 @@ BattleManager.getBestLimb = function(subject, hit) {
 			armOrLeg = usesParts.indexOf("bestArm") >= 0 ? "Leg" : "Arm";
 		}
 		
-		var leftPower = Math.floor(subject.protection("left"+armOrLeg).armor.cut / 4);
-		var rightPower = Math.floor(subject.protection("right"+armOrLeg).armor.cut / 4);
-		
-		if(leftPower > rightPower) {
-			return "left"+armOrLeg;
-		}
-		if(leftPower < rightPower) {
-			return "right"+armOrLeg;
+		if(hasBluntDamage) {
+			var leftPower = Math.floor(subject.protection("left"+armOrLeg).armor.cut / 4);
+			var rightPower = Math.floor(subject.protection("right"+armOrLeg).armor.cut / 4);
+			
+			if(leftPower > rightPower) {
+				return "left"+armOrLeg;
+			}
+			if(leftPower < rightPower) {
+				return "right"+armOrLeg;
+			}
 		}
 		
 		if(subject.getDamage("left"+armOrLeg) > subject.getDamage("right"+armOrLeg)) {
