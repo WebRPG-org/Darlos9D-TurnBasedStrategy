@@ -1758,11 +1758,25 @@
 	};
 	
 	Game_Actor.prototype.defenseSkill = function() {
-		return this.totalSkill(this.currentClass().tbsStats.defenseAbility);
+		var defense = this.totalSkill(this.currentClass().tbsStats.defenseAbility);
+		var attributes = this.getAttributes();
+		attributes.forEach(function (attribute) {
+			if(attribute.defense !== undefined) {
+				defense += attribute.defense;
+			}
+		});
+		return defense;
 	};
 	
 	Game_Actor.prototype.reflexSkill = function() {
-		return this.totalSkill(this.currentClass().tbsStats.reflexAbility);
+		var reflex = this.totalSkill(this.currentClass().tbsStats.reflexAbility);
+		var attributes = this.getAttributes();
+		attributes.forEach(function (attribute) {
+			if(attribute.reflex !== undefined) {
+				reflex += attribute.reflex;
+			}
+		});
+		return reflex;
 	};
 	
 	Game_Actor.prototype.baseProtection = function() {
