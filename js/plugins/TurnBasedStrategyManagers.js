@@ -2022,20 +2022,9 @@ BattleManager.getUsedParts = function(subject, actionInfo, hit) {
 				}
 			}
 		});
-		if(usesParts.indexOf("bestLimb") >= 0) {
-			if(subject && subject.handedness() === "left") {
-				if(subject && subject.limbsType() === "winged" && subject.isFlying()) {
-					actualUsedParts.push("leftLeg");
-				} else {
-					actualUsedParts.push("leftArm");
-				}
-			} else {
-				if(subject && subject.limbsType() === "winged" && subject.isFlying()) {
-					actualUsedParts.push("rightLeg");
-				} else {
-					actualUsedParts.push("rightArm");
-				}
-			}
+		var bestLimbPart = this.getBestLimb(subject, hit);
+		if(bestLimbPart) {
+			actualUsedParts.push(bestLimbPart);
 		}
 		if(usesParts.indexOf("equippedOn") >= 0 && actionInfo.sourceEquipSlotId !== undefined) {
 			if((actionInfo.sourceEquipSlotId === 0 || actionInfo.sourceEquipSlotId === 1)
@@ -2096,6 +2085,26 @@ BattleManager.getUsedParts = function(subject, actionInfo, hit) {
 	return actualUsedParts;
 };
 
+BattleManager.getBestLimb = function(subject, hit) {
+	var usesParts = hit.usesParts;
+	if(usesParts.indexOf("bestLimb") >= 0) {
+		if(subject && subject.handedness() === "left") {
+			if(subject && subject.limbsType() === "winged" && subject.isFlying()) {
+				return "leftLeg";
+			} else {
+				return "leftArm";
+			}
+		} else {
+			if(subject && subject.limbsType() === "winged" && subject.isFlying()) {
+				return "rightLeg";
+			} else {
+				return "rightArm";
+			}
+		}
+	}
+	return undefined;
+};
+
 BattleManager.getCompleteDamage = function(subject, actionInfo, hit) {
 	var damage = hit.damage;
 	var completeDamage = {};
@@ -2103,6 +2112,14 @@ BattleManager.getCompleteDamage = function(subject, actionInfo, hit) {
 	if(!damage) {
 		damage = {};
 	}
+	
+	var bluntIncrease = 0;
+	var bestLimbPart = this.getBestLimb(subject, hit);
+	if(bestLimbPart) {
+		var protection = subject.protection(bestLimbPart);
+		bluntIncrease = Math.floor(protection.armor.cut / 4);
+	}
+	
 	var actualUsedParts = this.getUsedParts(subject, actionInfo, hit);
 	var damageReduction = 0;
 	if(subject && actualUsedParts.length > 0) {
@@ -2136,7 +2153,7 @@ BattleManager.getCompleteDamage = function(subject, actionInfo, hit) {
 	completeDamage.damageReduction = damageReduction;
 	completeDamage.stress = damage.stress !== undefined ? damage.stress - damageReduction : undefined;
 	completeDamage.trip = damage.trip !== undefined ? damage.trip - damageReduction : undefined;
-	completeDamage.blunt = damage.blunt !== undefined ? damage.blunt - damageReduction : undefined;
+	completeDamage.blunt = damage.blunt !== undefined ? damage.blunt - damageReduction + bluntIncrease : undefined;
 	completeDamage.cut = damage.cut !== undefined ? damage.cut - damageReduction : undefined;
 	completeDamage.keen = damage.keen !== undefined ? damage.keen - damageReduction : undefined;
 	completeDamage.thrust = damage.thrust !== undefined ? damage.thrust - damageReduction : undefined;
