@@ -2087,20 +2087,59 @@ BattleManager.getUsedParts = function(subject, actionInfo, hit) {
 
 BattleManager.getBestLimb = function(subject, hit) {
 	var usesParts = hit.usesParts;
+	if(!usesParts) { return undefined; }
 	if(usesParts.indexOf("bestLimb") >= 0) {
-		if(subject && subject.handedness() === "left") {
-			if(subject && subject.limbsType() === "winged" && subject.isFlying()) {
-				return "leftLeg";
-			} else {
-				return "leftArm";
-			}
-		} else {
-			if(subject && subject.limbsType() === "winged" && subject.isFlying()) {
-				return "rightLeg";
-			} else {
-				return "rightArm";
+		var leftArmPower = Math.floor(subject.protection("leftArm").armor.cut / 4);
+		var rightArmPower = Math.floor(subject.protection("rightArm").armor.cut / 4);
+		var leftLegPower = Math.floor(subject.protection("leftLeg").armor.cut / 4);
+		var rightLegPower = Math.floor(subject.protection("rightLeg").armor.cut / 4);
+		var highestPower = leftArmPower;
+		highestPower = rightArmPower > highestPower ? rightArmPower : highestPower;
+		highestPower = leftLegPower > highestPower ? leftLegPower : highestPower;
+		highestPower = rightLegPower > highestPower ? rightLegPower : highestPower;
+		
+		var limbArray = [];
+		if(leftArmPower == highestPower) { limbArray.push("leftArm"); }
+		if(rightArmPower == highestPower) { limbArray.push("rightArm"); }
+		if(leftLegPower == highestPower) { limbArray.push("leftLeg"); }
+		if(rightLegPower == highestPower) { limbArray.push("rightLeg"); }
+		
+		var lowestDamage = undefined;
+		for(let i = 0; i < limbArray.length; i++) {
+			if(lowestDamage == undefined || subject.getDamage(limbArray[i]) < lowestDamage) {
+				lowestDamage = subject.getDamage(limbArray[i]);
 			}
 		}
+		
+		limbArray = limbArray.filter(function (limb) {
+			return subject.getDamage(limb) == lowestDamage;
+		});
+		
+		return limbArray[Math.floor(Math.random()*limbArray.length)];
+	}
+	if(usesParts.indexOf("bestArm") >= 0 || usesParts.indexOf("bestLeg") >= 0) {
+		var armOrLeg = usesParts.indexOf("bestArm") >= 0 ? "Arm" : "Leg";
+		if(subject.limbsType() === "winged" && subject.isFlying()) {
+			armOrLeg = usesParts.indexOf("bestArm") >= 0 ? "Leg" : "Arm";
+		}
+		
+		var leftPower = Math.floor(subject.protection("left"+armOrLeg).armor.cut / 4);
+		var rightPower = Math.floor(subject.protection("right"+armOrLeg).armor.cut / 4);
+		
+		if(leftPower > rightPower) {
+			return "left"+armOrLeg;
+		}
+		if(leftPower < rightPower) {
+			return "right"+armOrLeg;
+		}
+		
+		if(subject.getDamage("left"+armOrLeg) > subject.getDamage("right"+armOrLeg)) {
+			return "right"+armOrLeg;
+		}
+		if(subject.getDamage("left"+armOrLeg) < subject.getDamage("right"+armOrLeg)) {
+			return "left"+armOrLeg;
+		}
+		return Math.random() < 0.5 ? "right"+armOrLeg : "left"+armOrLeg;
 	}
 	return undefined;
 };

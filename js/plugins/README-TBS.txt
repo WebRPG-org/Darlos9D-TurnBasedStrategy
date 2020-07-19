@@ -257,7 +257,7 @@ Action
         		"multipleDelay": (integer),
         		"accuracyDegradation": (integer),
 			"usesParts": [
-				(entries can be "head", "torso", "mind", "bestLimb", and "equippedOn")
+				(entries can be "head", "torso", "bestLimb", "bestArm", "bestLeg", and "equippedOn")
 			],
 			"damage": {
 				"blunt": (integer),
