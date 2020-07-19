@@ -1639,10 +1639,11 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					}
 					var limbLoops = 0;
 					var leg = Math.random() >= 0.5 ? "leftLeg" : "rightLeg";
+					var stressMult = target.limbsType() === "winged" && target.isFlying() ? 1 : 2;
 					while(partHealing > 0 && limbLoops < 2) {
 						results.hit[leg] = true;
 						results.heal[leg] += partHealing > target.getDamage(leg) ? target.getDamage(leg) : partHealing;
-						var healStress = Math.floor((results.heal[leg] / (tough/2)) * 2);
+						var healStress = Math.floor((results.heal[leg] / (tough/2)) * stressMult);
 						results.stress[leg] += Math.max(0, healStress - stressReduction);
 						partHealing -= target.getDamage(leg);
 						stressReduction = Math.max(0, stressReduction - healStress);
@@ -1651,10 +1652,11 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					}
 					limbLoops = 0;
 					var arm = Math.random() >= 0.5 ? "leftArm" : "rightArm";
+					stressMult = stressMult == 1 ? 2 : 1;
 					while(partHealing > 0 && limbLoops < 2) {
 						results.hit[arm] = true;
 						results.heal[arm] += partHealing > target.getDamage(arm) ? target.getDamage(arm) : partHealing;
-						var healStress = Math.floor(results.heal[arm] / (tough/2));
+						var healStress = Math.floor((results.heal[arm] / (tough/2)) * stressMult);
 						results.stress[arm] += Math.max(0, healStress - stressReduction);
 						partHealing -= target.getDamage(leg);
 						stressReduction = Math.max(0, stressReduction - healStress);
