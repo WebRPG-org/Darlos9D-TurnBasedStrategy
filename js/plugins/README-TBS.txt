@@ -51,6 +51,9 @@ Classes
 			"skillRequirements": [(see "Skill Requirement" section)], (THIS IS AN ARRAY OF MORE THAN ONE SKILL REQUIREMENT!!!)
 			"strength": (integer),
 			"toughness": (integer),
+			"stressRecovery": (integer),
+			"defense": (integer),
+			"reflex": (integer),
 			"movement": (integer)(double the number of squares ingame),
 			"reach": (integer)(double the number of squares ingame),
 			"incremental": true/false
@@ -94,7 +97,20 @@ Weapons
 {
 	"hands": 1/2,
 	"protection": {(see "Protection" section)},
-	"actions": [(see "Action" section)] (THIS IS AN ARRAY OF MORE THAN ONE ACTION!!!)
+	"actions": [(see "Action" section)] (THIS IS AN ARRAY OF MORE THAN ONE ACTION!!!),
+	"attributes": [
+		{
+			"name": (string),
+			"description": (string),
+			"strength": (integer),
+			"toughness": (integer),
+			"stressRecovery": (integer),
+			"defense": (integer),
+			"reflex": (integer),
+			"movement": (integer)(double the number of squares ingame),
+			"reach": (integer)(double the number of squares ingame)
+		}
+	]
 }
 
 ----------------------------------------------------
@@ -102,7 +118,20 @@ Armors
 ----------------------------------------------------
 {
 	"limitedPart": "head"/"torso"/"arms"/"legs", (if this is set, other armor with this same setting cannot be worn with this)
-	"protection": {(see "Protection" section)}
+	"protection": {(see "Protection" section)},
+	"attributes": [
+		{
+			"name": (string),
+			"description": (string),
+			"strength": (integer),
+			"toughness": (integer),
+			"stressRecovery": (integer),
+			"defense": (integer),
+			"reflex": (integer),
+			"movement": (integer)(double the number of squares ingame),
+			"reach": (integer)(double the number of squares ingame)
+		}
+	]
 }
 
 ----------------------------------------------------

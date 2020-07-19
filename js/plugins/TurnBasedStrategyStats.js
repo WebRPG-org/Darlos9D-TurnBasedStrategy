@@ -948,7 +948,14 @@
 	};
 	
 	Game_BattlerBase.prototype.stressRecovery = function() {
-		return 4;
+		var stressRecovery = 2;
+		var attributes = this.getAttributes();
+		attributes.forEach(function (attribute) {
+			if(attribute.stressRecovery !== undefined) {
+				stressRecovery += attribute.stressRecovery;
+			}
+		});
+		return stressRecovery >= 1 ? stressRecovery : 1;
 	};
 	
 	Game_BattlerBase.prototype.baseProtection = function() {
@@ -1018,8 +1025,7 @@
 	Game_BattlerBase.prototype.getAttributes = function() {
 		var attributes = this.getBattlerAttributes();
 		if(!attributes) { attributes = []; }
-		var i;
-		for(i = 0; i < $dataClasses.length; i++) {
+		for(let i = 0; i < $dataClasses.length; i++) {
 			var dataClass = $dataClasses[i];
 			if(!dataClass) { continue; }
 			if(dataClass.name === "UNIVERSAL DEFINITIONS") {
@@ -1061,6 +1067,20 @@
 				}
 			}
 		}, this);
+		var equips = this.equips();
+		if(equips && equips.length) {
+			for(let i = 0; i < equips.length; i++)
+			{
+				if(equips[i] && equips[i].tbsStats.attributes && equips[i].tbsStats.attributes.length > 0)
+				{
+					var attributes = equips[i].tbsStats.attributes;
+					for(let j = 0; j < attributes.length; j++)
+					{
+						returnArray.push(attributes[j]);
+					}
+				}
+			}
+		}
 		return returnArray;
 	};
 	

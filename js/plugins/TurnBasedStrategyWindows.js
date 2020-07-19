@@ -4482,7 +4482,18 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 						multipleHits = hits[i].multipleHits;
 					}
 					if(damage !== undefined) {
+						var physDamageBonus = 0;
+						if(actor && !hits[i].ignoreUserStrength && (hits[i].rangeType === "melee" || hits[i].rangeType === "thrown")) {
+							physDamageBonus = actor.strength();
+						}
+						
 						var hitDamage = BattleManager.getCompleteDamage(actor, actionInfo, hits[i]);
+						if(hitDamage.blunt !== undefined) { hitDamage.blunt += physDamageBonus; }
+						if(hitDamage.cut !== undefined) { hitDamage.cut += physDamageBonus; }
+						if(hitDamage.keen !== undefined) { hitDamage.keen += physDamageBonus; }
+						if(hitDamage.thrust !== undefined) { hitDamage.thrust += physDamageBonus; }
+						if(hitDamage.stiletto !== undefined) { hitDamage.stiletto += physDamageBonus; }
+						if(hitDamage.trip !== undefined) { hitDamage.trip += physDamageBonus; }
 						
 						damageLineOffset += this.drawDamageForType(hitDamage.trip*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("trip"));
 						damageLineOffset += this.drawDamageForType(hitDamage.blunt*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("blunt"));

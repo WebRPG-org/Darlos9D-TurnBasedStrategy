@@ -1062,7 +1062,7 @@
 				+ battler.getDamage("leftArm") >= tough ? 3 : (battler.getDamage("leftArm") >= tough/2 ? 1 : 0)
 				+ battler.getDamage("rightArm") >= tough ? 3 : (battler.getDamage("rightArm") >= tough/2 ? 1 : 0);
 		}
-		battler.adjustStress(Math.floor(damageStress-battler.stressRecovery()));
+		battler.adjustStress(Math.floor(damageStress));
 	}
 	
 	Game_Map.prototype.rollInitiative = function(actor, force) {
@@ -1075,17 +1075,13 @@
 			var skillDice = perception > defense ? perception - defense : defense - perception;
 			var expertDice = perception > defense ? defense : perception;
 			var buffDice = roundBuffs;
-			var debuffDice = stress;
 			var initiativeRoll = BattleManager.rollSkillDice(skillDice, expertDice, buffDice);
-			var stressRoll = BattleManager.rollTestDice(0, 0, debuffDice);
 			initiativeRoll.bonuses += initiativeRoll.rareBonuses * 2;
-			initiativeRoll.hits -= stressRoll.misses;
-			initiativeRoll.bonuses -= stressRoll.penalties;
-			if(initiativeRoll.bonuses > stress) {
-				actor.battler.setRoundBuffs(initiativeRoll.bonuses - stress);
+			if(initiativeRoll.bonuses + actor.battler.stressRecovery() > stress) {
+				actor.battler.setRoundBuffs((initiativeRoll.bonuses + actor.battler.stressRecovery()) - stress);
 			}
-			if(initiativeRoll.bonuses > 0) {
-				actor.battler.adjustStress(-initiativeRoll.bonuses);
+			if(initiativeRoll.bonuses + actor.battler.stressRecovery() > 0) {
+				actor.battler.adjustStress(-initiativeRoll.bonuses - actor.battler.stressRecovery());
 			}
 			if(
 				force.initiativeRoll === undefined ||

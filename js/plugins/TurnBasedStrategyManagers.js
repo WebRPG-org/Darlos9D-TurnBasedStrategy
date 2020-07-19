@@ -1793,26 +1793,20 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 			if(hit.rollInitiative) {
 				hitDodged = false;
 				results.dodged = false;
-				var stressRecovery = subject.stressRecovery();
 				var perception = subject.totalSkill("perception");
 				var defense = subject.defenseSkill();
-				var stress = Math.max(0, subject.stress() - stressRecovery);
-				results.heal.stress += stressRecovery;
+				var stress = subject.stress();
 				var roundBuffs = subject.roundBuffs();
 				var skillDice = perception > defense ? perception - defense : defense - perception;
 				var expertDice = perception > defense ? defense : perception;
 				var buffDice = roundBuffs;
-				var debuffDice = stress;
 				var initiativeRoll = this.rollSkillDice(skillDice, expertDice, buffDice);
-				var stressRoll = this.rollTestDice(0, 0, debuffDice);
 				initiativeRoll.bonuses += initiativeRoll.rareBonuses * 2;
-				initiativeRoll.hits -= stressRoll.misses;
-				initiativeRoll.bonuses -= stressRoll.penalties;
-				if(initiativeRoll.bonuses > stress) {
-					results.subjectRoundBuffs += initiativeRoll.bonuses - stress;
+				if(initiativeRoll.bonuses + subject.stressRecovery() > stress) {
+					results.subjectRoundBuffs += (initiativeRoll.bonuses + subject.stressRecovery()) - stress;
 				}
-				if(initiativeRoll.bonuses > 0) {
-					results.heal.stress += initiativeRoll.bonuses;
+				if(initiativeRoll.bonuses + subject.stressRecovery() > 0) {
+					results.heal.stress += initiativeRoll.bonuses + subject.stressRecovery();
 				}
 			}
 			if(hit.initialAnimationId !== undefined && hit.initialAnimationId > 0) {
