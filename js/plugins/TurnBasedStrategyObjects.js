@@ -2006,12 +2006,12 @@
 					this.rollInitiative(this._tbsForces[i].actors[j], this._tbsForces[i]);
 				}
 			}
-			var currentTurnForceId = this._tbsCurrentTurnForce;
+			//var currentTurnForceId = this._tbsCurrentTurnForce;
 			this.determineForceOrder();
-			if(this._tbsMinorAction) {
-				this._tbsMinorAction = false;
-				this._tbsCurrentTurnForce = currentTurnForceId;
-			}
+			//if(this._tbsMinorAction) {
+			//	this._tbsMinorAction = false;
+			//	this._tbsCurrentTurnForce = currentTurnForceId;
+			//}
 			this._tbsRoundJustStarted = true;
 		}
 		

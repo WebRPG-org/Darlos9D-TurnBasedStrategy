@@ -3509,7 +3509,7 @@ Window_StatusSkills.prototype.drawParametersColumnTwo = function() {
 	rect = this.itemRect(15);
 	this.drawSkillLevel("Manual Dexterity", "manualDex", rect.x, rect.y, rect.width);
 	rect = this.itemRect(17);
-	this.drawSkillLevel("Perception", "perception", rect.x, rect.y, rect.width);
+	this.drawSkillLevel("Initiative", "perception", rect.x, rect.y, rect.width);
 	this._activeIndicies.push(3);
 	this._activeIndicies.push(5);
 	this._activeIndicies.push(9);
