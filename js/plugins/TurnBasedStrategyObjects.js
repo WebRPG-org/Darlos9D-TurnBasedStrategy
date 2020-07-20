@@ -1547,10 +1547,10 @@
 			if(!hitGroup.hits || hitGroup.hits.length == 0) { return; }
 			hitGroup.hits.forEach(function (hit) {
 				var targets = [];
-				if(hit.aoe !== undefined && hit.aoe > 0) {
+				if(hit.aoe !== undefined) {
 					var centerPointX = $gamePlayer.x;
 					var centerPointY = $gamePlayer.y;
-					var aoeRange = hit.aoe / 2;
+					var aoeRange = (hit.aoe + (this._tbsSelectedActor && hit.aoeUsesUserRange ? this._tbsSelectedActor.battler.baseRange() : 0)) / 2;
 					var checkBoxRange = Math.ceil(aoeRange);
 					var x;
 					for(x = centerPointX - checkBoxRange; x <= centerPointX + checkBoxRange; x++) {
@@ -1590,10 +1590,10 @@
 		hitGroups.forEach(function (hitGroup) {
 			if(!hitGroup.hits || hitGroup.hits.length == 0) { return; }
 			hitGroup.hits.forEach(function (hit) {
-				if(hit.aoe !== undefined && hit.aoe > 0) {
+				if(hit.aoe !== undefined) {
 					var centerPointX = $gamePlayer.x;
 					var centerPointY = $gamePlayer.y;
-					var aoeRange = hit.aoe / 2;
+					var aoeRange = (hit.aoe + (this._tbsSelectedActor && hit.aoeUsesUserRange ? this._tbsSelectedActor.battler.baseRange() : 0)) / 2;
 					var checkBoxRange = Math.ceil(aoeRange);
 					var x;
 					for(x = centerPointX - checkBoxRange ; x <= centerPointX + checkBoxRange; x++) {
@@ -3502,13 +3502,13 @@
 					skills[i].tbsStats.action.hitGroups.forEach(function (hitGroup) {
 						if(!hitGroup.hits || hitGroup.hits.length == 0) { return; }
 						actionInfo.canTargetBodyPart = hitGroup.hits.some(function (hit) {
-							if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+							if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined)) {
 								return true;
 							}
 							return false;
 						});
 						actionInfo.canTargetDownedBodyPart = hitGroup.hits.some(function (hit) {
-							if(hit.aoe === undefined || hit.aoe <= 0) {
+							if(hit.aoe === undefined) {
 								return true;
 							}
 							return false;
@@ -3535,13 +3535,13 @@
 				skill.tbsStats.action.hitGroups.forEach(function (hitGroup) {
 					if(!hitGroup.hits || hitGroup.hits.length == 0) { return; }
 					actionInfo.canTargetBodyPart = hitGroup.hits.some(function (hit) {
-						if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+						if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined)) {
 							return true;
 						}
 						return false;
 					});
 					actionInfo.canTargetDownedBodyPart = hitGroup.hits.some(function (hit) {
-						if(hit.aoe === undefined || hit.aoe <= 0) {
+						if(hit.aoe === undefined) {
 							return true;
 						}
 						return false;

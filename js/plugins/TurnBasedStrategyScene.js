@@ -1149,7 +1149,7 @@
 			if(!hitGroup.hits || hitGroup.hits.length == 0) { return false; }
 			return hitGroup.hits.some(function(hit) {
 				if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0
-					&& (hit.aoe == undefined || hit.aoe <= 0)) { return true; }
+					&& (hit.aoe == undefined)) { return true; }
 				return false;
 			});
 		});

@@ -1096,13 +1096,13 @@
 				skills[i].tbsStats.action.hitGroups.forEach(function (hitGroup) {
 					if(!hitGroup.hits || hitGroup.hits.length == 0) { return; }
 					actionInfo.canTargetBodyPart = hitGroup.hits.some(function (hit) {
-						// if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+						// if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined)) {
 							// return true;
 						// }
 						return false;
 					});
 					actionInfo.canTargetDownedBodyPart = hitGroup.hits.some(function (hit) {
-						if(hit.aoe === undefined || hit.aoe <= 0) {
+						if(hit.aoe === undefined) {
 							return true;
 						}
 						return false;
@@ -1140,13 +1140,13 @@
 								if(groups[k].hits && groups[k].hits.length > 0) {
 									var hits = groups[k].hits;
 									returnActionInfo.canTargetBodyPart = hits.some(function (hit) {
-										// if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+										// if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined)) {
 											// return true;
 										// }
 										return false;
 									});
 									returnActionInfo.canTargetDownedBodyPart = hits.some(function (hit) {
-										if(hit.aoe === undefined || hit.aoe <= 0) {
+										if(hit.aoe === undefined) {
 											return true;
 										}
 										return false;
@@ -1205,13 +1205,13 @@
 								if(groups[k].hits && groups[k].hits.length > 0) {
 									var hits = groups[k].hits;
 									returnActionInfo.canTargetBodyPart = hits.some(function (hit) {
-										// if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+										// if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined)) {
 											// return true;
 										// }
 										return false;
 									});
 									returnActionInfo.canTargetDownedBodyPart = hits.some(function (hit) {
-										if(hit.aoe === undefined || hit.aoe <= 0) {
+										if(hit.aoe === undefined) {
 											return true;
 										}
 										return false;

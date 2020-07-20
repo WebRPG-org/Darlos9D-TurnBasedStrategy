@@ -268,6 +268,7 @@ Action
 			"range": (integer)(double the number of squares ingame),
 			"aoe": (integer)(double the number of squares ingame),
 			"aoeType": "engulf"/"regularHit",
+                        "aoeUsesUserRange": true/false,
 			"arcedTrajectory": true/false,
 			"randomTarget": true/false,
                         "targetMobility": true/false,

@@ -1010,13 +1010,13 @@ Window_ItemOption.prototype.actionInfo = function() {
 			action.hitGroups.forEach(function (hitGroup) {
 				if(!hitGroup.hits || hitGroup.hits.length == 0) { return; }
 				actionInfo.canTargetBodyPart = hitGroup.hits.some(function (hit) {
-					if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined || hit.aoe <= 0)) {
+					if(hit.heal && hit.heal.damage !== undefined && hit.heal.damage > 0 && (hit.aoe === undefined)) {
 						return true;
 					}
 					return false;
 				});
 				actionInfo.canTargetDownedBodyPart = hitGroup.hits.some(function (hit) {
-					if(hit.aoe === undefined || hit.aoe <= 0) {
+					if(hit.aoe === undefined) {
 						return true;
 					}
 					return false;
@@ -4425,6 +4425,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 				accuracy -= hits[i].accuracyPenalty !== undefined ? hits[i].accuracyPenalty : 0;
 				this.drawText((hits[i].damage || hits[i].debuffs) && accuracy > 0 ? accuracy : "-", nameOffset + Window_Base._iconWidth*2 + 14*9, lineHeight, 14*2, 'right');
 				var hitAoe = hits[i].aoe !== undefined ? hits[i].aoe : 0;
+				hitAoe += hits[i].aoeUsesUserRange ? actor.baseRange() : 0;
 				var aoe = hitAoe / 2;
 				var flooredAoe = Math.floor(aoe);
 				this.drawText(aoe > 0 ? flooredAoe + (aoe > flooredAoe ? "½" : "") : "-", nameOffset + Window_Base._iconWidth*2 + 14*6, lineHeight, 14*2, 'right');
