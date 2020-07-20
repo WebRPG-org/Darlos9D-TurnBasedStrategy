@@ -6281,7 +6281,10 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 				results.stress.leftArm + results.stress.rightArm + results.stress.leftLeg +
 				results.stress.rightLeg + results.stress.leftHeld + results.stress.rightHeld) < results.heal.stress) {
 				target.performRecovery();
-			} else if((results.stress.other + results.stress.mind + results.stress.head + results.stress.torso +
+			} else if((results.hit.mind || results.hit.head || results.hit.torso ||
+					results.hit.leftArm || results.hit.rightArm ||
+					results.hit.leftLeg || results.hit.rightLeg) &&
+				(results.stress.other + results.stress.mind + results.stress.head + results.stress.torso +
 				results.stress.leftArm + results.stress.rightArm + results.stress.leftLeg +
 				results.stress.rightLeg + results.stress.leftHeld + results.stress.rightHeld) > results.heal.stress) {
 				target.performStress();
@@ -6292,61 +6295,9 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_BattleLog.prototype.showStressCost = function(subject, stressCost) {
-		var totalResults = {};
-		totalResults.stress = {};
+		var totalResults = BattleManager.getNewResultsObject();
 		totalResults.stress.head = stressCost;
-		totalResults.stress.torso = 0;
-		totalResults.stress.leftArm = 0;
-		totalResults.stress.rightArm = 0;
-		totalResults.stress.leftLeg = 0;
-		totalResults.stress.rightLeg = 0;
-		totalResults.stress.leftHeld = 0;
-		totalResults.stress.rightHeld = 0;
-		totalResults.stress.mind = 0;
-		totalResults.stress.other = 0;
-		totalResults.damage = {};
-		totalResults.damage.head = 0;
-		totalResults.damage.torso = 0;
-		totalResults.damage.leftArm = 0;
-		totalResults.damage.rightArm = 0;
-		totalResults.damage.leftLeg = 0;
-		totalResults.damage.rightLeg = 0;
-		totalResults.damage.leftHeld = 0;
-		totalResults.damage.rightHeld = 0;
-		totalResults.damage.mind = 0;
-		totalResults.heal = {};
-		totalResults.heal.stress = 0;
-		totalResults.heal.head = 0;
-		totalResults.heal.torso = 0;
-		totalResults.heal.leftArm = 0;
-		totalResults.heal.rightArm = 0;
-		totalResults.heal.leftLeg = 0;
-		totalResults.heal.rightLeg = 0;
-		totalResults.heal.leftHeld = 0;
-		totalResults.heal.rightHeld = 0;
-		totalResults.heal.mind = 0;
 		totalResults.dodged = false;
-		totalResults.hit = {};
-		totalResults.hit.mind = false;
-		totalResults.hit.head = false;
-		totalResults.hit.torso = false;
-		totalResults.hit.leftArm = false;
-		totalResults.hit.rightArm = false;
-		totalResults.hit.leftLeg = false;
-		totalResults.hit.rightLeg = false;
-		totalResults.hit.leftHeld = false;
-		totalResults.hit.rightHeld = false;
-		totalResults.critical = {};
-		totalResults.critical.mind = false;
-		totalResults.critical.head = false;
-		totalResults.critical.torso = false;
-		totalResults.critical.leftArm = false;
-		totalResults.critical.rightArm = false;
-		totalResults.critical.leftLeg = false;
-		totalResults.critical.rightLeg = false;
-		totalResults.buffs = [];
-		totalResults.downed = false;
-		totalResults.revived = false;
 		subject.setTbsResults(totalResults);
 		subject.startDamagePopup();
 	};

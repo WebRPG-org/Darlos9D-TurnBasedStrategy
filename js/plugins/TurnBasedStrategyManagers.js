@@ -653,64 +653,7 @@ BattleManager.invokeAction = function(subject, target, resultsPerGroup) {
 BattleManager.invokeNormalAction = function(subject, target, resultsPerGroup) {
     //var realTarget = this.applySubstitute(target);
     //this._action.apply(realTarget);
-	var totalResults = {};
-	totalResults.stress = {};
-	totalResults.stress.head = 0;
-	totalResults.stress.torso = 0;
-	totalResults.stress.leftArm = 0;
-	totalResults.stress.rightArm = 0;
-	totalResults.stress.leftLeg = 0;
-	totalResults.stress.rightLeg = 0;
-	totalResults.stress.leftHeld = 0;
-	totalResults.stress.rightHeld = 0;
-	totalResults.stress.mind = 0;
-	totalResults.stress.other = 0;
-	totalResults.damage = {};
-	totalResults.damage.head = 0;
-	totalResults.damage.torso = 0;
-	totalResults.damage.leftArm = 0;
-	totalResults.damage.rightArm = 0;
-	totalResults.damage.leftLeg = 0;
-	totalResults.damage.rightLeg = 0;
-	totalResults.damage.leftHeld = 0;
-	totalResults.damage.rightHeld = 0;
-	totalResults.damage.mind = 0;
-	totalResults.damage.core = 0;
-	totalResults.heal = {};
-	totalResults.heal.stress = 0;
-	totalResults.heal.head = 0;
-	totalResults.heal.torso = 0;
-	totalResults.heal.leftArm = 0;
-	totalResults.heal.rightArm = 0;
-	totalResults.heal.leftLeg = 0;
-	totalResults.heal.rightLeg = 0;
-	totalResults.heal.leftHeld = 0;
-	totalResults.heal.rightHeld = 0;
-	totalResults.heal.mind = 0;
-	totalResults.heal.core = 0;
-	totalResults.dodged = true;
-	totalResults.hit = {};
-	totalResults.hit.mind = false;
-	totalResults.hit.head = false;
-	totalResults.hit.torso = false;
-	totalResults.hit.leftArm = false;
-	totalResults.hit.rightArm = false;
-	totalResults.hit.leftLeg = false;
-	totalResults.hit.rightLeg = false;
-	totalResults.hit.leftHeld = false;
-	totalResults.hit.rightHeld = false;
-	totalResults.critical = {};
-	totalResults.critical.mind = false;
-	totalResults.critical.head = false;
-	totalResults.critical.torso = false;
-	totalResults.critical.leftArm = false;
-	totalResults.critical.rightArm = false;
-	totalResults.critical.leftLeg = false;
-	totalResults.critical.rightLeg = false;
-	totalResults.buffs = [];
-	totalResults.focus = 0;
-	totalResults.downed = false;
-	totalResults.revived = false;
+	var totalResults = this.getNewResultsObject();
 	resultsPerGroup.forEach(function (results) {
 		totalResults.stress.head += results.stress.head;
 		totalResults.stress.torso += results.stress.torso;
@@ -790,41 +733,7 @@ BattleManager.shouldSkipTarget = function(processedHitGroups, target, targetsByH
 	return shouldSkip;
 };
 
-BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, target, targetsByHit, hitGroupIndex, targetingType, rangedDistance) {
-	var battlersByHit = [];
-	targetsByHit[hitGroupIndex].forEach(function (targets) {
-		var battlers = targets.map(function (hitTarget) { return hitTarget.battler; });
-		battlersByHit.push(battlers);
-	});
-	
-	var targetLeftHeldProt = target.protection("leftHeld");
-	var targetRightHeldProt = target.protection("rightHeld");
-	var targetHeadProt = target.protection("head");
-	var targetTorsoProt = target.protection("torso");
-	var targetLeftArmProt = target.protection("leftArm");
-	var targetRightArmProt = target.protection("rightArm");
-	var targetLeftLegProt = target.protection("leftLeg");
-	var targetRightLegProt = target.protection("rightLeg");
-	var targetMentalProt = target.mentalProtection();
-	
-	var physEvaSkill = target.totalSkill("physEvade");
-	var defenseSkill = target.defenseSkill();
-	var reflexSkill = target.reflexSkill();
-	var defenseTestDice = physEvaSkill > defenseSkill ? physEvaSkill - defenseSkill : defenseSkill - physEvaSkill;
-	var defenseCrisisDice = physEvaSkill > defenseSkill ? defenseSkill : physEvaSkill;
-	var reflexTestDice = physEvaSkill > reflexSkill ? physEvaSkill - reflexSkill : reflexSkill - physEvaSkill;
-	var reflexCrisisDice = physEvaSkill > reflexSkill ? reflexSkill : physEvaSkill;
-	
-	var mentalEvaSkill = target.totalSkill("mentalEvade");
-	var mentalArmorSkill = 1;
-	var mentalTestDice = mentalEvaSkill > mentalArmorSkill ? mentalEvaSkill - mentalArmorSkill : mentalArmorSkill - mentalEvaSkill;
-	var mentalCrisisDice = mentalEvaSkill > mentalArmorSkill ? mentalArmorSkill : mentalEvaSkill;
-	
-	var tripEvaSkill = target.totalSkill("tripEvade");
-	var tripTestDice = tripEvaSkill > reflexSkill ? tripEvaSkill - reflexSkill : reflexSkill - tripEvaSkill;
-	var tripCrisisDice = tripEvaSkill > reflexSkill ? reflexSkill : tripEvaSkill;
-	
-	var i;
+BattleManager.getNewResultsObject = function() {
 	var results = {};
 	results.stress = {};
 	results.stress.head = 0;
@@ -838,6 +747,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 	results.stress.mind = 0;
 	results.stress.other = 0;
 	results.damage = {};
+	results.damage.core = 0;
 	results.damage.head = 0;
 	results.damage.torso = 0;
 	results.damage.leftArm = 0;
@@ -849,6 +759,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 	results.damage.mind = 0;
 	results.heal = {};
 	results.heal.stress = 0;
+	results.heal.core = 0;
 	results.heal.head = 0;
 	results.heal.torso = 0;
 	results.heal.leftArm = 0;
@@ -892,6 +803,45 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 	results.skipTarget = true;
 	results.subjectStress = 0;
 	results.subjectRoundBuffs = 0;
+	return results;
+};
+
+BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, target, targetsByHit, hitGroupIndex, targetingType, rangedDistance) {
+	var battlersByHit = [];
+	targetsByHit[hitGroupIndex].forEach(function (targets) {
+		var battlers = targets.map(function (hitTarget) { return hitTarget.battler; });
+		battlersByHit.push(battlers);
+	});
+	
+	var targetLeftHeldProt = target.protection("leftHeld");
+	var targetRightHeldProt = target.protection("rightHeld");
+	var targetHeadProt = target.protection("head");
+	var targetTorsoProt = target.protection("torso");
+	var targetLeftArmProt = target.protection("leftArm");
+	var targetRightArmProt = target.protection("rightArm");
+	var targetLeftLegProt = target.protection("leftLeg");
+	var targetRightLegProt = target.protection("rightLeg");
+	var targetMentalProt = target.mentalProtection();
+	
+	var physEvaSkill = target.totalSkill("physEvade");
+	var defenseSkill = target.defenseSkill();
+	var reflexSkill = target.reflexSkill();
+	var defenseTestDice = physEvaSkill > defenseSkill ? physEvaSkill - defenseSkill : defenseSkill - physEvaSkill;
+	var defenseCrisisDice = physEvaSkill > defenseSkill ? defenseSkill : physEvaSkill;
+	var reflexTestDice = physEvaSkill > reflexSkill ? physEvaSkill - reflexSkill : reflexSkill - physEvaSkill;
+	var reflexCrisisDice = physEvaSkill > reflexSkill ? reflexSkill : physEvaSkill;
+	
+	var mentalEvaSkill = target.totalSkill("mentalEvade");
+	var mentalArmorSkill = 1;
+	var mentalTestDice = mentalEvaSkill > mentalArmorSkill ? mentalEvaSkill - mentalArmorSkill : mentalArmorSkill - mentalEvaSkill;
+	var mentalCrisisDice = mentalEvaSkill > mentalArmorSkill ? mentalArmorSkill : mentalEvaSkill;
+	
+	var tripEvaSkill = target.totalSkill("tripEvade");
+	var tripTestDice = tripEvaSkill > reflexSkill ? tripEvaSkill - reflexSkill : reflexSkill - tripEvaSkill;
+	var tripCrisisDice = tripEvaSkill > reflexSkill ? reflexSkill : tripEvaSkill;
+	
+	var i;
+	var results = this.getNewResultsObject();
 	var hitDodged = true;
 	var hitGroup = processedHitGroup.hitGroup;
 	if(target.blankDummy()) {
