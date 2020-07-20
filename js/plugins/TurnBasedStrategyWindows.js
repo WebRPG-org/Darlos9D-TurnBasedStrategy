@@ -6268,12 +6268,12 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		if (results.dodged) {
 			target.performEvasion();
 		} else {
-			if(results.damage.head > results.heal.head || results.damage.mind > results.heal.mind ||
+			if(results.damage.core > results.heal.core || results.damage.head > results.heal.head || results.damage.mind > results.heal.mind ||
 				results.damage.torso > results.heal.torso || results.damage.leftArm > results.heal.leftArm ||
 				results.damage.rightArm > results.heal.rightArm || results.damage.leftLeg > results.heal.leftLeg ||
 				results.damage.rightLeg > results.heal.rightLeg) {
 				target.performDamage();
-			} else if(results.damage.head < results.heal.head || results.damage.mind < results.heal.mind ||
+			} else if(results.damage.core < results.heal.core || results.damage.head < results.heal.head || results.damage.mind < results.heal.mind ||
 				results.damage.torso < results.heal.torso || results.damage.leftArm < results.heal.leftArm ||
 				results.damage.rightArm < results.heal.rightArm || results.damage.leftLeg < results.heal.leftLeg ||
 				results.damage.rightLeg < results.heal.rightLeg ||
