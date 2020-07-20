@@ -2584,13 +2584,22 @@ Window_TbsTarget.prototype.refreshWindowContents = function(dontSelectFirst) {
 
 Window_TbsTarget.prototype.selectFirstEnabledItem = function() {
 	var selected = false;
-	var i;
-	for(i = 0; i < this.maxItems(); i++) {
+	for(let i = 0; i < this.maxItems(); i++) {
 		var tbsActor = this._actors[i];
-		if(this.isEnabled(i) && (!tbsActor || !tbsActor.battler.isDown())) {
+		if(tbsActor == $gameMap.getTbsSelectedActor()) {
 			this.select(i);
 			selected = true;
 			break;
+		}
+	}
+	if(!selected) {
+		for(let i = 0; i < this.maxItems(); i++) {
+			var tbsActor = this._actors[i];
+			if(this.isEnabled(i) && (!tbsActor || !tbsActor.battler.isDown())) {
+				this.select(i);
+				selected = true;
+				break;
+			}
 		}
 	}
 	if(!selected) {
