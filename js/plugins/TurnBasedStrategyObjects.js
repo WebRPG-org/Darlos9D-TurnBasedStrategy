@@ -1534,10 +1534,12 @@
 		if(!this._tbsSelectedAction) { return targetsByHit; }
 		var hitGroups = this._tbsSelectedAction.hitGroups;
 		if(!hitGroups || hitGroups.length == 0) { return targetsByHit; }
-		var centerTarget = this.getTbsActorAtPosition($gamePlayer.x, $gamePlayer.y);
+		var centerPointX = $gamePlayer.x;
+		var centerPointY = $gamePlayer.y;
+		var centerTarget = this.getTbsActorAtPosition(centerPointX, centerPointY);
 		if(!centerTarget) {
 			centerTarget = this._dummyTarget;
-			centerTarget.chara.setPosition($gamePlayer.x, $gamePlayer.y);
+			centerTarget.chara.setPosition(centerPointX, centerPointY);
 		}
 		var processedHitGroups = BattleManager.processHitGroups(hitGroups);
 		processedHitGroups.forEach(function (processedHitGroup) {
@@ -1548,15 +1550,12 @@
 			hitGroup.hits.forEach(function (hit) {
 				var targets = [];
 				if(hit.aoe !== undefined) {
-					var centerPointX = $gamePlayer.x;
-					var centerPointY = $gamePlayer.y;
 					var aoeRange = (hit.aoe + (this._tbsSelectedActor && hit.aoeUsesUserRange ? this._tbsSelectedActor.battler.baseRange() : 0)) / 2;
 					var checkBoxRange = Math.ceil(aoeRange);
 					var x;
 					for(x = centerPointX - checkBoxRange; x <= centerPointX + checkBoxRange; x++) {
 						var y;
 						for(y = centerPointY - checkBoxRange; y <= centerPointY + checkBoxRange; y++) {
-							if(hit.ignoreCenter && x === centerPointX && y === centerPointY) { continue; }
 							if(x === centerPointX && y === centerPointY && targets.indexOf(centerTarget) === -1) {
 								targets.unshift(centerTarget);
 								continue;
