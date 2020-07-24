@@ -1485,7 +1485,7 @@
 			}
 			if(partHealing > 0) {
 				var newPartHealing = partHealing - this.getDamage("torso");
-				this.adjustDamage("head", partHealing > this.getDamage("torso") ? -this.getDamage("torso") : -partHealing);
+				this.adjustDamage("torso", partHealing > this.getDamage("torso") ? -this.getDamage("torso") : -partHealing);
 				partHealing = newPartHealing;
 			}
 			var limbLoops = 0;
