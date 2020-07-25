@@ -329,13 +329,10 @@ $gameSystem.addTbsPartyMember(
 	forceId,
 	partyId,
 	startingX,
-	startingY,
-	surprised,
-	label,
-	labelType
+	startingY
 );
 
-Use this to add a party member to a force before starting a battle. The partyId refers to the member's current position in the party. startingX and startingY determines where on the map the character begins the battle. surprised will cause the member to skip the first round of combat. label is a string that is added after the member's name. if the string "replace" is passed in as the labelType, the label will instead completely replace the member's name.
+Use this to add a party member to a force before starting a battle. The partyId refers to the member's current position in the party. startingX and startingY determines where on the map the character begins the battle.
 
 ----------------------------------------------------
 $gameSystem.addTbsEnemy(
@@ -343,12 +340,13 @@ $gameSystem.addTbsEnemy(
 	enemyId,
 	startingX,
 	startingY,
+        patient,
 	surprised,
 	label,
 	labelType
 );
 
-Use this to add an enemy to a force before starting a battle. startingX and startingY determines where on the map the character begins the battle. surprised will cause the member to skip the first round of combat. label is a string that is added after the enemy's name. if the string "replace" is passed in as the labelType, the label will instead completely replace the enemy's name.
+Use this to add an enemy to a force before starting a battle. startingX and startingY determines where on the map the character begins the battle. patient will cause the memeber to hold its ground until a target is in range. surprised will cause the member to skip the first round of combat. label is a string that is added after the enemy's name. if the string "replace" is passed in as the labelType, the label will instead completely replace the enemy's name.
 
 -----------------------------------------------------
 $gameSystem.setTbsForceEnemyForce(
