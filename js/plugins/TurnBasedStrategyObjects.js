@@ -3304,7 +3304,7 @@
 		this._tbsFullMoveTiles = [];
 		if(!tbsActor || !tbsActor.canActThisRound || tbsActor.movedThisRound) { return; }
 		var moveRange = Math.max(1, tbsActor.battler.moveRange() / 2);
-		var moveType = (tbsActor.battler.limbsType() === "winged" && tbsActor.battler.isFlying()) ? "fly" : "walk";
+		var moveType = tbsActor.battler.isFlying() ? "fly" : "walk";
 		this.checkMoveTile(tbsActor.chara.x, tbsActor.chara.y, moveRange, this._tbsMoveTiles, moveType);
 		this._tbsMoveTiles.forEach(function (moveTile) {
 			if(moveRange - moveTile.remainingRange <= moveRange/2) {
@@ -3615,7 +3615,7 @@
 							largestActionRange.range = hitRange;
 							largestActionRange.type = hit.rangeType;
 							largestActionRange.ignoreUserRange = hit.ignoreUserRange;
-							largestActionRange.arcedTrajectory = hit.arcedTrajectory;
+							largestActionRange.arcedTrajectory = this._tbsSelectedActor.isFlying() || hit.arcedTrajectory;
 						}
 					},this);
 				}
