@@ -190,13 +190,13 @@
 		return this._tbsAoeSpritesToAdd;
 	};
 	
-	Game_Temp.prototype.addTbsAoeSprite = function(x, y, isFollowUp) {
+	Game_Temp.prototype.addTbsAoeSprite = function(x, y, color) {
 		var chara = new Game_Character();
 		chara.setStepAnime(true);
 		chara.setPriorityType(2);
 		chara.setTbsBattleMode(true);
 		chara.setPosition(x, y);
-		chara.setImage("Cursor", isFollowUp ? 4 : 5);
+		chara.setImage("Cursor", color === "white" ? 4 : (color === "red" ? 5 : 6));
 		this._tbsAoeSpritesToAdd.push(chara);
 		return chara;
 	};
@@ -1605,7 +1605,7 @@
 								continue;
 							}
 							if(!this.isTrajectoryObstructed(centerPointX, centerPointY, x, y, "thrown", true)) {
-								this._tbsAoeSprites.push($gameTemp.addTbsAoeSprite(x, y, hit.rangeType === "followUp"));
+								this._tbsAoeSprites.push($gameTemp.addTbsAoeSprite(x, y, hit.rangeType === "followUp" ? "yellow" : "white"));
 							}
 						}
 					}
@@ -2183,9 +2183,7 @@
 			var actionsAtPosition = [];
 			actionsAtPosition.push(actionAtPosition);
 			var longestRangedActionAtPos = undefined;
-			var longestRangedActionAtPosIndex = -1;
 			var longestRangedArcedActionAtPos = undefined;
-			var longestRangedArcedActionAtPosIndex = -1;
 			
 			var i;
 			for(i = this._tbsQueuedActionsAtPositions.length - 1; i >= 0; i--) {
@@ -2211,7 +2209,6 @@
 					)
 				) {
 					longestRangedArcedActionAtPos = curActionAtPosition;
-					longestRangedArcedActionAtPosIndex = actionsAtPosition.length-1;
 				} else if (
 					!curActionAtPosition.actionRange.arcedTrajectory && 
 					(
@@ -2223,34 +2220,27 @@
 					)
 				) {
 					longestRangedActionAtPos = curActionAtPosition;
-					longestRangedActionAtPosIndex = actionsAtPosition.length-1;
 				}
 			}
 			
+			var longestRangedActionTiles = [];
 			if(longestRangedActionAtPos) {
-				this.checkActionTiles(longestRangedActionAtPos.x, longestRangedActionAtPos.y, false, false, longestRangedActionAtPos.actionRange, longestRangedActionAtPos.actionTiles, true);
+				this.checkActionTiles(longestRangedActionAtPos.x, longestRangedActionAtPos.y, longestRangedActionAtPos.actionRange, longestRangedActionTiles);
 			}
+			var longestRangedArcedActionTiles = [];
 			if(longestRangedArcedActionAtPos) {
-				this.checkActionTiles(longestRangedArcedActionAtPos.x, longestRangedArcedActionAtPos.y, false, false, longestRangedArcedActionAtPos.actionRange, longestRangedArcedActionAtPos.actionTiles, true);
+				this.checkActionTiles(longestRangedArcedActionAtPos.x, longestRangedArcedActionAtPos.y, longestRangedArcedActionAtPos.actionRange, longestRangedArcedActionTiles);
 			}
 			
-			var actionAtPosIndex = 0;
 			actionsAtPosition.forEach(function (curActionAtPosition) {
-				if(
-					(curActionAtPosition.actionRange.arcedTrajectory && actionAtPosIndex == longestRangedArcedActionAtPosIndex) ||
-					(!curActionAtPosition.actionRange.arcedTrajectory && actionAtPosIndex == longestRangedActionAtPosIndex)
-				) { actionAtPosIndex++; return; }
+				var tilesToCopy = curActionAtPosition.actionRange.arcedTrajectory ? longestRangedArcedActionTiles : longestRangedActionTiles;
 				
-				var actionAtPosToCopy = curActionAtPosition.actionRange.arcedTrajectory ? longestRangedArcedActionAtPos : longestRangedActionAtPos;
-				
-				actionAtPosToCopy.actionTiles.forEach(function (tileToCopy) {
+				tilesToCopy.forEach(function (tileToCopy) {
 					if(
-						this.actualDistance(actionAtPosToCopy.x, actionAtPosToCopy.y, tileToCopy.x, tileToCopy.y) <=
+						this.actualDistance(curActionAtPosition.x, curActionAtPosition.y, tileToCopy.x, tileToCopy.y) <=
 						curActionAtPosition.actionRange.range + (curActionAtPosition.actionRange.ignoreUserRange ? 0 : curActionAtPosition.actionRange.baseRange)
 					) { curActionAtPosition.actionTiles.push(tileToCopy); }
 				}, this);
-				
-				actionAtPosIndex++;
 			}, this);
 			
 			if(this._tbsQueuedActionsAtPositions.length == 0) {
@@ -2266,11 +2256,8 @@
 			return;
 		}
 		
-		var actionIndex = 0;
 		var longestRangedAction = undefined;
-		var longestRangedActionIndex = -1;
 		var longestRangedArcedAction = undefined;
-		var longestRangedArcedActionIndex = -1;
 		var chara = this._tbsSelectedActor.chara;
 		
 		this._tbsQueuedActions.forEach(function (actionInfo) {
@@ -2279,7 +2266,6 @@
 			if(actionRange.arcedTrajectory) {
 				if(longestRangedArcedAction == undefined) {
 					longestRangedArcedAction = action;
-					longestRangedArcedActionIndex = actionIndex;
 				} else {
 					var longestArcedActionRange = this.getLargestActionRange(longestRangedArcedAction);
 					if(
@@ -2287,13 +2273,11 @@
 						longestArcedActionRange.range + (longestArcedActionRange.ignoreUserRange ? 0 : longestArcedActionRange.baseRange)
 					) {
 						longestRangedArcedAction = action;
-						longestRangedArcedActionIndex = actionIndex;
 					}
 				}
 			} else {
 				if(longestRangedAction == undefined) {
 					longestRangedAction = action;
-					longestRangedActionIndex = actionIndex;
 				} else {
 					var longestActionRange = this.getLargestActionRange(longestRangedAction);
 					if(
@@ -2301,36 +2285,23 @@
 						longestActionRange.range + (longestActionRange.ignoreUserRange ? 0 : longestActionRange.baseRange)
 					) {
 						longestRangedAction = action;
-						longestRangedActionIndex = actionIndex;
 					}
 				}
 			}
-			actionIndex++;
 		}, this);
 		
-		actionIndex = this._tbsQueuedActions-1;
 		var longestActionRange = this.getLargestActionRange(longestRangedAction);
 		var longestActionTiles = [];
 		var longestArcedActionRange = this.getLargestActionRange(longestRangedArcedAction);
 		var longestArcedActionTiles = [];
 		if(longestRangedAction) {
-			this.checkActionTiles(chara.x, chara.y, longestRangedAction.cantUseHalfMove, longestRangedAction.cantUseFullMove, longestActionRange, longestActionTiles);
+			this.checkActionTiles(chara.x, chara.y, longestActionRange, longestActionTiles);
 		}
 		if(longestRangedArcedAction) {
-			this.checkActionTiles(chara.x, chara.y, longestRangedArcedAction.cantUseHalfMove, longestRangedArcedAction.cantUseFullMove, longestArcedActionRange, longestArcedActionTiles);
+			this.checkActionTiles(chara.x, chara.y, longestArcedActionRange, longestArcedActionTiles);
 		}
 		while(this._tbsQueuedActions.length > 0) {
 			var actionInfo = this._tbsQueuedActions.pop();
-			if(actionIndex == longestRangedActionIndex) {
-				this._tbsActionsTiles[this._tbsActionsTiles.length] = longestActionTiles;
-				actionIndex--;
-				return;
-			}
-			if(actionIndex == longestRangedArcedActionIndex) {
-				this._tbsActionsTiles[this._tbsActionsTiles.length] = longestArcedActionTiles;
-				actionIndex--;
-				return;
-			}
 			var action = actionInfo.action;
 			var actionRange = this.getLargestActionRange(action);
 			var totalRange = actionRange.range + (actionRange.ignoreUserRange ? 0 : actionRange.baseRange);
@@ -2346,9 +2317,9 @@
 			this._tbsActionsTiles[this._tbsActionsTiles.length] = actionTiles;
 			if(!this._tbsSelectedActor.movedThisRound) {
 				var moveTiles = this._tbsMoveTiles;
-				if(longestRangedAction.cantUseHalfMove) {
+				if(action.cantUseHalfMove) {
 					moveTiles = this._tbsFullMoveTiles;
-				} else if(longestRangedAction.cantUseFullMove) {
+				} else if(action.cantUseFullMove) {
 					moveTiles = this._tbsHalfMoveTiles;
 				}
 				moveTiles.forEach(function (moveTile) {
@@ -2362,8 +2333,6 @@
 					}
 				},this);
 			}
-			
-			actionIndex--;
 		}
 		
 		this.processQueuedActionsAtPositions();
@@ -2551,7 +2520,7 @@
 					) {
 						actionByPriority.selfTargetMoveType = "retreat";
 					} else if(
-						aiType === "tactical" &&
+						aiType === "tactical" && !noThreats &&
 						closestEnemyDistance > (this._tbsSelectedActor.battler.moveRange() / 2) * 1.5
 					) {
 						actionByPriority.selfTargetMoveType = "cover";
@@ -2735,19 +2704,20 @@
 	};
 	
 	Game_Map.prototype.getClosestMoveTileToTarget = function(startX, startY, targetX, targetY, passageType) {
-		var curCheckX = startX;
-		var curCheckY = startY;
+		var checkedTiles = [];
+		checkedTiles.push(this.getExistingTbsTile(startX, startY, this._tbsMoveTiles));
 		
 		while(true) {
-			var direction = this.findDirection(curCheckX, curCheckY, targetX, targetY, passageType);
+			var curTile = checkedTiles[checkedTiles.length-1];
+			var direction = this.findDirection(curTile.x, curTile.y, targetX, targetY, passageType);
 			if(direction == 0) {
-				if(curCheckX == startX && curCheckY == startY) {
+				if(curTile.x == startX && curTile.y == startY) {
 					return undefined;
 				}
-				return this.getExistingTbsTile(curCheckX, curCheckY, this._tbsMoveTiles);
+				break;
 			}
-			var newCheckX = curCheckX;
-			var newCheckY = curCheckY;
+			var newCheckX = curTile.x;
+			var newCheckY = curTile.y;
 			if(direction <= 3) {
 				newCheckY++;
 			} else if(direction >= 7) {
@@ -2759,10 +2729,15 @@
 				newCheckX++;
 			}
 			if((newCheckX == targetX && newCheckY == targetY) || !this.getExistingTbsTile(newCheckX, newCheckY, this._tbsMoveTiles)) {
-				return this.getExistingTbsTile(curCheckX, curCheckY, this._tbsMoveTiles);
+				break;
 			}
-			curCheckX = newCheckX;
-			curCheckY = newCheckY;
+			checkedTiles.push(this.getExistingTbsTile(newCheckX, newCheckY, this._tbsMoveTiles));
+		}
+		while(checkedTiles.length > 0) {
+			var curTile = checkedTiles.pop();
+			if(!this.getTbsActorAtPosition(curTile.x, curTile.y)) {
+				return curTile;
+			}
 		}
 		return undefined;
 	};
@@ -2866,6 +2841,8 @@
 		if(x == chara.x && y == chara.y) { return "direct"; }
 		if(!this.isTrajectoryObstructed(chara.x, chara.y, x, y, "thrown")) {
 			return "direct";
+		} else if(!this.isTrajectoryObstructed(chara.x, chara.y, x, y, "thrown", true)) {
+			return "arced";
 		}
 		return "none";
 	};
@@ -2878,7 +2855,7 @@
 				if(actor.chara.x == chara.x && actor.chara.y == chara.y) { return; }
 				var losType = this.tbsActorInLOSOfPositionType(this._tbsSelectedActor, actor.chara.x, actor.chara.y);
 				if(losType !== "none") {
-					this._tbsAoeSprites.push($gameTemp.addTbsAoeSprite(actor.chara.x, actor.chara.y, losType === "reach"));
+					this._tbsAoeSprites.push($gameTemp.addTbsAoeSprite(actor.chara.x, actor.chara.y, losType === "arced" ? "yellow" : "red"));
 				}
 			}, this);
 		}, this);
@@ -2940,7 +2917,7 @@
 			if(!actionTiles) { return; }
 			actionTiles.forEach(function (tile) {
 				if(this.getExistingTbsTile(tile.x, tile.y, $gameTemp.tbsRangeTilesToAdd())) { return; }
-				$gameTemp.addTbsRangeTile(tile.x, tile.y, tile.centerMovePosition ? 'red' : 'white');
+				$gameTemp.addTbsRangeTile(tile.x, tile.y, 'red');
 			},this);
 		}
 	};
@@ -3615,7 +3592,7 @@
 							largestActionRange.range = hitRange;
 							largestActionRange.type = hit.rangeType;
 							largestActionRange.ignoreUserRange = hit.ignoreUserRange;
-							largestActionRange.arcedTrajectory = this._tbsSelectedActor.isFlying() || hit.arcedTrajectory;
+							largestActionRange.arcedTrajectory = this._tbsSelectedActor.battler.isFlying() || hit.arcedTrajectory;
 						}
 					},this);
 				}
@@ -3635,37 +3612,18 @@
 		return members;
 	};
 	
-	Game_Map.prototype.checkActionTiles = function(x, y, cantUseHalfMove, cantUseFullMove, actionRange, actionTiles, treatAsMovedThisRound) {
+	Game_Map.prototype.checkActionTiles = function(x, y, actionRange, actionTiles) {
 		this.getReachedActionTiles(
 			x,
 			y,
 			actionRange.range + (actionRange.ignoreUserRange ? 0 : actionRange.baseRange),
 			actionTiles,
 			actionRange.type,
-			!treatAsMovedThisRound,
 			actionRange.arcedTrajectory
 		);
-		if(!treatAsMovedThisRound && !this._tbsSelectedActor.movedThisRound) {
-			var moveTiles = this._tbsMoveTiles;
-			if(cantUseHalfMove) {
-				moveTiles = this._tbsFullMoveTiles;
-			} else if(cantUseFullMove) {
-				moveTiles = this._tbsHalfMoveTiles;
-			}
-			moveTiles.forEach(function (moveTile) {
-				if(!this.getTbsActorAtPosition(moveTile.x, moveTile.y)) {
-					var actionAtPosition = {};
-					actionAtPosition.x = moveTile.x;
-					actionAtPosition.y = moveTile.y;
-					actionAtPosition.actionRange = actionRange;
-					actionAtPosition.actionTiles = actionTiles;
-					this._tbsQueuedActionsAtPositions.push(actionAtPosition);
-				}
-			},this);
-		}
 	};
 	
-	Game_Map.prototype.getReachedActionTiles = function(x, y, radius, actionTiles, passageType, centerMoveTile, arcedTrajectory) {
+	Game_Map.prototype.getReachedActionTiles = function(x, y, radius, actionTiles, passageType, arcedTrajectory) {
 		var checkRadius = Math.ceil(radius);
 		var curY = y-checkRadius;
 		for(; curY <= y+checkRadius; curY++){
@@ -3678,7 +3636,6 @@
 				var tile = {};
 				tile.x = curX;
 				tile.y = curY;
-				tile.centerMovePosition = centerMoveTile;
 				if(!this.isTrajectoryObstructed(x, y, curX, curY, passageType, arcedTrajectory)) {
 					actionTiles.push(tile);
 				}
