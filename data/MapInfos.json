@@ -33,6 +33,6 @@ null,
 {"id":31,"expanded":true,"name":"Ruined Castle F2 Courtyard","order":31,"parentId":26,"scrollX":1620,"scrollY":2460},
 {"id":32,"expanded":true,"name":"Ruined Castle F2 Interior","order":32,"parentId":26,"scrollX":1490.6666666666667,"scrollY":2169.3333333333335},
 {"id":33,"expanded":false,"name":"Ruined Castle B1","order":33,"parentId":23,"scrollX":1318.6666666666667,"scrollY":1304},
-{"id":34,"expanded":true,"name":"Ruined Temple","order":34,"parentId":13,"scrollX":1515,"scrollY":1683},
+{"id":34,"expanded":true,"name":"Ruined Temple","order":34,"parentId":13,"scrollX":1514,"scrollY":1714},
 {"id":35,"expanded":true,"name":"Ruined Temple F2","order":35,"parentId":34,"scrollX":1769.4545454545455,"scrollY":1309.0909090909092}
 ]

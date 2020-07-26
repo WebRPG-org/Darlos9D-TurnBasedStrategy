@@ -6297,7 +6297,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 				results.stress.leftArm + results.stress.rightArm + results.stress.leftLeg +
 				results.stress.rightLeg + results.stress.leftHeld + results.stress.rightHeld) > results.heal.stress) {
 				target.performStress();
-			} else {
+			} else if (results.hit.leftHeld || results.hit.rightHeld) {
 				target.performDeflection();
 			}
 		}

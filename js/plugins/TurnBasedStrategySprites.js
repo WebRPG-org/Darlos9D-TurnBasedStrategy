@@ -305,42 +305,6 @@ Sprite_TbsBodyPartDamage.prototype.updatePosition = function() {
 					resultsType = "blocked";
 				}
 				this.setupSingleDamagePopup(true, totalDamage - results.heal.core, resultsType, crit);
-				
-				// var leftArmHit = results.hit.leftArm;
-				// var leftArmDamage = results.damage.leftArm - results.heal.leftArm;
-				// var leftArmCrit = results.critical.leftArm;
-				// var leftArmResultsType = "physicalDamage";
-				// if(!results.hit.leftArm && results.hit.leftHeld) {
-					// leftArmHit = true;
-					// leftArmDamage = 0;
-					// leftArmCrit = false;
-					// leftArmResultsType = "blocked";
-				// }
-				// this.setupSingleDamagePopup(leftArmHit, leftArmDamage, leftArmResultsType, leftArmCrit, -90);
-					
-				// var rightArmHit = results.hit.rightArm;
-				// var rightArmDamage = results.damage.rightArm - results.heal.rightArm;
-				// var rightArmCrit = results.critical.rightArm;
-				// var rightArmResultsType = "physicalDamage";
-				// if(!results.hit.rightArm && results.hit.rightHeld) {
-					// rightArmHit = true;
-					// rightArmDamage = 0;
-					// rightArmCrit = false;
-					// rightArmResultsType = "blocked";
-				// }
-				// this.setupSingleDamagePopup(rightArmHit, rightArmDamage, rightArmResultsType, rightArmCrit, 90);
-				
-				// this.setupSingleDamagePopup(results.hit.head, results.damage.head - results.heal.head,
-					// "physicalDamage", results.critical.head, 0, -60);
-				// this.setupSingleDamagePopup(results.hit.torso, results.damage.torso - results.heal.torso,
-					// "physicalDamage");
-				// this.setupSingleDamagePopup(results.hit.leftLeg, results.damage.leftLeg - results.heal.leftLeg,
-					// "physicalDamage", results.critical.leftLeg, -45, 60);
-				// this.setupSingleDamagePopup(results.hit.rightLeg, results.damage.rightLeg - results.heal.rightLeg,
-					// "physicalDamage", results.critical.rightLeg, 45, 60);
-				// this.setupSingleDamagePopup(results.hit.mind, results.damage.mind - results.heal.mind,
-					// "mentalDamage", results.critical.mind, -90, -60);
-				// this.setupSingleDamagePopup(totalStress != 0, totalStress, "stress", false, 90, -60);
 			}
 			this._battler.clearDamagePopup();
 			this._battler.clearResult();
