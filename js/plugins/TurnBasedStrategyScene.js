@@ -72,6 +72,13 @@
 	};
 	
 	Scene_Map.prototype.updateMessageWindows = function() {
+		if($gameMap.shouldCloseGoldWindow()) {
+			this._goldWindow.close();
+		}
+		if($gameMap.shouldOpenGoldWindow()) {
+			this._goldWindow.open();
+		}
+		
 		var needToClose = $gameMap.needToCloseCloseableMessageWindows();
 		var needToClearMessages = $gameMap.needToClearMessageWindows();
 		var waitingOn = false;
@@ -548,6 +555,7 @@
 		this.createInfoLogWindows();
 		this.createConcurrentMessageWindows();
 		this.createScrollTextWindow();
+		this.createGoldWindow();
 		this.createTbsActorStatusWindow();
 		this.createTbsActorWindow();
 		this.createTbsActionTypeWindow();
@@ -606,6 +614,13 @@
 			this.addWindow(concurrentWindow);
 		}
 		$gameTemp.setStoredSuffixWindows(this._suffixWindows);
+	};
+	
+	Scene_Map.prototype.createGoldWindow = function() {
+		this._goldWindow = new Window_Gold(0, 0);
+		this._goldWindow.x = Graphics.boxWidth - this._goldWindow.width;
+		this._goldWindow.y = Graphics.boxHeight - this._goldWindow.height;
+		this._goldWindow.openness = 0;
 	};
 
 	Scene_Map.prototype.createTbsActorStatusWindow = function() {

@@ -559,3 +559,9 @@ $gameSystem.setSkillLevel(
 );
 
 Sets the given skill to the given level, for the character at the given partyPosition. Use this to set up skills at the start of the game, or when characters are first introduced.
+
+------------------------------------------------------
+$gameSystem.openGoldWindow();
+$gameSystem.closeGoldWindow();
+
+Fairly self-explanatory. The first one will open the gold window in the lower left during the map scene. The second one will close it.

@@ -523,6 +523,14 @@
 		battler.adjustRespecXP(points);
 	};
 	
+	Game_System.prototype.openGoldWindow = function() {
+		$gameMap.setShouldOpenGoldWindow();
+	};
+	
+	Game_System.prototype.closeGoldWindow = function() {
+		$gameMap.setShouldCloseGoldWindow();
+	};
+	
 	//item
 	Game_Item.prototype.actions = function() {
 		if(!this.isWeapon() && !this.isArmor() && !this.isItem()) {
@@ -624,6 +632,26 @@
 		var originY = this._displayY * tileHeight;
 		var canvasY = (y * tileHeight) - originY;
 		return canvasY;
+	};
+	
+	Game_Map.prototype.setShouldOpenGoldWindow = function() {
+		this._shouldOpenGoldWindow = true;
+	};
+	
+	Game_Map.prototype.setShouldCloseGoldWindow = function() {
+		this._shouldCloseGoldWindow = true;
+	};
+	
+	Game_Map.prototype.shouldOpenGoldWindow = function() {
+		var returnValue = this._shouldOpenGoldWindow;
+		this._shouldOpenGoldWindow = false;
+		return returnValue;
+	};
+	
+	Game_Map.prototype.shouldCloseGoldWindow = function() {
+		var returnValue = this._shouldCloseGoldWindow;
+		this._shouldCloseGoldWindow = false;
+		return returnValue;
 	};
 	
 	Game_Map.prototype.addInfoLogWindow = function(text) {

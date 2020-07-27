@@ -161,45 +161,106 @@ Window_ConcurrentWindow.prototype.drawCurrentText = function() {
 
 Window_ConcurrentWindow.prototype.getTextRowLength = function(textRow) {
 	var rowLength = 0;
-	for(let i = 0; i < textRow.length; i++) {
-		rowLength++;
-		if(
-			textRow[i] === "\\" &&
-			i+1 < textRow.length &&
-			textRow[i+1] === "I" &&
-			i+2 < textRow.length &&
-			textRow[i+2] >= '0' &&textRow[i+2] <= '9'
-		) {
-			rowLength += 2;
-			i = i+2;
-			var endOfControlFound = false;
-			for(let j = i+1; j < textRow.length; j++) {
-				if(textRow[j] >= '0' &&textRow[j] <= '9') {
-					continue;
-				}
-				i = j-1;
-				endOfControlFound = true;
-				break;
-			}
-			if(!endOfControlFound) {
-				break;
-			}
-		}
+	var index = 0;
+	while(index < textRow.length) {
+		var content = this.getTextPositionContent(textRow, index);
+		rowLength += content.icon > -1 ? 3 : 0;
+		rowLength += content.text.length;
+		index += content.controlLength;
 	}
 	return rowLength;
+};
+
+Window_ConcurrentWindow.prototype.getTextPositionContent = function(textRow, index) {
+	var content = {};
+	content.icon = -1;
+	content.text = textRow[index];
+	content.controlLength = 1;
+	
+	if(textRow[index] !== "\\") {
+		return content;
+	}
+	
+	if(
+		textRow[index+1] === "I"
+	) {
+		var controlNumber = this.getTextControlNumber(textRow, index+2);
+		if(controlNumber > -1) {
+			content.icon = controlNumber;
+			content.controlLength = (controlNumber+"").length + 2;
+			return content;
+		}
+	}
+	
+	if(
+		textRow[index+1] === "W"
+	) {
+		var controlNumber = this.getTextControlNumber(textRow, index+2);
+		if(controlNumber > -1) {
+			var weapon = $dataWeapons[controlNumber];
+			content.icon = weapon.iconIndex;
+			content.text = weapon.name;
+			content.controlLength = (controlNumber+"").length + 2;
+			return content;
+		}
+	}
+	
+	if(
+		textRow[index+1] === "A"
+	) {
+		var controlNumber = this.getTextControlNumber(textRow, index+2);
+		if(controlNumber > -1) {
+			var armor = $dataArmors[controlNumber];
+			content.icon = armor.iconIndex;
+			content.text = armor.name;
+			content.controlLength = (controlNumber+"").length + 2;
+			return content;
+		}
+	}
+	
+	if(
+		textRow[index+1] === "T"
+	) {
+		var controlNumber = this.getTextControlNumber(textRow, index+2);
+		if(controlNumber > -1) {
+			var item = $dataItems[controlNumber];
+			content.icon = item.iconIndex;
+			content.text = item.name;
+			content.controlLength = (controlNumber+"").length + 2;
+			return content;
+		}
+	}
+	
+	return content;
+};
+
+Window_ConcurrentWindow.prototype.getTextControlNumber = function(textRow, index) {
+	if(
+		textRow[index] && textRow[index] >= '0' && textRow[index] <= '9'
+	) {
+		var parseIndex = index;
+		var numberSegment = textRow[parseIndex];
+		var endOfControlFound = false;
+		for(let j = parseIndex+1; j < textRow.length; j++) {
+			if(textRow[j] >= '0' &&textRow[j] <= '9') {
+				numberSegment += textRow[j];
+				continue;
+			}
+			return parseInt(numberSegment);
+		}
+		return parseInt(numberSegment);
+	}
+	return -1;
 };
 
 Window_ConcurrentWindow.prototype.getTextRowSegments = function(textRow) {
 	var textRowSegments = [];
 	var stringSegment = "";
-	for(let i = 0; i < textRow.length; i++) {
-		if(
-			textRow[i] === "\\" &&
-			i+1 < textRow.length &&
-			textRow[i+1] === "I" &&
-			i+2 < textRow.length &&
-			textRow[i+2] >= '0' &&textRow[i+2] <= '9'
-		) {
+	var index = 0;
+	while(index < textRow.length) {
+		var content = this.getTextPositionContent(textRow, index);
+		
+		if(content.icon > -1) {
 			if(stringSegment.length > 0) {
 				var stringSegmentObject = {};
 				stringSegmentObject.type = "string";
@@ -207,32 +268,18 @@ Window_ConcurrentWindow.prototype.getTextRowSegments = function(textRow) {
 				textRowSegments.push(stringSegmentObject);
 				stringSegment = "";
 			}
-			var iconSegment = textRow[i+2]+"";
-			i = i+2;
-			var endOfControlFound = false;
-			for(let j = i+1; j < textRow.length; j++) {
-				if(textRow[j] >= '0' &&textRow[j] <= '9') {
-					iconSegment += textRow[j];
-					continue;
-				}
-				var iconSegmentObject = {};
-				iconSegmentObject.type = "icon";
-				iconSegmentObject.value = parseInt(iconSegment);
-				textRowSegments.push(iconSegmentObject); 
-				i = j-1;
-				endOfControlFound = true;
-				break;
-			}
-			if(!endOfControlFound) {
-				var iconSegmentObject = {};
-				iconSegmentObject.type = "icon";
-				iconSegmentObject.value = parseInt(iconSegment);
-				textRowSegments.push(iconSegmentObject); 
-				break;
-			}
-		} else {
-			stringSegment += textRow[i];
+			
+			var iconSegmentObject = {};
+			iconSegmentObject.type = "icon";
+			iconSegmentObject.value = content.icon;
+			textRowSegments.push(iconSegmentObject); 
 		}
+		
+		if(content.text.length > 0) {
+			stringSegment += content.text;
+		}
+		
+		index += content.controlLength;
 	}
 	if(stringSegment.length > 0) {
 		var stringSegmentObject = {};
