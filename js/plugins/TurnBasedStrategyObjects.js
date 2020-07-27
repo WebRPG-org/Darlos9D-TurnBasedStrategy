@@ -2436,7 +2436,7 @@
 				
 				var enemies = [];
 				var curForce = this.currentForce();
-				for(i = 0; i < this._tbsForces.length; i++) {
+				for(let i = 0; i < this._tbsForces.length; i++) {
 					if(curForce.enemyForceIds.indexOf(i) >= 0) {
 						enemies = enemies.concat(this._tbsForces[i].actors);
 					}
@@ -2444,7 +2444,7 @@
 				var noThreats = true;
 				var closestEnemyDistance = -1;
 				var chara = this._tbsSelectedActor.chara;
-				for(i = 0; i < enemies.length; i++) {
+				for(let i = 0; i < enemies.length; i++) {
 					var enemy = enemies[i];
 					var distance = this.actualDistance(enemy.chara.x, enemy.chara.y, chara.x, chara.y);
 					if(closestEnemyDistance == -1 || distance < closestEnemyDistance) {
@@ -2457,7 +2457,7 @@
 				
 				var actionInfos = this.getEnemyActionInfos();
 				if(defensePriority == 0 && !noThreats && aiType === "tactical") {
-					for(i = 0; i < actionInfos.length; i++) {
+					for(let i = 0; i < actionInfos.length; i++) {
 						if(actionInfos[i].action.returnToStart) {
 							defensePriority = 4;
 							break;
@@ -2470,8 +2470,7 @@
 				var highestPriority = 0;
 				var aiType = this._tbsSelectedActor.battler.aiType();
 				if(!aiType) { aiType = "aggressive"; }
-				var i;
-				for(i = 0; i < actionInfos.length; i++) {
+				for(let i = 0; i < actionInfos.length; i++) {
 					var actionInfo = actionInfos[i];
 					var action = actionInfo.action;
 					if(action.returnToStart && !noThreats) {
@@ -2484,10 +2483,8 @@
 						priority = 1;
 					} else {
 						priority = 2;
-						var j = 0;
-						var k = 0;
-						for(j = 0; j < action.hitGroups.length; j++) {
-							for(k = 0; k < action.hitGroups[j].hits.length; k++) {
+						for(let j = 0; j < action.hitGroups.length; j++) {
+							for(let k = 0; k < action.hitGroups[j].hits.length; k++) {
 								var rangeType = action.hitGroups[j].hits[k].rangeType;
 								if(
 									(rangeType === "melee" && aiType === "aggressive") ||
@@ -2533,7 +2530,7 @@
 				if(this._tbsSelectedAction) {
 					
 				} else {
-					console.log("NO ENEMY ACTION SELECTED");
+					console.log("NO ENEMY ACTION SELECTED! You probably didn't set up a battle region.");
 				}
 			}
 			if(!this.tbsCursorIsFocusing()) {
@@ -3063,24 +3060,26 @@
 			if(tbsTargets.length > 0) {
 				BattleManager.initMembers();
 				var subjectRoundBuffs = 0;
-				var nonSkippedTargets = [];
 				tbsTargets.forEach(function (tbsTarget) {
 					var index = 0;
 					var processedHitGroups = BattleManager.processHitGroups(this._tbsSelectedActionInfo.action.hitGroups);
+					var targetRoundBuffs = 0;
+					var targetSkipped = true;
 					processedHitGroups.forEach(function (processedHitGroup) {
 						var rangedDistance = this.getRangedDistance();
 						var results = BattleManager.combatMath(this._tbsSelectedActor.battler, this._tbsSelectedActionInfo, processedHitGroup, tbsTarget.battler, tbsTargetsByHit, index, undefined, rangedDistance);
 						if(!results.skipTarget) {
-							nonSkippedTargets.push(tbsTarget);
+							targetSkipped = false;
+							targetRoundBuffs += results.focus;
+							subjectRoundBuffs += results.subjectRoundBuffs;
 							BattleManager.applyActionResults(results, this._tbsSelectedActor.battler, tbsTarget.battler);
 						}
-						subjectRoundBuffs += results.subjectRoundBuffs;
 						index++;
 					},this);
+					if(!targetSkipped) {
+						tbsTarget.battler.setRoundBuffs(targetRoundBuffs);
+					}
 				},this);
-				nonSkippedTargets.forEach(function (tbsTarget) {
-					tbsTarget.battler.setRoundBuffs(0);
-				});
 				this._tbsSelectedActor.battler.setRoundBuffs(subjectRoundBuffs);
 			}
 		}

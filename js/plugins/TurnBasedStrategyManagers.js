@@ -210,6 +210,7 @@ BattleManager.initMembers = function() {
 	this._firstTarget = true;
 	this._equipmentBaseToughness = 5;
 	this._rangedDistance = 0;
+	this._targetRoundBuffs = 0;
 };
 
 BattleManager.processHitGroups = function(hitGroups) {
@@ -555,8 +556,7 @@ BattleManager.updateAction = function() {
 		
 		var noHitGroupsLeft = true;
 		var noHitMissDelaysLeft = true;
-		var i;
-		for(i = 0; i < this._processedHitGroups.length; i++) {
+		for(let i = 0; i < this._processedHitGroups.length; i++) {
 			var processedHitGroup = this._processedHitGroups[i];
 			var delay = processedHitGroup.delay;
 			if(delay == this._actionTimer) {
@@ -578,7 +578,7 @@ BattleManager.updateAction = function() {
 				noHitGroupsLeft = false;
 			}
 		}
-		for(i = 0; i < this._processedHitGroups.length; i++) {
+		for(let i = 0; i < this._processedHitGroups.length; i++) {
 			if(this._hitMissDelay[i] !== undefined) {
 				if(this._hitMissDelay[i] <= 0) {
 					this._hitMissDelay[i] = undefined;
@@ -601,14 +601,13 @@ BattleManager.updateAction = function() {
 		this._actionTimer++;
 		if(noHitGroupsLeft && noHitMissDelaysLeft && !this._spriteset.isAnimationPlaying()) {
 			var target = this._tbsTargets[0];
+			target.battler.setRoundBuffs(this._targetRoundBuffs);
+			this._targetRoundBuffs = 0;
 			this._nonSkippedtargets.push(this._tbsTargets.shift());
 			while(this._tbsTargets.length > 0 && this.shouldSkipTarget(this._processedHitGroups, this._tbsTargets[0].battler, this._tbsTargetsByHit)) {
 				this._tbsTargets.shift();
 			}
 			if(this._tbsTargets.length <= 0) {
-				this._nonSkippedtargets.forEach(function (tbsTarget) {
-					tbsTarget.battler.setRoundBuffs(0);
-				});
 				var subjectRoundBuffs = 0;
 				this._resultsPerGroup.forEach(function (results) {
 					subjectRoundBuffs += results.subjectRoundBuffs;
@@ -721,7 +720,7 @@ BattleManager.shouldSkipTarget = function(processedHitGroups, target, targetsByH
 			if(battlersByHit[i].indexOf(target) === -1) { continue; }
 			var hit = hitGroup.hits[i];
 			if((hit.rangeType === "followUp" && this._nonFollowupsAllDodged[hitGroupIndex])
-				|| (hit.randomTarget && Math.random() < 0.5))
+				|| (hit.randomTarget && Math.random() < 0.2))
 			{
 				continue;
 			}
@@ -2885,7 +2884,7 @@ BattleManager.applyActionResults = function(results, subject, target) {
 		}
 	}
 	target.addTbsBuffs(results.buffs);
-	target.adjustRoundBuffs(results.focus);
+	this._targetRoundBuffs += results.focus;
 };
 
 BattleManager.invokeCounterAttack = function(subject, target) {
