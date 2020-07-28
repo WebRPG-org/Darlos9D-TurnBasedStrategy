@@ -78,6 +78,9 @@
 		if($gameMap.shouldOpenGoldWindow()) {
 			this._goldWindow.open();
 		}
+		if(this._goldWindow.isOpen()) {
+			this._goldWindow.refresh();
+		}
 		
 		var needToClose = $gameMap.needToCloseCloseableMessageWindows();
 		var needToClearMessages = $gameMap.needToClearMessageWindows();
@@ -618,9 +621,9 @@
 	
 	Scene_Map.prototype.createGoldWindow = function() {
 		this._goldWindow = new Window_Gold(0, 0);
-		this._goldWindow.x = Graphics.boxWidth - this._goldWindow.width;
 		this._goldWindow.y = Graphics.boxHeight - this._goldWindow.height;
 		this._goldWindow.openness = 0;
+		this.addWindow(this._goldWindow);
 	};
 
 	Scene_Map.prototype.createTbsActorStatusWindow = function() {
