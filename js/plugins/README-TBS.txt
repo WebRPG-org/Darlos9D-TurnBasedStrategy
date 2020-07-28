@@ -403,7 +403,7 @@ $gameSystem.setTbsActorDamage(
 	damage
 );
 
-Applies damage to a party member's indicated body part. partyPositionId refers to the member's current position in the party. partName is a string and can be "head", "torso", "leftArm", "rightArm", "leftLeg", "rightLeg", or "mind".
+Applies damage to a party member's indicated body part. partyPositionId refers to the member's current position in the party. partName is a string and can be "head", "torso", "leftArm", "rightArm", "leftLeg", or "rightLeg".
 
 ----------------------------------------------------
 $gameSystem.giveItemToParty(
@@ -474,6 +474,20 @@ This is mostly useful for outfitting actors upon their first appearance.
 $gameSystem.getItemReceiver();
 
 Returns the display name of the party member who recieved the item given by the last call of any of the give*To*() and equip*ToActor() functions. If nobody had room to recieve the item, this will return undefined. Use it with a script call in an event IF branch to know how to proceed after attempting to give an item.
+
+-----------------------------------------------------
+$gameSystem.getPartyItemCount(itemId);
+$gameSystem.getPartyWeaponCount(itemId);
+$gameSystem.getPartyArmorCount(itemId);
+
+Finds and returns the number of the given item currently collectively held by the party. This does not include the regular inventory (the stash).
+
+-----------------------------------------------------
+$gameSystem.removeItemFromParty(itemId, count);
+$gameSystem.removeWeaponFromParty(itemId, count);
+$gameSystem.removeArmorFromParty(itemId, count);
+
+Finds and removes the first instance of the item found in the party, starting with the first party member. If count is given and is more than 1, that many of the item will be removed from the party. Returns the number of items actually removed, similar to getParty*Count(). This does not include the regular inventory (the stash).
 
 -----------------------------------------------------
 $gameSystem.giveSkillPointsToParty(

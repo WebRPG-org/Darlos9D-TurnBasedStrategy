@@ -182,6 +182,17 @@ Window_ConcurrentWindow.prototype.getTextPositionContent = function(textRow, ind
 	}
 	
 	if(
+		textRow[index+1] === "V"
+	) {
+		var controlNumber = this.getTextControlNumber(textRow, index+2);
+		if(controlNumber > -1) {
+			content.text = $gameVariables.value(controlNumber)+"";
+			content.controlLength = (controlNumber+"").length + 2;
+			return content;
+		}
+	}
+	
+	if(
 		textRow[index+1] === "I"
 	) {
 		var controlNumber = this.getTextControlNumber(textRow, index+2);
@@ -1001,8 +1012,11 @@ Window_ItemOption.prototype.numVisibleRows = function() {
 Window_ItemOption.prototype.makeCommandList = function() {
     if (this._item) {
 		if(this._actor) {
-			var canUse = DataManager.isItem(this._item)
-				&& this._item.tbsStats.actions.some(function(action) { return this.isHealing(action); }, this);
+			var canUse = DataManager.isItem(this._item) &&
+				this._item.tbsStats !== undefined &&
+				this._item.tbsStats.actions !== undefined &&
+				this._item.tbsStats.actions.length > 0 &&
+				this._item.tbsStats.actions.some(function(action) { return this.isHealing(action); }, this);
 			this.addCommand("Use", 'use', canUse);
 			this.addCommand("Stash", 'stash', $gameSystem.isSaveEnabled());
 		} else {

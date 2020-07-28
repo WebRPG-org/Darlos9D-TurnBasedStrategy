@@ -531,6 +531,93 @@
 		$gameMap.setShouldCloseGoldWindow();
 	};
 	
+	Game_System.prototype.getPartyItemCount = function(itemId) {
+		var count = 0;
+		for(let i = 0; i < $gameParty.size(); i++) {
+			var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(i));
+			count += battler.totalItemCountById(itemId);
+		}
+		return count;
+	};
+	
+	Game_System.prototype.getPartyWeaponCount = function(itemId) {
+		var count = 0;
+		for(let i = 0; i < $gameParty.size(); i++) {
+			var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(i));
+			count += battler.totalWeaponCountById(itemId);
+		}
+		return count;
+	};
+	
+	Game_System.prototype.getPartyArmorCount = function(itemId) {
+		var count = 0;
+		for(let i = 0; i < $gameParty.size(); i++) {
+			var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(i));
+			count += battler.totalArmorCountById(itemId);
+		}
+		return count;
+	};
+	
+	Game_System.prototype.removeItemFromParty = function(itemId, count) {
+		if(count == undefined || count < 1) {
+			count = 1;
+		}
+		var removedCount = 0;
+		for(let i = 0; i < $gameParty.size(); i++) {
+			var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(i));
+			while(battler.loseItemById(itemId)) {
+				removedCount++;
+				if(removedCount >= count) {
+					break
+				}
+			}
+			if(removedCount >= count) {
+				break
+			}
+		}
+		return removedCount;
+	};
+	
+	Game_System.prototype.removeWeaponFromParty = function(itemId, count) {
+		if(count == undefined || count < 1) {
+			count = 1;
+		}
+		var removedCount = 0;
+		for(let i = 0; i < $gameParty.size(); i++) {
+			var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(i));
+			while(battler.loseWeaponById(itemId)) {
+				removedCount++;
+				if(removedCount >= count) {
+					break
+				}
+			}
+			if(removedCount >= count) {
+				break
+			}
+		}
+		return removedCount;
+	};
+	
+	Game_System.prototype.removeArmorFromParty = function(itemId, count) {
+		if(count == undefined || count < 1) {
+			count = 1;
+		}
+		var removedCount = 0;
+		for(let i = 0; i < $gameParty.size(); i++) {
+			var battler = $gameActors.actor($gameParty.getMemberActorIdByPosition(i));
+			while(battler.loseArmorById(itemId)) {
+				removedCount++;
+				if(removedCount >= count) {
+					break
+				}
+			}
+			if(removedCount >= count) {
+				break
+			}
+		}
+		return removedCount;
+	};
+	
 	//item
 	Game_Item.prototype.actions = function() {
 		if(!this.isWeapon() && !this.isArmor() && !this.isItem()) {

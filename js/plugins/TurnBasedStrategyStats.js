@@ -474,6 +474,42 @@
 		return count;
 	};
 	
+	Game_BattlerBase.prototype.totalItemCountById = function(itemId) {
+		var count = 0;
+		for(let i = 0; i < this.maxItems(); i++) {
+			count += this._items[i].id == itemId && this._items[i].type === "item";
+		}
+		return count;
+	};
+	
+	Game_BattlerBase.prototype.totalWeaponCountById = function(itemId) {
+		var count = 0;
+		for(let i = 0; i < this.maxItems(); i++) {
+			count += this._items[i].id == itemId && this._items[i].type === "weapon";
+		}
+		return count;
+	};
+	
+	Game_BattlerBase.prototype.totalArmorCountById = function(itemId) {
+		var count = 0;
+		for(let i = 0; i < this.maxItems(); i++) {
+			count += this._items[i].id == itemId && this._items[i].type === "armor";
+		}
+		return count;
+	};
+	
+	Game_BattlerBase.prototype.loseItemById = function(itemId) {
+		return this.loseItem($dataItems[itemId]);
+	};
+	
+	Game_BattlerBase.prototype.loseWeaponById = function(itemId) {
+		return this.loseItem($dataWeapons[itemId]);
+	};
+	
+	Game_BattlerBase.prototype.loseArmorById = function(itemId) {
+		return this.loseItem($dataArmors[itemId]);
+	};
+	
 	Game_BattlerBase.prototype.hasItem = function(item) {
 		return this.numItems(item) > 0;
 	};
