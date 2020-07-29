@@ -1323,6 +1323,9 @@
 		if(!protTwo) { return protOne; }
 		if(bodyPart !== "leftHeld" && bodyPart !== "rightHeld") {
 			protOne = this.sumProtection(protOne, protTwo.fullBody, true);
+			if(bodyPart == "head") {
+				protOne = this.sumProtection(protOne, protTwo.fullBody, true);
+			}
 		}
 		protOne = this.sumProtection(protOne, protTwo[bodyPart], true);
 		
