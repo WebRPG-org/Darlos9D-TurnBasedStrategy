@@ -185,7 +185,7 @@ Window_ConcurrentWindow.prototype.getTextPositionContent = function(textRow, ind
 		textRow[index+1] === "V"
 	) {
 		var controlNumber = this.getTextControlNumber(textRow, index+2);
-		if(controlNumber > -1) {
+		if(controlNumber > 0) {
 			content.text = $gameVariables.value(controlNumber)+"";
 			content.controlLength = (controlNumber+"").length + 2;
 			return content;
@@ -196,8 +196,19 @@ Window_ConcurrentWindow.prototype.getTextPositionContent = function(textRow, ind
 		textRow[index+1] === "I"
 	) {
 		var controlNumber = this.getTextControlNumber(textRow, index+2);
-		if(controlNumber > -1) {
+		if(controlNumber > 0) {
 			content.icon = controlNumber;
+			content.controlLength = (controlNumber+"").length + 2;
+			return content;
+		}
+	}
+	
+	if(
+		textRow[index+1] === "P"
+	) {
+		var controlNumber = this.getTextControlNumber(textRow, index+2);
+		if(controlNumber > 0) {
+			content.text = this.partyMemberName(controlNumber);
 			content.controlLength = (controlNumber+"").length + 2;
 			return content;
 		}
@@ -207,7 +218,7 @@ Window_ConcurrentWindow.prototype.getTextPositionContent = function(textRow, ind
 		textRow[index+1] === "W"
 	) {
 		var controlNumber = this.getTextControlNumber(textRow, index+2);
-		if(controlNumber > -1) {
+		if(controlNumber > 0) {
 			var weapon = $dataWeapons[controlNumber];
 			content.icon = weapon.iconIndex;
 			content.text = weapon.name;
@@ -220,7 +231,7 @@ Window_ConcurrentWindow.prototype.getTextPositionContent = function(textRow, ind
 		textRow[index+1] === "A"
 	) {
 		var controlNumber = this.getTextControlNumber(textRow, index+2);
-		if(controlNumber > -1) {
+		if(controlNumber > 0) {
 			var armor = $dataArmors[controlNumber];
 			content.icon = armor.iconIndex;
 			content.text = armor.name;
@@ -233,7 +244,7 @@ Window_ConcurrentWindow.prototype.getTextPositionContent = function(textRow, ind
 		textRow[index+1] === "T"
 	) {
 		var controlNumber = this.getTextControlNumber(textRow, index+2);
-		if(controlNumber > -1) {
+		if(controlNumber > 0) {
 			var item = $dataItems[controlNumber];
 			content.icon = item.iconIndex;
 			content.text = item.name;
