@@ -14,8 +14,8 @@ null,
 {"id":12,"expanded":false,"name":"BattleRoom","order":12,"parentId":8,"scrollX":4259.333333333333,"scrollY":4498},
 {"id":13,"expanded":true,"name":"Overworld","order":13,"parentId":0,"scrollX":3665.4545454545455,"scrollY":3222.5454545454545},
 {"id":14,"expanded":false,"name":"Party Creation Room","order":14,"parentId":13,"scrollX":1025,"scrollY":1179},
-{"id":15,"expanded":true,"name":"Seaside Passage","order":15,"parentId":13,"scrollX":1278,"scrollY":2267},
-{"id":16,"expanded":false,"name":"Seaside Passage B1","order":16,"parentId":15,"scrollX":1103,"scrollY":2011},
+{"id":15,"expanded":true,"name":"Seaside Passage","order":15,"parentId":13,"scrollX":1490.6666666666667,"scrollY":1500},
+{"id":16,"expanded":false,"name":"Seaside Passage B1","order":16,"parentId":15,"scrollX":2282.6666666666665,"scrollY":2840},
 {"id":17,"expanded":false,"name":"Fake Overworld","order":17,"parentId":13,"scrollX":5028,"scrollY":5171},
 {"id":18,"expanded":true,"name":"Castle Town","order":18,"parentId":17,"scrollX":1641,"scrollY":1611},
 {"id":19,"expanded":true,"name":"Castle Courtyard","order":21,"parentId":27,"scrollX":1521,"scrollY":2428.5},
@@ -37,5 +37,5 @@ null,
 {"id":35,"expanded":true,"name":"Ruined Temple F2","order":35,"parentId":34,"scrollX":866,"scrollY":453},
 {"id":36,"expanded":false,"name":"Battlefields","order":36,"parentId":13,"scrollX":1228.5,"scrollY":691.5},
 {"id":37,"expanded":false,"name":"Wasteland A","order":37,"parentId":36,"scrollX":1228.5,"scrollY":691.5},
-{"id":38,"expanded":false,"name":"Merchant's Cave","order":38,"parentId":13,"scrollX":1081.3333333333333,"scrollY":997.3333333333334}
+{"id":38,"expanded":false,"name":"Merchant's Cave","order":38,"parentId":13,"scrollX":1081.3333333333333,"scrollY":1305.3333333333333}
 ]
