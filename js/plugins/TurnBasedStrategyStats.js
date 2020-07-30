@@ -816,12 +816,12 @@
 	};
 	
 	Game_BattlerBase.prototype.skillUpgradeCost = function(skill) {
-		return Math.pow(Math.max(0, this.skillPoints(skill)-this.skillPotential(skill))+1, 2)*100;
+		return Math.pow(Math.max(0, this.skillPoints(skill)-this.skillPotential(skill))+1, 2)*5;
 	};
 	
 	Game_BattlerBase.prototype.skillDowngradeCost = function(skill) {
 		var skillPoints = this.skillPoints(skill);
-		return skillPoints > 0 ? Math.pow(Math.max(1, skillPoints-this.skillPotential(skill)), 2)*100 : 0;;
+		return skillPoints > 0 ? Math.pow(Math.max(1, skillPoints-this.skillPotential(skill)), 2)*5 : 0;;
 	};
 	
 	Game_BattlerBase.prototype.skillXP = function() {
@@ -1752,14 +1752,14 @@
 			for (const [skill, level] of Object.entries(this.currentClass().tbsStats.startingSkills)) {
 				this.setSkillPoints(skill, level);
 				var skillPotential = this.skillPotential(skill);
-				var respecXP = skillPotential >= level ? level * 100 : skillPotential * 100;
+				var respecXP = skillPotential >= level ? level * 5 : skillPotential * 5;
 				if(skillPotential >= level) {
 					this.adjustRespecXP(respecXP);
 					continue;
 				}
 				var skillLevel = 1;
 				while(skillLevel <= level - skillPotential) {
-					respecXP += Math.pow(skillLevel, 2) * 100;
+					respecXP += Math.pow(skillLevel, 2) * 5;
 					skillLevel++;
 				}
 				this.adjustRespecXP(respecXP);
