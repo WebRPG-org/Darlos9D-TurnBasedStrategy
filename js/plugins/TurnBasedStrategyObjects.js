@@ -543,6 +543,18 @@
 		$gameMap.setShouldCloseGoldWindow();
 	};
 	
+	Game_System.prototype.getStashItemCount = function(itemId) {
+		return $gameParty.numItems($dataItems(itemId));
+	};
+	
+	Game_System.prototype.getStashWeaponCount = function(itemId) {
+		return $gameParty.numItems($dataWeapons(itemId));
+	};
+	
+	Game_System.prototype.getStashArmorCount = function(itemId) {
+		return $gameParty.numItems($dataArmors(itemId));
+	};
+	
 	Game_System.prototype.getPartyItemCount = function(itemId) {
 		var count = 0;
 		for(let i = 0; i < $gameParty.size(); i++) {
