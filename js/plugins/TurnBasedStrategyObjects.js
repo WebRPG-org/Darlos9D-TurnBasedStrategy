@@ -312,6 +312,18 @@
 		battler.setDamage(partName, damage);
 	};
 	
+	Game_System.prototype.sendItemToStash = function(itemId) {
+		$gameParty.gainItem($dataItems[itemId], 1);
+	};
+	
+	Game_System.prototype.sendWeaponToStash = function(itemId) {
+		$gameParty.gainItem($dataWeapons[itemId], 1);
+	};
+	
+	Game_System.prototype.sendArmorToStash = function(itemId) {
+		$gameParty.gainItem($dataArmors[itemId], 1);
+	};
+	
 	Game_System.prototype.giveItemToParty = function(itemId) {
 		$gameTemp.clearItemReceiver();
 		var i;
@@ -2592,7 +2604,7 @@
 						continue;
 					}
 					var priority = 0;
-					if(action.name === "Rest") {
+					if(action.name === "Focus") {
 						priority = defensePriority;
 					} else if(action.name.includes("Unarmed") || action.name === "Shove") {
 						priority = 1;

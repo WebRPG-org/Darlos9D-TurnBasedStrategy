@@ -406,6 +406,13 @@ $gameSystem.setTbsActorDamage(
 Applies damage to a party member's indicated body part. partyPositionId refers to the member's current position in the party. partName is a string and can be "head", "torso", "leftArm", "rightArm", "leftLeg", or "rightLeg".
 
 ----------------------------------------------------
+$gameSystem.sendItemToStash(itemId);
+$gameSystem.sendWeaponToStash(itemId);
+$gameSystem.sendArmorToStash(itemId);
+
+Basically functions like using the Change Items/Weapons/Armors event commands with a value of 1. These were added so you can use a script command to pass variables in as IDs.
+
+----------------------------------------------------
 $gameSystem.giveItemToParty(
 	itemId
 );
