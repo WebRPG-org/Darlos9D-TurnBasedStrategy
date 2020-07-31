@@ -1213,7 +1213,7 @@
 			var stress = actor.battler.stress();
 			var skillDice = perception > defense ? perception - defense : defense - perception;
 			var expertDice = perception > defense ? defense : perception;
-			var buffDice = roundBuffs;
+			var buffDice = Math.floor(roundBuffs/2);
 			var initiativeRoll = BattleManager.rollSkillDice(skillDice, expertDice, buffDice);
 			initiativeRoll.bonuses += initiativeRoll.rareBonuses * 2;
 			if(initiativeRoll.bonuses + actor.battler.stressRecovery() > stress) {

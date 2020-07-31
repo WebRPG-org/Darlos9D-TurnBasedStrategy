@@ -922,8 +922,8 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				var skillDiceReduction = hit.accuracyPenalty === undefined ? 0 : hit.accuracyPenalty;
 				
 				var testDiceReduction = hit.evasionPenalty === undefined ? 0 : hit.evasionPenalty;
-				dicePool.debuff = subjectStress + processedHitGroup.accuracyReduction + hitDamage.damageReduction + target.roundBuffs();
-				dicePool.buff = targetStress + subject.roundBuffs();
+				dicePool.debuff = Math.floor(subjectStress/2) + processedHitGroup.accuracyReduction + hitDamage.damageReduction + Math.floor(target.roundBuffs()/2);
+				dicePool.buff = Math.floor(targetStress/2) + Math.floor(subject.roundBuffs()/2);
 				
 				if(hit.accuracyDropoffDistance !== undefined && rangedDistance !== undefined) {
 					var accuracyDropoff = (rangedDistance*2) / hit.accuracyDropoffDistance;
@@ -935,7 +935,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				var accSkill = 0;
 				if(hit.ignoreUserAccuracy) {
 					accSkill = hit.accuracy == undefined ? 0 : hit.accuracy;
-					dicePool.buff -= subject.roundBuffs();
+					dicePool.buff -= Math.floor(subject.roundBuffs()/2);
 				} else {
 					switch(hit.rangeType) {
 						case "melee":
@@ -1510,8 +1510,8 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				
 				var testDiceReduction = hit.evasionPenalty === undefined ? 0 : hit.evasionPenalty;
 				var hitSupport = this.getCompleteSupport(subject, actionInfo, hit);
-				dicePool.debuff = subjectStress + processedHitGroup.accuracyReduction + hitSupport.supportReduction;
-				dicePool.buff = subject.roundBuffs() + target.roundBuffs();
+				dicePool.debuff = Math.floor(subjectStress/2) + processedHitGroup.accuracyReduction + hitSupport.supportReduction;
+				dicePool.buff = Math.floor(subject.roundBuffs()/2) + Math.floor(target.roundBuffs()/2);
 				
 				if(hit.accuracyDropoffDistance !== undefined && rangedDistance !== undefined) {
 					var accuracyDropoff = (rangedDistance*2) / hit.accuracyDropoffDistance;
@@ -1522,7 +1522,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				var accSkill = 0;
 				if(hit.ignoreUserAccuracy) {
 					accSkill = hit.accuracy == undefined ? 0 : hit.accuracy;
-					dicePool.buff -= subject.roundBuffs();
+					dicePool.buff -= Math.floor(subject.roundBuffs()/2);
 				} else {
 					accSkill = subject.totalSkill("manualDex");
 				}
@@ -1549,7 +1549,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				
 				if(hitSupport.stress !== undefined) {
 					var stressHealRoll = this.rollSkillDice(dicePool.skill, dicePool.expert, dicePool.buff);
-					var stressRoll = this.rollTestDice(0, 0, subject.stress());
+					var stressRoll = this.rollTestDice(0, 0, Math.floor(subject.stress()/2));
 					
 					stressHealRoll.bonuses += stressHealRoll.rareBonuses * 2;
 					stressHealRoll.hits -= stressRoll.misses;
@@ -1559,7 +1559,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				}
 				if(hitSupport.damage !== undefined) {
 					var healRoll = this.rollSkillDice(dicePool.skill, dicePool.expert, dicePool.buff);
-					var stressRoll = this.rollTestDice(0, 0, subject.stress());
+					var stressRoll = this.rollTestDice(0, 0, Math.floor(subject.stress()/2));
 					
 					healRoll.bonuses += healRoll.rareBonuses * 2;
 					healRoll.hits -= stressRoll.misses;
@@ -1695,8 +1695,8 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				
 				var testDiceReduction = hit.evasionPenalty === undefined ? 0 : hit.evasionPenalty;
 				var hitSupport = this.getCompleteSupport(subject, actionInfo, hit);
-				dicePool.debuff = subjectStress + processedHitGroup.accuracyReduction + hitSupport.supportReduction;
-				dicePool.buff = subject.roundBuffs() + target.roundBuffs();
+				dicePool.debuff = Math.floor(subjectStress/2) + processedHitGroup.accuracyReduction + hitSupport.supportReduction;
+				dicePool.buff = Math.floor(subject.roundBuffs()/2) + Math.floor(target.roundBuffs()/2);
 				
 				if(hit.accuracyDropoffDistance !== undefined && rangedDistance !== undefined) {
 					var accuracyDropoff = (rangedDistance*2) / hit.accuracyDropoffDistance;
@@ -1707,7 +1707,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				var accSkill = 0;
 				if(hit.ignoreUserAccuracy) {
 					accSkill = hit.accuracy == undefined ? 0 : hit.accuracy;
-					dicePool.buff -= subject.roundBuffs();
+					dicePool.buff -= Math.floor(subject.roundBuffs()/2);
 				} else {
 					accSkill = subject.totalSkill("manualDex");
 				}
@@ -1734,7 +1734,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				
 				if(hitSupport.focus !== undefined) {
 					var focusGainRoll = this.rollSkillDice(dicePool.skill, dicePool.expert, dicePool.buff);
-					var stressRoll = this.rollTestDice(0, 0, subject.stress());
+					var stressRoll = this.rollTestDice(0, 0, Math.floor(subject.stress()/2));
 					
 					focusGainRoll.bonuses += focusGainRoll.rareBonuses * 2;
 					focusGainRoll.hits -= stressRoll.misses;
@@ -1752,7 +1752,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				var roundBuffs = subject.roundBuffs();
 				var skillDice = perception > defense ? perception - defense : defense - perception;
 				var expertDice = perception > defense ? defense : perception;
-				var buffDice = roundBuffs;
+				var buffDice = Math.floor(roundBuffs/2);
 				var initiativeRoll = this.rollSkillDice(skillDice, expertDice, buffDice);
 				initiativeRoll.bonuses += initiativeRoll.rareBonuses * 2;
 				if(initiativeRoll.bonuses + subject.stressRecovery() > stress) {
