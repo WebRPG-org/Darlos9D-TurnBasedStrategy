@@ -4900,6 +4900,14 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		}
 	};
 	
+	Window_MenuCommand.prototype.addSaveCommand = function() {
+		if (this.needsCommand('save')) {
+			var enabled = this.isSaveEnabled();
+			this.addCommand("Camp", 'camp', enabled);
+			this.addCommand(TextManager.save, 'save', enabled);
+		}
+	};
+	
 	//menu status
 	Window_MenuStatus.prototype.drawItemStatus = function(index) {
 		var actor = $gameParty.members()[index];
