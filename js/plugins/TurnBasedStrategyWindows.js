@@ -4124,8 +4124,8 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			this.drawActorClass(actor, x, y+lineHeight);
 		}
 		this.changePaintOpacity(true);
-		this.drawActorTbsMP(actor, x, y+lineHeight*2);
-		this.drawActorSkillXP(actor, x, y+lineHeight*3, 14*12);
+		this.drawActorSkillXP(actor, x, y+lineHeight*2, 14*12);
+		this.drawActorTbsMP(actor, x, y+lineHeight*3);
 		//this.drawActorIcons(actor, x, y + lineHeight * 2);
 		//this.drawActorStress(actor, x, y + lineHeight);
 		this.drawActorSimpleDamage(actor, x+14*12, y);
@@ -4133,7 +4133,6 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_Base.prototype.drawActorTbsMP = function(actor, x, y) {
-		return;
 		if(actor.maxMP() == 0) { return; }
 		this.changeTextColor(this.systemColor());
 		this.drawText("MP", x, y, 14*2);
@@ -4143,13 +4142,17 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.drawText(actor.maxMP(), x+14*5, y, 14*2, 'right');
 	};
 	
-	Window_Base.prototype.drawActorSkillXP = function(actor, x, y, width) {
+	Window_Base.prototype.drawActorSkillXP = function(actor, x, y, width, twoLines) {
+		var lineOneX = x;
+		var lineTwoX = x + (twoLines ? 0 : width/2);
+		var lineOneY = y;
+		var lineTwoY = y + (twoLines ? this.lineHeight() : 0);
 		this.changeTextColor(this.systemColor());
-		this.drawText("SP", x, y, width/2);
-		this.drawText("RP", x+width/2, y, width/2);
+		this.drawText("SP", lineOneX, lineOneY, width/2);
+		this.drawText("RP", lineTwoX, lineTwoY, width/2);
 		this.resetTextColor();
-		this.drawText(actor.skillXP(), x, y, width/2, 'right');
-		this.drawText(actor.respecXP(), x+width/2, y, width/2, 'right');
+		this.drawText(actor.skillXP(), lineOneX, lineOneY, width/2, 'right');
+		this.drawText(actor.respecXP(), lineTwoX, lineTwoY, width/2, 'right');
 	};
 	
 	Window_Base.prototype.healthMeterPipCount = function() {
@@ -4848,11 +4851,34 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		}
 	};
 	
-	Window_MenuActor.prototype.selectForActionInfo = function(actionInfo) {
+	Window_MenuActor.prototype.selectForActionInfo = function(actionInfo, user) {
 		var actor = $gameParty.menuActor();
 		this.setCursorFixed(false);
+		this.setCursorAll(false);
         this.select(0);
-		//TODO: use the action to figure out which actor to select. I guess.
+		if(!actionInfo || !actionInfo.action) { return; }
+		var action = actionInfo.action;
+		var hitGroups = action.hitGroups;
+		var extraAoe = user == undefined ? 0 : user.baseRange();
+		if(
+			hitGroups &&
+			hitGroups.length > 0 &&
+			hitGroups.some(function(hitGroup)
+			{
+				if(!hitGroup.hits || hitGroup.hits.length == 0) { return false; }
+				return hitGroup.hits.some(function (hit)
+				{
+					return hit.aoe !== undefined && hit.aoe + (hit.aoeUsesUserRange ? extraAoe : 0) >= 2 && hit.heal &&
+					(
+						(hit.heal.damage !== undefined && hit.heal.damage > 0) ||
+						(hit.heal.stress !== undefined && hit.heal.stress > 0)
+					);
+				});
+			})
+		) {
+			this.setCursorAll(true);
+			this.select(0);
+		}
 	};
 	
 	//selectable
@@ -5684,10 +5710,15 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			this.changePaintOpacity(this.isEnabled(action));
 			this.drawIcon(iconIndex, rect.x + 2, rect.y + 2);
 			this.drawText(action.name, rect.x + iconBoxWidth, rect.y, rect.width - costWidth - iconBoxWidth);
-			if(action.stressCost !== undefined && action.stressCost > 0) {
+			if((action.stressCost !== undefined && action.stressCost > 0) || (action.mpCost !== undefined && action.mpCost > 0)) {
+				var stressCost = action.stressCost == undefined ? 0 : action.stressCost;
+				var mpCost = action.mpCost == undefined ? 0 : action.mpCost;
 				this.changeTextColor(this.crisisColor());
-				this.drawText(action.stressCost, rect.x, rect.y, rect.width, 'right');
+				this.drawText(stressCost, rect.x, rect.y, rect.width-14*2, 'right');
+				this.changeTextColor(this.systemColor());
+				this.drawText(":", rect.x, rect.y, rect.width-14, 'right');
 				this.resetTextColor();
+				this.drawText(mpCost, rect.x, rect.y, rect.width, 'right');
 			}
 			this.changePaintOpacity(1);
 		}
@@ -5703,7 +5734,13 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_SkillList.prototype.isEnabled = function(action) {
-		return this.isHealing(action);
+		if(!this.isHealing(action)) {
+			return false;
+		}
+		if(action.mpCost == undefined || action.mpCost <= this._actor.maxMP() - this._actor.mpSpent()) {
+			return true;
+		}
+		return false;
 	};
 	
 	//equip command
@@ -6208,13 +6245,13 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.changePaintOpacity(false);
 		this.drawActorClass(this._actor, x, y+lineHeight);
 		this.changePaintOpacity(true);
-		this.drawActorTbsMP(this._actor, x, y+lineHeight*2);
-		this.drawActorSkillXP(this._actor, x, y+lineHeight*3, 14*12);
+		this.drawActorSkillXP(this._actor, x, y+lineHeight*2, 14*12, true);
 		//this.drawActorIcons(this._actor, x, y + lineHeight * 2);
 		//this.drawActorStress(this._actor, x, y + lineHeight);
 		this.drawActorDamage(this._actor, 432, y);
-		this.drawActorPartsDamage(this._actor, 432+14, y+lineHeight, true);
-		this.drawActorBuffs(this._actor, 432+14*7, y+lineHeight);
+		this.drawActorTbsMP(this._actor, 432, y+lineHeight);
+		this.drawActorPartsDamage(this._actor, 432+14*17, y+lineHeight, true);
+		//this.drawActorBuffs(this._actor, 432+14*7, y+lineHeight);
 	};
 	
 	//BattleLog

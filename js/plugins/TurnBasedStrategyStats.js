@@ -1660,6 +1660,15 @@
 		return true;
 	};
 	
+	Game_Battler.prototype.useActionMP = function(actionInfo) {
+		if(!actionInfo || actionInfo.action.mpCost == undefined || actionInfo.action.mpCost <= 0) { return false; }
+		this.adjustMPSpent(actionInfo.action.mpCost);
+		if(this.maxMP() - this.mpSpent() < actionInfo.action.mpCost) {
+			return true;
+		}
+		return false;
+	};
+	
 	Game_Battler.prototype.performActionStart = function(action) {
 		//if (!action.isGuard()) {
 			this.setActionState('acting');

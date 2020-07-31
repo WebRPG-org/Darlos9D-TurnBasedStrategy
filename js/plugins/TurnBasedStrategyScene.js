@@ -1057,7 +1057,7 @@
 		var actionInfo = this.actionInfo();
 		if (actionInfo && actionInfo.action && this.actionIsEnabled(actionInfo.action)) {
 			this.showSubWindow(this._actorWindow);
-			this._actorWindow.selectForActionInfo(actionInfo);
+			this._actorWindow.selectForActionInfo(actionInfo, this.user());
 		}
 	};
 	
@@ -1130,9 +1130,11 @@
 		if(!actionInfo || !actionInfo.action) { return false; }
 		var action = actionInfo.action;
 		var hitGroups = action.hitGroups;
+		var user = this.user();
+		var extraAoe = user == undefined ? 0 : user.baseRange();
 		return hitGroups && hitGroups.length > 0 &&
 			hitGroups.some(function(hitGroup) { if(!hitGroup.hits || hitGroup.hits.length == 0) { return false; }
-				return hitGroup.hits.some(function (hit) { return hit.aoe !== undefined && hit.aoe >= 2 && hit.heal
+				return hitGroup.hits.some(function (hit) { return hit.aoe !== undefined && hit.aoe + (hit.aoeUsesUserRange ? extraAoe : 0) >= 2 && hit.heal
 				&& ((hit.heal.damage !== undefined && hit.heal.damage > 0)
 				|| (hit.heal.stress !== undefined && hit.heal.stress > 0)); }); });
 	};
@@ -1203,7 +1205,7 @@
 		var user = this.user();
 		this.applyAction();
 		if(user) {
-			if(user.useActionItem(this.actionInfo())) {
+			if(user.useActionItem(this.actionInfo()) || user.useActionMP(this.actionInfo())) {
 				this._actorWindow.setDisplayMode(true);
 			}
 		}
@@ -1336,7 +1338,7 @@
 			this._actorWindow.x = 0;
 			this._actorWindow.show();
 			this._actorWindow.activate();
-			this._actorWindow.selectForActionInfo(actionInfo);
+			this._actorWindow.selectForActionInfo(actionInfo, this.user());
 			this._itemOptionsWindow.deactivate();
 		}
 	};
