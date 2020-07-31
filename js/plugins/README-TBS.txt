@@ -117,7 +117,7 @@ Weapons
 Armors
 ----------------------------------------------------
 {
-	"limitedPart": "head"/"torso"/"arms"/"legs", (if this is set, other armor with this same setting cannot be worn with this)
+	"limitedPart": "head"/"torso"/"arms"/"legs"/"fullBody", (if this is set, other armor covering the same part cannot also be worn)
 	"protection": {(see "Protection" section)},
 	"attributes": [
 		{

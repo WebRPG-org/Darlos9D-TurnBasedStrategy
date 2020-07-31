@@ -6126,7 +6126,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 							}
 						}
 						for(i = 0; i < limitedParts.length; i++) {
-							if(item.tbsStats.limitedPart === limitedParts[i]) {
+							if(item.tbsStats.limitedPart === "fullBody" || item.tbsStats.limitedPart === limitedParts[i]) {
 								return false;
 							}
 						}
