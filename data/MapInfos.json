@@ -37,5 +37,5 @@ null,
 {"id":35,"expanded":true,"name":"Ruined Temple F2","order":35,"parentId":34,"scrollX":1456.5,"scrollY":1729.5},
 {"id":36,"expanded":false,"name":"Battlefields","order":36,"parentId":13,"scrollX":1228.5,"scrollY":691.5},
 {"id":37,"expanded":false,"name":"Wasteland A","order":37,"parentId":36,"scrollX":1228.5,"scrollY":691.5},
-{"id":38,"expanded":false,"name":"Merchant's Cave","order":38,"parentId":13,"scrollX":1216.5,"scrollY":1228.5}
+{"id":38,"expanded":false,"name":"Merchant's Cave","order":38,"parentId":13,"scrollX":1216.5,"scrollY":1018.5}
 ]

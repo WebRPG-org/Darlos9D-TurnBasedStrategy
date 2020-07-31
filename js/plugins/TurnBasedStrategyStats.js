@@ -397,6 +397,7 @@
 		this.clearBuffs();
 		this._stress = 0;
 		this._roundBuffs = 0;
+		this._mpSpent = 0;
 		this._damage = {};
 		this._damage.core = 0;
 		this._damage.mind = 0;
@@ -634,6 +635,7 @@
 		this._mp = this._mp.clamp(0, this.mmp);
 		this._tp = this._tp.clamp(0, this.maxTp());
 		this._stress = this._stress.clamp(0, 10);
+		this._mpSpent = this._mpSpent.clamp(0, this.maxMP());
 		this._roundBuffs = this._roundBuffs.clamp(0, 10);
 		this._damage.core = this._damage.core.clamp(0, this.toughness()*2);
 		this._damage.head = this._damage.head.clamp(0, this.toughness());
@@ -650,6 +652,7 @@
 		this._hp = this.mhp;
 		this._mp = this.mmp;
 		this._stress = 0;
+		this._mpSpent = 0;
 		this._damage.core = 0;
 		this._damage.head = 0;
 		this._damage.torso = 0;
@@ -658,6 +661,22 @@
 		this._damage.leftLeg = 0;
 		this._damage.rightLeg = 0;
 		this._damage.mind = 0;
+	};
+	
+	Game_BattlerBase.prototype.setMPSpent = function(newMPSpent) {
+		this._mpSpent = Math.min(this.maxMP(), Math.max(0, newMPSpent));
+	};
+	
+	Game_BattlerBase.prototype.adjustMPSpent = function(change) {
+		this.setMPSpent(this._mpSpent + change);
+	};
+	
+	Game_BattlerBase.prototype.clearMPSpent = function() {
+		this.setMPSpent(0);
+	};
+	
+	Game_BattlerBase.prototype.mpSpent = function() {
+		return Math.max(0, this._mpSpent);
 	};
 	
 	Game_BattlerBase.prototype.setStress = function(newStress) {
@@ -955,6 +974,10 @@
 	
 	Game_BattlerBase.prototype.isFlying = function() {
 		return false;
+	};
+	
+	Game_BattlerBase.prototype.maxMP = function() {
+		return 0;
 	};
 	
 	Game_BattlerBase.prototype.strength = function() {
@@ -1836,6 +1859,28 @@
 			}
 		});
 		return reflex;
+	};
+	
+	Game_Actor.prototype.maxMP = function() {
+		if(this.currentClass().tbsStats.mpAbility == undefined) {
+			return 0;
+		}
+		var mpAbility = this.totalSkill(this.currentClass().tbsStats.mpAbility);
+		var maxMP = 0;
+		switch(mpAbility) {
+			case 1: maxMP = 5; break;
+			case 2: maxMP = 13; break;
+			case 3: maxMP = 23; break;
+			case 4: maxMP = 31; break;
+			case 5: maxMP = 44; break;
+		}
+		var attributes = this.getAttributes();
+		attributes.forEach(function (attribute) {
+			if(attribute.maxMP !== undefined) {
+				maxMP += attribute.maxMP;
+			}
+		});
+		return maxMP;
 	};
 	
 	Game_Actor.prototype.baseProtection = function() {

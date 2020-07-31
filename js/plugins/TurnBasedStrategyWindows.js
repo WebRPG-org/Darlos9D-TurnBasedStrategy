@@ -4124,20 +4124,32 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			this.drawActorClass(actor, x, y+lineHeight);
 		}
 		this.changePaintOpacity(true);
-		this.drawActorSkillXP(actor, x, y+lineHeight*2, 14*11);
+		this.drawActorTbsMP(actor, x, y+lineHeight*2);
+		this.drawActorSkillXP(actor, x, y+lineHeight*3, 14*12);
 		//this.drawActorIcons(actor, x, y + lineHeight * 2);
 		//this.drawActorStress(actor, x, y + lineHeight);
 		this.drawActorSimpleDamage(actor, x+14*12, y);
 		this.drawActorPartsDamage(actor, x+14*13, y+lineHeight, true);
 	};
 	
+	Window_Base.prototype.drawActorTbsMP = function(actor, x, y) {
+		return;
+		if(actor.maxMP() == 0) { return; }
+		this.changeTextColor(this.systemColor());
+		this.drawText("MP", x, y, 14*2);
+		this.drawText("/", x+14*4, y, 14);
+		this.resetTextColor();
+		this.drawText(actor.maxMP() - actor.mpSpent(), x+14*2, y, 14*2, 'right');
+		this.drawText(actor.maxMP(), x+14*5, y, 14*2, 'right');
+	};
+	
 	Window_Base.prototype.drawActorSkillXP = function(actor, x, y, width) {
 		this.changeTextColor(this.systemColor());
-		this.drawText("SP", x, y, width);
-		this.drawText("RP", x, y+this.lineHeight(), width);
+		this.drawText("SP", x, y, width/2);
+		this.drawText("RP", x+width/2, y, width/2);
 		this.resetTextColor();
-		this.drawText(actor.skillXP(), x, y, width, 'right');
-		this.drawText(actor.respecXP(), x, y+this.lineHeight(), width, 'right');
+		this.drawText(actor.skillXP(), x, y, width/2, 'right');
+		this.drawText(actor.respecXP(), x+width/2, y, width/2, 'right');
 	};
 	
 	Window_Base.prototype.healthMeterPipCount = function() {
@@ -6116,17 +6128,16 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 				}
 			} else if(this._slotType === "accessories") {
 				if(DataManager.isArmor(item)) {
-					if(item.tbsStats.limitedPart) {
+					if(item.tbsStats.limitedPart !== undefined) {
 						var limitedParts = [];
-						var i;
-						for(i = 2; i < 7; i++) {
-							var equips = this._actor.equips();
-							if(equips[i] && equips[i].tbsStats.limitedPart) {
+						var equips = this._actor.equips();
+						for(let i = 2; i < 7; i++) {
+							if(equips[i] && equips[i].tbsStats.limitedPart !== undefined) {
 								limitedParts.push(equips[i].tbsStats.limitedPart);
 							}
 						}
-						for(i = 0; i < limitedParts.length; i++) {
-							if(item.tbsStats.limitedPart === "fullBody" || item.tbsStats.limitedPart === limitedParts[i]) {
+						for(let i = 0; i < limitedParts.length; i++) {
+							if(limitedParts[i] === "fullBody" || item.tbsStats.limitedPart === limitedParts[i]) {
 								return false;
 							}
 						}
@@ -6197,7 +6208,8 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.changePaintOpacity(false);
 		this.drawActorClass(this._actor, x, y+lineHeight);
 		this.changePaintOpacity(true);
-		this.drawActorSkillXP(this._actor, x, y+lineHeight*2, 14*11);
+		this.drawActorTbsMP(this._actor, x, y+lineHeight*2);
+		this.drawActorSkillXP(this._actor, x, y+lineHeight*3, 14*12);
 		//this.drawActorIcons(this._actor, x, y + lineHeight * 2);
 		//this.drawActorStress(this._actor, x, y + lineHeight);
 		this.drawActorDamage(this._actor, 432, y);
