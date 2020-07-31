@@ -613,9 +613,12 @@ BattleManager.updateAction = function() {
 					subjectRoundBuffs += results.subjectRoundBuffs;
 				}, this);
 				this._subject.battler.setRoundBuffs(subjectRoundBuffs);
-				if(this._tbsActionInfo.action.stressCost !== undefined) {
+				if(this._tbsActionInfo.action.stressCost !== undefined && this._tbsActionInfo.action.stressCost > 0) {
 					this._subject.battler.adjustStress(this._tbsActionInfo.action.stressCost);
 					this._logWindow.showStressCost(this._subject.battler, this._tbsActionInfo.action.stressCost);
+				}
+				if(this._tbsActionInfo.action.mpCost !== undefined && this._tbsActionInfo.action.mpCost > 0) {
+					this._subject.battler.adjustMPSpent(this._tbsActionInfo.action.mpCost);
 				}
 			}
 			this.invokeAction(this._subject.battler, target.battler, this._resultsPerGroup);

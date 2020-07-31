@@ -1519,6 +1519,65 @@ Window_TbsActorStatus.prototype.updateClose = function() {
 };
 
 //-----------------------------------------------------------------------------
+// Window_TbsSmallActorStatus
+//
+// The window for showing current stress, focus, and mp during battle
+
+function Window_TbsSmallActorStatus() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_TbsSmallActorStatus.prototype = Object.create(Window_Base.prototype);
+Window_TbsSmallActorStatus.prototype.constructor = Window_TbsSmallActorStatus;
+
+Window_TbsSmallActorStatus.prototype.initialize = function() {
+    Window_Base.prototype.initialize.call(this, 0, 0, this.windowWidth(), this.windowHeight());
+    this._tbsActor = null;
+};
+
+Window_TbsSmallActorStatus.prototype.windowWidth = function() {
+	var includeMP = this._tbsActor && this._tbsActor.battler.maxMP() > 0;
+	return this.standardPadding()*2 + this.textPadding()*2 + 14*(includeMP ? 8 : 5);
+};
+
+Window_TbsSmallActorStatus.prototype.windowHeight = function() {
+	return this.fittingHeight(2);
+};
+
+Window_TbsSmallActorStatus.prototype.setTbsActor = function(tbsActor) {
+    if (this._tbsActor !== tbsActor) {
+        this._tbsActor = tbsActor;
+        this.refresh();
+    }
+};
+
+Window_TbsSmallActorStatus.prototype.refresh = function() {
+	this.move(this.x, this.y, this.windowWidth(), this.windowHeight());
+	this.createContents();
+    if (this._tbsActor) {
+		var battler = this._tbsActor.battler;
+		this.changeTextColor(this.crisisColor());
+		this.drawText("St", this.textPadding(), 0, 14*2);
+		this.changeTextColor(this.textColor(27));
+		this.drawText("   Fo", this.textPadding(), 0, 14*5);
+		this.changeTextColor(this.systemColor());
+		this.drawText("  :", this.textPadding(), this.lineHeight(), 14*3);
+		this.changeTextColor(this.crisisColor());
+		this.drawText(battler.stress(), this.textPadding(), this.lineHeight(), 14*2, 'right');
+		this.changeTextColor(this.textColor(27));
+		this.drawText(battler.roundBuffs(), this.textPadding()+14*3, this.lineHeight(), 14*2, 'right');
+		if(battler.maxMP() > 0) {
+			this.changeTextColor(this.systemColor());
+			this.drawText("     :", this.textPadding(), this.lineHeight(), 14*6);
+			this.resetTextColor();
+			this.drawText("      MP", this.textPadding(), 0, 14*8);
+			this.drawText(battler.maxMP()-battler.mpSpent(), this.textPadding()+14*6, this.lineHeight(), 14*2, 'right');
+		}
+		this.resetTextColor();
+    }
+};
+
+//-----------------------------------------------------------------------------
 // Window_TbsActor
 //
 // The window for selecting an actor during battle
@@ -1999,14 +2058,17 @@ Window_TbsAction.prototype.windowWidth = function() {
 			actionInfoGroup.forEach(function (actionInfoGroupEntry) {
 				var actionInfo = actionInfoGroupEntry.actionInfo;
 				var thisLength = actionInfo.action.name.length;
-				if(actionInfo.action.stressCost !== undefined && actionInfo.action.stressCost > 0) {
-					thisLength += 3;
+				if(
+					(actionInfo.action.stressCost !== undefined && actionInfo.action.stressCost > 0) ||
+					(actionInfo.action.mpCost !== undefined && actionInfo.action.mpCost > 0)
+				) {
+					thisLength += 5;
 				}
 				if(longestLength < thisLength) {
 					longestLength = thisLength;
 				}
-			});
-		});
+			},this);
+		},this);
 		return this.standardPadding() * 2 + longestLength * 14 + Window_Base._iconWidth + this.textPadding() * 3;
 	} else {
 		return Graphics.boxWidth / 4;
@@ -2071,11 +2133,20 @@ Window_TbsAction.prototype.setActionLevelWindow = function(actionLevelWindow) {
 	}
 };
 
+Window_TbsAction.prototype.setSmallActorStatusWindow = function(smallActorStatusWindow) {
+	if (this._smallActorStatusWindow !== smallActorStatusWindow) {
+		this._smallActorStatusWindow = smallActorStatusWindow;
+	}
+};
+
 Window_TbsAction.prototype.setTbsActor = function(tbsActor) {
     if (this._tbsActor !== tbsActor) {
         this._tbsActor = tbsActor;
 		if(this._targetWindow) {
 			this._targetWindow.setActionIndex(-1);
+		}
+		if(this._smallActorStatusWindow) {
+			this._smallActorStatusWindow.setTbsActor(tbsActor);
 		}
     }
 };
@@ -2283,8 +2354,6 @@ Window_TbsAction.prototype.drawItem = function(index) {
 				break;
 			}
 		}
-		var costWidth = this.costWidth();
-		
 		var iconBoxWidth = Window_Base._iconWidth;
 		this.resetTextColor();
 		
@@ -2299,9 +2368,16 @@ Window_TbsAction.prototype.drawItem = function(index) {
 		this.drawIcon(iconIndex, this.textPadding(), this.lineHeight() * index + 2);
 		this.drawText(name, this.textPadding() * 2 + iconBoxWidth, this.lineHeight() * index);
 		var stressCost = index == this.index() ? action.stressCost : highestEnabledAction.stressCost;
-		if(stressCost !== undefined && stressCost > 0) {
+		var mpCost = index == this.index() ? action.mpCost : highestEnabledAction.mpCost;
+		if((stressCost !== undefined && stressCost > 0) || (mpCost !== undefined && mpCost > 0)) {
 			this.changeTextColor(this.crisisColor());
-			this.drawText(stressCost, this.textPadding(), this.lineHeight() * index,
+			this.drawText(stressCost == undefined ? 0 : stressCost, this.textPadding(), this.lineHeight() * index,
+				this.windowWidth() - this.standardPadding()*2 - this.textPadding()*2 - 14*2, "right");
+			this.changeTextColor(this.systemColor());
+			this.drawText(":", this.textPadding(), this.lineHeight() * index,
+				this.windowWidth() - this.standardPadding()*2 - this.textPadding()*2 - 14, "right");
+			this.resetTextColor();
+			this.drawText(mpCost == undefined ? 0 : mpCost, this.textPadding(), this.lineHeight() * index,
 				this.windowWidth() - this.standardPadding()*2 - this.textPadding()*2, "right");
 		}
 		this.resetTextColor();
@@ -2326,13 +2402,14 @@ Window_TbsAction.prototype.selectFirstEnabledItem = function() {
 };
 
 Window_TbsAction.prototype.costWidth = function() {
-    return this.textWidth('000');
+    return this.textWidth('0000');
 };
 
 Window_TbsAction.prototype.isActionEnabled = function(action) {
 	if(this._tbsActor && action) {
-		return (!action.cantUseHalfMove || $gameMap.tbsCurrentPositionIsFullMove())
-			&& (!action.cantUseFullMove || $gameMap.tbsCurrentPositionIsHalfMove());
+		return (!action.cantUseHalfMove || $gameMap.tbsCurrentPositionIsFullMove()) &&
+			(!action.cantUseFullMove || $gameMap.tbsCurrentPositionIsHalfMove()) &&
+			(action.mpCost == undefined || action.mpCost <= this._tbsActor.battler.maxMP() - this._tbsActor.battler.mpSpent());
 	}
 	return false;
 };
@@ -2376,6 +2453,14 @@ Window_TbsAction.prototype.open = function() {
 	if(this._actionLevelWindow) {
 		this._actionLevelWindow.select(0);
 	}
+	if(this._smallActorStatusWindow) {
+		this._smallActorStatusWindow.show();
+		this._smallActorStatusWindow.open();
+		this._smallActorStatusWindow.x = Graphics.boxWidth -
+			(Window_TbsActionInfo.prototype.windowWidth() - this.standardPadding()*(2/3)) -
+			(this._smallActorStatusWindow.windowWidth() - this.standardPadding()*(2/3));
+		this._smallActorStatusWindow.y = -this.standardPadding()*(2/3);
+	}
 	this.updateActionLevelWindow(true);
 };
 
@@ -2386,6 +2471,9 @@ Window_TbsAction.prototype.close = function() {
     this._opening = false;
 	if(this._actionInfoWindow) {
 		this._actionInfoWindow.close();
+	}
+	if(this._smallActorStatusWindow) {
+		this._smallActorStatusWindow.close();
 	}
 };
 
@@ -5693,6 +5781,10 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	Window_SkillList.prototype.selectLast = function() {
 		this.select(0);
+	};
+	
+	Window_SkillList.prototype.costWidth = function() {
+		return this.textWidth('00000');
 	};
 	
 	Window_SkillList.prototype.drawItem = function(index) {

@@ -562,6 +562,7 @@
 		this.createTbsActorStatusWindow();
 		this.createTbsActorWindow();
 		this.createTbsActionTypeWindow();
+		this.createTbsSmallActorStatusWindow();
 		this.createTbsActionInfoWindow();
 		this.createTbsActionLevelWindow();
 		this.createTbsActionWindow();
@@ -662,11 +663,19 @@
 		this._tbsActionTypeWindow.setActorWindow(this._tbsActorWindow);
 	};
 
+	Scene_Map.prototype.createTbsSmallActorStatusWindow = function() {
+		this._tbsSmallActorStatusWindow = new Window_TbsSmallActorStatus();
+		this.addWindow(this._tbsSmallActorStatusWindow);
+		this._tbsSmallActorStatusWindow.hide();
+		this._tbsSmallActorStatusWindow.close();
+	};
+
 	Scene_Map.prototype.createTbsActionInfoWindow = function() {
-		var wx = Graphics.boxWidth - 298 + Window_TbsActorStatus.prototype.standardPadding()*(2/3);
-		this._tbsActionInfoWindow = new Window_TbsActionInfo(wx, -Window_TbsActorStatus.prototype.standardPadding()*(2/3));
+		var wx = Graphics.boxWidth - Window_TbsActionInfo.prototype.windowWidth() + Window_TbsActionInfo.prototype.standardPadding()*(2/3);
+		this._tbsActionInfoWindow = new Window_TbsActionInfo(wx, -Window_TbsActionInfo.prototype.standardPadding()*(2/3));
 		this.addWindow(this._tbsActionInfoWindow);
 		this._tbsActionInfoWindow.hide();
+		this._tbsActionInfoWindow.close();
 	};
 	
 	Scene_Map.prototype.createTbsActionLevelWindow = function() {
@@ -688,6 +697,7 @@
 		this._tbsActionWindow.setActionTypeWindow(this._tbsActionTypeWindow);
 		this._tbsActionWindow.setActionInfoWindow(this._tbsActionInfoWindow);
 		this._tbsActionWindow.setActionLevelWindow(this._tbsActionLevelWindow);
+		this._tbsActionWindow.setSmallActorStatusWindow(this._tbsSmallActorStatusWindow);
 	};
 
 	Scene_Map.prototype.createTbsTargetWindow = function() {
