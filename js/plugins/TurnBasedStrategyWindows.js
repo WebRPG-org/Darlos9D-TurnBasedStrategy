@@ -1570,7 +1570,7 @@ Window_TbsSmallActorStatus.prototype.refresh = function() {
 			this.changeTextColor(this.systemColor());
 			this.drawText("     :", this.textPadding(), this.lineHeight(), 14*6);
 			this.resetTextColor();
-			this.drawText("      MP", this.textPadding(), 0, 14*8);
+			this.drawText("      En", this.textPadding(), 0, 14*8);
 			this.drawText(battler.maxMP()-battler.mpSpent(), this.textPadding()+14*6, this.lineHeight(), 14*2, 'right');
 		}
 		this.resetTextColor();
@@ -4223,7 +4223,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_Base.prototype.drawActorTbsMP = function(actor, x, y) {
 		if(actor.maxMP() == 0) { return; }
 		this.changeTextColor(this.systemColor());
-		this.drawText("MP", x, y, 14*2);
+		this.drawText("En", x, y, 14*2);
 		this.drawText("/", x+14*4, y, 14);
 		this.resetTextColor();
 		this.drawText(actor.maxMP() - actor.mpSpent(), x+14*2, y, 14*2, 'right');
@@ -6359,8 +6359,8 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	Window_Status.prototype.drawMaxHPAndMP = function(actor, x, y) {
 		this.changeTextColor(this.systemColor());
-		this.drawText("Max HP", x, y, 14*6);
-		this.drawText("Max MP", x, y+this.lineHeight(), 14*6);
+		this.drawText("Max Hit Points", x, y, 14*14);
+		this.drawText("Max Energy", x, y+this.lineHeight(), 14*10);
 		this.resetTextColor();
 		this.drawText(actor.toughness()*2, x+14*15, y, 14*3, 'right');
 		this.drawText(actor.maxMP(), x+14*16, y+this.lineHeight(), 14*2, 'right');
