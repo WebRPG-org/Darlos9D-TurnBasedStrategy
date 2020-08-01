@@ -991,6 +991,17 @@
 		return strength;
 	};
 	
+	Game_BattlerBase.prototype.magicPower = function() {
+		var magicPower = 0;
+		var attributes = this.getAttributes();
+		attributes.forEach(function (attribute) {
+			if(attribute.magicPower !== undefined) {
+				magicPower += attribute.magicPower;
+			}
+		});
+		return magicPower;
+	};
+	
 	Game_BattlerBase.prototype.toughness = function() {
 		var toughness = 10;
 		var attributes = this.getAttributes();

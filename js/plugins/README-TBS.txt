@@ -50,6 +50,7 @@ Classes
 			"description": (string),
 			"skillRequirements": [(see "Skill Requirement" section)], (THIS IS AN ARRAY OF MORE THAN ONE SKILL REQUIREMENT!!!)
 			"strength": (integer),
+			"magicPower": (integer),
 			"toughness": (integer),
 			"stressRecovery": (integer),
 			"defense": (integer),
@@ -104,6 +105,7 @@ Weapons
 			"name": (string),
 			"description": (string),
 			"strength": (integer),
+			"magicPower": (integer),
 			"toughness": (integer),
 			"stressRecovery": (integer),
 			"defense": (integer),
@@ -126,6 +128,7 @@ Armors
 			"name": (string),
 			"description": (string),
 			"strength": (integer),
+			"magicPower": (integer),
 			"toughness": (integer),
 			"stressRecovery": (integer),
 			"defense": (integer),

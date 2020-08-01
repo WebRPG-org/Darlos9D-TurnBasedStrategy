@@ -1399,12 +1399,12 @@ Window_EquipCharacterInfo.prototype.refresh = function() {
     this.contents.clear();
     if (this._actor) {
 		this.drawActorNickname(this._actor, 0, 0, Graphics.boxWidth/2);
-		var handedness = "Left Handed";
-		if(this._actor.handedness() === "right") {
-			handedness = "Right Handed";
-		}
+		//var handedness = "Left Handed";
+		//if(this._actor.handedness() === "right") {
+		//	handedness = "Right Handed";
+		//}
 		this.resetTextColor();
-		this.drawText(handedness, Graphics.boxWidth/2, 0, Graphics.boxWidth/2);
+		//this.drawText(handedness, Graphics.boxWidth/2, 0, Graphics.boxWidth/2);
 		/* this.changeTextColor(this.systemColor());
 		this.drawText("Class Skills", 500, 0);
 		var skillsPosition = 708;
@@ -3728,7 +3728,7 @@ Window_StatusSkillOption.prototype.initialize = function(x, y) {
 };
 
 Window_StatusSkillOption.prototype.windowWidth = function() {
-    return this.standardPadding()*2 + this.textPadding()*2 + 14*20;
+    return this.standardPadding()*2 + this.textPadding()*2 + 14*17;
 };
 
 Window_StatusSkillOption.prototype.setActor = function(actor) {
@@ -3754,18 +3754,18 @@ Window_StatusSkillOption.prototype.numVisibleRows = function() {
 Window_StatusSkillOption.prototype.makeCommandList = function() {
 	var canUpgrade = false;
 	var canDowngrade = false;
-	var upgradeCostText = "------";
-	var downgradeCostText = "------";
+	var upgradeCostText = "---";
+	var downgradeCostText = "---";
 	if(this._actor && this._skill) {
 		var battler = this._actor;
 		canUpgrade = battler.skillPoints(this._skill) < battler.maxSkillPoints() && battler.skillXP() >= battler.skillUpgradeCost(this._skill);
 		canDowngrade = battler.skillPoints(this._skill) > 0 && battler.respecXP() >= battler.skillDowngradeCost(this._skill);
-		upgradeCostText = battler.skillPoints(this._skill) < battler.maxSkillPoints() ? battler.skillUpgradeCost(this._skill)+"" : "------";
-		downgradeCostText = battler.skillPoints(this._skill) > 0 ? battler.skillDowngradeCost(this._skill)+"" : "------";
-		while(upgradeCostText.length < 6) {
+		upgradeCostText = battler.skillPoints(this._skill) < battler.maxSkillPoints() ? battler.skillUpgradeCost(this._skill)+"" : "---";
+		downgradeCostText = battler.skillPoints(this._skill) > 0 ? battler.skillDowngradeCost(this._skill)+"" : "---";
+		while(upgradeCostText.length < 3) {
 			upgradeCostText = " " + upgradeCostText;
 		}
-		while(downgradeCostText.length < 6) {
+		while(downgradeCostText.length < 3) {
 			downgradeCostText = " " + downgradeCostText;
 		}
 	}
@@ -4212,7 +4212,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			this.drawActorClass(actor, x, y+lineHeight);
 		}
 		this.changePaintOpacity(true);
-		this.drawActorSkillXP(actor, x, y+lineHeight*2, 14*12);
+		this.drawActorSkillXP(actor, x, y+lineHeight*2);
 		this.drawActorTbsMP(actor, x, y+lineHeight*3);
 		//this.drawActorIcons(actor, x, y + lineHeight * 2);
 		//this.drawActorStress(actor, x, y + lineHeight);
@@ -4230,17 +4230,25 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.drawText(actor.maxMP(), x+14*5, y, 14*2, 'right');
 	};
 	
-	Window_Base.prototype.drawActorSkillXP = function(actor, x, y, width, twoLines) {
+	Window_Base.prototype.drawActorSkillXP = function(actor, x, y, twoLines) {
 		var lineOneX = x;
-		var lineTwoX = x + (twoLines ? 0 : width/2);
+		var lineTwoX = x + (twoLines ? 0 : 14*6);
 		var lineOneY = y;
 		var lineTwoY = y + (twoLines ? this.lineHeight() : 0);
 		this.changeTextColor(this.systemColor());
-		this.drawText("SP", lineOneX, lineOneY, width/2);
-		this.drawText("RP", lineTwoX, lineTwoY, width/2);
+		var spText = "SP";
+		var rpText = "RP";
+		var xValueOffset = 14*2;
+		if(twoLines) {
+			spText = "Skill Points";
+			rpText = "Refund Points";
+			xValueOffset = 14*14;
+		}
+		this.drawText(spText, lineOneX, lineOneY, 14*(spText.length));
+		this.drawText(rpText, lineTwoX, lineTwoY, 14*(rpText.length));
 		this.resetTextColor();
-		this.drawText(actor.skillXP(), lineOneX, lineOneY, width/2, 'right');
-		this.drawText(actor.respecXP(), lineTwoX, lineTwoY, width/2, 'right');
+		this.drawText(actor.skillXP(), lineOneX+xValueOffset, lineOneY, 14*4, 'right');
+		this.drawText(actor.respecXP(), lineTwoX+xValueOffset, lineTwoY, 14*4, 'right');
 	};
 	
 	Window_Base.prototype.healthMeterPipCount = function() {
@@ -6315,12 +6323,15 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_Status.prototype.drawBlock1 = function(y) {
-		this.drawActorName(this._actor, this.textPadding(), y, 14*28);
-		var handedness = "Left Handed";
-		if(this._actor.handedness() === "right") {
-			handedness = "Right Handed";
-		}
-		this.drawText(handedness, this.width-this.standardPadding()-this.textPadding()-14*13, y, 14*12);
+		this.drawActorName(this._actor, this.textPadding(), y, 14*10);
+		this.changePaintOpacity(false);
+		this.drawActorClass(this._actor, this.textPadding()+14*11, y, 14*20);
+		this.changePaintOpacity(true);
+		//var handedness = "Left Handed";
+		//if(this._actor.handedness() === "right") {
+		//	handedness = "Right Handed";
+		//}
+		//this.drawText(handedness, this.width-this.standardPadding()-this.textPadding()-14*13, y, 14*12);
 	};
 	
 	Window_Status.prototype.drawBlock2 = function(y) {
@@ -6341,17 +6352,33 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	Window_Status.prototype.drawBasicInfo = function(x, y) {
 		var lineHeight = this.lineHeight();
-		this.drawActorNickname(this._actor, x, y);
-		this.changePaintOpacity(false);
-		this.drawActorClass(this._actor, x, y+lineHeight);
-		this.changePaintOpacity(true);
-		this.drawActorSkillXP(this._actor, x, y+lineHeight*2, 14*12, true);
-		//this.drawActorIcons(this._actor, x, y + lineHeight * 2);
-		//this.drawActorStress(this._actor, x, y + lineHeight);
-		this.drawActorDamage(this._actor, 432, y);
-		this.drawActorTbsMP(this._actor, 432, y+lineHeight);
-		this.drawActorPartsDamage(this._actor, 432+14*17, y+lineHeight, true);
-		//this.drawActorBuffs(this._actor, 432+14*7, y+lineHeight);
+		this.drawMaxHPAndMP(this._actor, x, y);
+		this.drawActorSkillXP(this._actor, x, y+lineHeight*2, true);
+		this.drawDerivedStats(this._actor, x+14*19, y);
+	};
+	
+	Window_Status.prototype.drawMaxHPAndMP = function(actor, x, y) {
+		this.changeTextColor(this.systemColor());
+		this.drawText("Max HP", x, y, 14*6);
+		this.drawText("Max MP", x, y+this.lineHeight(), 14*6);
+		this.resetTextColor();
+		this.drawText(actor.toughness()*2, x+14*15, y, 14*3, 'right');
+		this.drawText(actor.maxMP(), x+14*16, y+this.lineHeight(), 14*2, 'right');
+	};
+	
+	Window_Status.prototype.drawDerivedStats = function(actor, x, y) {
+		this.changeTextColor(this.systemColor());
+		this.drawText("Strength Bonus", x, y, 14*14);
+		this.drawText("Magic Bonus", x, y+this.lineHeight(), 14*11);
+		this.drawText("Stress Recovery", x, y+this.lineHeight()*2, 14*15);
+		this.drawText("Movement", x, y+this.lineHeight()*3, 14*8);
+		this.resetTextColor();
+		this.drawText(actor.strength(), x+14*16, y, 14*3, 'right');
+		this.drawText(actor.magicPower(), x+14*16, y+this.lineHeight(), 14*3, 'right');
+		this.drawText(actor.stressRecovery(), x+14*16, y+this.lineHeight()*2, 14*3, 'right');
+		var move = actor.baseMove()/2;
+		var flooredMove = Math.floor(move);
+		this.drawText(flooredMove+(move>flooredMove?"½":""), x+14*16, y+this.lineHeight()*3, 14*3, 'right');
 	};
 	
 	//BattleLog

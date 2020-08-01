@@ -1827,7 +1827,7 @@
 		this._statusSkillsWindow.deactivate();
 		
 		this._statusSkillOptionWindow = new Window_StatusSkillOption(
-			Graphics.boxWidth/2,
+			Graphics.boxWidth-Window_StatusSkillOption.prototype.windowWidth(),
 			this._statusSkillsWindow.y -
 				(Window_StatusSkillOption.prototype.standardPadding()*2+Window_StatusSkillOption.prototype.lineHeight()*2)
 		);
@@ -1839,7 +1839,7 @@
 		this._statusSkillOptionWindow.deactivate();
 		
 		this._statusSkillConfirmWindow = new Window_YesNoConfirm(
-			Graphics.boxWidth/2,
+			this._statusSkillOptionWindow.x,
 			this._statusSkillOptionWindow.y -
 				(Window_StatusSkillOption.prototype.standardPadding()*2+Window_StatusSkillOption.prototype.lineHeight()*2)
 		);
