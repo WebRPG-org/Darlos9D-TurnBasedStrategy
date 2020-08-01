@@ -1951,6 +1951,8 @@
 	Scene_Status.prototype.onConfirmYes = function() {
 		var actor = this.actor();
 		var skill = this._statusSkillsWindow.currentSkill();
+		var oldToughness = actor.toughness();
+		var oldMaxMP = actor.maxMP();
 		if(this._skillOption === "downgrade") {
 			SoundManager.playSkillDowngradeSound();
 			actor.adjustSkillXP(actor.skillDowngradeCost(skill));
@@ -1960,6 +1962,20 @@
 			SoundManager.playSkillUpgradeSound();
 			actor.adjustSkillXP(-actor.skillUpgradeCost(skill));
 			actor.adjustSkillPoints(skill, 1);
+		}
+		var newToughness = actor.toughness();
+		var newMaxMP = actor.maxMP();
+		if(newToughness > oldToughness) {
+			actor.adjustDamage("core", (newToughness - oldToughness)*2);
+			actor.adjustDamage("head", newToughness - oldToughness);
+			actor.adjustDamage("torso", (newToughness - oldToughness)*2);
+			actor.adjustDamage("leftArm", newToughness - oldToughness);
+			actor.adjustDamage("rightArm", newToughness - oldToughness);
+			actor.adjustDamage("leftLeg", newToughness - oldToughness);
+			actor.adjustDamage("rightLeg", newToughness - oldToughness);
+		}
+		if(newMaxMP > oldMaxMP) {
+			actor.adjustMPSpent(newMaxMP - oldMaxMP);
 		}
 		this._statusSkillsWindow.refresh();
 		this._statusAttributesListWindow.refresh();

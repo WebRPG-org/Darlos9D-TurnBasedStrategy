@@ -1875,14 +1875,7 @@
 			return 0;
 		}
 		var mpAbility = this.totalSkill(this.currentClass().tbsStats.mpAbility);
-		var maxMP = 0;
-		switch(mpAbility) {
-			case 1: maxMP = 5; break;
-			case 2: maxMP = 13; break;
-			case 3: maxMP = 23; break;
-			case 4: maxMP = 31; break;
-			case 5: maxMP = 44; break;
-		}
+		var maxMP = mpAbility*5;
 		var attributes = this.getAttributes();
 		attributes.forEach(function (attribute) {
 			if(attribute.maxMP !== undefined) {
@@ -1925,7 +1918,23 @@
 	Game_Actor.prototype.changeEquip = function(slotId, item, itemIndex) {
 		if (this.tradeItemWithSelf(item, this.equips()[slotId], itemIndex)) {
 			this._equips[slotId].setObject(item);
+			var oldToughness = this.toughness();
+			var oldMaxMP = this.maxMP();
 			this.refresh();
+			var newToughness = this.toughness();
+			var newMaxMP = this.maxMP();
+			if(newToughness > oldToughness) {
+				this.adjustDamage("core", (newToughness - oldToughness)*2);
+				this.adjustDamage("head", newToughness - oldToughness);
+				this.adjustDamage("torso", (newToughness - oldToughness)*2);
+				this.adjustDamage("leftArm", newToughness - oldToughness);
+				this.adjustDamage("rightArm", newToughness - oldToughness);
+				this.adjustDamage("leftLeg", newToughness - oldToughness);
+				this.adjustDamage("rightLeg", newToughness - oldToughness);
+			}
+			if(newMaxMP > oldMaxMP) {
+				this.adjustMPSpent(newMaxMP - oldMaxMP);
+			}
 		}
 	};
 	

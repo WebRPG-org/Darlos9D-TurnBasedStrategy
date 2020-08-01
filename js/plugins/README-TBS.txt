@@ -56,6 +56,7 @@ Classes
 			"reflex": (integer),
 			"movement": (integer)(double the number of squares ingame),
 			"reach": (integer)(double the number of squares ingame),
+                        "maxMP": (integer),
 			"incremental": true/false
 		}
 	]
@@ -108,7 +109,8 @@ Weapons
 			"defense": (integer),
 			"reflex": (integer),
 			"movement": (integer)(double the number of squares ingame),
-			"reach": (integer)(double the number of squares ingame)
+			"reach": (integer)(double the number of squares ingame),
+                        "maxMP": (integer)
 		}
 	]
 }
@@ -129,7 +131,8 @@ Armors
 			"defense": (integer),
 			"reflex": (integer),
 			"movement": (integer)(double the number of squares ingame),
-			"reach": (integer)(double the number of squares ingame)
+			"reach": (integer)(double the number of squares ingame),
+                        "maxMP": (integer)
 		}
 	]
 }
