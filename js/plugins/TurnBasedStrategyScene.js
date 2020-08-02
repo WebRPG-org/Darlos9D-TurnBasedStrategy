@@ -82,6 +82,33 @@
 			this._goldWindow.refresh();
 		}
 		
+		if($gameMap.shouldCloseItemInfoWindow()) {
+			this._itemInfoWindow.close();
+		}
+		var itemWindowInfo = $gameMap.shouldOpenItemInfoWindow();
+		if(itemWindowInfo !== undefined) {
+			this._itemInfoWindow.setActor(undefined);
+			this._itemInfoWindow.setTempActor(undefined);
+			if(itemWindowInfo.itemType === "item") {
+				this._itemInfoWindow.setActionsItem($dataItems[itemWindowInfo.itemId]);
+			} else if(itemWindowInfo.itemType === "weapon") {
+				this._itemInfoWindow.setActionsItem($dataWeapons[itemWindowInfo.itemId]);
+			} else if(itemWindowInfo.itemType === "armor") {
+				this._itemInfoWindow.setActionsItem($dataArmors[itemWindowInfo.itemId]);
+			}
+			this._itemInfoWindow.showActions();
+			this._itemInfoWindow.open();
+		}
+		if(this._itemInfoWindow.isOpen()) {
+			if (Input.isTriggered('pagedown')) {
+				SoundManager.playCursor();
+				this._itemInfoWindow.nextStatusPage();
+			} else if (Input.isTriggered('pageup')) {
+				SoundManager.playCursor();
+				this._itemInfoWindow.prevStatusPage();
+			}
+		}
+		
 		var needToClose = $gameMap.needToCloseCloseableMessageWindows();
 		var needToClearMessages = $gameMap.needToClearMessageWindows();
 		var waitingOn = false;
@@ -559,6 +586,7 @@
 		this.createConcurrentMessageWindows();
 		this.createScrollTextWindow();
 		this.createGoldWindow();
+		this.createItemInfoWindow();
 		this.createTbsActorStatusWindow();
 		this.createTbsActorWindow();
 		this.createTbsActionTypeWindow();
@@ -625,6 +653,14 @@
 		this._goldWindow.y = Graphics.boxHeight - this._goldWindow.height;
 		this._goldWindow.openness = 0;
 		this.addWindow(this._goldWindow);
+	};
+	
+	Scene_Map.prototype.createItemInfoWindow = function() {
+		var wx = Graphics.boxWidth-Window_ItemStatus.prototype.windowWidth();
+		var wy = 0; //Window_EquipCharacterInfo.prototype.windowHeight();
+		this._itemInfoWindow = new Window_ItemStatus(wx, wy);
+		this._itemInfoWindow.openness = 0;
+		this.addWindow(this._itemInfoWindow);
 	};
 
 	Scene_Map.prototype.createTbsActorStatusWindow = function() {

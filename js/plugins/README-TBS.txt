@@ -592,3 +592,9 @@ $gameSystem.openGoldWindow();
 $gameSystem.closeGoldWindow();
 
 Fairly self-explanatory. The first one will open the gold window in the lower left during the map scene. The second one will close it.
+
+------------------------------------------------------
+$gameSystem.openItemInfoWindow(itemType, itemId);
+$gameSystem.closeItemInfoWindow();
+
+Opens/closes an item info window like the one seen in the inventory and equipment menus. The first one will open the window in the upper right during the map scene, displaying the info of the given item. itemType is a string that can be "item", "weapon", or "armor". The second one will close it.

@@ -543,6 +543,14 @@
 		$gameMap.setShouldCloseGoldWindow();
 	};
 	
+	Game_System.prototype.openItemInfoWindow = function(itemType, itemId) {
+		$gameMap.setShouldOpenItemInfoWindow(itemType, itemId);
+	};
+	
+	Game_System.prototype.closeItemInfoWindow = function() {
+		$gameMap.setShouldCloseItemInfoWindow();
+	};
+	
 	Game_System.prototype.getStashItemCount = function(itemId) {
 		return $gameParty.numItems($dataItems[itemId]);
 	};
@@ -762,6 +770,33 @@
 	Game_Map.prototype.shouldCloseGoldWindow = function() {
 		var returnValue = this._shouldCloseGoldWindow;
 		this._shouldCloseGoldWindow = false;
+		return returnValue;
+	};
+	
+	Game_Map.prototype.setShouldOpenItemInfoWindow = function(itemType, itemId) {
+		this._openItemInfoWindowItemType = itemType;
+		this._openItemInfoWindowItemId = itemId;
+		this._shouldOpenItemInfoWindow = true;
+	};
+	
+	Game_Map.prototype.setShouldCloseItemInfoWindow = function() {
+		this._shouldCloseItemInfoWindow = true;
+	};
+	
+	Game_Map.prototype.shouldOpenItemInfoWindow = function() {
+		if(!this._shouldOpenItemInfoWindow) {
+			return undefined;
+		}
+		this._shouldOpenItemInfoWindow = false;
+		var returnValue = {};
+		returnValue.itemType = this._openItemInfoWindowItemType;
+		returnValue.itemId = this._openItemInfoWindowItemId;
+		return returnValue;
+	};
+	
+	Game_Map.prototype.shouldCloseItemInfoWindow = function() {
+		var returnValue = this._shouldCloseItemInfoWindow;
+		this._shouldCloseItemInfoWindow = false;
 		return returnValue;
 	};
 	
