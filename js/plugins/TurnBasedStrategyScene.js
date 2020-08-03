@@ -91,12 +91,14 @@
 			this._itemInfoWindow.setTempActor(undefined);
 			if(itemWindowInfo.itemType === "item") {
 				this._itemInfoWindow.setActionsItem($dataItems[itemWindowInfo.itemId]);
+			this._itemInfoWindow.showActions();
 			} else if(itemWindowInfo.itemType === "weapon") {
 				this._itemInfoWindow.setActionsItem($dataWeapons[itemWindowInfo.itemId]);
+			this._itemInfoWindow.showActions();
 			} else if(itemWindowInfo.itemType === "armor") {
 				this._itemInfoWindow.setActionsItem($dataArmors[itemWindowInfo.itemId]);
+			this._itemInfoWindow.showProtection();
 			}
-			this._itemInfoWindow.showActions();
 			this._itemInfoWindow.open();
 		}
 		if(this._itemInfoWindow.isOpen()) {
