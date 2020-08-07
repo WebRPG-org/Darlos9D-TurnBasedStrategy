@@ -115,8 +115,25 @@
 		}
 	};
 	
-	Game_Temp.prototype.startTbsBattle = function(resetCameraAfterBattle, cursorRegions) {
-		$gameMap.setTbsBattleMode(true, resetCameraAfterBattle, cursorRegions);
+	Game_Temp.prototype.startTbsBattle = function(
+		resetCameraAfterBattle, 
+		cursorRegions,
+		victorySwitchId,
+		escapeSwitchId,
+		escapeMapId,
+		escapeLocationX,
+		escapeLocationY
+	) {
+		$gameMap.setTbsBattleMode(
+			true, 
+			resetCameraAfterBattle, 
+			cursorRegions,
+			victorySwitchId,
+			escapeSwitchId,
+			escapeMapId,
+			escapeLocationX,
+			escapeLocationY
+		);
 		this.clearTbsForces();
 	};
 	
@@ -291,8 +308,24 @@
 		$gameTemp.setTbsForceAllyForce(forceId, allyForceId);
 	};
 	
-	Game_System.prototype.startTbsBattle = function(resetCameraAfterBattle, cursorRegions) {
-		$gameTemp.startTbsBattle(resetCameraAfterBattle, cursorRegions);
+	Game_System.prototype.startTbsBattle = function(
+		resetCameraAfterBattle, 
+		cursorRegions,
+		victorySwitchId,
+		escapeSwitchId,
+		escapeMapId,
+		escapeLocationX,
+		escapeLocationY
+	) {
+		$gameTemp.startTbsBattle(
+			resetCameraAfterBattle,
+			cursorRegions,
+			victorySwitchId,
+			escapeSwitchId,
+			escapeMapId,
+			escapeLocationX,
+			escapeLocationY
+		);
 	};
 	
 	Game_System.prototype.clearTbsForces = function() {
@@ -1045,7 +1078,16 @@
 		}
 	};
 	
-	Game_Map.prototype.setTbsBattleMode = function(modeOn, resetCameraAfterBattle, cursorRegions) {
+	Game_Map.prototype.setTbsBattleMode = function(
+		modeOn,
+		resetCameraAfterBattle, 
+		cursorRegions,
+		victorySwitchId,
+		escapeSwitchId,
+		escapeMapId,
+		escapeLocationX,
+		escapeLocationY
+	) {
 		var pendingTbsForces = $gameTemp.pendingTbsForces();
 		if(this._tbsBattleMode !== modeOn && (!modeOn ||
 			(modeOn && pendingTbsForces && pendingTbsForces.length >= 2)))
@@ -1054,6 +1096,11 @@
 			if(modeOn) {
 				this._resetCameraAfterBattle = resetCameraAfterBattle;
 				this._tbsCursorRegions = cursorRegions ? cursorRegions : [];
+				this._tbsVictorySwitchId = Number.isInteger(victorySwitchId) && victorySwitchId >= 1 ? victorySwitchId : 0;
+				this._tbsEscapeSwitchId = Number.isInteger(escapeSwitchId) && escapeSwitchId >= 1 ? escapeSwitchId : 0;
+				this._tbsEscapeMapId = Number.isInteger(escapeMapId) && escapeMapId >= 1 ? escapeMapId : 0;
+				this._tbsEscapeLocationX = Number.isInteger(escapeLocationX) && escapeLocationX >= 0 ? escapeLocationX : -1;
+				this._tbsEscapeLocationY = Number.isInteger(escapeLocationY) && escapeLocationY >= 0 ? escapeLocationY : -1;
 				this._tbsSurpriseRoundJustStarted = false;
 				this._tbsForces = this.createTbsForces(pendingTbsForces);
 				this.setTbsTurnMode("setup");
@@ -1184,6 +1231,7 @@
 				if(actor.memberPosition === 0) {
 					this._tbsLeadCharacter = actor;
 				}
+				actor.battler.checkLearnedSkills();
 			} else {
 				actor.battler = new Game_Enemy(pendingActor.id);
 				actor.memberPosition = -1;
@@ -1927,6 +1975,8 @@
 					this._dummyTarget.canActThisRound = false;
 					this._queuedActionLoops = 0;
 					this._queuedActionLimit = 500000;
+					this._tbsEscapees = [];
+					this._partyMemberEscaped = false;
 					var chara = new Game_Character();
 					chara.setStepAnime(false);
 					chara.setTbsBattleMode(true);
@@ -1966,7 +2016,7 @@
 						$gameTemp.setShouldClearTbsAoeSprites(true);
 					}
 				}
-				if(prevMode === "actionBattleScene" || prevMode === "passTurn" || prevMode === "postActionMove") {
+				if(prevMode === "actionBattleScene" || prevMode === "passTurn" || prevMode === "postActionMove" || prevMode === "escape") {
 					this.tbsNextTurn();
 				}
 				break;
@@ -2030,6 +2080,7 @@
 				}
 				break;
 			case "actionBattleScene":
+				this._tbsEscapees = [];
 				$gamePlayer.setTbsShowCursor(true);
 				if(!this._tbsSelectedAction.skipBattleScene && this.isAnyTbsActionTargets(true)) {
 					this._tbsInActionBattleScene = true;
@@ -2041,42 +2092,49 @@
 					chara.turnTowardLocation(this._tbsActionTargetLocationX, this._tbsActionTargetLocationY);
 				}
 				break;
+			case "escape":
+				SoundManager.playEscape();
+				this._tbsEnemyFadeoutTimer = this._tbsEnemyFadeoutTime;
+				break;
 			case "postActionMove":
 				$gamePlayer.setTbsShowCursor(true);
 				$gamePlayer.setTbsFollowingCharacter(false);
 				break;
-			case "victory":
+			case "partyEscaped":
+				this.endTbsBattle();
+				this._tbsForces = [];
+				this._tbsOrderedForces = [];
 				this._tbsMoveTiles = [];
 				this._tbsHalfMoveTiles = [];
 				this._tbsFullMoveTiles = [];
 				this._tbsActionsTiles = [];
-				this.setTbsSelectedActor(undefined);
-				this.clearTbsManualMoveStart();
-				this.setTbsSelectedActionType(-1);
-				this.setTbsSelectedAction(undefined, -1);
-				this.clearTbsActionTargetLocation();
-				this.clearTbsActionMoveDestination();
-				this.clearTbsActionTargetPart();
-				this.setBreadcrumbStage("none");
-				this._tbsForces.forEach(function (tbsForce) {
-					if(tbsForce.isParty) {
-						tbsForce.actors.forEach(function (tbsActor) {
-							if(tbsActor.suffixWindow) {
-								tbsActor.suffixWindow.hide();
-								tbsActor.suffixWindow.close();
-								tbsActor.suffixWindow == undefined;
-							}
-							var battler = tbsActor.battler;
-							if(battler.getDamage("core") >= battler.toughness()*2) {
-								battler.setDamage("core", battler.toughness()*2-1);
-							}
-							battler.setStress(0);
-							battler.setRoundBuffs(0);
-							battler.clearTbsBuffs();
-							battler.setDisplayName(undefined);
-						});
-					}
-				});
+				this._tbsSelectedActor = undefined;
+				this._tbsSelectedAction = undefined;
+				this._tbsActionTargetPart = undefined;
+				this._tbsBreadcrumbs = [];
+				this._cameraFocusX = undefined;
+				this._cameraFocusY = undefined;
+				this._cameraFocusDirection = undefined;
+				this._cameraFocusResetToPlayer = undefined;
+				this._resetCameraAfterBattle = undefined;
+				this._tbsCursorRegions = [];
+				this._tileRuns = [];
+				this._pendingMessages = [];
+				this._tbsLeadCharacter = undefined;
+				this.replayBgmAndBgs();
+				this.setTbsBattleMode(false);
+				$gamePlayer.reserveTransfer(
+					this._tbsEscapeMapId,
+					this._tbsEscapeLocationX,
+					this._tbsEscapeLocationY,
+					2,
+					0
+				);
+				this._interpreter.setWaitMode('transfer');
+				$gameSwitches.setValue(this._tbsEscapeSwitchId, true);
+				break;
+			case "victory":
+				this.endTbsBattle();
 				if(this._resetCameraAfterBattle) {
 					this.clearCameraFocus(true, 5);
 				}
@@ -2119,6 +2177,7 @@
 				this._tbsCursorRegions = [];
 				this._tileRuns = [];
 				this._pendingMessages = [];
+				this._tbsEscapees = [];
 				SceneManager.goto(Scene_Gameover);
 				break;
 			default:
@@ -2126,6 +2185,41 @@
 			}
 			$gamePlayer.refresh();
 		}
+	};
+	
+	Game_Map.prototype.endTbsBattle = function() {
+		this._tbsMoveTiles = [];
+		this._tbsHalfMoveTiles = [];
+		this._tbsFullMoveTiles = [];
+		this._tbsActionsTiles = [];
+		this._tbsEscapees = [];
+		this.setTbsSelectedActor(undefined);
+		this.clearTbsManualMoveStart();
+		this.setTbsSelectedActionType(-1);
+		this.setTbsSelectedAction(undefined, -1);
+		this.clearTbsActionTargetLocation();
+		this.clearTbsActionMoveDestination();
+		this.clearTbsActionTargetPart();
+		this.setBreadcrumbStage("none");
+		this._tbsForces.forEach(function (tbsForce) {
+			if(tbsForce.isParty) {
+				tbsForce.actors.forEach(function (tbsActor) {
+					if(tbsActor.suffixWindow) {
+						tbsActor.suffixWindow.hide();
+						tbsActor.suffixWindow.close();
+						tbsActor.suffixWindow == undefined;
+					}
+					var battler = tbsActor.battler;
+					if(battler.getDamage("core") >= battler.toughness()*2) {
+						battler.setDamage("core", battler.toughness()*2-1);
+					}
+					battler.setStress(0);
+					battler.setRoundBuffs(0);
+					battler.clearTbsBuffs();
+					battler.setDisplayName(undefined);
+				});
+			}
+		});
 	};
 	
 	Game_Map.prototype.tbsNextTurn = function() {
@@ -2335,6 +2429,9 @@
 				break;
 			case "actionBattleScene":
 				this.updateTbsActionBattleScene();
+				break;
+			case "escape":
+				this.updateTbsEscape();
 				break;
 			case "postActionMove":
 				this.updateTbsPostActionMove();
@@ -3239,6 +3336,7 @@
 					var processedHitGroups = BattleManager.processHitGroups(this._tbsSelectedActionInfo.action.hitGroups);
 					var targetRoundBuffs = 0;
 					var targetSkipped = true;
+					var escapee = false;
 					processedHitGroups.forEach(function (processedHitGroup) {
 						var rangedDistance = this.getRangedDistance();
 						var results = BattleManager.combatMath(this._tbsSelectedActor.battler, this._tbsSelectedActionInfo, processedHitGroup, tbsTarget.battler, tbsTargetsByHit, index, undefined, rangedDistance);
@@ -3246,12 +3344,16 @@
 							targetSkipped = false;
 							targetRoundBuffs += results.focus;
 							subjectRoundBuffs += results.subjectRoundBuffs;
+							escapee = escapee ? escapee : results.escape;
 							BattleManager.applyActionResults(results, this._tbsSelectedActor.battler, tbsTarget.battler);
 						}
 						index++;
 					},this);
 					if(!targetSkipped) {
 						tbsTarget.battler.setRoundBuffs(targetRoundBuffs);
+						if(escapee) {
+							this._tbsEscapees.push(tbsTarget);
+						}
 					}
 				},this);
 				this._tbsSelectedActor.battler.setRoundBuffs(subjectRoundBuffs);
@@ -3266,6 +3368,54 @@
 		}
 		this._tbsMinorAction = this._tbsSelectedAction.minorAction;
 		
+		if(this.endOfBattleCheck()) { return; }
+		
+		if(this._tbsEscapees.length > 0) {
+			this.setTbsTurnMode("escape");
+		} else if(this._tbsSelectedAction.returnToStart && !this._tbsSelectedActor.battler.isDown()) {
+			this.setTbsCursorFocus(this._tbsSelectedActor.chara.x, this._tbsSelectedActor.chara.y);
+			this.setTbsManualMoveStart(this._tbsMoveTiles[0].x, this._tbsMoveTiles[0].y);
+			this.setTbsTurnMode("postActionMove");
+		} else {
+			this.setTbsTurnMode("selectActorActionType");
+		}
+	};
+	
+	Game_Map.prototype.updateTbsEscape = function() {
+		if(this._tbsEnemyFadeoutTimer > 0) {
+			this._tbsEnemyFadeoutTimer--;
+			this._tbsEscapees.forEach(function (escapee) {
+				escapee.chara.setOpacity((this._tbsEnemyFadeoutTimer/this._tbsEnemyFadeoutTime)*255);
+			});
+			return;
+		}
+		
+		this._tbsEscapees.forEach(function (escapee) {
+			for(let i = 0; i < this._tbsForces[escapee.forceId].actors.length; i++) {
+				if(this._tbsForces[escapee.forceId].actors[i] == escapee) {
+					this._tbsForces[escapee.forceId].actors.splice(i, 1);
+					if(this._tbsForces[escapee.forceId].isParty) {
+						this._partyMemberEscaped = true;
+					}
+					break;
+				}
+			}
+		}, this);
+		
+		this._tbsEscapees = [];
+		
+		if(this.endOfBattleCheck()) { return; }
+		
+		if(this._tbsSelectedAction.returnToStart && !this._tbsSelectedActor.battler.isDown()) {
+			this.setTbsCursorFocus(this._tbsSelectedActor.chara.x, this._tbsSelectedActor.chara.y);
+			this.setTbsManualMoveStart(this._tbsMoveTiles[0].x, this._tbsMoveTiles[0].y);
+			this.setTbsTurnMode("postActionMove");
+		} else {
+			this.setTbsTurnMode("selectActorActionType");
+		}
+	};
+	
+	Game_Map.prototype.endOfBattleCheck = function() {
 		var enemyForceIds = [];
 		var partyAndAlliesIds = [];
 		var i;
@@ -3313,8 +3463,12 @@
 			}
 		}
 		if(partyAndAlliesAllDown) {
-			this.setTbsTurnMode("gameOver");
-			return;
+			if(this._partyMemberEscaped) {
+				this.setTbsTurnMode("partyEscaped");
+			} else {
+				this.setTbsTurnMode("gameOver");
+			}
+			return true;
 		}
 		
 		var enemiesAllDown = true;
@@ -3335,16 +3489,10 @@
 		}
 		if(enemiesAllDown) {
 			this.setTbsTurnMode("victory");
-			return;
+			return true;
 		}
 		
-		if(this._tbsSelectedAction.returnToStart && !this._tbsSelectedActor.battler.isDown()) {
-			this.setTbsCursorFocus(this._tbsSelectedActor.chara.x, this._tbsSelectedActor.chara.y);
-			this.setTbsManualMoveStart(this._tbsMoveTiles[0].x, this._tbsMoveTiles[0].y);
-			this.setTbsTurnMode("postActionMove");
-		} else {
-			this.setTbsTurnMode("selectActorActionType");
-		}
+		return false;
 	};
 	
 	Game_Map.prototype.updateTbsPostActionMove = function() {
@@ -3440,6 +3588,7 @@
 			});
 			this.replayBgmAndBgs();
 			this.setTbsBattleMode(false);
+			$gameSwitches.setValue(this._tbsVictorySwitchId, true);
 		}
 	};
 	
@@ -3557,6 +3706,23 @@
 			if(returnActor) { break; }
 		}
 		return returnActor;
+	};
+	
+	Game_Map.prototype.tbsCurrentPositionAllowsEscape = function() {
+		if(!this._tbsSelectedActor)
+		{
+			return false;
+		}
+		var events = this.eventsXyNt(this._tbsSelectedActor.chara.x, this._tbsSelectedActor.chara.y);
+		for(let i = 0; i < events.length; i++) {
+			var event = events[i].event();
+			var note = event.note.length > 0 ? event.note : "{}";
+			var tbsStats = JSON.parse(note);
+			if(tbsStats.tbsBattleEscape) {
+				return true;
+			}
+		}
+		return false;
 	};
 	
 	Game_Map.prototype.tbsCurrentPositionIsFullMove = function() {

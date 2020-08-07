@@ -762,8 +762,7 @@
 	};
 	
 	Game_BattlerBase.prototype.checkLearnedSkills = function() {
-		var i;
-		for(i = 0; i <= $dataSkills.length; i++) {
+		for(let i = 0; i <= $dataSkills.length; i++) {
 			if(!$dataSkills[i]) { continue; }
 			var skillStats = $dataSkills[i].tbsStats;
 			if(!skillStats || skillStats.unlearnable || !skillStats.action) {
@@ -773,8 +772,7 @@
 			var skillReqs = skillStats.action.skillRequirements;
 			var shouldLearn = true;
 			if(skillReqs) {
-				var j;
-				for(j = 0; j < skillReqs.length; j++) {
+				for(let j = 0; j < skillReqs.length; j++) {
 					if(this.skillPoints(skillReqs[j].skill) < skillReqs[j].level) {
 						shouldLearn = false;
 						break;

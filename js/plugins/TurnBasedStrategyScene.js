@@ -439,6 +439,8 @@
 						this._tbsActionWindow.show();
 						this._tbsActionWindow.open();
 						this._tbsActionWindow.activate();
+						this._tbsActorStatusWindow.setTbsActor(undefined);
+						this._tbsActorStatusWindow.close();
 						$gameMap.setBreadcrumbStage("actor");
 					}
 					$gameMap.setTbsTurnMode("selectActionTarget");
@@ -1667,6 +1669,7 @@
 
 	Scene_Skill.prototype.refreshActor = function() {
 		var actor = this.actor();
+		actor.checkLearnedSkills();
 		this._characterInfoWindow.setActor(actor);
 		this._skillTypeWindow.setActor(actor);
 		this._itemWindow.setActor(actor);

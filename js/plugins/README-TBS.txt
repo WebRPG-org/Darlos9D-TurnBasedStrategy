@@ -280,6 +280,7 @@ Action
                         "targetMobility": true/false,
 			"ignoreCenter": true/false,
 			"ignoreUserRange": true/false,
+			"escapeBattle": true/false,
                         "evasionPenalty": (integer),
 			"ignoreUserAccuracy": true/false,
 			"accuracy": (integer),
@@ -373,10 +374,15 @@ Use this to assign a force as another force's ally before starting a battle. The
 -----------------------------------------------------
 $gameSystem.startTbsBattle(
 	resetCameraAfterBattle,
-	cursorRegions
+	cursorRegions,
+        victorySwitchId,
+	escapeSwitchId,
+	escapeMapId,
+	escapeLocationX,
+	escapeLocationY
 );
 
-Starts a turn based strategy battle. Only use after setting everything up as desired with the various battle setup scripts. resetCameraAfterBattle, if set to true when starting a battle after using setCameraFocus() will clear that focus immediately after battle victory, refocusing the camera to the player character. cursorRegions is an array of integers, indicating encounter region tiles on the map. When defined, all battle movement, action ranges, and cursor movement will be contained within the tiles indicated by the regions. It is recommended that these regions be set up so that individual battles take place within a rectangular area.
+Starts a turn based strategy battle. Only use after setting everything up as desired with the various battle setup scripts. resetCameraAfterBattle, if set to true when starting a battle after using setCameraFocus() will clear that focus immediately after battle victory, refocusing the camera to the player character. cursorRegions is an array of integers, indicating encounter region tiles on the map. When defined, all battle movement, action ranges, and cursor movement will be contained within the tiles indicated by the regions. It is recommended that these regions be set up so that individual battles take place within a rectangular area. victorySwitchId toggles the switch with the given ID to ON once the party has achieved victory, once the party has been gathered and the camera has reset. escapeSwitchId does the same when the party escapes, during the player transfer. escapeMapId, escapeLocationX, and escapeLocationY use the map with the given id and the coordinates in that map as the location for the player when the party escapes.
 
 This function and the ensuing battle will NOT hold up event processing, so it should probably be the last thing to happen in an event.
 

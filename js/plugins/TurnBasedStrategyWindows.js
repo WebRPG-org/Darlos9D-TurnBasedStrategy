@@ -2409,7 +2409,8 @@ Window_TbsAction.prototype.isActionEnabled = function(action) {
 	if(this._tbsActor && action) {
 		return (!action.cantUseHalfMove || $gameMap.tbsCurrentPositionIsFullMove()) &&
 			(!action.cantUseFullMove || $gameMap.tbsCurrentPositionIsHalfMove()) &&
-			(action.mpCost == undefined || action.mpCost <= this._tbsActor.battler.maxMP() - this._tbsActor.battler.mpSpent());
+			(action.mpCost == undefined || action.mpCost <= this._tbsActor.battler.maxMP() - this._tbsActor.battler.mpSpent()) &&
+			(action.name !== "Escape" || $gameMap.tbsCurrentPositionAllowsEscape());
 	}
 	return false;
 };

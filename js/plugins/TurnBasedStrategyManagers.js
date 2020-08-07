@@ -805,6 +805,7 @@ BattleManager.getNewResultsObject = function() {
 	results.skipTarget = true;
 	results.subjectStress = 0;
 	results.subjectRoundBuffs = 0;
+	results.escape = false;
 	return results;
 };
 
@@ -1764,6 +1765,11 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				if(initiativeRoll.bonuses + subject.stressRecovery() > 0) {
 					results.heal.stress += initiativeRoll.bonuses + subject.stressRecovery();
 				}
+			}
+			if(hit.escapeBattle) {
+				hitDodged = false;
+				results.dodged = false;
+				results.escape = true;
 			}
 			if(hit.initialAnimationId !== undefined && hit.initialAnimationId > 0) {
 				results.initialAnimationIds.push(hit.initialAnimationId);
