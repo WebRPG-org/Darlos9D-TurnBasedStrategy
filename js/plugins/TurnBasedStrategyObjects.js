@@ -2102,36 +2102,6 @@
 				break;
 			case "partyEscaped":
 				this.endTbsBattle();
-				this._tbsForces = [];
-				this._tbsOrderedForces = [];
-				this._tbsMoveTiles = [];
-				this._tbsHalfMoveTiles = [];
-				this._tbsFullMoveTiles = [];
-				this._tbsActionsTiles = [];
-				this._tbsSelectedActor = undefined;
-				this._tbsSelectedAction = undefined;
-				this._tbsActionTargetPart = undefined;
-				this._tbsBreadcrumbs = [];
-				this._cameraFocusX = undefined;
-				this._cameraFocusY = undefined;
-				this._cameraFocusDirection = undefined;
-				this._cameraFocusResetToPlayer = undefined;
-				this._resetCameraAfterBattle = undefined;
-				this._tbsCursorRegions = [];
-				this._tileRuns = [];
-				this._pendingMessages = [];
-				this._tbsLeadCharacter = undefined;
-				this.replayBgmAndBgs();
-				this.setTbsBattleMode(false);
-				$gamePlayer.reserveTransfer(
-					this._tbsEscapeMapId,
-					this._tbsEscapeLocationX,
-					this._tbsEscapeLocationY,
-					2,
-					0
-				);
-				this._interpreter.setWaitMode('transfer');
-				$gameSwitches.setValue(this._tbsEscapeSwitchId, true);
 				break;
 			case "victory":
 				this.endTbsBattle();
@@ -2436,12 +2406,23 @@
 			case "postActionMove":
 				this.updateTbsPostActionMove();
 				break;
+			case "partyEscaped":
+				this.updatePartyEscaped();
+				break;
 			case "victory":
 				this.updateTbsVictory();
 				break;
 			case "gameOver":
 				this.updateTbsGameOver();
 				break;
+			}
+		} else if(this._escapeFadeTime != undefined && this._escapeFadeTime >= 0) {
+			if(this._escapeFadeTime <= 0) {
+				this._escapeFadeTime = undefined;
+				$gameScreen.startFadeIn(this._interpreter.fadeSpeed());
+				this._interpreter.wait(this._interpreter.fadeSpeed());
+			} else {
+				this._escapeFadeTime--;
 			}
 		}
 	};
@@ -3386,7 +3367,7 @@
 			this._tbsEnemyFadeoutTimer--;
 			this._tbsEscapees.forEach(function (escapee) {
 				escapee.chara.setOpacity((this._tbsEnemyFadeoutTimer/this._tbsEnemyFadeoutTime)*255);
-			});
+			}, this);
 			return;
 		}
 		
@@ -3520,6 +3501,48 @@
 		this.clearTbsManualMoveStart();
 		chara.setDirection(2);
 		this.setTbsTurnMode("selectActorActionType");
+	};
+	
+	Game_Map.prototype.updatePartyEscaped = function() {
+		if(this._escapeFadeTime == undefined) {
+			this._escapeFadeTime = this._interpreter.fadeSpeed()*3;
+		}
+		if(this._escapeFadeTime == this._interpreter.fadeSpeed()*3) {
+			$gameScreen.startFadeOut(this._interpreter.fadeSpeed());
+			this._interpreter.wait(this._interpreter.fadeSpeed());
+		} else if(this._escapeFadeTime <= this._interpreter.fadeSpeed()*2) {
+			this._cameraFocusX = undefined;
+			this._cameraFocusY = undefined;
+			this._cameraFocusDirection = undefined;
+			this._cameraFocusResetToPlayer = undefined;
+			this._resetCameraAfterBattle = undefined;
+			this._tbsCursorRegions = [];
+			this._tbsForces = [];
+			this._tbsOrderedForces = [];
+			this._tbsMoveTiles = [];
+			this._tbsHalfMoveTiles = [];
+			this._tbsFullMoveTiles = [];
+			this._tbsActionsTiles = [];
+			this._tbsSelectedActor = undefined;
+			this._tbsSelectedAction = undefined;
+			this._tbsActionTargetPart = undefined;
+			this._tbsBreadcrumbs = [];
+			this._tileRuns = [];
+			this._pendingMessages = [];
+			this._tbsLeadCharacter = undefined;
+			this.setTbsBattleMode(false);
+			$gamePlayer.reserveTransfer(
+				this._tbsEscapeMapId,
+				this._tbsEscapeLocationX,
+				this._tbsEscapeLocationY,
+				2,
+				0
+			);
+			this._interpreter.setWaitMode('transfer');
+			this.replayBgmAndBgs();
+			$gameSwitches.setValue(this._tbsEscapeSwitchId, true);
+		}
+		this._escapeFadeTime--;
 	};
 	
 	Game_Map.prototype.updateTbsVictory = function() {
