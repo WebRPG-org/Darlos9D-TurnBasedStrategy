@@ -2690,25 +2690,29 @@
 					}
 				}
 				
+				var defensePriority = 0;
 				var fleePriority = -1;
 				var coreDamage = this._tbsSelectedActor.battler.getDamage("core");
 				var toughness = this._tbsSelectedActor.battler.toughness();
 				var fleeChance = (coreDamage/(toughness*2-1))*0.5;
 				if(activeAllies.length < activeEnemies.length) {
-					fleeChance += (activeAllies.length / activeEnemies.length)*0.5;
+					fleeChance += (1 - (activeAllies.length / activeEnemies.length))*0.5;
 				}
 				if(Math.random() < fleeChance) {
 					fleePriority = 7;
+					defensePriority = 6;
 				}
 				
-				var defensePriority = 0;
-				var stress = this._tbsSelectedActor.battler.stress();
-				if(stress > 0) {
-					var stressCompare = 1 - (stress / 10);
-					if(Math.random() > stressCompare) {
-						defensePriority = 6;
+				if(defensePriority == 0) {
+					var stress = this._tbsSelectedActor.battler.stress();
+					if(stress > 0) {
+						var stressCompare = 1 - (stress / 10);
+						if(Math.random() > stressCompare) {
+							defensePriority = 6;
+						}
 					}
 				}
+				
 				var noThreats = true;
 				var closestEnemyDistance = -1;
 				var chara = this._tbsSelectedActor.chara;
