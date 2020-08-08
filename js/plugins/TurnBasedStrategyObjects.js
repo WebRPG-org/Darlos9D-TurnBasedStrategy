@@ -2677,6 +2677,29 @@
 				}
 				if(this._tbsQueuedActions.length > 0 || this._tbsQueuedActionsAtPositions.length > 0) { return; }
 				
+				var activeAllies = [];
+				var activeEnemies = [];
+				var curForce = this.currentForce();
+				for(let i = 0; i < this._tbsForces.length; i++) {
+					if(this._tbsForces[i] == curForce || curForce.allyForceIds.indexOf(i) >= 0) {
+						activeAllies = activeAllies.concat(this._tbsForces[i].actors.filter(function(actor) { return !actor.battler.isDown()}));
+					}
+					if(curForce.enemyForceIds.indexOf(i) >= 0) {
+						activeEnemies = activeEnemies.concat(this._tbsForces[i].actors.filter(function(actor) { return !actor.battler.isDown()}));
+					}
+				}
+				
+				var fleePriority = 0;
+				var coreDamage = this._tbsSelectedActor.battler.getDamage("core");
+				var toughness = this._tbsSelectedActor.battler.toughness();
+				var fleeChance = (coreDamage/(toughness*2-1))*0.5;
+				if(activeAllies.length < activeEnemies.length) {
+					fleeChance += (activeAllies.length / activeEnemies.length)*0.5;
+				}
+				if(Math.random() < fleeChance) {
+					fleePriority = 7;
+				}
+				
 				var defensePriority = 0;
 				var stress = this._tbsSelectedActor.battler.stress();
 				if(stress > 0) {
@@ -2685,24 +2708,16 @@
 						defensePriority = 6;
 					}
 				}
-				
-				var enemies = [];
-				var curForce = this.currentForce();
-				for(let i = 0; i < this._tbsForces.length; i++) {
-					if(curForce.enemyForceIds.indexOf(i) >= 0) {
-						enemies = enemies.concat(this._tbsForces[i].actors);
-					}
-				}
 				var noThreats = true;
 				var closestEnemyDistance = -1;
 				var chara = this._tbsSelectedActor.chara;
-				for(let i = 0; i < enemies.length; i++) {
-					var enemy = enemies[i];
+				for(let i = 0; i < activeEnemies.length; i++) {
+					var enemy = activeEnemies[i];
 					var distance = this.actualDistance(enemy.chara.x, enemy.chara.y, chara.x, chara.y);
 					if(closestEnemyDistance == -1 || distance < closestEnemyDistance) {
 						closestEnemyDistance = distance;
 					}
-					if(noThreats && !enemy.battler.isDown() && this.tbsActorInLOSOfPositionType(enemy, chara.x, chara.y) !== "none") {
+					if(noThreats && this.tbsActorInLOSOfPositionType(enemy, chara.x, chara.y) !== "none") {
 						noThreats = false;
 					}
 				}
@@ -2731,6 +2746,8 @@
 					var priority = 0;
 					if(action.name === "Focus") {
 						priority = defensePriority;
+					} else if(action.name === "Escape") {
+						priority = fleePriority;
 					} else if(action.name.includes("Unarmed") || action.name === "Shove") {
 						priority = 1;
 					} else {
@@ -2762,8 +2779,10 @@
 					actionByPriority.actionInfo = actionInfo;
 					actionByPriority.index = i;
 					actionByPriority.selfTargetMoveType = "advance";
-					if(
-						defensePriority >= 6 ||
+					if(fleePriority >= 7 && !this._tbsSelectedActor.battler.isFlying()) {
+						actionByPriority.selfTargetMoveType = "escape";
+					} else if(
+						(fleePriority >= 7 && this._tbsSelectedActor.battler.isFlying()) || defensePriority >= 6 ||
 						(aiType === "tactical" &&
 						closestEnemyDistance <= (this._tbsSelectedActor.battler.moveRange() / 2) * 1.5)
 					) {
@@ -2817,10 +2836,11 @@
 				} else if(action.intendedTarget === "enemy") {
 					targets = alliesAndEnemies.enemies.filter(function (enemy) { return !enemy.battler.isDown(); });
 				}
-				if(targets.length > 0) {
+				if(targets.length > 0 && (action.name !== "Escape" || this._tbsSelectedActor.battler.isFlying() || alliesAndEnemies.escapeTiles.length > 0)) {
 					var actionWithTargets = {};
 					actionWithTargets.actionInfo = actionInfo;
 					actionWithTargets.targets = targets;
+					actionWithTargets.escapeTiles = alliesAndEnemies.escapeTiles;
 					actionWithTargets.index = actionIndex;
 					actionWithTargets.selfTargetMoveType = actionWithIndex.selfTargetMoveType;
 					actionsWithTargets.push(actionWithTargets);
@@ -2926,6 +2946,22 @@
 					} else if(bestFleeTile) {
 						if(bestFleeTile.x != chara.x || bestFleeTile.y != chara.y) {
 							this.setTbsActionTargetLocation(bestFleeTile.x, bestFleeTile.y);
+						}
+					}
+				} else if(actionWithTargets.selfTargetMoveType === "escape") {
+					var closestEscapeTile = undefined;
+					var shortesetDistance = -1;
+					actionWithTargets.escapeTiles.forEach(function (escapeTile) {
+						var distance = this.actualDistance(chara.x, chara.y, escapeTile.x, escapeTile.y);
+						if(shortesetDistance === -1 || shortesetDistance > distance) {
+							shortesetDistance = distance;
+							closestEscapeTile = enemy;
+						}
+					},this);
+					if(closestEscapeTile) {
+						var moveTile = this.getClosestMoveTileToTarget(chara.x, chara.y, closestEscapeTile.x, closestEscapeTile.y, this._tbsSelectedActor.battler.isFlying() ? "fly" : undefined);
+						if(moveTile) {
+							this.setTbsActionTargetLocation(moveTile.x, moveTile.y);
 						}
 					}
 				} else if(actionWithTargets.selfTargetMoveType === "advance") {
@@ -3736,7 +3772,11 @@
 		{
 			return false;
 		}
-		var events = this.eventsXyNt(this._tbsSelectedActor.chara.x, this._tbsSelectedActor.chara.y);
+		return this.tbsPositionAllowsEscape(this._tbsSelectedActor.chara.x, this._tbsSelectedActor.chara.y);
+	};
+	
+	Game_Map.prototype.tbsPositionAllowsEscape = function(x, y) {
+		var events = this.eventsXyNt(x, y);
 		for(let i = 0; i < events.length; i++) {
 			var event = events[i].event();
 			var note = event.note.length > 0 ? event.note : "{}";
@@ -3893,14 +3933,19 @@
 	Game_Map.prototype.getCurrentActorAlliesAndEnemiesInRange = function(actionIndex) {
 		var allies = [];
 		var enemies = [];
+		var escapeTiles = [];
 		var alliesAndEnemies = {};
 		alliesAndEnemies.allies = allies;
 		alliesAndEnemies.enemies = enemies;
+		alliesAndEnemies.escapeTiles = escapeTiles;
 		if(!this._tbsSelectedActor) { return alliesAndEnemies; }
 		var force = this._tbsForces[this._tbsSelectedActor.forceId];
 		var actionTiles = this._tbsActionsTiles[actionIndex];
 		if(!actionTiles) { return alliesAndEnemies; }
 		actionTiles.forEach(function (tile) {
+			if(this.tbsPositionAllowsEscape(tile.x, tile.y)) {
+				escapeTiles.push(tile);
+			}
 			var tbsActor = this.getTbsActorAtPosition(tile.x, tile.y);
 			if(!tbsActor) { return; }
 			if(force.enemyForceIds.indexOf(tbsActor.forceId) >= 0) {
