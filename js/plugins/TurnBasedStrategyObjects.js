@@ -2163,6 +2163,7 @@
 		this._tbsFullMoveTiles = [];
 		this._tbsActionsTiles = [];
 		this._tbsEscapees = [];
+		this._tbsEscapeTiles = [];
 		this.setTbsSelectedActor(undefined);
 		this.clearTbsManualMoveStart();
 		this.setTbsSelectedActionType(-1);
@@ -2689,7 +2690,7 @@
 					}
 				}
 				
-				var fleePriority = 0;
+				var fleePriority = -1;
 				var coreDamage = this._tbsSelectedActor.battler.getDamage("core");
 				var toughness = this._tbsSelectedActor.battler.toughness();
 				var fleeChance = (coreDamage/(toughness*2-1))*0.5;
@@ -2951,11 +2952,11 @@
 				} else if(actionWithTargets.selfTargetMoveType === "escape") {
 					var closestEscapeTile = undefined;
 					var shortesetDistance = -1;
-					actionWithTargets.escapeTiles.forEach(function (escapeTile) {
+					this._tbsEscapeTiles.forEach(function (escapeTile) {
 						var distance = this.actualDistance(chara.x, chara.y, escapeTile.x, escapeTile.y);
 						if(shortesetDistance === -1 || shortesetDistance > distance) {
 							shortesetDistance = distance;
-							closestEscapeTile = enemy;
+							closestEscapeTile = escapeTile;
 						}
 					},this);
 					if(closestEscapeTile) {
@@ -3013,10 +3014,13 @@
 			} else if(direction % 3 == 0) {
 				newCheckX++;
 			}
-			if((newCheckX == targetX && newCheckY == targetY) || !this.getExistingTbsTile(newCheckX, newCheckY, this._tbsMoveTiles)) {
+			if(!this.getExistingTbsTile(newCheckX, newCheckY, this._tbsMoveTiles)) {
 				break;
 			}
 			checkedTiles.push(this.getExistingTbsTile(newCheckX, newCheckY, this._tbsMoveTiles));
+			if(newCheckX == targetX && newCheckY == targetY) {
+				break;
+			}
 		}
 		while(checkedTiles.length > 0) {
 			var curTile = checkedTiles.pop();
@@ -4380,6 +4384,7 @@
 		var startY = 0;
 		var endX = this.width()-1;
 		var endY = this.height()-1;
+		this._tbsEscapeTiles = [];
 		
 		var xDiff = Math.abs(startX - endX);
 		var yDiff = Math.abs(startY - endY);
@@ -4404,6 +4409,9 @@
 				tile.y = boxY;
 				tile.enterability = this.getTbsTileEnterability(tile.x, tile.y);
 				tile.exitability = this.getTbsTileExitability(tile.x, tile.y);
+				if(this.tbsPositionAllowsEscape(boxX, boxY)) {
+					this._tbsEscapeTiles.push(tile);
+				}
 				if(this.isTileFullyPassable(tile)) {
 					if(curRun.length > 0) {
 						rowRuns.push(curRun);
