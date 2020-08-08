@@ -6411,6 +6411,10 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			} else if(this._slotType === "accessories") {
 				if(DataManager.isArmor(item)) {
 					if(item.tbsStats.limitedPart !== undefined) {
+						var slotItem = this._slotWindow.item();
+						if(slotItem != undefined && item.tbsStats.limitedPart === slotItem.tbsStats.limitedPart) {
+							return true;
+						}
 						var limitedParts = [];
 						var equips = this._actor.equips();
 						for(let i = 2; i < 7; i++) {
@@ -6418,8 +6422,14 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 								limitedParts.push(equips[i].tbsStats.limitedPart);
 							}
 						}
+						if(item.tbsStats.limitedPart === "fullBody" && limitedParts.length > 0) {
+							return false;
+						}
 						for(let i = 0; i < limitedParts.length; i++) {
-							if(limitedParts[i] === "fullBody" || item.tbsStats.limitedPart === limitedParts[i]) {
+							if(
+								limitedParts[i] === "fullBody" ||
+								item.tbsStats.limitedPart === limitedParts[i]
+							) {
 								return false;
 							}
 						}
