@@ -445,6 +445,8 @@ Window_ItemStatusBase.prototype.refresh = function() {
 		this.drawSkillRequirements();
 	} else if(this._statusPage ===  "protection") {
 		this.drawProtection();
+	} else if(this._statusPage ===  "bonuses") {
+		this.drawBonuses();
 	} else if(this._statusPage ===  "description") {
 		this.drawEquipDescription();
 	}
@@ -515,6 +517,11 @@ Window_ItemStatusBase.prototype.showProtection = function() {
 	this.refresh();
 };
 
+Window_ItemStatusBase.prototype.showBonuses = function() {
+	this._statusPage = "bonuses";
+	this.refresh();
+};
+
 Window_ItemStatusBase.prototype.showDescription = function() {
 	this._statusPage = "description";
 	this.refresh();
@@ -531,6 +538,8 @@ Window_ItemStatusBase.prototype.nextStatusPage = function() {
 	} else if(this._statusPage ===  "skillRequirements") {
 		this.showProtection();
 	} else if(this._statusPage ===  "protection") {
+		this.showBonuses();
+	} else if(this._statusPage ===  "bonuses") {
 		this.showDescription();
 	} else if(this._statusPage ===  "description") {
 		this.showActions();
@@ -544,8 +553,10 @@ Window_ItemStatusBase.prototype.prevStatusPage = function() {
 		this.showActions();
 	} else if(this._statusPage ===  "protection") {
 		this.showSkillRequirements();
-	} else if(this._statusPage ===  "description") {
+	} else if(this._statusPage ===  "bonuses") {
 		this.showProtection();
+	} else if(this._statusPage ===  "description") {
+		this.showBonuses();
 	}
 };
 
@@ -826,6 +837,124 @@ Window_ItemStatusBase.prototype.setTextColorForComparison = function(newValue, o
 	}
 };
 
+Window_ItemStatusBase.prototype.drawBonuses = function() {
+	var maxHP = 0;
+	var maxMP = 0;
+	var strengthBonus = 0;
+	var magicBonus = 0;
+	var stressRecovery = 0;
+	var movement = 0;
+	var maxHPTemp = 0;
+	var maxMPTemp = 0;
+	var strengthBonusTemp = 0;
+	var magicBonusTemp = 0;
+	var stressRecoveryTemp = 0;
+	var movementTemp = 0;
+	
+	if (this._actor) {
+		maxHP = this._actor.toughness()*2;
+		maxMP = this._actor.maxMP();
+		strengthBonus = this._actor.strength();
+		magicBonus = this._actor.magicPower();
+		stressRecovery = this._actor.stressRecovery();
+		movement = this._actor.baseMove();
+		
+		if(this._tempActor) {
+			maxHPTemp = this._tempActor.toughness()*2;
+			maxMPTemp = this._tempActor.maxMP();
+			strengthBonusTemp = this._tempActor.strength();
+			magicBonusTemp = this._tempActor.magicPower();
+			stressRecoveryTemp = this._tempActor.stressRecovery();
+			movementTemp = this._tempActor.baseMove();
+		} else {
+			maxHPTemp = maxHP;
+			maxMPTemp = maxMP;
+			strengthBonusTemp = strengthBonus;
+			magicBonusTemp = magicBonus;
+			stressRecoveryTemp = stressRecovery;
+			movementTemp = movement;
+		}
+	} else if (this._actionsItem && this._actionsItem.tbsStats.attributes) {
+		var attributes = this._actionsItem.tbsStats.attributes;
+		attributes.forEach(function(attribute) {
+			maxHP += attribute.toughness == undefined ? 0 : attribute.toughness*2;
+			maxMP += attribute.maxMP == undefined ? 0 : attribute.maxMP;
+			strengthBonus += attribute.strength == undefined ? 0 : attribute.strength;
+			magicBonus += attribute.magicPower == undefined ? 0 : attribute.magicPower;
+			stressRecovery += attribute.stressRecovery == undefined ? 0 : attribute.stressRecovery;
+			movement += attribute.movement == undefined ? 0 : attribute.movement;
+		});
+		
+		maxHPTemp = maxHP;
+		maxMPTemp = maxMP;
+		strengthBonusTemp = strengthBonus;
+		magicBonusTemp = magicBonus;
+		stressRecoveryTemp = stressRecovery;
+		movementTemp = movement;
+	}
+	
+	this.changeTextColor(this.systemColor());
+	this.drawText("Max Hit Points", 0, this.lineHeight(), 14*14);
+	this.drawText("Max Energy", 0, this.lineHeight()*2, 14*10);
+	this.drawText("Strength Bonus", 0, this.lineHeight()*3, 14*14);
+	this.drawText("Magic Bonus", 0, this.lineHeight()*4, 14*11);
+	this.drawText("Stress Recovery", 0, this.lineHeight()*5, 14*15);
+	this.drawText("Movement", 0, this.lineHeight()*6, 14*8);
+	
+	var valueX = 14*16
+	this.resetTextColor();
+	this.drawText(maxHP, valueX, this.lineHeight(), 14*3, 'right');
+	this.drawText(maxMP, valueX, this.lineHeight()*2, 14*3, 'right');
+	this.drawText(strengthBonus, valueX, this.lineHeight()*3, 14*3, 'right');
+	this.drawText(magicBonus, valueX, this.lineHeight()*4, 14*3, 'right');
+	this.drawText(stressRecovery, valueX, this.lineHeight()*5, 14*3, 'right');
+	var halvedMove = movement/2;
+	var flooredMove = Math.floor(halvedMove);
+	this.drawText(flooredMove+(halvedMove > flooredMove ? "½" : ""), valueX, this.lineHeight()*6, 14*3, 'right');
+	
+	var arrowX = 14*20;
+	var newValueX = 14*23;
+	if(maxHPTemp != maxHP) {
+		this.drawRightArrow(arrowX, this.lineHeight());
+		this.setTextColorForComparison(maxHPTemp, maxHP);
+		this.drawText(maxHPTemp, newValueX, this.lineHeight(), 14*3, 'right');
+	}
+	
+	if(maxMPTemp != maxMP) {
+		this.drawRightArrow(arrowX, this.lineHeight()*2);
+		this.setTextColorForComparison(maxMPTemp, maxMP);
+		this.drawText(maxMPTemp, newValueX, this.lineHeight()*2, 14*3, 'right');
+	}
+	
+	if(strengthBonusTemp != strengthBonus) {
+		this.drawRightArrow(arrowX, this.lineHeight()*3);
+		this.setTextColorForComparison(strengthBonusTemp, strengthBonus);
+		this.drawText(strengthBonusTemp, newValueX, this.lineHeight()*3, 14*3, 'right');
+	}
+	
+	if(magicBonusTemp != magicBonus) {
+		this.drawRightArrow(arrowX, this.lineHeight()*4);
+		this.setTextColorForComparison(magicBonusTemp, magicBonus);
+		this.drawText(magicBonusTemp, newValueX, this.lineHeight()*4, 14*3, 'right');
+	}
+	
+	if(stressRecoveryTemp != stressRecovery) {
+		this.drawRightArrow(arrowX, this.lineHeight()*5);
+		this.setTextColorForComparison(stressRecoveryTemp, stressRecovery);
+		this.drawText(stressRecoveryTemp, newValueX, this.lineHeight()*5, 14*3, 'right');
+	}
+	
+	if(movementTemp != movement) {
+		this.drawRightArrow(arrowX, this.lineHeight()*6);
+		this.setTextColorForComparison(movementTemp, movement);
+		var halvedMove = movementTemp/2;
+		var flooredMove = Math.floor(halvedMove);
+		this.drawText(flooredMove+(halvedMove > flooredMove ? "½" : ""), newValueX, this.lineHeight()*6, 14*3, 'right');
+	}
+	
+	this.resetTextColor();
+};
+
 Window_ItemStatusBase.prototype.drawEquipDescription = function() {
 	if(this._actionsItem && this._actionsItem.description) {
 		this.drawDescription(this._actionsItem.description);
@@ -833,7 +962,7 @@ Window_ItemStatusBase.prototype.drawEquipDescription = function() {
 };
 
 Window_ItemStatusBase.prototype.drawTabs = function() {
-	var tabsX = 398;
+	var tabsX = 366;
 	
 	if(this._statusPage !== "actions") {
 		this.changePaintOpacity(false);
@@ -853,10 +982,16 @@ Window_ItemStatusBase.prototype.drawTabs = function() {
 	this.drawIcon(this.getIconIdFor("solidDefense"), tabsX + Window_Base._iconWidth * 2, this.lineHeight() * 9);
 	this.changePaintOpacity(true);
 	
+	if(this._statusPage !== "bonuses") {
+		this.changePaintOpacity(false);
+	}
+	this.drawIcon(this.getIconIdFor("bonuses"), tabsX + Window_Base._iconWidth * 3, this.lineHeight() * 9);
+	this.changePaintOpacity(true);
+	
 	if(this._statusPage !== "description") {
 		this.changePaintOpacity(false);
 	}
-	this.drawIcon(this.getIconIdFor("knowledge"), tabsX + Window_Base._iconWidth * 3, this.lineHeight() * 9);
+	this.drawIcon(this.getIconIdFor("knowledge"), tabsX + Window_Base._iconWidth * 4, this.lineHeight() * 9);
 	this.changePaintOpacity(true);
 };
 
@@ -4856,6 +4991,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			
 			case "action":			return  76; break;
 			case "skill":      	   	return  88; break;
+			case "bonuses":      	return  32; break;
 			case "knowledge":      	return  79; break;
 		}
 		return 0;
