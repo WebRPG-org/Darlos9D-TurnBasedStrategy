@@ -903,13 +903,22 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					physDamageBonus = subject.strength();
 				}
 				
+				var magicDamageBonus = 0;
+				if(hit.usesMagicPower) {
+					magicDamageBonus = subject.magicPower();
+				}
+				
 				var hitDamage = this.getCompleteDamage(subject, actionInfo, hit);
-				if(hitDamage.blunt !== undefined) { hitDamage.blunt += physDamageBonus; }
-				if(hitDamage.cut !== undefined) { hitDamage.cut += physDamageBonus; }
-				if(hitDamage.keen !== undefined) { hitDamage.keen += physDamageBonus; }
-				if(hitDamage.thrust !== undefined) { hitDamage.thrust += physDamageBonus; }
-				if(hitDamage.stiletto !== undefined) { hitDamage.stiletto += physDamageBonus; }
-				if(hitDamage.trip !== undefined) { hitDamage.trip += physDamageBonus; }
+				if(hitDamage.blunt !== undefined) { hitDamage.blunt += physDamageBonus + magicDamageBonus; }
+				if(hitDamage.cut !== undefined) { hitDamage.cut += physDamageBonus + magicDamageBonus; }
+				if(hitDamage.keen !== undefined) { hitDamage.keen += physDamageBonus + magicDamageBonus; }
+				if(hitDamage.thrust !== undefined) { hitDamage.thrust += physDamageBonus + magicDamageBonus; }
+				if(hitDamage.stiletto !== undefined) { hitDamage.stiletto += physDamageBonus + magicDamageBonus; }
+				if(hitDamage.trip !== undefined) { hitDamage.trip += physDamageBonus + magicDamageBonus; }
+				if(hitDamage.fire !== undefined) { hitDamage.fire += magicDamageBonus; }
+				if(hitDamage.ice !== undefined) { hitDamage.ice += magicDamageBonus; }
+				if(hitDamage.corrosion !== undefined) { hitDamage.corrosion += magicDamageBonus; }
+				if(hitDamage.lightning !== undefined) { hitDamage.lightning += magicDamageBonus; }
 				
 				var dicePool = {};
 				dicePool.skill = 0;
@@ -1514,6 +1523,14 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				
 				var testDiceReduction = hit.evasionPenalty === undefined ? 0 : hit.evasionPenalty;
 				var hitSupport = this.getCompleteSupport(subject, actionInfo, hit);
+				
+				var magicDamageBonus = 0;
+				if(hit.usesMagicPower) {
+					magicDamageBonus = subject.magicPower();
+				}
+				if(hitSupport.stress != undefined) { hitSupport.stress += magicDamageBonus; }
+				if(hitSupport.damage != undefined) { hitSupport.damage += magicDamageBonus; }
+				
 				dicePool.debuff = Math.floor(subjectStress/2) + processedHitGroup.accuracyReduction + hitSupport.supportReduction;
 				dicePool.buff = Math.floor(subject.roundBuffs()/2) + Math.floor(target.roundBuffs()/2);
 				
@@ -1699,6 +1716,13 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 				
 				var testDiceReduction = hit.evasionPenalty === undefined ? 0 : hit.evasionPenalty;
 				var hitSupport = this.getCompleteSupport(subject, actionInfo, hit);
+				
+				var magicDamageBonus = 0;
+				if(hit.usesMagicPower) {
+					magicDamageBonus = subject.magicPower();
+				}
+				if(hitSupport.focus != undefined) { hitSupport.focus += magicDamageBonus; }
+				
 				dicePool.debuff = Math.floor(subjectStress/2) + processedHitGroup.accuracyReduction + hitSupport.supportReduction;
 				dicePool.buff = Math.floor(subject.roundBuffs()/2) + Math.floor(target.roundBuffs()/2);
 				
