@@ -1944,6 +1944,7 @@
 				if(prevMode === "setup") {
 					this._tbsTurnJustStarted = true;
 					this._tbsRoundJustStarted = false;
+					this._tbsMinorAction = false;
 					this._tbsMoveTiles = [];
 					this._tbsHalfMoveTiles = [];
 					this._tbsFullMoveTiles = [];
