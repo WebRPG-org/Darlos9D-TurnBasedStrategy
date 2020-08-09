@@ -1508,7 +1508,15 @@
 		var skillDiceReduction = hit.accuracyPenalty === undefined ? 0 : hit.accuracyPenalty;
 		
 		var testDiceReduction = hit.evasionPenalty === undefined ? 0 : hit.evasionPenalty;
+				
+		var magicDamageBonus = 0;
+		if(hit.usesMagicPower) {
+			magicDamageBonus = user.magicPower();
+		}
+		
 		var hitSupport = BattleManager.getCompleteSupport(user, actionInfo, hit);
+		if(hitSupport.damage != undefined) { hitSupport.damage += magicDamageBonus; };
+		
 		dicePool.debuff = hitSupport.supportReduction;
 		
 		var accSkill = 0;
@@ -1539,11 +1547,12 @@
 		}
 		
 		if(hitSupport.damage !== undefined) {
+			
 			var healRoll = BattleManager.rollSkillDice(dicePool.skill, dicePool.expert, dicePool.buff);
 			
 			healRoll.bonuses += healRoll.rareBonuses * 2;
 			
-			var healing = Math.max(0, hitSupport.damage + healRoll.hits);
+			var healing = Math.min(hitSupport.damage*4, Math.max(0, hitSupport.damage + healRoll.hits));
 			
 			this.adjustDamage("core", -healing);
 			var tough = this.toughness();

@@ -4816,13 +4816,22 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 							physDamageBonus = actor.strength();
 						}
 						
+						var magicDamageBonus = 0;
+						if(actor && hits[i].usesMagicPower) {
+							magicDamageBonus = actor.magicPower();
+						}
+						
 						var hitDamage = BattleManager.getCompleteDamage(actor, actionInfo, hits[i]);
-						if(hitDamage.blunt !== undefined) { hitDamage.blunt += physDamageBonus; }
-						if(hitDamage.cut !== undefined) { hitDamage.cut += physDamageBonus; }
-						if(hitDamage.keen !== undefined) { hitDamage.keen += physDamageBonus; }
-						if(hitDamage.thrust !== undefined) { hitDamage.thrust += physDamageBonus; }
-						if(hitDamage.stiletto !== undefined) { hitDamage.stiletto += physDamageBonus; }
-						if(hitDamage.trip !== undefined) { hitDamage.trip += physDamageBonus; }
+						if(hitDamage.blunt !== undefined) { hitDamage.blunt += physDamageBonus + magicDamageBonus; }
+						if(hitDamage.cut !== undefined) { hitDamage.cut += physDamageBonus + magicDamageBonus; }
+						if(hitDamage.keen !== undefined) { hitDamage.keen += physDamageBonus + magicDamageBonus; }
+						if(hitDamage.thrust !== undefined) { hitDamage.thrust += physDamageBonus + magicDamageBonus; }
+						if(hitDamage.stiletto !== undefined) { hitDamage.stiletto += physDamageBonus + magicDamageBonus; }
+						if(hitDamage.trip !== undefined) { hitDamage.trip += physDamageBonus + magicDamageBonus; }
+						if(hitDamage.fire !== undefined) { hitDamage.fire += magicDamageBonus; }
+						if(hitDamage.ice !== undefined) { hitDamage.ice += magicDamageBonus; }
+						if(hitDamage.corrosion !== undefined) { hitDamage.corrosion += magicDamageBonus; }
+						if(hitDamage.lightning !== undefined) { hitDamage.lightning += magicDamageBonus; }
 						
 						damageLineOffset += this.drawDamageForType(hitDamage.trip*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("trip"));
 						damageLineOffset += this.drawDamageForType(hitDamage.blunt*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("blunt"));
@@ -4839,11 +4848,19 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 						//damageLineOffset += this.drawDamage(hitDamage.psychic*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("psychic")) ? 1 : 0;
 					}
 					if(heal !== undefined) {
-						damageLineOffset += this.drawHeal(heal.stress*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("healStress")) ? 1 : 0;
-						damageLineOffset += this.drawHeal(heal.damage*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("healBody")) ? 1 : 0;
+						var magicDamageBonus = 0;
+						if(actor && hits[i].usesMagicPower) {
+							magicDamageBonus = actor.magicPower();
+						}
+						damageLineOffset += this.drawHeal((heal.stress+magicDamageBonus)*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("healStress")) ? 1 : 0;
+						damageLineOffset += this.drawHeal((heal.damage+magicDamageBonus)*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("healBody")) ? 1 : 0;
 					}
 					if(focusAmount !== undefined) {
-						damageLineOffset += this.drawHeal(focusAmount*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("focus")) ? 1 : 0;
+						var magicDamageBonus = 0;
+						if(actor && hits[i].usesMagicPower) {
+							magicDamageBonus = actor.magicPower();
+						}
+						damageLineOffset += this.drawHeal((focusAmount+magicDamageBonus)*multipleHits, drawName, nameOffset, lineHeight, damageLineOffset, reqLacked, this.getIconIdFor("focus")) ? 1 : 0;
 					}
 					if(buffs !== undefined) {
 						var j;
