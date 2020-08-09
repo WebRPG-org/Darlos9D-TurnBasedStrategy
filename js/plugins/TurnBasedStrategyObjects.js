@@ -2252,6 +2252,7 @@
 			//	this._tbsCurrentTurnForce = currentTurnForceId;
 			//}
 			this._tbsRoundJustStarted = true;
+			this._tbsMinorAction = false;
 		}
 		
 		this._tbsMoveTiles = [];

@@ -1509,6 +1509,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					results.stress.other += hitDamage.stress !== undefined ? hitDamage.stress : 0;
 				}
 			}
+			var maxSupportMult = 4;
 			var heal = hit.heal;
 			if(heal) {
 				hitDodged = false;
@@ -1576,7 +1577,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					stressHealRoll.hits -= stressRoll.misses;
 					stressHealRoll.bonuses -= stressRoll.penalties;
 					
-					results.heal.stress += Math.max(0, hitSupport.stress + stressHealRoll.hits);
+					results.heal.stress += Math.min(hitSupport.stress*maxSupportMult, Math.max(0, hitSupport.stress + stressHealRoll.hits));
 				}
 				if(hitSupport.damage !== undefined) {
 					var healRoll = this.rollSkillDice(dicePool.skill, dicePool.expert, dicePool.buff);
@@ -1586,7 +1587,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					healRoll.hits -= stressRoll.misses;
 					healRoll.bonuses -= stressRoll.penalties;
 					
-					var healing = Math.max(0, hitSupport.damage + healRoll.hits);
+					var healing = Math.min(hitSupport.damage*maxSupportMult, Math.max(0, hitSupport.damage + healRoll.hits));
 					
 					results.heal.core += healing;
 					var tough = target.toughness();
@@ -1768,7 +1769,7 @@ BattleManager.combatMath = function(subject, actionInfo, processedHitGroup, targ
 					focusGainRoll.hits -= stressRoll.misses;
 					focusGainRoll.bonuses -= stressRoll.penalties;
 					
-					results.focus += Math.max(0, hitSupport.focus + focusGainRoll.hits);
+					results.focus += Math.min(hitSupport.focus*maxSupportMult, Math.max(0, hitSupport.focus + focusGainRoll.hits));
 				}
 			}
 			if(hit.rollInitiative) {
@@ -2495,14 +2496,16 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 	returnObj.shouldCleave = false;
 	returnObj.shouldConduct = false;
 	
+	var maxDamageMult = 4;
+	
 	var roundedTough = Math.floor(tough);
 	
 	var bluntPow = 0;
 	
 	if(hitDamage.cut !== undefined) {
-		var power = Math.max(0, hitDamage.cut +
+		var power = Math.min(hitDamage.cut*maxDamageMult, Math.max(0, hitDamage.cut +
 			hitResult.damageBonus +
-			hitResult.rareDamageBonus*2);
+			hitResult.rareDamageBonus*2));
 		var damage = Math.max(0, power - partProt.armor.cut);
 		if(damage < power) {
 			bluntPow += Math.floor((power - damage) / 2);
@@ -2512,9 +2515,9 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 	}
 	
 	if(hitDamage.keen !== undefined) {
-		var power = Math.max(0, hitDamage.keen +
+		var power = Math.min(hitDamage.keen*maxDamageMult, Math.max(0, hitDamage.keen +
 			hitResult.damageBonus +
-			hitResult.rareDamageBonus*2);
+			hitResult.rareDamageBonus*2));
 		var damage = Math.max(0, power - partProt.armor.cut);
 		if(damage < power) {
 			bluntPow += Math.floor((power - damage) / 4);
@@ -2527,7 +2530,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		var armorReduction = hitResult.damageBonus + hitResult.rareDamageBonus*2;
 		var effectiveArmor = Math.max(0, partProt.armor.cut - armorReduction);
 		var powerBonus = Math.floor(hitResult.damageBonus/2) + hitResult.rareDamageBonus + Math.floor(Math.max(0, armorReduction - partProt.armor.cut)/2);
-		var power = Math.max(0, hitDamage.thrust + powerBonus);
+		var power = Math.min(hitDamage.thrust*maxDamageMult, Math.max(0, hitDamage.thrust + powerBonus));
 		var damage = Math.max(0, power - effectiveArmor);
 		if(damage < power) {
 			bluntPow += Math.floor((power - damage) / 4);
@@ -2541,7 +2544,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		var armorReduction = hitResult.damageBonus*2 + hitResult.rareDamageBonus*4;
 		var effectiveArmor = Math.max(0, partProt.armor.cut - armorReduction);
 		var powerBonus = Math.floor(Math.max(0, armorReduction - partProt.armor.cut)/2);
-		var power = Math.max(0, hitDamage.stiletto + powerBonus);
+		var power = Math.min(hitDamage.stiletto*maxDamageMult, Math.max(0, hitDamage.stiletto + powerBonus));
 		var damage = Math.max(0, power - effectiveArmor);
 		if(damage < power) {
 			bluntPow += Math.floor((power - damage) / 8);
@@ -2552,9 +2555,9 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 	}
 	
 	if(hitDamage.bullet !== undefined) {
-		var power = Math.max(0, hitDamage.bullet +
+		var power = Math.min(hitDamage.bullet*maxDamageMult, Math.max(0, hitDamage.bullet +
 			hitResult.damageBonus +
-			hitResult.rareDamageBonus*2);
+			hitResult.rareDamageBonus*2));
 		var damage = Math.max(0, power - partProt.armor.bullet);
 		if(damage < power) {
 			bluntPow += power - damage;
@@ -2569,10 +2572,8 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 	
 	var tripPow = 0;
 	if(hitDamage.blunt !== undefined || bluntPow > 0) {
-		var power = bluntPow;
-		if(hitDamage.blunt !== undefined) {
-			power += Math.max(0, hitDamage.blunt + hitResult.damageBonus + hitResult.rareDamageBonus*2);
-		}
+		bluntPow += hitDamage.blunt !== undefined ? hitDamage.blunt : 0;
+		var power = Math.min(bluntPow*maxDamageMult, Math.max(0, bluntPow + hitResult.damageBonus + hitResult.rareDamageBonus*2));
 		var damage = Math.max(0, power - partProt.armor.blunt);
 		returnObj.damage += damage < tough ? damage : roundedTough;
 		returnObj.remainingPower.blunt = Math.max(0, damage - roundedTough);
@@ -2585,7 +2586,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		var armorReduction = hitResult.damageBonus*2 + hitResult.rareDamageBonus*4;
 		var effectiveArmor = Math.max(0, partProt.armor.fire - armorReduction);
 		var powerBonus = Math.floor(Math.max(0, armorReduction - partProt.armor.fire)/2);
-		var power = Math.max(0, hitDamage.fire + powerBonus);
+		var power = Math.min(hitDamage.fire*maxDamageMult, Math.max(0, hitDamage.fire + powerBonus));
 		var damage = Math.max(0, power - effectiveArmor);
 		returnObj.damage += damage < tough ? damage : roundedTough;
 		returnObj.remainingPower.fire = Math.max(0, damage - roundedTough);
@@ -2596,7 +2597,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		var armorReduction = hitResult.damageBonus*2 + hitResult.rareDamageBonus*4;
 		var effectiveArmor = Math.max(0, partProt.armor.ice - armorReduction);
 		var powerBonus = Math.floor(Math.max(0, armorReduction - partProt.armor.ice)/2);
-		var power = Math.max(0, hitDamage.ice + powerBonus);
+		var power = Math.min(hitDamage.ice*maxDamageMult, Math.max(0, hitDamage.ice + powerBonus));
 		var damage = Math.max(0, power - effectiveArmor);
 		returnObj.damage += damage < tough ? damage : roundedTough;
 		returnObj.remainingPower.ice = Math.max(0, damage - roundedTough);
@@ -2607,7 +2608,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		var armorReduction = hitResult.damageBonus*2 + hitResult.rareDamageBonus*4;
 		var effectiveArmor = Math.max(0, partProt.armor.corrosion - armorReduction);
 		var powerBonus = Math.floor(Math.max(0, armorReduction - partProt.armor.corrosion)/2);
-		var power = Math.max(0, hitDamage.corrosion + powerBonus);
+		var power = Math.min(hitDamage.corrosion*maxDamageMult, Math.max(0, hitDamage.corrosion + powerBonus));
 		var damage = Math.max(0, power - effectiveArmor);
 		returnObj.damage += damage < tough ? damage : roundedTough;
 		returnObj.remainingPower.corrosion = Math.max(0, damage - roundedTough);
@@ -2618,7 +2619,7 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 		var armorReduction = hitResult.damageBonus*2 + hitResult.rareDamageBonus*4;
 		var effectiveArmor = Math.max(0, partProt.armor.lightning - armorReduction);
 		var powerBonus = Math.floor(Math.max(0, armorReduction - partProt.armor.lightning)/2);
-		var power = Math.max(0, hitDamage.lightning + powerBonus);
+		var power = Math.min(hitDamage.lightning*maxDamageMult, Math.max(0, hitDamage.lightning + powerBonus));
 		var damage = Math.max(0, power - effectiveArmor);
 		returnObj.damage += damage < tough ? damage : roundedTough;
 		returnObj.remainingPower.lightning = Math.max(0, damage - roundedTough);
@@ -2626,10 +2627,8 @@ BattleManager.resolvePhysicalDamage = function(hitResult, hitDamage, partProt, t
 	}
 	
 	if(hitDamage.trip !== undefined || tripPow > 0) {
-		var power = tripPow;
-		if(hitDamage.trip !== undefined) {
-			power += Math.max(0, hitDamage.trip + hitResult.damageBonus + hitResult.rareDamageBonus*2);
-		}
+		tripPow += hitDamage.trip !== undefined ? hitDamage.trip : 0;
+		var power = Math.min(tripPow*maxDamageMult, Math.max(0, tripPow + hitResult.damageBonus + hitResult.rareDamageBonus*2));
 		var skillResult = this.rollSkillDice(power, 0 , dicePool.buff);
 		var testResult = this.rollTestDice(dicePool.tripTest, dicePool.tripCrisis, dicePool.debuff);
 		var tripStress = skillResult.hits > testResult.misses ? skillResult.hits - testResult.misses : 0;
