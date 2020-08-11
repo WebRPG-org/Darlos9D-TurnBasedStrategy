@@ -37,7 +37,7 @@ null,
 {"id":35,"expanded":true,"name":"Ruined Temple F2","order":35,"parentId":34,"scrollX":1456,"scrollY":1489.3333333333333},
 {"id":36,"expanded":false,"name":"Battlefields","order":36,"parentId":13,"scrollX":1092,"scrollY":614.6666666666666},
 {"id":37,"expanded":false,"name":"Wasteland A","order":37,"parentId":36,"scrollX":728,"scrollY":409.77777777777777},
-{"id":38,"expanded":false,"name":"Merchant's Cave","order":38,"parentId":13,"scrollX":1082,"scrollY":1296},
+{"id":38,"expanded":false,"name":"Merchant's Cave","order":38,"parentId":13,"scrollX":1081.3333333333333,"scrollY":1138.6666666666667},
 {"id":39,"expanded":true,"name":"Lakeside Shrine","order":39,"parentId":13,"scrollX":1082.6666666666667,"scrollY":1138.6666666666667},
 {"id":40,"expanded":false,"name":"Lakeside Shrine Interior","order":40,"parentId":39,"scrollX":1081.3333333333333,"scrollY":932},
 {"id":41,"expanded":false,"name":"Lakeside Shrine F2","order":41,"parentId":39,"scrollX":1081.3333333333333,"scrollY":1065.3333333333333}

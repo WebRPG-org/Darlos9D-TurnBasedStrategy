@@ -4981,32 +4981,31 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			case "mentalDefense":	return 302; break;
 			
 			case "trip":          	return   6; break;
-			case "blunt":          	return 110; break;
-			case "cut":            	return  99; break;
-			case "keen":            return 120; break;
-			case "thrust":        	return 107; break;
-			case "stiletto":        return  96; break;
-			case "bullet":         	return 115; break;
-			case "frag":        	return 115; break;
+			case "blunt":          	return  77; break;
+			case "cut":            	return  76; break;
+			case "keen":            return  92; break;
+			case "thrust":        	return  78; break;
+			case "stiletto":        return  94; break;
+			case "bullet":         	return  93; break;
 			case "fire":           	return  64; break;
 			case "ice":            	return  65; break;
 			case "corrosion":      	return   2; break;
 			case "conducted":		return  66; break;
 			case "psychic":        	return  71; break;
 			
-			case "healStress":     	return  70; break;
+			case "healStress":     	return  83; break;
 			case "healBody":       	return  72; break;
 			case "healMind":       	return  72; break;
 			
 			case "focus":			return	80; break;
 			
 			case "self":           	return  75; break;
-			case "melee":          	return  97; break;
-			case "thrown":         	return 114; break;
-			case "fired":          	return 102; break;
-			case "followUp":        return  73; break;
+			case "melee":          	return  90; break;
+			case "thrown":         	return  91; break;
+			case "fired":          	return  95; break;
+			case "followUp":        return  74; break;
 			
-			case "action":			return  76; break;
+			case "action":			return  77; break;
 			case "skill":      	   	return  88; break;
 			case "bonuses":      	return  32; break;
 			case "knowledge":      	return  79; break;
