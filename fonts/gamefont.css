@@ -1,4 +1,25 @@
 @font-face {
     font-family: GameFont;
     src: url("mplus-1m-regular.ttf");
+    image-rendering: pixelated;
+    font-smooth: none 0px !important;
 }
+CANVAS{
+  image-rendering: pixelated;
+}
+Object.defineProperty(Bitmap.prototype, 'smooth', {
+    get: function() {
+        return false; // this._smooth;
+    },
+    set: function(value) {
+        if (this._smooth !== value) {
+            this._smooth = value;
+            if (0) {//(this._smooth) {
+                this._baseTexture.scaleMode = PIXI.SCALE_MODES.LINEAR;
+            } else {
+                this._baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
+            }
+        }
+    },
+    configurable: true
+});

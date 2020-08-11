@@ -51,7 +51,7 @@ Window_ConcurrentWindow.prototype.windowWidth = function() {
 		var textRowLength = this.getTextRowLength(textRow);
 		textLength = textRowLength > textLength ? textRowLength : textLength;
 	}, this);
-	return textLength*14 + this.standardPadding()*2 + this.textPadding()*2;
+	return textLength*this.standardCharacterWidth() + this.standardPadding()*2 + this.textPadding()*2;
 };
 
 Window_ConcurrentWindow.prototype.windowHeight = function() {
@@ -138,7 +138,7 @@ Window_ConcurrentWindow.prototype.drawCurrentText = function() {
 					segmentText = segmentText.slice(0, this._curTextLength - (charactersDrawn + segmentPosition));
 					limitReached = true;
 				}
-				this.drawText(segmentText, this.textPadding()+segmentPosition*14, this.lineHeight()*i, segmentText.length*14);
+				this.drawText(segmentText, this.textPadding()+segmentPosition*this.standardCharacterWidth(), this.lineHeight()*i, segmentText.length*this.standardCharacterWidth());
 				segmentPosition += segmentText.length;
 				if(limitReached) { break; }
 			} else if(textRowSegment.type === "icon") {
@@ -148,7 +148,7 @@ Window_ConcurrentWindow.prototype.drawCurrentText = function() {
 				}
 				this.drawIcon(
 					textRowSegment.value,
-					this.textPadding() + segmentPosition * 14 + Math.floor((14 * 3 - Window_Base._iconWidth) / 2),
+					this.textPadding() + segmentPosition * this.standardCharacterWidth() + Math.floor((this.standardCharacterWidth() * 3 - Window_Base._iconWidth) / 2),
 					this.lineHeight()*i
 				);
 				segmentPosition += 3;
@@ -575,9 +575,9 @@ Window_ItemStatusBase.prototype.drawActions = function() {
 		this.changeTextColor(this.systemColor());
 		this.drawText("Action", 0, 0);
 		this.drawText("Pw", this.nameOffset() + Window_Base._iconWidth, 0);
-		this.drawText("Rn", this.nameOffset() + Window_Base._iconWidth*2 + 14*3, 0);
-		this.drawText("AE", this.nameOffset() + Window_Base._iconWidth*2 + 14*6, 0);
-		this.drawText("Ac", this.nameOffset() + Window_Base._iconWidth*2 + 14*9, 0);
+		this.drawText("Rn", this.nameOffset() + Window_Base._iconWidth*2 + this.standardCharacterWidth()*3, 0);
+		this.drawText("AE", this.nameOffset() + Window_Base._iconWidth*2 + this.standardCharacterWidth()*6, 0);
+		this.drawText("Ac", this.nameOffset() + Window_Base._iconWidth*2 + this.standardCharacterWidth()*9, 0);
 		this.resetTextColor();
 		var lineOffset = 0;
 		var i;
@@ -894,54 +894,54 @@ Window_ItemStatusBase.prototype.drawBonuses = function() {
 	}
 	
 	this.changeTextColor(this.systemColor());
-	this.drawText("Max Hit Points", 0, this.lineHeight(), 14*14);
-	this.drawText("Max Energy", 0, this.lineHeight()*2, 14*10);
-	this.drawText("Strength Bonus", 0, this.lineHeight()*3, 14*14);
-	this.drawText("Magic Bonus", 0, this.lineHeight()*4, 14*11);
-	this.drawText("Stress Recovery", 0, this.lineHeight()*5, 14*15);
-	this.drawText("Movement", 0, this.lineHeight()*6, 14*8);
+	this.drawText("Max Hit Points", 0, this.lineHeight(), this.standardCharacterWidth()*14);
+	this.drawText("Max Energy", 0, this.lineHeight()*2, this.standardCharacterWidth()*10);
+	this.drawText("Strength Bonus", 0, this.lineHeight()*3, this.standardCharacterWidth()*14);
+	this.drawText("Magic Bonus", 0, this.lineHeight()*4, this.standardCharacterWidth()*11);
+	this.drawText("Stress Recovery", 0, this.lineHeight()*5, this.standardCharacterWidth()*15);
+	this.drawText("Movement", 0, this.lineHeight()*6, this.standardCharacterWidth()*8);
 	
-	var valueX = 14*16
+	var valueX = this.standardCharacterWidth()*16
 	this.resetTextColor();
-	this.drawText(maxHP, valueX, this.lineHeight(), 14*3, 'right');
-	this.drawText(maxMP, valueX, this.lineHeight()*2, 14*3, 'right');
-	this.drawText(strengthBonus, valueX, this.lineHeight()*3, 14*3, 'right');
-	this.drawText(magicBonus, valueX, this.lineHeight()*4, 14*3, 'right');
-	this.drawText(stressRecovery, valueX, this.lineHeight()*5, 14*3, 'right');
+	this.drawText(maxHP, valueX, this.lineHeight(), this.standardCharacterWidth()*3, 'right');
+	this.drawText(maxMP, valueX, this.lineHeight()*2, this.standardCharacterWidth()*3, 'right');
+	this.drawText(strengthBonus, valueX, this.lineHeight()*3, this.standardCharacterWidth()*3, 'right');
+	this.drawText(magicBonus, valueX, this.lineHeight()*4, this.standardCharacterWidth()*3, 'right');
+	this.drawText(stressRecovery, valueX, this.lineHeight()*5, this.standardCharacterWidth()*3, 'right');
 	var halvedMove = movement/2;
 	var flooredMove = Math.floor(halvedMove);
-	this.drawText(flooredMove+(halvedMove > flooredMove ? "½" : ""), valueX, this.lineHeight()*6, 14*3, 'right');
+	this.drawText(flooredMove+(halvedMove > flooredMove ? "½" : ""), valueX, this.lineHeight()*6, this.standardCharacterWidth()*3, 'right');
 	
-	var arrowX = 14*20;
-	var newValueX = 14*23;
+	var arrowX = this.standardCharacterWidth()*20;
+	var newValueX = this.standardCharacterWidth()*23;
 	if(maxHPTemp != maxHP) {
 		this.drawRightArrow(arrowX, this.lineHeight());
 		this.setTextColorForComparison(maxHPTemp, maxHP);
-		this.drawText(maxHPTemp, newValueX, this.lineHeight(), 14*3, 'right');
+		this.drawText(maxHPTemp, newValueX, this.lineHeight(), this.standardCharacterWidth()*3, 'right');
 	}
 	
 	if(maxMPTemp != maxMP) {
 		this.drawRightArrow(arrowX, this.lineHeight()*2);
 		this.setTextColorForComparison(maxMPTemp, maxMP);
-		this.drawText(maxMPTemp, newValueX, this.lineHeight()*2, 14*3, 'right');
+		this.drawText(maxMPTemp, newValueX, this.lineHeight()*2, this.standardCharacterWidth()*3, 'right');
 	}
 	
 	if(strengthBonusTemp != strengthBonus) {
 		this.drawRightArrow(arrowX, this.lineHeight()*3);
 		this.setTextColorForComparison(strengthBonusTemp, strengthBonus);
-		this.drawText(strengthBonusTemp, newValueX, this.lineHeight()*3, 14*3, 'right');
+		this.drawText(strengthBonusTemp, newValueX, this.lineHeight()*3, this.standardCharacterWidth()*3, 'right');
 	}
 	
 	if(magicBonusTemp != magicBonus) {
 		this.drawRightArrow(arrowX, this.lineHeight()*4);
 		this.setTextColorForComparison(magicBonusTemp, magicBonus);
-		this.drawText(magicBonusTemp, newValueX, this.lineHeight()*4, 14*3, 'right');
+		this.drawText(magicBonusTemp, newValueX, this.lineHeight()*4, this.standardCharacterWidth()*3, 'right');
 	}
 	
 	if(stressRecoveryTemp != stressRecovery) {
 		this.drawRightArrow(arrowX, this.lineHeight()*5);
 		this.setTextColorForComparison(stressRecoveryTemp, stressRecovery);
-		this.drawText(stressRecoveryTemp, newValueX, this.lineHeight()*5, 14*3, 'right');
+		this.drawText(stressRecoveryTemp, newValueX, this.lineHeight()*5, this.standardCharacterWidth()*3, 'right');
 	}
 	
 	if(movementTemp != movement) {
@@ -949,7 +949,7 @@ Window_ItemStatusBase.prototype.drawBonuses = function() {
 		this.setTextColorForComparison(movementTemp, movement);
 		var halvedMove = movementTemp/2;
 		var flooredMove = Math.floor(halvedMove);
-		this.drawText(flooredMove+(halvedMove > flooredMove ? "½" : ""), newValueX, this.lineHeight()*6, 14*3, 'right');
+		this.drawText(flooredMove+(halvedMove > flooredMove ? "½" : ""), newValueX, this.lineHeight()*6, this.standardCharacterWidth()*3, 'right');
 	}
 	
 	this.resetTextColor();
@@ -1051,7 +1051,7 @@ Window_ActorItemName.prototype.initialize = function(x, y) {
 
 Window_ActorItemName.prototype.windowWidth = function() {
 	if(this._tbsActor) {
-		return this.standardPadding() * 2 + this._tbsActor.battler.displayName().length * 14 + this.textPadding() * 2;
+		return this.standardPadding() * 2 + this._tbsActor.battler.displayName().length * this.standardCharacterWidth() + this.textPadding() * 2;
 	} else {
 		return 300;
 	}
@@ -1294,7 +1294,7 @@ Window_YesNoConfirm.prototype.initialize = function(x, y) {
 
 Window_YesNoConfirm.prototype.windowWidth = function() {
 	var textLength = this._yesText.length > this._noText.length ? this._yesText.length : this._noText.length;
-    return this.standardPadding()*2 + this.textPadding()*2 + textLength*14;
+    return this.standardPadding()*2 + this.textPadding()*2 + textLength*this.standardCharacterWidth();
 };
 
 Window_YesNoConfirm.prototype.setYesText = function(yesText) {
@@ -1344,7 +1344,7 @@ Window_ActorBodyPart.prototype.initialize = function(x, y) {
 };
 
 Window_ActorBodyPart.prototype.windowWidth = function() {
-	var textWidth = 14 * 9;
+	var textWidth = this.standardCharacterWidth() * 9;
     return textWidth + this.standardPadding()*2 + this.textPadding()*2;
 };
 
@@ -1452,7 +1452,7 @@ Window_SkillActionInfo.prototype.initialize = function(y) {
 };
 
 Window_SkillActionInfo.prototype.windowWidth = function() {
-	return this.standardPadding()*2 + Window_Base._iconWidth*2 + 14*11;
+	return this.standardPadding()*2 + Window_Base._iconWidth*2 + this.standardCharacterWidth()*11;
 };
 
 Window_SkillActionInfo.prototype.windowHeight = function() {
@@ -1489,9 +1489,9 @@ Window_SkillActionInfo.prototype.drawSkillActionInfo = function() {
 	
 	this.changeTextColor(this.systemColor());
 	this.drawText("Pw", Window_Base._iconWidth, 0);
-	this.drawText("Rn", Window_Base._iconWidth*2 + 14*3, 0);
-	this.drawText("AE", Window_Base._iconWidth*2 + 14*6, 0);
-	this.drawText("Ac", Window_Base._iconWidth*2 + 14*9, 0);
+	this.drawText("Rn", Window_Base._iconWidth*2 + this.standardCharacterWidth()*3, 0);
+	this.drawText("AE", Window_Base._iconWidth*2 + this.standardCharacterWidth()*6, 0);
+	this.drawText("Ac", Window_Base._iconWidth*2 + this.standardCharacterWidth()*9, 0);
 	this.resetTextColor();
 	
 	this.drawActionInfo(this._actionInfo, undefined, undefined, undefined, this._actor);
@@ -1499,7 +1499,7 @@ Window_SkillActionInfo.prototype.drawSkillActionInfo = function() {
 	if(this._actionInfo.sourceEquip) {
 		this.drawText("Source:", 0, this.lineHeight() * (this.numVisibleRows() - 2));
 		var rect = this.itemRectForText(this.numVisibleRows() - 1);
-		this.drawItemName(this._actionInfo.sourceEquip, 0, rect.y, Window_Base._iconWidth*2 + 14*11);
+		this.drawItemName(this._actionInfo.sourceEquip, 0, rect.y, Window_Base._iconWidth*2 + this.standardCharacterWidth()*11);
 	}
 };
  
@@ -1543,7 +1543,7 @@ Window_EquipCharacterInfo.prototype.refresh = function() {
 		/* this.changeTextColor(this.systemColor());
 		this.drawText("Class Skills", 500, 0);
 		var skillsPosition = 708;
-		var characterWidth = 14;
+		var characterWidth = this.standardCharacterWidth();
 		this.drawText("/", skillsPosition + characterWidth, 0);
 		this.drawText("/", skillsPosition + characterWidth * 3, 0);
 		this.resetTextColor();
@@ -1598,7 +1598,7 @@ Window_TbsActorStatus.prototype.initialize = function(x, y) {
 //};
 
 Window_TbsActorStatus.prototype.windowWidth = function() {
-	return this.standardPadding()*2 + this.textPadding()*2 + 14*29;
+	return this.standardPadding()*2 + this.textPadding()*2 + this.standardCharacterWidth()*29;
 };
 
 Window_TbsActorStatus.prototype.windowHeight = function() {
@@ -1627,12 +1627,12 @@ Window_TbsActorStatus.prototype.refresh = function() {
 			0,
 			270
 		);
-		this.drawActorBuffs(this._tbsActor.battler, this.textPadding()+14*12, 0)
+		this.drawActorBuffs(this._tbsActor.battler, this.textPadding()+this.standardCharacterWidth()*12, 0)
         this.drawActorDamage(this._tbsActor.battler, this.textPadding(), this.lineHeight());
         this.drawActorStress(this._tbsActor.battler, this.textPadding(), this.lineHeight()*2);
-        this.drawActorRoundBuffs(this._tbsActor.battler, this.textPadding()+14*12, this.lineHeight()*2);
+        this.drawActorRoundBuffs(this._tbsActor.battler, this.textPadding()+this.standardCharacterWidth()*12, this.lineHeight()*2);
 		
-        this.drawActorPartsDamage(this._tbsActor.battler, this.textPadding()+14*24, 0, true);
+        this.drawActorPartsDamage(this._tbsActor.battler, this.textPadding()+this.standardCharacterWidth()*24, 0, true);
     }
 };
 
@@ -1672,7 +1672,7 @@ Window_TbsSmallActorStatus.prototype.initialize = function() {
 
 Window_TbsSmallActorStatus.prototype.windowWidth = function() {
 	var includeMP = this._tbsActor && this._tbsActor.battler.maxMP() > 0;
-	return this.standardPadding()*2 + this.textPadding()*2 + 14*(includeMP ? 8 : 5);
+	return this.standardPadding()*2 + this.textPadding()*2 + this.standardCharacterWidth()*(includeMP ? 8 : 5);
 };
 
 Window_TbsSmallActorStatus.prototype.windowHeight = function() {
@@ -1692,21 +1692,21 @@ Window_TbsSmallActorStatus.prototype.refresh = function() {
     if (this._tbsActor) {
 		var battler = this._tbsActor.battler;
 		this.changeTextColor(this.crisisColor());
-		this.drawText("St", this.textPadding(), 0, 14*2);
+		this.drawText("St", this.textPadding(), 0, this.standardCharacterWidth()*2);
 		this.changeTextColor(this.textColor(27));
-		this.drawText("   Fo", this.textPadding(), 0, 14*5);
+		this.drawText("   Fo", this.textPadding(), 0, this.standardCharacterWidth()*5);
 		this.changeTextColor(this.systemColor());
-		this.drawText("  :", this.textPadding(), this.lineHeight(), 14*3);
+		this.drawText("  :", this.textPadding(), this.lineHeight(), this.standardCharacterWidth()*3);
 		this.changeTextColor(this.crisisColor());
-		this.drawText(battler.stress(), this.textPadding(), this.lineHeight(), 14*2, 'right');
+		this.drawText(battler.stress(), this.textPadding(), this.lineHeight(), this.standardCharacterWidth()*2, 'right');
 		this.changeTextColor(this.textColor(27));
-		this.drawText(battler.roundBuffs(), this.textPadding()+14*3, this.lineHeight(), 14*2, 'right');
+		this.drawText(battler.roundBuffs(), this.textPadding()+this.standardCharacterWidth()*3, this.lineHeight(), this.standardCharacterWidth()*2, 'right');
 		if(battler.maxMP() > 0) {
 			this.changeTextColor(this.systemColor());
-			this.drawText("     :", this.textPadding(), this.lineHeight(), 14*6);
+			this.drawText("     :", this.textPadding(), this.lineHeight(), this.standardCharacterWidth()*6);
 			this.resetTextColor();
-			this.drawText("      En", this.textPadding(), 0, 14*8);
-			this.drawText(battler.maxMP()-battler.mpSpent(), this.textPadding()+14*6, this.lineHeight(), 14*2, 'right');
+			this.drawText("      En", this.textPadding(), 0, this.standardCharacterWidth()*8);
+			this.drawText(battler.maxMP()-battler.mpSpent(), this.textPadding()+this.standardCharacterWidth()*6, this.lineHeight(), this.standardCharacterWidth()*2, 'right');
 		}
 		this.resetTextColor();
     }
@@ -1741,7 +1741,7 @@ Window_TbsActor.prototype.windowWidth = function() {
 			}
 		});
 	}
-	return this.standardPadding() * 2 + longestLength * 14 + this.textPadding() * 2;
+	return this.standardPadding() * 2 + longestLength * this.standardCharacterWidth() + this.textPadding() * 2;
 };
 
 Window_TbsActor.prototype.windowHeight = function() {
@@ -2115,7 +2115,7 @@ Window_TbsActionInfo.prototype.initialize = function(x, y) {
 };
 
 Window_TbsActionInfo.prototype.windowWidth = function() {
-	return this.standardPadding()*2 + Window_Base._iconWidth*2 + 14*11;
+	return this.standardPadding()*2 + Window_Base._iconWidth*2 + this.standardCharacterWidth()*11;
 };
 
 Window_TbsActionInfo.prototype.windowHeight = function() {
@@ -2152,9 +2152,9 @@ Window_TbsActionInfo.prototype.drawSkillActionInfo = function() {
 	
 	this.changeTextColor(this.systemColor());
 	this.drawText("Pw", Window_Base._iconWidth, 0);
-	this.drawText("Rn", Window_Base._iconWidth*2 + 14*3, 0);
-	this.drawText("AE", Window_Base._iconWidth*2 + 14*6, 0);
-	this.drawText("Ac", Window_Base._iconWidth*2 + 14*9, 0);
+	this.drawText("Rn", Window_Base._iconWidth*2 + this.standardCharacterWidth()*3, 0);
+	this.drawText("AE", Window_Base._iconWidth*2 + this.standardCharacterWidth()*6, 0);
+	this.drawText("Ac", Window_Base._iconWidth*2 + this.standardCharacterWidth()*9, 0);
 	this.resetTextColor();
 	
 	this.drawActionInfo(this._actionInfo, undefined, undefined, undefined, this._actor);
@@ -2162,7 +2162,7 @@ Window_TbsActionInfo.prototype.drawSkillActionInfo = function() {
 	if(this._actionInfo.sourceEquip) {
 		this.drawText("Source:", 0, this.lineHeight() * (this.numVisibleRows() - 2));
 		var rect = this.itemRectForText(this.numVisibleRows() - 1);
-		this.drawItemName(this._actionInfo.sourceEquip, 0, rect.y, Window_Base._iconWidth*2 + 14*11);
+		this.drawItemName(this._actionInfo.sourceEquip, 0, rect.y, Window_Base._iconWidth*2 + this.standardCharacterWidth()*11);
 	}
 };
 
@@ -2204,7 +2204,7 @@ Window_TbsAction.prototype.windowWidth = function() {
 				}
 			},this);
 		},this);
-		return this.standardPadding() * 2 + longestLength * 14 + Window_Base._iconWidth + this.textPadding() * 3;
+		return this.standardPadding() * 2 + longestLength * this.standardCharacterWidth() + Window_Base._iconWidth + this.textPadding() * 3;
 	} else {
 		return Graphics.boxWidth / 4;
 	}
@@ -2507,10 +2507,10 @@ Window_TbsAction.prototype.drawItem = function(index) {
 		if((stressCost !== undefined && stressCost > 0) || (mpCost !== undefined && mpCost > 0)) {
 			this.changeTextColor(this.crisisColor());
 			this.drawText(stressCost == undefined ? 0 : stressCost, this.textPadding(), this.lineHeight() * index,
-				this.windowWidth() - this.standardPadding()*2 - this.textPadding()*2 - 14*2, "right");
+				this.windowWidth() - this.standardPadding()*2 - this.textPadding()*2 - this.standardCharacterWidth()*2, "right");
 			this.changeTextColor(this.systemColor());
 			this.drawText(":", this.textPadding(), this.lineHeight() * index,
-				this.windowWidth() - this.standardPadding()*2 - this.textPadding()*2 - 14, "right");
+				this.windowWidth() - this.standardPadding()*2 - this.textPadding()*2 - this.standardCharacterWidth(), "right");
 			this.resetTextColor();
 			this.drawText(mpCost == undefined ? 0 : mpCost, this.textPadding(), this.lineHeight() * index,
 				this.windowWidth() - this.standardPadding()*2 - this.textPadding()*2, "right");
@@ -2685,7 +2685,7 @@ Window_TbsActionLevel.prototype.initialize = function() {
 Window_TbsActionLevel.prototype.windowWidth = function() {
 	var levelCount = this._levels.length;
 	var levelString = levelCount+"";
-	return this.standardPadding()*2 + this.spacing()*(levelCount-1) + (levelString.length*14+this.textPadding()*2)*levelCount;
+	return this.standardPadding()*2 + this.spacing()*(levelCount-1) + (levelString.length*this.standardCharacterWidth()+this.textPadding()*2)*levelCount;
 };
 
 Window_TbsActionLevel.prototype.windowHeight = function() {
@@ -2729,9 +2729,9 @@ Window_TbsActionLevel.prototype.drawItem = function(index) {
 	var levelString = this._levels[index].number+"";
     this.drawText(
 		levelString,
-		this.textPadding()+(levelString.length*14+this.textPadding()*2+this.spacing())*index,
+		this.textPadding()+(levelString.length*this.standardCharacterWidth()+this.textPadding()*2+this.spacing())*index,
 		0,
-		levelString.length*14,
+		levelString.length*this.standardCharacterWidth(),
 		this.itemTextAlign()
 	);
     this.resetTextColor();
@@ -2777,9 +2777,9 @@ Window_TbsTarget.prototype.windowWidth = function() {
 				longestLength = name.length;
 			}
 		});
-		return this.standardPadding() * 2 + longestLength * 14 + this.textPadding() * 2;
+		return this.standardPadding() * 2 + longestLength * this.standardCharacterWidth() + this.textPadding() * 2;
 	} else {
-		return this.standardPadding() * 2 + 7 * 14 + this.textPadding() * 2;
+		return this.standardPadding() * 2 + 7 * this.standardCharacterWidth() + this.textPadding() * 2;
 	}
 };
 
@@ -3078,7 +3078,7 @@ Window_TbsTargetName.prototype.initialize = function(x, y) {
 
 Window_TbsTargetName.prototype.windowWidth = function() {
 	if(this._tbsActor) {
-		return this.standardPadding()*2 + this.textPadding()*2 + this._tbsActor.battler.displayName().length * 14;
+		return this.standardPadding()*2 + this.textPadding()*2 + this._tbsActor.battler.displayName().length * this.standardCharacterWidth();
 	} else {
 		return this.standardPadding()*2 + this.textPadding()*2;
 	}
@@ -3180,7 +3180,7 @@ Window_TbsTargetPart.prototype.initialize = function(x, y) {
 };
 
 Window_TbsTargetPart.prototype.windowWidth = function() {
-	var textWidth = 14 * 9;
+	var textWidth = this.standardCharacterWidth() * 9;
     return textWidth + this.standardPadding()*2 + this.textPadding()*2;
 };
 
@@ -3307,9 +3307,9 @@ Window_TbsBreadcrumb.prototype.initialize = function(x, y) {
 Window_TbsBreadcrumb.prototype.windowWidth = function() {
 	if(this._breadcrumbInfo) {
 		if(this._breadcrumbInfo.action) {
-			return this.standardPadding() * 2 + this._breadcrumbInfo.text.length * 14 + Window_Base._iconWidth + this.textPadding() * 3;
+			return this.standardPadding() * 2 + this._breadcrumbInfo.text.length * this.standardCharacterWidth() + Window_Base._iconWidth + this.textPadding() * 3;
 		} else {
-			return this.standardPadding() * 2 + this._breadcrumbInfo.text.length * 14 + this.textPadding() * 2;
+			return this.standardPadding() * 2 + this._breadcrumbInfo.text.length * this.standardCharacterWidth() + this.textPadding() * 2;
 		}
 	} else {
 		return 300;
@@ -3455,7 +3455,7 @@ Window_TbsNoTarget.prototype.refresh = function() {
 };
 
 Window_TbsNoTarget.prototype.windowWidth = function() {
-	return 14*9 + this.standardPadding()*2 + this.textPadding()*2;
+	return this.standardCharacterWidth()*9 + this.standardPadding()*2 + this.textPadding()*2;
 };
 
 Window_TbsNoTarget.prototype.windowHeight = function() {
@@ -3486,7 +3486,7 @@ Window_TbsSurpriseRound.prototype.refresh = function() {
 };
 
 Window_TbsSurpriseRound.prototype.windowWidth = function() {
-	return 14*14 + this.standardPadding()*2 + this.textPadding()*2;
+	return this.standardCharacterWidth()*14 + this.standardPadding()*2 + this.textPadding()*2;
 };
 
 Window_TbsSurpriseRound.prototype.windowHeight = function() {
@@ -3518,7 +3518,7 @@ Window_TbsNextRound.prototype.refresh = function() {
 };
 
 Window_TbsNextRound.prototype.windowWidth = function() {
-	return 14*9 + this.standardPadding()*2 + this.textPadding()*2;
+	return this.standardCharacterWidth()*9 + this.standardPadding()*2 + this.textPadding()*2;
 };
 
 Window_TbsNextRound.prototype.windowHeight = function() {
@@ -3825,12 +3825,12 @@ Window_StatusSkills.prototype.drawParametersColumnTwo = function() {
 
 Window_StatusSkills.prototype.drawSkillLevel = function(displayName, skill, x, y, width) {
 	if(this._actor.skillPotential(skill) > 0) {
-		this.drawIcon(87, x + width - 14*2 - this.textPadding()*2 - Window_Base._iconWidth, y);
+		this.drawIcon(87, x + width - this.standardCharacterWidth()*2 - this.textPadding()*2 - Window_Base._iconWidth, y);
 	}
 	this.changeTextColor(this.systemColor());
-	this.drawText(displayName, this.textPadding() + x, y, width - 14*7);
+	this.drawText(displayName, this.textPadding() + x, y, width - this.standardCharacterWidth()*7);
 	this.resetTextColor();
-	this.drawText(this._actor.totalSkill(skill), x + width - 14*2 - this.textPadding(), y, 14*2, 'right');
+	this.drawText(this._actor.totalSkill(skill), x + width - this.standardCharacterWidth()*2 - this.textPadding(), y, this.standardCharacterWidth()*2, 'right');
 };
 
 Window_StatusSkills.prototype.processPageup = function() {
@@ -3864,7 +3864,7 @@ Window_StatusSkillOption.prototype.initialize = function(x, y) {
 };
 
 Window_StatusSkillOption.prototype.windowWidth = function() {
-    return this.standardPadding()*2 + this.textPadding()*2 + 14*17;
+    return this.standardPadding()*2 + this.textPadding()*2 + this.standardCharacterWidth()*17;
 };
 
 Window_StatusSkillOption.prototype.setActor = function(actor) {
@@ -3948,7 +3948,7 @@ Window_StatusSkillLearned.prototype.initialize = function() {
 };
 
 Window_StatusSkillLearned.prototype.windowWidth = function() {
-	var contentsWidth = 18*14;
+	var contentsWidth = 18*this.standardCharacterWidth();
 	var characterCount = 0;
 	this._learnedActions.forEach(function (action) {
 		if(characterCount < action.name.length) {
@@ -3960,7 +3960,7 @@ Window_StatusSkillLearned.prototype.windowWidth = function() {
 			characterCount = action.name.length;
 		}
 	});
-	var actionWidth = Window_Base._iconWidth + this.textPadding() + characterCount*14;
+	var actionWidth = Window_Base._iconWidth + this.textPadding() + characterCount*this.standardCharacterWidth();
 	if(contentsWidth < actionWidth) {
 		contentsWidth = actionWidth;
 	}
@@ -3975,7 +3975,7 @@ Window_StatusSkillLearned.prototype.windowWidth = function() {
 			characterCount = attribute.name.length;
 		}
 	});
-	var attributeWidth = characterCount*14;
+	var attributeWidth = characterCount*this.standardCharacterWidth();
 	if(contentsWidth < attributeWidth) {
 		contentsWidth = attributeWidth;
 	}
@@ -4115,45 +4115,45 @@ Window_StatusSkillLearned.prototype.refresh = function() {
 		var lineOffset = 0;
 		if(this._learnedActions.length > 0) {
 			this.changeTextColor(this.systemColor());
-			this.drawText("Learned Actions:", this.textPadding(), lineOffset, 16*14);
+			this.drawText("Learned Actions:", this.textPadding(), lineOffset, 16*this.standardCharacterWidth());
 			this.resetTextColor();
 			lineOffset += this.lineHeight();
 			this._learnedActions.forEach(function (learnedAction) {
 				var iconIndex = this.iconIndexForAction(learnedAction);
 				this.drawIcon(iconIndex, this.textPadding(), lineOffset);
-				this.drawText(learnedAction.name, this.textPadding() * 2 + iconBoxWidth, lineOffset, learnedAction.name.length*14);
+				this.drawText(learnedAction.name, this.textPadding() * 2 + iconBoxWidth, lineOffset, learnedAction.name.length*this.standardCharacterWidth());
 				lineOffset += this.lineHeight();
 			}, this);
 		}
 		if(this._forgottenActions.length > 0) {
 			this.changeTextColor(this.systemColor());
-			this.drawText("Forgotten Actions:", this.textPadding(), lineOffset, 18*14);
+			this.drawText("Forgotten Actions:", this.textPadding(), lineOffset, 18*this.standardCharacterWidth());
 			this.resetTextColor();
 			lineOffset += this.lineHeight();
 			this._forgottenActions.forEach(function (forgottenAction) {
 				var iconIndex = this.iconIndexForAction(forgottenAction);
 				this.drawIcon(iconIndex, this.textPadding(), lineOffset);
-				this.drawText(forgottenAction.name, this.textPadding() * 2 + iconBoxWidth, lineOffset, forgottenAction.name.length*14);
+				this.drawText(forgottenAction.name, this.textPadding() * 2 + iconBoxWidth, lineOffset, forgottenAction.name.length*this.standardCharacterWidth());
 				lineOffset += this.lineHeight();
 			}, this);
 		}
 		if(this._gainedAttributes.length > 0) {
 			this.changeTextColor(this.systemColor());
-			this.drawText("Gained Attributes:", this.textPadding(), lineOffset, 18*14);
+			this.drawText("Gained Attributes:", this.textPadding(), lineOffset, 18*this.standardCharacterWidth());
 			this.resetTextColor();
 			lineOffset += this.lineHeight();
 			this._gainedAttributes.forEach(function (gainedAttribute) {
-				this.drawText(gainedAttribute.name, this.textPadding(), lineOffset, gainedAttribute.name.length*14);
+				this.drawText(gainedAttribute.name, this.textPadding(), lineOffset, gainedAttribute.name.length*this.standardCharacterWidth());
 				lineOffset += this.lineHeight();
 			}, this);
 		}
 		if(this._lostAttributes.length > 0) {
 			this.changeTextColor(this.systemColor());
-			this.drawText("Lost Attributes:", this.textPadding(), lineOffset, 16*14);
+			this.drawText("Lost Attributes:", this.textPadding(), lineOffset, 16*this.standardCharacterWidth());
 			this.resetTextColor();
 			lineOffset += this.lineHeight();
 			this._lostAttributes.forEach(function (lostAttribute) {
-				this.drawText(lostAttribute.name, this.textPadding(), lineOffset, lostAttribute.name.length*14);
+				this.drawText(lostAttribute.name, this.textPadding(), lineOffset, lostAttribute.name.length*this.standardCharacterWidth());
 				lineOffset += this.lineHeight();
 			}, this);
 		}
@@ -4180,7 +4180,7 @@ Window_StatusAttributesList.prototype.initialize = function(y, height) {
 };
 
 Window_StatusAttributesList.prototype.windowWidth = function() {
-	return this.standardPadding()*2 + this.textPadding() + 14*20;
+	return this.standardPadding()*2 + this.textPadding() + this.standardCharacterWidth()*20;
 };
 
 Window_StatusAttributesList.prototype.numVisibleRows = function() {
@@ -4315,6 +4315,18 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
  
 (function() {
 	//base
+	//Window_Base.prototype.lineHeight = function() {
+	//	return 30;
+	//};
+	
+	Window_Base.prototype.standardFontSize = function() {
+		return Bitmap.prototype.standardFontSize();
+	};
+	
+	Window_Base.prototype.standardCharacterWidth = function() {
+		return Bitmap.prototype.standardCharacterWidth();
+	};
+	
 	Window_Base.prototype.openCloseSpeed = function() {
 		return 64;
 	};
@@ -4352,43 +4364,43 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.drawActorTbsMP(actor, x, y+lineHeight*3);
 		//this.drawActorIcons(actor, x, y + lineHeight * 2);
 		//this.drawActorStress(actor, x, y + lineHeight);
-		this.drawActorSimpleDamage(actor, x+14*12, y);
-		this.drawActorPartsDamage(actor, x+14*13, y+lineHeight, true);
+		this.drawActorSimpleDamage(actor, x+this.standardCharacterWidth()*12, y);
+		this.drawActorPartsDamage(actor, x+this.standardCharacterWidth()*13, y+lineHeight, true);
 	};
 	
 	Window_Base.prototype.drawActorTbsMP = function(actor, x, y) {
 		if(actor.maxMP() == 0) { return; }
 		this.changeTextColor(this.systemColor());
-		this.drawText("En", x, y, 14*2);
-		this.drawText("/", x+14*4, y, 14);
+		this.drawText("En", x, y, this.standardCharacterWidth()*2);
+		this.drawText("/", x+this.standardCharacterWidth()*4, y, this.standardCharacterWidth());
 		this.resetTextColor();
-		this.drawText(actor.maxMP() - actor.mpSpent(), x+14*2, y, 14*2, 'right');
-		this.drawText(actor.maxMP(), x+14*5, y, 14*2, 'right');
+		this.drawText(actor.maxMP() - actor.mpSpent(), x+this.standardCharacterWidth()*2, y, this.standardCharacterWidth()*2, 'right');
+		this.drawText(actor.maxMP(), x+this.standardCharacterWidth()*5, y, this.standardCharacterWidth()*2, 'right');
 	};
 	
 	Window_Base.prototype.drawActorSkillXP = function(actor, x, y, twoLines) {
 		var lineOneX = x;
-		var lineTwoX = x + (twoLines ? 0 : 14*6);
+		var lineTwoX = x + (twoLines ? 0 : this.standardCharacterWidth()*6);
 		var lineOneY = y;
 		var lineTwoY = y + (twoLines ? this.lineHeight() : 0);
 		this.changeTextColor(this.systemColor());
 		var spText = "SP";
 		var rpText = "RP";
-		var xValueOffset = 14*2;
+		var xValueOffset = this.standardCharacterWidth()*2;
 		if(twoLines) {
 			spText = "Skill Points";
 			rpText = "Refund Points";
-			xValueOffset = 14*14;
+			xValueOffset = this.standardCharacterWidth()*14;
 		}
-		this.drawText(spText, lineOneX, lineOneY, 14*(spText.length));
-		this.drawText(rpText, lineTwoX, lineTwoY, 14*(rpText.length));
+		this.drawText(spText, lineOneX, lineOneY, this.standardCharacterWidth()*(spText.length));
+		this.drawText(rpText, lineTwoX, lineTwoY, this.standardCharacterWidth()*(rpText.length));
 		this.resetTextColor();
-		this.drawText(actor.skillXP(), lineOneX+xValueOffset, lineOneY, 14*4, 'right');
-		this.drawText(actor.respecXP(), lineTwoX+xValueOffset, lineTwoY, 14*4, 'right');
+		this.drawText(actor.skillXP(), lineOneX+xValueOffset, lineOneY, this.standardCharacterWidth()*4, 'right');
+		this.drawText(actor.respecXP(), lineTwoX+xValueOffset, lineTwoY, this.standardCharacterWidth()*4, 'right');
 	};
 	
 	Window_Base.prototype.healthMeterPipCount = function() {
-		return 14;
+		return this.standardCharacterWidth();
 	};
 	
 	Window_Base.prototype.statusMeterPipCount = function() {
@@ -4401,9 +4413,9 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		//this.drawActorPartDamage(actor, "head"    , x		, y							, "He");
 		//this.drawActorPartDamage(actor, "torso"   , x		, y + this.lineHeight()		, "To");
 		//this.drawActorLimbDamage(actor, "leftArm" , x		, y + this.lineHeight()*2	, "Ar");
-		//this.drawActorLimbDamage(actor, "rightArm", x+14*12	, y + this.lineHeight()*2);
+		//this.drawActorLimbDamage(actor, "rightArm", x+this.standardCharacterWidth()*12	, y + this.lineHeight()*2);
 		//this.drawActorLimbDamage(actor, "leftLeg" , x		, y + this.lineHeight()*3	, "Le");
-		//this.drawActorLimbDamage(actor, "rightLeg", x+14*12	, y + this.lineHeight()*3);
+		//this.drawActorLimbDamage(actor, "rightLeg", x+this.standardCharacterWidth()*12	, y + this.lineHeight()*3);
 	};
 	
 	Window_Base.prototype.drawActorSimpleDamage = function(actor, x, y) {
@@ -4411,21 +4423,21 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		//this.drawActorSimplePartDamage(actor, "head"    , x		, y							, "He");
 		//this.drawActorSimplePartDamage(actor, "torso"   , x		, y + this.lineHeight()		, "To");
 		//this.drawActorSimpleLimbDamage(actor, "leftArm" , x		, y + this.lineHeight()*2	, "Ar");
-		//this.drawActorSimpleLimbDamage(actor, "rightArm", x+14*8	, y + this.lineHeight()*2);
+		//this.drawActorSimpleLimbDamage(actor, "rightArm", x+this.standardCharacterWidth()*8	, y + this.lineHeight()*2);
 		//this.drawActorSimpleLimbDamage(actor, "leftLeg" , x		, y + this.lineHeight()*3	, "Le");
-		//this.drawActorSimpleLimbDamage(actor, "rightLeg", x+14*8	, y + this.lineHeight()*3);
+		//this.drawActorSimpleLimbDamage(actor, "rightLeg", x+this.standardCharacterWidth()*8	, y + this.lineHeight()*3);
 	};
 	
 	Window_Base.prototype.drawActorMentalDamage = function(actor, part, x, y, label) {
 		this.changeTextColor(this.systemColor());
-		this.drawText(label, x, y, 14*2);
+		this.drawText(label, x, y, this.standardCharacterWidth()*2);
 		if(actor.getDamage(part) >= 100) {
 			this.changeTextColor(this.deathColor());
 		} else {
 			this.resetTextColor();
 			this.changePaintOpacity(false);
 		}
-		this.drawText(actor.getDamage(part) > 0 ? actor.getDamage(part) : "-", x + 14*2, y, 14*3, 'right');
+		this.drawText(actor.getDamage(part) > 0 ? actor.getDamage(part) : "-", x + this.standardCharacterWidth()*2, y, this.standardCharacterWidth()*3, 'right');
 		this.resetTextColor();
 		this.changePaintOpacity(true);
 	};
@@ -4445,29 +4457,29 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	Window_Base.prototype.drawActorPartDamage = function(actor, part, x, y, label) {
 		this.changeTextColor(this.systemColor());
-		this.drawText(label, x, y, 14*2);
-		this.drawText("/", x+14*4, y, 14);
+		this.drawText(label, x, y, this.standardCharacterWidth()*2);
+		this.drawText("/", x+this.standardCharacterWidth()*4, y, this.standardCharacterWidth());
 		var brackets = "[";
 		var i;
 		for(i = 0; i < this.healthMeterPipCount(); i++) {
 			brackets += " ";
 		}
 		brackets += "]";
-		this.drawText(brackets, x+14*7, y, brackets.length*14);
+		this.drawText(brackets, x+this.standardCharacterWidth()*7, y, brackets.length*this.standardCharacterWidth());
 		var health = actor.toughness()*(part==="core"||part==="torso"?2:1) - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
 		}
-		this.drawText(health, x + 14*2, y, 14*2, 'right');
-		this.drawText(actor.toughness()*(part==="core"||part==="torso"?2:1), x + 14*5, y, 14*2, 'right');
+		this.drawText(health, x + this.standardCharacterWidth()*2, y, this.standardCharacterWidth()*2, 'right');
+		this.drawText(actor.toughness()*(part==="core"||part==="torso"?2:1), x + this.standardCharacterWidth()*5, y, this.standardCharacterWidth()*2, 'right');
 		var pips = (health / (actor.toughness()*(part==="core"||part==="torso"?2:1))) * this.healthMeterPipCount();
 		for(i = 0; i < pips; i++) {
-			var width = 14;
+			var width = this.standardCharacterWidth();
 			if(pips - i > 0 && pips - i < 1) {
 				width *= pips - i;
 			}
-			this.drawText("=", x+14*(8+i), y, width);
+			this.drawText("=", x+this.standardCharacterWidth()*(8+i), y, width);
 		}
 		this.resetTextColor();
 	};
@@ -4475,56 +4487,56 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_Base.prototype.drawActorLimbDamage = function(actor, part, x, y, label) {
 		this.changeTextColor(this.systemColor());
 		if(label) {
-			this.drawText(label, x, y, 14*2);
+			this.drawText(label, x, y, this.standardCharacterWidth()*2);
 		} else {
-			x -= 14*2;
+			x -= this.standardCharacterWidth()*2;
 		}
-		this.drawText("[     ]", x+14*5, y, 14*7);
+		this.drawText("[     ]", x+this.standardCharacterWidth()*5, y, this.standardCharacterWidth()*7);
 		var health = actor.toughness()*(part==="core"||part==="torso"?2:1) - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
 		}
-		this.drawText(health, x + 14*2, y, 14*3, 'right');
+		this.drawText(health, x + this.standardCharacterWidth()*2, y, this.standardCharacterWidth()*3, 'right');
 		var pips = (health / (actor.toughness()*(part==="core"||part==="torso"?2:1))) * 5;
 		var i;
 		for(i = 0; i < pips; i++) {
-			var width = 14;
+			var width = this.standardCharacterWidth();
 			if(pips - i > 0 && pips - i < 1) {
 				width *= pips - i;
 			}
-			this.drawText("=", x+14*(6+i), y, width);
+			this.drawText("=", x+this.standardCharacterWidth()*(6+i), y, width);
 		}
 		this.resetTextColor();
 	};
 	
 	Window_Base.prototype.drawActorSimplePartDamage = function(actor, part, x, y, label) {
 		this.changeTextColor(this.systemColor());
-		this.drawText(label, x, y, 14*2);
-		this.drawText("/", x+14*4, y, 14);
+		this.drawText(label, x, y, this.standardCharacterWidth()*2);
+		this.drawText("/", x+this.standardCharacterWidth()*4, y, this.standardCharacterWidth());
 		var health = actor.toughness()*(part==="core"||part==="torso"?2:1) - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
 		}
-		this.drawText(health, x + 14*2, y, 14*2, 'right');
-		this.drawText(actor.toughness()*(part==="core"||part==="torso"?2:1), x + 14*5, y, 14*2, 'right');
+		this.drawText(health, x + this.standardCharacterWidth()*2, y, this.standardCharacterWidth()*2, 'right');
+		this.drawText(actor.toughness()*(part==="core"||part==="torso"?2:1), x + this.standardCharacterWidth()*5, y, this.standardCharacterWidth()*2, 'right');
 		this.resetTextColor();
 	};
 	
 	Window_Base.prototype.drawActorSimpleLimbDamage = function(actor, part, x, y, label) {
 		if(label) {
 			this.changeTextColor(this.systemColor());
-			this.drawText(label, x, y, 14*2);
+			this.drawText(label, x, y, this.standardCharacterWidth()*2);
 		} else {
-			x -= 14*2;
+			x -= this.standardCharacterWidth()*2;
 		}
 		var health = actor.toughness()*(part==="core"||part==="torso"?2:1) - actor.getDamage(part);
 		this.resetTextColor();
 		if(health <= 0) {
 			this.changeTextColor(this.deathColor());
 		}
-		this.drawText(health, x + 14*3, y, 14*3, 'right');
+		this.drawText(health, x + this.standardCharacterWidth()*3, y, this.standardCharacterWidth()*3, 'right');
 		this.resetTextColor();
 	};
 	
@@ -4542,9 +4554,9 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 					this.changeTextColor(this.deathColor());
 				}
 			}
-			this.drawText("He", curX, y, 14*2);
+			this.drawText("He", curX, y, this.standardCharacterWidth()*2);
 		}
-		curX += 14*3;
+		curX += this.standardCharacterWidth()*3;
 		if(actor.getDamage("torso") > 0) {
 			this.resetTextColor();
 			this.changePaintOpacity(false);
@@ -4555,9 +4567,9 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 					this.changeTextColor(this.deathColor());
 				}
 			}
-			this.drawText("To", curX, y, 14*2);
+			this.drawText("To", curX, y, this.standardCharacterWidth()*2);
 		}
-		curX += 14*3;
+		curX += this.standardCharacterWidth()*3;
 		if(multipleLines) { curX = x; y += this.lineHeight(); }
 		if(actor.getDamage("leftArm") > 0) {
 			this.resetTextColor();
@@ -4569,9 +4581,9 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 					this.changeTextColor(this.deathColor());
 				}
 			}
-			this.drawText("LA", curX, y, 14*2);
+			this.drawText("LA", curX, y, this.standardCharacterWidth()*2);
 		}
-		curX += 14*3;
+		curX += this.standardCharacterWidth()*3;
 		if(actor.getDamage("rightArm") > 0) {
 			this.resetTextColor();
 			this.changePaintOpacity(false);
@@ -4582,9 +4594,9 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 					this.changeTextColor(this.deathColor());
 				}
 			}
-			this.drawText("RA", curX, y, 14*2);
+			this.drawText("RA", curX, y, this.standardCharacterWidth()*2);
 		}
-		curX += 14*3;
+		curX += this.standardCharacterWidth()*3;
 		if(multipleLines) { curX = x; y += this.lineHeight(); }
 		if(actor.getDamage("leftLeg") > 0) {
 			this.resetTextColor();
@@ -4596,9 +4608,9 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 					this.changeTextColor(this.deathColor());
 				}
 			}
-			this.drawText("LL", curX, y, 14*2);
+			this.drawText("LL", curX, y, this.standardCharacterWidth()*2);
 		}
-		curX += 14*3;
+		curX += this.standardCharacterWidth()*3;
 		if(actor.getDamage("rightLeg") > 0) {
 			this.resetTextColor();
 			this.changePaintOpacity(false);
@@ -4609,7 +4621,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 					this.changeTextColor(this.deathColor());
 				}
 			}
-			this.drawText("RL", curX, y, 14*2);
+			this.drawText("RL", curX, y, this.standardCharacterWidth()*2);
 		}
 		this.changePaintOpacity(true);
 		this.resetTextColor();
@@ -4618,24 +4630,24 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_Base.prototype.drawActorStress = function(actor, x, y) {
 		if(actor.blankDummy()) { return; }
 		this.changeTextColor(this.systemColor());
-		this.drawText("St", x, y, 14*2);
+		this.drawText("St", x, y, this.standardCharacterWidth()*2);
 		var brackets = "[";
 		var i;
 		for(i = 0; i < this.statusMeterPipCount(); i++) {
 			brackets += " ";
 		}
 		brackets += "]";
-		this.drawText(brackets, x+14*4, y, brackets.length*14);
+		this.drawText(brackets, x+this.standardCharacterWidth()*4, y, brackets.length*this.standardCharacterWidth());
 		this.changeTextColor(this.crisisColor());
 		var stress = actor.stress();
-		this.drawText(stress, x + 14*2, y, 14*2, 'right');
+		this.drawText(stress, x + this.standardCharacterWidth()*2, y, this.standardCharacterWidth()*2, 'right');
 		var pips = (stress / 10) * this.statusMeterPipCount();
 		for(i = 0; i < pips; i++) {
-			var width = 14;
+			var width = this.standardCharacterWidth();
 			if(pips - i > 0 && pips - i < 1) {
 				width *= pips - i;
 			}
-			this.drawText("=", x+14*(5+i), y, width);
+			this.drawText("=", x+this.standardCharacterWidth()*(5+i), y, width);
 		}
 		this.resetTextColor();
 	};
@@ -4643,24 +4655,24 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_Base.prototype.drawActorRoundBuffs = function(actor, x, y) {
 		if(actor.blankDummy()) { return; }
 		this.changeTextColor(this.systemColor());
-		this.drawText("Fo", x, y, 14*2);
+		this.drawText("Fo", x, y, this.standardCharacterWidth()*2);
 		var brackets = "[";
 		var i;
 		for(i = 0; i < this.statusMeterPipCount(); i++) {
 			brackets += " ";
 		}
 		brackets += "]";
-		this.drawText(brackets, x+14*4, y, brackets.length*14);
+		this.drawText(brackets, x+this.standardCharacterWidth()*4, y, brackets.length*this.standardCharacterWidth());
 		this.changeTextColor(this.textColor(27));
 		var roundBuffs = actor.roundBuffs();
-		this.drawText(roundBuffs, x + 14*2, y, 14*2, 'right');
+		this.drawText(roundBuffs, x + this.standardCharacterWidth()*2, y, this.standardCharacterWidth()*2, 'right');
 		var pips = (roundBuffs / 10) * this.statusMeterPipCount();
 		for(i = 0; i < pips; i++) {
-			var width = 14;
+			var width = this.standardCharacterWidth();
 			if(pips - i > 0 && pips - i < 1) {
 				width *= pips - i;
 			}
-			this.drawText("=", x+14*(5+i), y, width);
+			this.drawText("=", x+this.standardCharacterWidth()*(5+i), y, width);
 		}
 		this.resetTextColor();
 	};
@@ -4672,7 +4684,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		
 		var nameOffset = drawName ? this.nameOffset() : 0;
 		var skillsPosition = nameOffset + 175;
-		var characterWidth = 14;
+		var characterWidth = this.standardCharacterWidth();
 		
 		var reqs = action.skillRequirements;
 		if(!reqs || reqs.length === 0) {
@@ -4742,21 +4754,21 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 				
 				var rangeTypeIconId = hits[i].rangeType ? this.getIconIdFor(hits[i].rangeType) : 0;
 				var rangeIsSelf = hits[i].rangeType && hits[i].rangeType === "self";
-				this.drawIcon(rangeTypeIconId, nameOffset + Window_Base._iconWidth + 14*3, lineHeight);
+				this.drawIcon(rangeTypeIconId, nameOffset + Window_Base._iconWidth + this.standardCharacterWidth()*3, lineHeight);
 				var hitRange = hits[i].range !== undefined ? hits[i].range : 0;
 				hitRange += hits[i].ignoreUserRange || !actor ? 0 : actor.baseRange();
 				var range = hitRange / 2;
 				var flooredRange = Math.floor(range);
-				this.drawText(!rangeIsSelf && range > 0 ? flooredRange + (range > flooredRange ? "½" : "") : "-", nameOffset + Window_Base._iconWidth*2 + 14*3, lineHeight, 14*2, 'right');
+				this.drawText(!rangeIsSelf && range > 0 ? flooredRange + (range > flooredRange ? "½" : "") : "-", nameOffset + Window_Base._iconWidth*2 + this.standardCharacterWidth()*3, lineHeight, this.standardCharacterWidth()*2, 'right');
 				var accuracy = hits[i].evasionPenalty !== undefined ? hits[i].evasionPenalty : 0;
 				accuracy += hits[i].accuracy !== undefined ? hits[i].accuracy : 0;
 				accuracy -= hits[i].accuracyPenalty !== undefined ? hits[i].accuracyPenalty : 0;
-				this.drawText((hits[i].damage || hits[i].debuffs) && accuracy > 0 ? accuracy : "-", nameOffset + Window_Base._iconWidth*2 + 14*9, lineHeight, 14*2, 'right');
+				this.drawText((hits[i].damage || hits[i].debuffs) && accuracy > 0 ? accuracy : "-", nameOffset + Window_Base._iconWidth*2 + this.standardCharacterWidth()*9, lineHeight, this.standardCharacterWidth()*2, 'right');
 				var hitAoe = hits[i].aoe !== undefined ? hits[i].aoe : 0;
 				hitAoe += hits[i].aoeUsesUserRange ? actor.baseRange() : 0;
 				var aoe = hitAoe / 2;
 				var flooredAoe = Math.floor(aoe);
-				this.drawText(aoe > 0 ? flooredAoe + (aoe > flooredAoe ? "½" : "") : "-", nameOffset + Window_Base._iconWidth*2 + 14*6, lineHeight, 14*2, 'right');
+				this.drawText(aoe > 0 ? flooredAoe + (aoe > flooredAoe ? "½" : "") : "-", nameOffset + Window_Base._iconWidth*2 + this.standardCharacterWidth()*6, lineHeight, this.standardCharacterWidth()*2, 'right');
 				
 				if(i === 0 && n === 0) {
 					if(actor) {
@@ -4776,7 +4788,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 						if(reqLacked) {
 							this.changeTextColor(this.deathColor());
 						}
-						this.drawText(action.name, 0, lineHeight, 18*14);
+						this.drawText(action.name, 0, lineHeight, 18*this.standardCharacterWidth());
 						this.resetTextColor();
 					}
 				} else {
@@ -4803,8 +4815,8 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 				var buffs = hits[i].buffs;
 				var focusAmount = hits[i].focus;
 				if(damage == undefined && heal == undefined && buffs == undefined && focusAmount == undefined) {
-					this.drawText("-", nameOffset + Window_Base._iconWidth, lineHeight, 14*2, 'right');
-					this.drawText("-", nameOffset + Window_Base._iconWidth, lineHeight, 14*2, 'right');
+					this.drawText("-", nameOffset + Window_Base._iconWidth, lineHeight, this.standardCharacterWidth()*2, 'right');
+					this.drawText("-", nameOffset + Window_Base._iconWidth, lineHeight, this.standardCharacterWidth()*2, 'right');
 				} else {
 					var multipleHits = 1;
 					if(hits[i].multipleHits !== undefined) {
@@ -4903,7 +4915,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_Base.prototype.drawDamage = function(power, drawName, nameOffset, lineHeight, lineOffset, reqLacked, iconId) {
 		if(power !== undefined && !isNaN(power)) {
 			this.drawIcon(iconId, nameOffset, lineHeight + this.lineHeight() * lineOffset);
-			this.drawText(power, nameOffset + Window_Base._iconWidth, lineHeight + this.lineHeight() * lineOffset, 14*2, 'right');
+			this.drawText(power, nameOffset + Window_Base._iconWidth, lineHeight + this.lineHeight() * lineOffset, this.standardCharacterWidth()*2, 'right');
 			if(drawName && lineOffset > 0) {
 				if(reqLacked) {
 					this.changeTextColor(this.deathColor());
@@ -4920,7 +4932,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		if(heal !== undefined && !isNaN(heal)) {
 			this.drawIcon(iconId, nameOffset, lineHeight + this.lineHeight() * lineOffset);
 			var power = heal !== undefined ? heal : 0;
-			this.drawText(power > 0 ? (power >= 100 ? "**" : power) : "-", nameOffset + Window_Base._iconWidth, lineHeight + this.lineHeight() * lineOffset, 14*2, 'right');
+			this.drawText(power > 0 ? (power >= 100 ? "**" : power) : "-", nameOffset + Window_Base._iconWidth, lineHeight + this.lineHeight() * lineOffset, this.standardCharacterWidth()*2, 'right');
 			if(drawName && lineOffset > 0) {
 				if(reqLacked) {
 					this.changeTextColor(this.deathColor());
@@ -5016,7 +5028,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_Base.prototype.drawDescription = function(description) {
 		if(!description) { return; }
 		
-		var lineWidth = Math.floor((this.width - this.standardPadding()*2 - this.textPadding()*2) / 14);
+		var lineWidth = Math.floor((this.width - this.standardPadding()*2 - this.textPadding()*2) / this.standardCharacterWidth());
 		var descWords = description.split(" ");
 		var i;
 		var descLine = "";
@@ -5975,9 +5987,9 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 				var stressCost = action.stressCost == undefined ? 0 : action.stressCost;
 				var mpCost = action.mpCost == undefined ? 0 : action.mpCost;
 				this.changeTextColor(this.crisisColor());
-				this.drawText(stressCost, rect.x, rect.y, rect.width-14*2, 'right');
+				this.drawText(stressCost, rect.x, rect.y, rect.width-this.standardCharacterWidth()*2, 'right');
 				this.changeTextColor(this.systemColor());
-				this.drawText(":", rect.x, rect.y, rect.width-14, 'right');
+				this.drawText(":", rect.x, rect.y, rect.width-this.standardCharacterWidth(), 'right');
 				this.resetTextColor();
 				this.drawText(mpCost, rect.x, rect.y, rect.width, 'right');
 			}
@@ -6053,8 +6065,8 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	Window_EquipCommand.prototype.makeCommandList = function() {
 		this.addCommand("Held",   'equipWeapons');
-		this.addCommand("Accessory", 'equipAccessories');
-		this.addCommand("Organize",    'organizeItems');
+		this.addCommand("Worn", 'equipAccessories');
+		this.addCommand("Org.",    'organizeItems');
 	};
 	
 	//equip slot
@@ -6486,15 +6498,15 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_Status.prototype.drawBlock1 = function(y) {
-		this.drawActorName(this._actor, this.textPadding(), y, 14*10);
+		this.drawActorName(this._actor, this.textPadding(), y, this.standardCharacterWidth()*10);
 		this.changePaintOpacity(false);
-		this.drawActorClass(this._actor, this.textPadding()+14*11, y, 14*20);
+		this.drawActorClass(this._actor, this.textPadding()+this.standardCharacterWidth()*11, y, this.standardCharacterWidth()*20);
 		this.changePaintOpacity(true);
 		//var handedness = "Left Handed";
 		//if(this._actor.handedness() === "right") {
 		//	handedness = "Right Handed";
 		//}
-		//this.drawText(handedness, this.width-this.standardPadding()-this.textPadding()-14*13, y, 14*12);
+		//this.drawText(handedness, this.width-this.standardPadding()-this.textPadding()-this.standardCharacterWidth()*13, y, this.standardCharacterWidth()*12);
 	};
 	
 	Window_Status.prototype.drawBlock2 = function(y) {
@@ -6517,31 +6529,31 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		var lineHeight = this.lineHeight();
 		this.drawMaxHPAndMP(this._actor, x, y);
 		this.drawActorSkillXP(this._actor, x, y+lineHeight*2, true);
-		this.drawDerivedStats(this._actor, x+14*19, y);
+		this.drawDerivedStats(this._actor, x+this.standardCharacterWidth()*19, y);
 	};
 	
 	Window_Status.prototype.drawMaxHPAndMP = function(actor, x, y) {
 		this.changeTextColor(this.systemColor());
-		this.drawText("Max Hit Points", x, y, 14*14);
-		this.drawText("Max Energy", x, y+this.lineHeight(), 14*10);
+		this.drawText("Max Hit Points", x, y, this.standardCharacterWidth()*14);
+		this.drawText("Max Energy", x, y+this.lineHeight(), this.standardCharacterWidth()*10);
 		this.resetTextColor();
-		this.drawText(actor.toughness()*2, x+14*15, y, 14*3, 'right');
-		this.drawText(actor.maxMP(), x+14*16, y+this.lineHeight(), 14*2, 'right');
+		this.drawText(actor.toughness()*2, x+this.standardCharacterWidth()*15, y, this.standardCharacterWidth()*3, 'right');
+		this.drawText(actor.maxMP(), x+this.standardCharacterWidth()*16, y+this.lineHeight(), this.standardCharacterWidth()*2, 'right');
 	};
 	
 	Window_Status.prototype.drawDerivedStats = function(actor, x, y) {
 		this.changeTextColor(this.systemColor());
-		this.drawText("Strength Bonus", x, y, 14*14);
-		this.drawText("Magic Bonus", x, y+this.lineHeight(), 14*11);
-		this.drawText("Stress Recovery", x, y+this.lineHeight()*2, 14*15);
-		this.drawText("Movement", x, y+this.lineHeight()*3, 14*8);
+		this.drawText("Strength Bonus", x, y, this.standardCharacterWidth()*14);
+		this.drawText("Magic Bonus", x, y+this.lineHeight(), this.standardCharacterWidth()*11);
+		this.drawText("Stress Recovery", x, y+this.lineHeight()*2, this.standardCharacterWidth()*15);
+		this.drawText("Movement", x, y+this.lineHeight()*3, this.standardCharacterWidth()*8);
 		this.resetTextColor();
-		this.drawText(actor.strength(), x+14*16, y, 14*3, 'right');
-		this.drawText(actor.magicPower(), x+14*16, y+this.lineHeight(), 14*3, 'right');
-		this.drawText(actor.stressRecovery(), x+14*16, y+this.lineHeight()*2, 14*3, 'right');
+		this.drawText(actor.strength(), x+this.standardCharacterWidth()*16, y, this.standardCharacterWidth()*3, 'right');
+		this.drawText(actor.magicPower(), x+this.standardCharacterWidth()*16, y+this.lineHeight(), this.standardCharacterWidth()*3, 'right');
+		this.drawText(actor.stressRecovery(), x+this.standardCharacterWidth()*16, y+this.lineHeight()*2, this.standardCharacterWidth()*3, 'right');
 		var move = actor.baseMove()/2;
 		var flooredMove = Math.floor(move);
-		this.drawText(flooredMove+(move>flooredMove?"½":""), x+14*16, y+this.lineHeight()*3, 14*3, 'right');
+		this.drawText(flooredMove+(move>flooredMove?"½":""), x+this.standardCharacterWidth()*16, y+this.lineHeight()*3, this.standardCharacterWidth()*3, 'right');
 	};
 	
 	//BattleLog
