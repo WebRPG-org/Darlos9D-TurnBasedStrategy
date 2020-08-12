@@ -46,17 +46,20 @@ Bitmap.prototype._drawTextBody = function(text, tx, ty, maxWidth, align) {
 		case '#db4161':
 			colorIndex = 3;
 			break;
-		case '#49aa10':
+		case '#ff7930':
 			colorIndex = 4;
 			break;
-		case '#4141ff':
+		case '#edb320':
 			colorIndex = 5;
 			break;
-		case '#edb320':
+		case '#49aa10':
 			colorIndex = 6;
 			break;
-		case '#db41c3':
+		case '#4141ff':
 			colorIndex = 7;
+			break;
+		case '#db41c3':
+			colorIndex = 8;
 			break;
 		}
 	} else {

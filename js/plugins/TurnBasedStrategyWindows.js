@@ -4316,7 +4316,19 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 (function() {
 	//base
 	Window_Base.prototype.lineHeight = function() {
-		return this.standardCharacterHeight()+3*2;
+		return this.standardCharacterHeight()+this.standardPixelSize()*4;
+	};
+	
+	Window_Base.prototype.standardPadding = function() {
+		return this.standardPixelSize()*2;
+	};
+
+	Window_Base.prototype.textPadding = function() {
+		return this.standardPixelSize();
+	};
+	
+	Window_Base.prototype.standardPixelSize = function() {
+		return Bitmap.prototype.standardPixelSize();
 	};
 	
 	Window_Base.prototype.standardFontSize = function() {
@@ -4352,7 +4364,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 
 	Window_Base.prototype.hpGaugeColor1 = function() {
-		return this.textColor(20);
+		return '#ff7930';
 	};
 
 	Window_Base.prototype.hpGaugeColor2 = function() {
