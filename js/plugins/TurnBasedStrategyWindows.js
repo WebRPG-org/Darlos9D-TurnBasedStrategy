@@ -4320,11 +4320,15 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_Base.prototype.standardPadding = function() {
-		return this.standardPixelSize()*2;
+		return this.standardPixelSize()*3;
 	};
 
 	Window_Base.prototype.textPadding = function() {
 		return this.standardPixelSize();
+	};
+	
+	Window_Base.prototype.standardBackOpacity = function() {
+		return 255;
 	};
 	
 	Window_Base.prototype.standardPixelSize = function() {

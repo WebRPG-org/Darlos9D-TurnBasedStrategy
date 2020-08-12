@@ -103,7 +103,7 @@ Bitmap.prototype.standardCharacterHeight = function() {
 };
 
 Bitmap.prototype.standardCharacterWidth = function() {
-	return 5*this.standardPixelSize();
+	return 6*this.standardPixelSize();
 };
 
 //touch input
