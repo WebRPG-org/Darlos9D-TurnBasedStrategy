@@ -16,48 +16,91 @@
  
 //bitmap
 Bitmap.prototype.drawText = function(text, x, y, maxWidth, lineHeight, align) {
-    // Note: Firefox has a bug with textBaseline: Bug 737852
-    //       So we use 'alphabetic' here.
-    if (text !== undefined) {
+    if (text !== undefined && lineHeight >= this.standardCharacterHeight()) {
         var tx = x;
-        var ty = y + lineHeight - (lineHeight - this.fontSize * 0.7) / 2;
+        var ty = y + (lineHeight-this.standardCharacterHeight())/2;
         var context = this._context;
         var alpha = context.globalAlpha;
-        maxWidth = maxWidth || 0xffffffff;
-        if (align === 'center') {
-            tx += maxWidth / 2;
-        }
-        if (align === 'right') {
-            tx += maxWidth;
-        }
+        maxWidth = maxWidth || Graphics.boxWidth - x;
         context.save();
-        context.font = this._makeFontNameText();
-        context.textAlign = align;
-        context.textBaseline = 'alphabetic';
-        context.globalAlpha = 1;
-        this._drawTextOutline(text, tx, ty, maxWidth);
-        context.globalAlpha = alpha;
-        this._drawTextBody(text, tx, ty, maxWidth);
+        this._drawTextBody(text, tx, ty, maxWidth, align);
         context.restore();
         this._setDirty();
     }
 };
 
-Bitmap.prototype._drawTextBody = function(text, tx, ty, maxWidth) {
+Bitmap.prototype._drawTextBody = function(text, tx, ty, maxWidth, align) {
     var context = this._context;
-	var measuredText = context.measureText(text);
+	var alpha = context.globalAlpha;
+	context.globalAlpha = 1;
     context.imageSmoothingEnabled = false;
-    context.fillStyle = this.textColor;
-	var textWidth = text.length * this.standardCharacterWidth();
-    context.fillText(text, tx, ty, maxWidth);
+	var colorIndex = 0;
+	if(alpha == 1) {
+		switch(this.textColor) {
+		case '#797979':
+			colorIndex = 1;
+			break;
+		case '#000000':
+			colorIndex = 2;
+			break;
+		case '#db4161':
+			colorIndex = 3;
+			break;
+		case '#49aa10':
+			colorIndex = 4;
+			break;
+		case '#4141ff':
+			colorIndex = 5;
+			break;
+		case '#edb320':
+			colorIndex = 6;
+			break;
+		case '#db41c3':
+			colorIndex = 7;
+			break;
+		}
+	} else {
+		colorIndex = 1;
+	}
+	var txAligned = tx;
+	if(align === 'right') {
+		txAligned += maxWidth - this.standardCharacterWidth() * text.length;
+	} else if(align === 'center') {
+		txAligned += Math.round(maxWidth / 2 - this.standardCharacterWidth() * (text.length / 2));
+	}
+	txAligned = (Math.floor(txAligned / 3) + (align === 'center' || align === 'right' ? 0 : 1)) * 3
+	for(let i = 0; i < text.length; i++) {
+		var curX = txAligned + i * this.standardCharacterWidth();
+		if(curX < tx) { continue; }
+		if(curX + this.standardCharacterWidth() > tx + maxWidth) { break; }
+		this._drawCharacter(text[i], colorIndex, txAligned + i * this.standardCharacterWidth(), ty);
+	}
+	context.globalAlpha = alpha;
+};
+
+Bitmap.prototype._drawCharacter = function(character, colorIndex, x, y) {
+    var bitmap = ImageManager.loadSystem('TextFont');
+    var pw = this.standardCharacterWidth();
+    var ph = this.standardCharacterHeight();
+    var sx = pw * (character.charCodeAt(0)-33);
+    var sy = ph * colorIndex;
+    this.blt(bitmap, sx, sy, pw, ph, x, y);
+};
+
+Bitmap.prototype.standardPixelSize = function() {
+	return 3;
 };
 
 Bitmap.prototype.standardFontSize = function() {
     return 28;
 };
 
+Bitmap.prototype.standardCharacterHeight = function() {
+	return 8*this.standardPixelSize();
+};
+
 Bitmap.prototype.standardCharacterWidth = function() {
-	return 14;
+	return 5*this.standardPixelSize();
 };
 
 //touch input

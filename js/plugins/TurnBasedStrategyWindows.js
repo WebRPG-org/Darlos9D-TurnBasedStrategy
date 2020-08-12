@@ -1693,13 +1693,13 @@ Window_TbsSmallActorStatus.prototype.refresh = function() {
 		var battler = this._tbsActor.battler;
 		this.changeTextColor(this.crisisColor());
 		this.drawText("St", this.textPadding(), 0, this.standardCharacterWidth()*2);
-		this.changeTextColor(this.textColor(27));
+		this.changeTextColor(this.focusColor());
 		this.drawText("   Fo", this.textPadding(), 0, this.standardCharacterWidth()*5);
 		this.changeTextColor(this.systemColor());
 		this.drawText("  :", this.textPadding(), this.lineHeight(), this.standardCharacterWidth()*3);
 		this.changeTextColor(this.crisisColor());
 		this.drawText(battler.stress(), this.textPadding(), this.lineHeight(), this.standardCharacterWidth()*2, 'right');
-		this.changeTextColor(this.textColor(27));
+		this.changeTextColor(this.focusColor());
 		this.drawText(battler.roundBuffs(), this.textPadding()+this.standardCharacterWidth()*3, this.lineHeight(), this.standardCharacterWidth()*2, 'right');
 		if(battler.maxMP() > 0) {
 			this.changeTextColor(this.systemColor());
@@ -4315,16 +4315,84 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
  
 (function() {
 	//base
-	//Window_Base.prototype.lineHeight = function() {
-	//	return 30;
-	//};
+	Window_Base.prototype.lineHeight = function() {
+		return this.standardCharacterHeight()+3*2;
+	};
 	
 	Window_Base.prototype.standardFontSize = function() {
 		return Bitmap.prototype.standardFontSize();
 	};
 	
+	Window_Base.prototype.standardCharacterHeight = function() {
+		return Bitmap.prototype.standardCharacterHeight();
+	};
+	
 	Window_Base.prototype.standardCharacterWidth = function() {
 		return Bitmap.prototype.standardCharacterWidth();
+	};
+	
+	Window_Base.prototype.normalColor = function() {
+		return '#ffffff';
+	};
+
+	Window_Base.prototype.systemColor = function() {
+		return '#4141ff';
+	};
+
+	Window_Base.prototype.crisisColor = function() {
+		return '#edb320';
+	};
+
+	Window_Base.prototype.deathColor = function() {
+		return '#db4161';
+	};
+
+	Window_Base.prototype.gaugeBackColor = function() {
+		return '#000000';
+	};
+
+	Window_Base.prototype.hpGaugeColor1 = function() {
+		return this.textColor(20);
+	};
+
+	Window_Base.prototype.hpGaugeColor2 = function() {
+		return this.textColor(21);
+	};
+
+	Window_Base.prototype.mpGaugeColor1 = function() {
+		return this.textColor(22);
+	};
+
+	Window_Base.prototype.mpGaugeColor2 = function() {
+		return this.textColor(23);
+	};
+
+	Window_Base.prototype.mpCostColor = function() {
+		return this.textColor(23);
+	};
+
+	Window_Base.prototype.powerUpColor = function() {
+		return '#49aa10';
+	};
+
+	Window_Base.prototype.powerDownColor = function() {
+		return this.textColor(25);
+	};
+
+	Window_Base.prototype.tpGaugeColor1 = function() {
+		return this.textColor(28);
+	};
+
+	Window_Base.prototype.tpGaugeColor2 = function() {
+		return this.textColor(29);
+	};
+
+	Window_Base.prototype.tpCostColor = function() {
+		return this.textColor(29);
+	};
+
+	Window_Base.prototype.focusColor = function() {
+		return '#db41c3';
 	};
 	
 	Window_Base.prototype.openCloseSpeed = function() {
@@ -4663,7 +4731,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		}
 		brackets += "]";
 		this.drawText(brackets, x+this.standardCharacterWidth()*4, y, brackets.length*this.standardCharacterWidth());
-		this.changeTextColor(this.textColor(27));
+		this.changeTextColor(this.focusColor());
 		var roundBuffs = actor.roundBuffs();
 		this.drawText(roundBuffs, x + this.standardCharacterWidth()*2, y, this.standardCharacterWidth()*2, 'right');
 		var pips = (roundBuffs / 10) * this.statusMeterPipCount();
