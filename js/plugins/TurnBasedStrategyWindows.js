@@ -964,35 +964,39 @@ Window_ItemStatusBase.prototype.drawEquipDescription = function() {
 Window_ItemStatusBase.prototype.drawTabs = function() {
 	var tabsX = 366;
 	
+	var iconName = "action";
 	if(this._statusPage !== "actions") {
-		this.changePaintOpacity(false);
+		iconName += "Gray";
 	}
-	this.drawIcon(this.getIconIdFor("action"), tabsX, this.lineHeight() * 9);
+	this.drawIcon(this.getIconIdFor(iconName), tabsX, this.lineHeight() * 9);
 	this.changePaintOpacity(true);
 	
+	iconName = "skill";
 	if(this._statusPage !== "skillRequirements") {
-		this.changePaintOpacity(false);
+		iconName += "Gray";
 	}
-	this.drawIcon(this.getIconIdFor("skill"), tabsX + Window_Base._iconWidth, this.lineHeight() * 9);
+	this.drawIcon(this.getIconIdFor(iconName), tabsX + Window_Base._iconWidth, this.lineHeight() * 9);
 	this.changePaintOpacity(true);
 	
+	iconName = "defenses";
 	if(this._statusPage !== "protection") {
-		this.changePaintOpacity(false);
+		iconName += "Gray";
 	}
-	this.drawIcon(this.getIconIdFor("solidDefense"), tabsX + Window_Base._iconWidth * 2, this.lineHeight() * 9);
+	this.drawIcon(this.getIconIdFor(iconName), tabsX + Window_Base._iconWidth * 2, this.lineHeight() * 9);
 	this.changePaintOpacity(true);
 	
+	iconName = "bonuses";
 	if(this._statusPage !== "bonuses") {
-		this.changePaintOpacity(false);
+		iconName += "Gray";
 	}
-	this.drawIcon(this.getIconIdFor("bonuses"), tabsX + Window_Base._iconWidth * 3, this.lineHeight() * 9);
+	this.drawIcon(this.getIconIdFor(iconName), tabsX + Window_Base._iconWidth * 3, this.lineHeight() * 9);
 	this.changePaintOpacity(true);
 	
+	iconName = "knowledge";
 	if(this._statusPage !== "description") {
-		this.changePaintOpacity(false);
+		iconName += "Gray";
 	}
-	this.drawIcon(this.getIconIdFor("knowledge"), tabsX + Window_Base._iconWidth * 4, this.lineHeight() * 9);
-	this.changePaintOpacity(true);
+	this.drawIcon(this.getIconIdFor(iconName), tabsX + Window_Base._iconWidth * 4, this.lineHeight() * 9);
 };
 
 //-----------------------------------------------------------------------------
@@ -4316,7 +4320,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 (function() {
 	//base
 	Window_Base.prototype.lineHeight = function() {
-		return this.standardCharacterHeight()+this.standardPixelSize()*4;
+		return this.standardCharacterHeight()+this.standardPixelSize()*3;
 	};
 	
 	Window_Base.prototype.standardPadding = function() {
@@ -5071,40 +5075,47 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	Window_Base.prototype.getIconIdFor = function(type) {
 		switch(type) {
-			case "solidDefense":   	return  81; break;
-			case "fluidDefense":   	return  67; break;
+			case "solidDefense":   	return  11; break;
+			case "fluidDefense":   	return  12; break;
 			case "tripEvade":   	return  82; break;
 			case "mentalDefense":	return 302; break;
 			
-			case "trip":          	return   6; break;
-			case "blunt":          	return  77; break;
-			case "cut":            	return  76; break;
-			case "keen":            return  92; break;
-			case "thrust":        	return  78; break;
-			case "stiletto":        return  94; break;
-			case "bullet":         	return  93; break;
-			case "fire":           	return  64; break;
-			case "ice":            	return  65; break;
-			case "corrosion":      	return   2; break;
-			case "conducted":		return  66; break;
+			case "trip":          	return  58; break;
+			case "blunt":          	return  48; break;
+			case "cut":            	return  49; break;
+			case "keen":            return  50; break;
+			case "thrust":        	return  51; break;
+			case "stiletto":        return  52; break;
+			case "bullet":         	return  53; break;
+			case "fire":           	return  54; break;
+			case "ice":            	return  55; break;
+			case "corrosion":      	return  56; break;
+			case "conducted":		return  57; break;
 			case "psychic":        	return  71; break;
 			
-			case "healStress":     	return  83; break;
-			case "healBody":       	return  72; break;
+			case "healStress":     	return  59; break;
+			case "healBody":       	return  61; break;
 			case "healMind":       	return  72; break;
 			
-			case "focus":			return	80; break;
+			case "focus":			return	60; break;
 			
-			case "self":           	return  75; break;
-			case "melee":          	return  90; break;
-			case "thrown":         	return  91; break;
-			case "fired":          	return  95; break;
-			case "followUp":        return  74; break;
+			case "self":           	return   4; break;
+			case "melee":          	return   5; break;
+			case "thrown":         	return   6; break;
+			case "fired":          	return   7; break;
+			case "followUp":        return   8; break;
 			
-			case "action":			return  77; break;
-			case "skill":      	   	return  88; break;
-			case "bonuses":      	return  32; break;
-			case "knowledge":      	return  79; break;
+			case "action":			return  49; break;
+			case "skill":      	   	return   1; break;
+			case "defenses":      	return  11; break;
+			case "bonuses":      	return   2; break;
+			case "knowledge":      	return   3; break;
+			
+			case "actionGray":		return  13; break;
+			case "skillGray":      	return  14; break;
+			case "defensesGray":    return  15; break;
+			case "bonusesGray":     return  16; break;
+			case "knowledgeGray":   return  17; break;
 		}
 		return 0;
 	};

@@ -18,7 +18,7 @@
 Bitmap.prototype.drawText = function(text, x, y, maxWidth, lineHeight, align) {
     if (text !== undefined && lineHeight >= this.standardCharacterHeight()) {
         var tx = x;
-        var ty = y + (lineHeight-this.standardCharacterHeight())/2;
+        var ty = Math.floor((y + (lineHeight-this.standardCharacterHeight())/2) / this.standardPixelSize()) * this.standardPixelSize();
         var context = this._context;
         var alpha = context.globalAlpha;
         maxWidth = maxWidth || Graphics.boxWidth - x;
@@ -71,7 +71,7 @@ Bitmap.prototype._drawTextBody = function(text, tx, ty, maxWidth, align) {
 	} else if(align === 'center') {
 		txAligned += Math.round(maxWidth / 2 - this.standardCharacterWidth() * (text.length / 2));
 	}
-	txAligned = (Math.floor(txAligned / 3) + (align === 'center' || align === 'right' ? 0 : 1)) * 3
+	txAligned = (Math.floor(txAligned / this.standardPixelSize()) + (align === 'center' || align === 'right' ? 0 : 1)) * this.standardPixelSize();
 	for(let i = 0; i < text.length; i++) {
 		var curX = txAligned + i * this.standardCharacterWidth();
 		if(curX < tx) { continue; }
