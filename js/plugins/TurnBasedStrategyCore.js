@@ -126,3 +126,74 @@ TouchInput.isMoved = function() {
 TouchInput.isReleased = function() {
     return false;
 };
+
+//window
+/**
+ * @method _refreshCursor
+ * @private
+ */
+Window.prototype._refreshCursorBak = function() {
+    var pad = this._padding;
+    var x = this._cursorRect.x + pad - this.origin.x;
+    var y = this._cursorRect.y + pad - this.origin.y;
+    var w = this._cursorRect.width;
+    var h = this._cursorRect.height;
+	var w2 = 4*Bitmap.prototype.standardPixelSize();
+	var h2 = 6*Bitmap.prototype.standardPixelSize();
+    var x2 = Math.max(x, pad);//-(w2+Bitmap.prototype.standardPixelSize());
+    var y2 = Math.max(y, pad);
+    var bitmap = new Bitmap(w2, h2);
+
+    this._windowCursorSprite.bitmap = bitmap;
+    this._windowCursorSprite.setFrame(0, 0, w2, h2);
+    this._windowCursorSprite.move(x2, y2);
+
+    if (w > 0 && h > 0 && this._windowskin) {
+        var skin = this._windowskin;
+        var p = 96;
+        bitmap.blt(skin, p, p, w2, h2, x2, y2);
+    }
+};
+
+/**
+ * @method _refreshCursor
+ * @private
+ */
+Window.prototype._refreshCursor = function() {
+    var pad = this._padding;
+    var x = this._cursorRect.x + pad - this.origin.x;
+    var y = this._cursorRect.y + pad - this.origin.y;
+    var w = this._cursorRect.width;
+    var h = this._cursorRect.height;
+    var x2 = Math.max(x, pad);
+    var y2 = Math.max(y, pad);
+    var ox = x - x2;
+    var oy = y - y2;
+    var w2 = Math.min(w, this._width - pad - x2);
+    var h2 = Math.min(h, this._height - pad - y2);
+    var bitmap = new Bitmap(w2, h2);
+
+    this._windowCursorSprite.bitmap = bitmap;
+    this._windowCursorSprite.setFrame(0, 0, w2, h2);
+    this._windowCursorSprite.move(x2, y2);
+
+    if (w > 0 && h > 0 && this._windowskin) {
+        var skin = this._windowskin;
+        var p = 96;
+		var q = 48;
+        var r = 4*bitmap.standardPixelSize();
+        bitmap.blt(skin, p, p, r, r, ox, oy);
+        bitmap.blt(skin, p+q-r, p, r, r, ox+w-r, oy);
+        bitmap.blt(skin, p, p+q-r, r, r, ox, oy+h-r);
+        bitmap.blt(skin, p+q-r, p+q-r, r, r, ox+w-r, oy+h-r);
+    }
+};
+
+/**
+ * @method _updateCursor
+ * @private
+ */
+Window.prototype._updateCursor = function() {
+    this._windowCursorSprite.alpha = 1;
+    this._windowCursorSprite.visible = this.isOpen();
+};
