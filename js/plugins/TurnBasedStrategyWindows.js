@@ -4319,16 +4319,47 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
  
 (function() {
 	//base
+	Window_Base._iconRenderWidth  = Bitmap.prototype.standardPixelSize()*8;
+	Window_Base._iconRenderHeight = Bitmap.prototype.standardPixelSize()*8;
+	
 	Window_Base.prototype.lineHeight = function() {
-		return this.standardCharacterHeight()+this.standardPixelSize()*3;
+		return this.standardCharacterHeight()+this.standardPixelSize()*4;
 	};
 	
 	Window_Base.prototype.standardPadding = function() {
 		return this.standardPixelSize()*3;
 	};
+	
+	Window_Base.prototype.standardPaddingTotal = function() {
+		return this.standardPadding()*2;
+	};
 
 	Window_Base.prototype.textPadding = function() {
-		return this.standardPixelSize();
+		return this.standardPixelSize()*2;
+	};
+	
+	Window_Base.prototype.textPaddingEnd = function() {
+		return this.textPadding() - this.standardPixelSize();
+	};
+
+	Window_Base.prototype.textPaddingTotal = function() {
+		return this.textPadding() + this.textPaddingEnd();
+	};
+	
+	Window_Base.prototype.roundToPixelGrid = function(value) {
+		return Math.round(value / this.standardPixelSize()) * this.standardPixelSize();
+	};
+	
+	Window_Base.prototype.contentsWidth = function() {
+		return this.width - this.standardPaddingTotal();
+	};
+
+	Window_Base.prototype.contentsHeight = function() {
+		return this.height - this.standardPaddingTotal();
+	};
+
+	Window_Base.prototype.fittingHeight = function(numLines) {
+		return numLines * this.lineHeight() + this.standardPaddingTotal();
 	};
 	
 	Window_Base.prototype.standardBackOpacity = function() {
@@ -4416,7 +4447,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_Base.prototype.openCloseSpeed = function() {
-		return 64;
+		return 22 * this.standardPixelSize();
 	};
 	
 	Window_Base.prototype.updateOpen = function() {
@@ -4434,6 +4465,52 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			if (this.isClosed()) {
 				this._closing = false;
 			}
+		}
+	};
+	
+	Window_Base.prototype.drawIcon = function(iconIndex, x, y) {
+		var bitmap = ImageManager.loadSystem('IconSet');
+		var pw = Window_Base._iconRenderWidth;
+		var ph = Window_Base._iconRenderHeight;
+		var sx = iconIndex % 16 * Window_Base._iconWidth;
+		var sy = Math.floor(iconIndex / 16) * Window_Base._iconHeight;
+		this.contents.blt(bitmap, sx, sy, pw, ph, x, y);
+	};
+
+	Window_Base.prototype.drawFace = function(faceName, faceIndex, x, y, width, height) {
+		width = width || Window_Base._faceWidth;
+		height = height || Window_Base._faceHeight;
+		var bitmap = ImageManager.loadFace(faceName);
+		var pw = Window_Base._faceWidth;
+		var ph = Window_Base._faceHeight;
+		var sw = Math.min(width, pw);
+		var sh = Math.min(height, ph);
+		var dx = Math.floor(x + Math.max(width - pw, 0) / 2);
+		var dy = Math.floor(y + Math.max(height - ph, 0) / 2);
+		var sx = faceIndex % 4 * pw + (pw - sw) / 2;
+		var sy = Math.floor(faceIndex / 4) * ph + (ph - sh) / 2;
+		this.contents.blt(bitmap, sx, sy, sw, sh, dx, dy);
+	};
+
+	Window_Base.prototype.drawCharacter = function(characterName, characterIndex, x, y) {
+		var bitmap = ImageManager.loadCharacter(characterName);
+		var big = ImageManager.isBigCharacter(characterName);
+		var pw = bitmap.width / (big ? 3 : 12);
+		var ph = bitmap.height / (big ? 4 : 8);
+		var n = characterIndex;
+		var sx = (n % 4 * 3 + 1) * pw;
+		var sy = (Math.floor(n / 4) * 4) * ph;
+		this.contents.blt(bitmap, sx, sy, pw, ph, x - pw / 2, y - ph);
+	};
+	
+	Window_Base.prototype.drawItemName = function(item, x, y, width) {
+		width = width || Graphics.boxWidth-x;
+		if (item) {
+			var iconBoxWidth = this.standardCharacterWidth()*2;
+			var iconX = this.roundToPixelGrid((iconBoxWidth - Window_Base._iconRenderWidth) / 2);
+			this.resetTextColor();
+			this.drawIcon(item.iconIndex, iconX, y);
+			this.drawText(item.name, x + iconBoxWidth, y, width - iconBoxWidth);
 		}
 	};
 	
@@ -5151,100 +5228,6 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		return 79;
 	};
 	
-	//menu command
-	Window_MenuCommand.prototype.addMainCommands = function() {
-		var enabled = this.areMainCommandsEnabled();
-		if (this.needsCommand('item')) {
-			this.addCommand('Inventory', 'item', enabled);
-		}
-		if (this.needsCommand('skill')) {
-			this.addCommand(TextManager.skill, 'skill', enabled);
-		}
-		if (this.needsCommand('equip')) {
-			this.addCommand(TextManager.equip, 'equip', enabled);
-		}
-		if (this.needsCommand('status')) {
-			this.addCommand(TextManager.status, 'status', enabled);
-		}
-	};
-	
-	Window_MenuCommand.prototype.addSaveCommand = function() {
-		if (this.needsCommand('save')) {
-			var enabled = this.isSaveEnabled();
-			this.addCommand("Camp", 'camp', enabled);
-			this.addCommand(TextManager.save, 'save', enabled);
-		}
-	};
-	
-	//menu status
-	Window_MenuStatus.prototype.drawItemStatus = function(index) {
-		var actor = $gameParty.members()[index];
-		var rect = this.itemRect(index);
-		var x = rect.x + 162;
-		var y = rect.y;
-		var width = rect.width - x - this.textPadding();
-		this.drawActorSimpleStatus(actor, x, y, width);
-	};
-	
-	Window_MenuStatus.prototype.selectLast = function() {
-		this.select(0);
-	};
-	
-	//menu actor
-	Window_MenuActor.prototype.initialize = function() {
-		Window_MenuStatus.prototype.initialize.call(this, 0, 0);
-		this._displayMode = false;
-		this.hide();
-	};
-	
-	Window_MenuActor.prototype.processOk = function() {
-        this.updateInputData();
-		if(this._displayMode) { return; }
-		
-		if (!this.cursorAll()) {
-			$gameParty.setTargetActor($gameParty.members()[this.index()]);
-		}
-		this.callOkHandler();
-	};
-	
-	Window_MenuActor.prototype.setDisplayMode = function(displayMode) {
-		this._displayMode = displayMode;
-		if(displayMode) {
-			this.select(-1);
-			this.setCursorFixed(true);
-		}
-	};
-	
-	Window_MenuActor.prototype.selectForActionInfo = function(actionInfo, user) {
-		var actor = $gameParty.menuActor();
-		this.setCursorFixed(false);
-		this.setCursorAll(false);
-        this.select(0);
-		if(!actionInfo || !actionInfo.action) { return; }
-		var action = actionInfo.action;
-		var hitGroups = action.hitGroups;
-		var extraAoe = user == undefined ? 0 : user.baseRange();
-		if(
-			hitGroups &&
-			hitGroups.length > 0 &&
-			hitGroups.some(function(hitGroup)
-			{
-				if(!hitGroup.hits || hitGroup.hits.length == 0) { return false; }
-				return hitGroup.hits.some(function (hit)
-				{
-					return hit.aoe !== undefined && hit.aoe + (hit.aoeUsesUserRange ? extraAoe : 0) >= 2 && hit.heal &&
-					(
-						(hit.heal.damage !== undefined && hit.heal.damage > 0) ||
-						(hit.heal.stress !== undefined && hit.heal.stress > 0)
-					);
-				});
-			})
-		) {
-			this.setCursorAll(true);
-			this.select(0);
-		}
-	};
-	
 	//selectable
 	Window_Selectable.prototype.initialize = function(x, y, width, height) {
 		Window_Base.prototype.initialize.call(this, x, y, width, height);
@@ -5386,6 +5369,134 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.changeTextColor(this.crisisColor());
 		this.drawText('__________________________', x, y, width);
 		this.resetTextColor();
+	};
+
+	Window_Selectable.prototype.itemWidth = function() {
+		return Math.floor((this.width - this.padding * 2) / this.maxCols());
+	};
+
+	Window_Selectable.prototype.itemHeight = function() {
+		return this.lineHeight();
+	};
+	
+	Window_Selectable.prototype.itemRect = function(index) {
+		var rect = new Rectangle();
+		var maxCols = this.maxCols();
+		rect.width = this.itemWidth();
+		rect.height = this.itemHeight();
+		rect.x = index % maxCols * rect.width - this._scrollX;
+		rect.y = Math.floor(index / maxCols) * rect.height - this._scrollY;
+		return rect;
+	};
+
+	Window_Selectable.prototype.itemRectForText = function(index) {
+		var rect = this.itemRect(index);
+		rect.x += this.textPadding();
+		rect.width -= this.textPaddingTotal();
+		return rect;
+	};
+	
+	//command
+	Window_Command.prototype.windowWidth = function() {
+		return 240;
+	};
+	
+	Window_Command.prototype.windowHeight = function() {
+		return this.fittingHeight(this.numVisibleRows());
+	};
+	
+	//menu command
+	Window_MenuCommand.prototype.addMainCommands = function() {
+		var enabled = this.areMainCommandsEnabled();
+		if (this.needsCommand('item')) {
+			this.addCommand('Inventory', 'item', enabled);
+		}
+		if (this.needsCommand('skill')) {
+			this.addCommand(TextManager.skill, 'skill', enabled);
+		}
+		if (this.needsCommand('equip')) {
+			this.addCommand(TextManager.equip, 'equip', enabled);
+		}
+		if (this.needsCommand('status')) {
+			this.addCommand(TextManager.status, 'status', enabled);
+		}
+	};
+	
+	Window_MenuCommand.prototype.addSaveCommand = function() {
+		if (this.needsCommand('save')) {
+			var enabled = this.isSaveEnabled();
+			this.addCommand("Camp", 'camp', enabled);
+			this.addCommand(TextManager.save, 'save', enabled);
+		}
+	};
+	
+	//menu status
+	Window_MenuStatus.prototype.drawItemStatus = function(index) {
+		var actor = $gameParty.members()[index];
+		var rect = this.itemRect(index);
+		var x = rect.x + 162;
+		var y = rect.y;
+		var width = rect.width - x - this.textPadding();
+		this.drawActorSimpleStatus(actor, x, y, width);
+	};
+	
+	Window_MenuStatus.prototype.selectLast = function() {
+		this.select(0);
+	};
+	
+	//menu actor
+	Window_MenuActor.prototype.initialize = function() {
+		Window_MenuStatus.prototype.initialize.call(this, 0, 0);
+		this._displayMode = false;
+		this.hide();
+	};
+	
+	Window_MenuActor.prototype.processOk = function() {
+        this.updateInputData();
+		if(this._displayMode) { return; }
+		
+		if (!this.cursorAll()) {
+			$gameParty.setTargetActor($gameParty.members()[this.index()]);
+		}
+		this.callOkHandler();
+	};
+	
+	Window_MenuActor.prototype.setDisplayMode = function(displayMode) {
+		this._displayMode = displayMode;
+		if(displayMode) {
+			this.select(-1);
+			this.setCursorFixed(true);
+		}
+	};
+	
+	Window_MenuActor.prototype.selectForActionInfo = function(actionInfo, user) {
+		var actor = $gameParty.menuActor();
+		this.setCursorFixed(false);
+		this.setCursorAll(false);
+        this.select(0);
+		if(!actionInfo || !actionInfo.action) { return; }
+		var action = actionInfo.action;
+		var hitGroups = action.hitGroups;
+		var extraAoe = user == undefined ? 0 : user.baseRange();
+		if(
+			hitGroups &&
+			hitGroups.length > 0 &&
+			hitGroups.some(function(hitGroup)
+			{
+				if(!hitGroup.hits || hitGroup.hits.length == 0) { return false; }
+				return hitGroup.hits.some(function (hit)
+				{
+					return hit.aoe !== undefined && hit.aoe + (hit.aoeUsesUserRange ? extraAoe : 0) >= 2 && hit.heal &&
+					(
+						(hit.heal.damage !== undefined && hit.heal.damage > 0) ||
+						(hit.heal.stress !== undefined && hit.heal.stress > 0)
+					);
+				});
+			})
+		) {
+			this.setCursorAll(true);
+			this.select(0);
+		}
 	};
 	
 	//item category
@@ -7117,6 +7228,16 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		if(wait) {
 			this.wait();
 		}
+	};
+	
+	//title command
+	Window_TitleCommand.prototype.windowWidth = function() {
+		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*8;
+	};
+	
+	Window_TitleCommand.prototype.updatePlacement = function() {
+		this.x = this.roundToPixelGrid((Graphics.boxWidth - this.width) / 2);
+		this.y = this.roundToPixelGrid(Graphics.boxHeight - this.height - 96);
 	};
 }) ();
  

@@ -69,9 +69,8 @@ Bitmap.prototype._drawTextBody = function(text, tx, ty, maxWidth, align) {
 	if(align === 'right') {
 		txAligned += maxWidth - this.standardCharacterWidth() * text.length;
 	} else if(align === 'center') {
-		txAligned += Math.round(maxWidth / 2 - this.standardCharacterWidth() * (text.length / 2));
+		txAligned += Math.floor((maxWidth / 2 - this.standardCharacterWidth() * (text.length / 2))/this.standardPixelSize()) * this.standardPixelSize();
 	}
-	txAligned = (Math.floor(txAligned / this.standardPixelSize()) + (align === 'center' || align === 'right' ? 0 : 1)) * this.standardPixelSize();
 	for(let i = 0; i < text.length; i++) {
 		var curX = txAligned + i * this.standardCharacterWidth();
 		if(curX < tx) { continue; }
@@ -128,33 +127,6 @@ TouchInput.isReleased = function() {
 };
 
 //window
-/**
- * @method _refreshCursor
- * @private
- */
-Window.prototype._refreshCursorBak = function() {
-    var pad = this._padding;
-    var x = this._cursorRect.x + pad - this.origin.x;
-    var y = this._cursorRect.y + pad - this.origin.y;
-    var w = this._cursorRect.width;
-    var h = this._cursorRect.height;
-	var w2 = 4*Bitmap.prototype.standardPixelSize();
-	var h2 = 6*Bitmap.prototype.standardPixelSize();
-    var x2 = Math.max(x, pad);//-(w2+Bitmap.prototype.standardPixelSize());
-    var y2 = Math.max(y, pad);
-    var bitmap = new Bitmap(w2, h2);
-
-    this._windowCursorSprite.bitmap = bitmap;
-    this._windowCursorSprite.setFrame(0, 0, w2, h2);
-    this._windowCursorSprite.move(x2, y2);
-
-    if (w > 0 && h > 0 && this._windowskin) {
-        var skin = this._windowskin;
-        var p = 96;
-        bitmap.blt(skin, p, p, w2, h2, x2, y2);
-    }
-};
-
 /**
  * @method _refreshCursor
  * @private
