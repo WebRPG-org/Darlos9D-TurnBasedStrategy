@@ -15,6 +15,29 @@
  */
  
 (function() {
+	//base
+	Scene_Base.prototype.checkGameover = function() {
+		if ($gameParty.isAllDead()) {
+			//SceneManager.goto(Scene_Gameover);
+		}
+	};
+	
+	//boot
+	Scene_Boot.prototype.loadSystemImages = function() {
+		ImageManager.loadSystem('Window');
+		ImageManager.loadSystem('IconSet');
+		ImageManager.loadSystem('Balloon');
+		ImageManager.loadSystem('Shadow1');
+		ImageManager.loadSystem('Shadow2');
+		ImageManager.loadSystem('Damage');
+		ImageManager.loadSystem('States');
+		ImageManager.loadSystem('Weapons1');
+		ImageManager.loadSystem('Weapons2');
+		ImageManager.loadSystem('Weapons3');
+		ImageManager.loadSystem('ButtonSet');
+		ImageManager.loadSystem('TextFont');
+	};
+	
 	//title
 	Scene_Title.prototype.createCommandWindow = function() {
 		this._commandWindow = new Window_TitleCommand();
@@ -22,13 +45,6 @@
 		this._commandWindow.setHandler('continue', this.commandContinue.bind(this));
 		this._commandWindow.setHandler('options',  this.commandOptions.bind(this));
 		this.addWindow(this._commandWindow);
-	};
-	
-	//base
-	Scene_Base.prototype.checkGameover = function() {
-		if ($gameParty.isAllDead()) {
-			//SceneManager.goto(Scene_Gameover);
-		}
 	};
 	
 	//map

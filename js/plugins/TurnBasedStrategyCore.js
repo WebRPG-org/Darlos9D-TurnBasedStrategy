@@ -153,7 +153,7 @@ Window.prototype._refreshCursor = function() {
         var skin = this._windowskin;
         var p = 96;
 		var q = 48;
-        var r = 4*bitmap.standardPixelSize();
+        var r = 5*bitmap.standardPixelSize();
         bitmap.blt(skin, p, p, r, r, ox, oy);
         bitmap.blt(skin, p+q-r, p, r, r, ox+w-r, oy);
         bitmap.blt(skin, p, p+q-r, r, r, ox, oy+h-r);

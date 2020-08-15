@@ -6762,6 +6762,47 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.drawText(flooredMove+(move>flooredMove?"½":""), x+this.standardCharacterWidth()*16, y+this.lineHeight()*3, this.standardCharacterWidth()*3, 'right');
 	};
 	
+	//Save file list
+	Window_SavefileList.prototype.maxVisibleItems = function() {
+		return 6;
+	};
+
+	Window_SavefileList.prototype.itemHeight = function() {
+		return this.lineHeight()*3;
+	};
+	
+	Window_SavefileList.prototype.drawItem = function(index) {
+		var id = index + 1;
+		var valid = DataManager.isThisGameFile(id);
+		var info = DataManager.loadSavefileInfo(id);
+		var rect = this.itemRectForText(index);
+		this.resetTextColor();
+		if (this._mode === 'load') {
+			this.changePaintOpacity(valid);
+		}
+		this.drawFileId(id, rect.x, rect.y);
+		if (info) {
+			this.changePaintOpacity(valid);
+			this.drawContents(info, rect, valid);
+		}
+		this.changePaintOpacity(true);
+	};
+	
+	Window_SavefileList.prototype.drawContents = function(info, rect, valid) {
+		var bottom = rect.y + rect.height;
+		if (rect.width >= 420) {
+			this.drawGameTitle(info, rect.x + 192, rect.y, rect.width - 192);
+			if (valid) {
+				this.drawPartyCharacters(info, rect.x + 222, bottom-24);
+			}
+		}
+		var lineHeight = this.lineHeight();
+		var y2 = bottom - lineHeight;
+		if (y2 >= lineHeight) {
+			this.drawPlaytime(info, rect.x, y2, rect.width);
+		}
+	};
+	
 	//BattleLog
 	Window_BattleLog.prototype.initialize = function() {
 		var width = this.windowWidth();
@@ -7232,12 +7273,20 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	//title command
 	Window_TitleCommand.prototype.windowWidth = function() {
-		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*8;
+		var textWidth = TextManager.newGame.length > TextManager.continue_.length ? TextManager.newGame.length : TextManager.continue_.length;
+		textWidth = textWidth > TextManager.options.length ? textWidth : TextManager.options.length;
+		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*textWidth;
 	};
 	
 	Window_TitleCommand.prototype.updatePlacement = function() {
 		this.x = this.roundToPixelGrid((Graphics.boxWidth - this.width) / 2);
 		this.y = this.roundToPixelGrid(Graphics.boxHeight - this.height - 96);
+	};
+	
+	//game end
+	Window_GameEnd.prototype.windowWidth = function() {
+		var textWidth = TextManager.toTitle.length > TextManager.cancel.length ? TextManager.toTitle.length : TextManager.cancel.length;
+		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*textWidth;
 	};
 }) ();
  
