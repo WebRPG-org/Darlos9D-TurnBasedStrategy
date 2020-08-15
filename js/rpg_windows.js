@@ -1496,7 +1496,7 @@ Window_Help.prototype.setItem = function(item) {
 
 Window_Help.prototype.refresh = function() {
     this.contents.clear();
-    this.drawText(this._text, this.textPadding(), 0);
+    this.drawTextEx(this._text, this.textPadding(), 0);
 };
 
 //-----------------------------------------------------------------------------

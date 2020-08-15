@@ -5405,6 +5405,12 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		return this.fittingHeight(this.numVisibleRows());
 	};
 	
+	//help
+	Window_Help.prototype.refresh = function() {
+		this.contents.clear();
+		this.drawText(this._text, this.textPadding(), 0);
+	};
+	
 	//menu command
 	Window_MenuCommand.prototype.addMainCommands = function() {
 		var enabled = this.areMainCommandsEnabled();
@@ -6760,6 +6766,16 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		var move = actor.baseMove()/2;
 		var flooredMove = Math.floor(move);
 		this.drawText(flooredMove+(move>flooredMove?"½":""), x+this.standardCharacterWidth()*16, y+this.lineHeight()*3, this.standardCharacterWidth()*3, 'right');
+	};
+	
+	//options
+	Window_Options.prototype.updatePlacement = function() {
+		this.x = this.roundToPixelGrid((Graphics.boxWidth - this.width) / 2);
+		this.y = this.roundToPixelGrid((Graphics.boxHeight - this.height) / 2);
+	};
+	
+	Window_Options.prototype.statusWidth = function() {
+		return 4*this.standardCharacterWidth();
 	};
 	
 	//Save file list
