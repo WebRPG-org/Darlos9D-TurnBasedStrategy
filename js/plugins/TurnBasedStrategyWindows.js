@@ -4514,45 +4514,53 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		}
 	};
 	
+	Window_Base.prototype.drawCurrencyValue = function(value, unit, x, y, width) {
+		var unitWidth = this.textWidth(unit);
+		this.resetTextColor();
+		this.drawText(value, x, y, width - unitWidth, 'right');
+		this.changeTextColor(this.systemColor());
+		this.drawText(unit, x + width - unitWidth, y, unitWidth, 'right');
+	};
+	
 	Window_Base.prototype.drawActorSimpleStatus = function(actor, x, y, width) {
 		var lineHeight = this.lineHeight();
-		var width2 = Math.min(200, width - 180 - this.textPadding());
 		this.drawActorNickname(actor, x, y);
 		this.changePaintOpacity(false);
-		if(actor.tbsBuffs().length > 0) {
-			this.drawActorBuffs(actor, x, y+lineHeight);
-		} else {
-			this.drawActorClass(actor, x, y+lineHeight);
-		}
+		this.drawActorClass(actor, x, y+lineHeight);
 		this.changePaintOpacity(true);
 		this.drawActorSkillXP(actor, x, y+lineHeight*2);
-		this.drawActorTbsMP(actor, x, y+lineHeight*3);
+		this.drawActorTbsMP(actor, x+this.standardCharacterWidth()*9, y+lineHeight*2);
 		//this.drawActorIcons(actor, x, y + lineHeight * 2);
 		//this.drawActorStress(actor, x, y + lineHeight);
-		this.drawActorSimpleDamage(actor, x+this.standardCharacterWidth()*12, y);
-		this.drawActorPartsDamage(actor, x+this.standardCharacterWidth()*13, y+lineHeight, true);
+		this.drawActorSimpleDamage(actor, x+this.standardCharacterWidth()*9, y);
+		this.drawActorPartsDamage(actor, x+this.standardCharacterWidth()*7, y+lineHeight+(this.roundToPixelGrid((lineHeight - Window_Base._iconRenderHeight)/2)), false);
+		this.drawActorBuffs(actor, x+this.standardCharacterWidth()*7, y+lineHeight*3+(this.roundToPixelGrid((lineHeight - Window_Base._iconRenderHeight)/2)));
 	};
 	
 	Window_Base.prototype.drawActorTbsMP = function(actor, x, y) {
 		if(actor.maxMP() == 0) { return; }
 		this.changeTextColor(this.systemColor());
-		this.drawText("En", x, y, this.standardCharacterWidth()*2);
+		this.drawIcon(
+			this.getIconIdFor("mp"), 
+			x+(this.standardCharacterWidth()*2-Window_Base._iconRenderWidth)-this.standardPixelSize(), 
+			y+this.roundToPixelGrid((this.lineHeight()-Window_Base._iconRenderHeight)/2)
+		);
 		this.drawText("/", x+this.standardCharacterWidth()*4, y, this.standardCharacterWidth());
 		this.resetTextColor();
 		this.drawText(actor.maxMP() - actor.mpSpent(), x+this.standardCharacterWidth()*2, y, this.standardCharacterWidth()*2, 'right');
 		this.drawText(actor.maxMP(), x+this.standardCharacterWidth()*5, y, this.standardCharacterWidth()*2, 'right');
 	};
 	
-	Window_Base.prototype.drawActorSkillXP = function(actor, x, y, twoLines) {
+	Window_Base.prototype.drawActorSkillXP = function(actor, x, y, longNames) {
 		var lineOneX = x;
-		var lineTwoX = x + (twoLines ? 0 : this.standardCharacterWidth()*6);
+		var lineTwoX = x;
 		var lineOneY = y;
-		var lineTwoY = y + (twoLines ? this.lineHeight() : 0);
+		var lineTwoY = y + this.lineHeight();
 		this.changeTextColor(this.systemColor());
 		var spText = "SP";
 		var rpText = "RP";
-		var xValueOffset = this.standardCharacterWidth()*2;
-		if(twoLines) {
+		var xValueOffset = this.standardCharacterWidth()*3;
+		if(longNames) {
 			spText = "Skill Points";
 			rpText = "Refund Points";
 			xValueOffset = this.standardCharacterWidth()*14;
@@ -4677,7 +4685,15 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	Window_Base.prototype.drawActorSimplePartDamage = function(actor, part, x, y, label) {
 		this.changeTextColor(this.systemColor());
-		this.drawText(label, x, y, this.standardCharacterWidth()*2);
+		if(part==="core") {
+			this.drawIcon(
+				this.getIconIdFor("hp"), 
+				x+(this.standardCharacterWidth()*2-Window_Base._iconRenderWidth)-this.standardPixelSize(), 
+				y+this.roundToPixelGrid((this.lineHeight()-Window_Base._iconRenderHeight)/2)
+			);	
+		} else {
+			this.drawText(label, x, y, this.standardCharacterWidth()*2);
+		}
 		this.drawText("/", x+this.standardCharacterWidth()*4, y, this.standardCharacterWidth());
 		var health = actor.toughness()*(part==="core"||part==="torso"?2:1) - actor.getDamage(part);
 		this.resetTextColor();
@@ -4707,89 +4723,38 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	Window_Base.prototype.drawActorPartsDamage = function(actor, x, y, multipleLines) {
 		if(actor.blankDummy()) { return; }
-		var curX = x;
+		
+		curX = x;
+		curY = y;
 		var tough = actor.toughness();
-		if(actor.getDamage("head") > 0) {
-			this.resetTextColor();
-			this.changePaintOpacity(false);
-			if(actor.getDamage("head") >= tough/2) {
-				this.changePaintOpacity(true);
-				this.changeTextColor(this.crisisColor());
-				if(actor.getDamage("head") >= tough) {
-					this.changeTextColor(this.deathColor());
+		var baseIconId = this.getIconIdFor("headGray");
+		var partCount = 6;
+		for(let i = 0; i < partCount; i++) {
+			var partName = "head";
+			var curTough = tough;
+			var iconOffset = 0;
+			if(i == 1) { partName = "torso"; curTough = tough*2; }
+			else if(i == 2) { partName = "leftArm"; }
+			else if(i == 3) { partName = "rightArm"; }
+			else if(i == 4) { partName = "leftLeg"; }
+			else if(i == 5) { partName = "rightLeg"; }
+			if(actor.getDamage(partName) > 0) {
+				if(actor.getDamage(partName) >= curTough) {
+					iconOffset = partCount*3;
+				} else if(actor.getDamage(partName) > Math.round(curTough/2)) {
+					iconOffset = partCount*2;
+				} else if(actor.getDamage(partName) == Math.round(curTough/2)) {
+					iconOffset = partCount;
 				}
+				this.drawIcon(baseIconId+i+iconOffset, curX, curY);
 			}
-			this.drawText("He", curX, y, this.standardCharacterWidth()*2);
-		}
-		curX += this.standardCharacterWidth()*3;
-		if(actor.getDamage("torso") > 0) {
-			this.resetTextColor();
-			this.changePaintOpacity(false);
-			if(actor.getDamage("torso") >= tough) {
-				this.changePaintOpacity(true);
-				this.changeTextColor(this.crisisColor());
-				if(actor.getDamage("torso") >= tough*2) {
-					this.changeTextColor(this.deathColor());
-				}
+			if(multipleLines && i % 2 == 1) {
+				curX = x;
+				curY += Window_Base._iconRenderHeight+this.standardPixelSize();
+			} else {
+				curX += Window_Base._iconRenderWidth+this.standardPixelSize();
 			}
-			this.drawText("To", curX, y, this.standardCharacterWidth()*2);
 		}
-		curX += this.standardCharacterWidth()*3;
-		if(multipleLines) { curX = x; y += this.lineHeight(); }
-		if(actor.getDamage("leftArm") > 0) {
-			this.resetTextColor();
-			this.changePaintOpacity(false);
-			if(actor.getDamage("leftArm") >= tough/2) {
-				this.changePaintOpacity(true);
-				this.changeTextColor(this.crisisColor());
-				if(actor.getDamage("leftArm") >= tough) {
-					this.changeTextColor(this.deathColor());
-				}
-			}
-			this.drawText("LA", curX, y, this.standardCharacterWidth()*2);
-		}
-		curX += this.standardCharacterWidth()*3;
-		if(actor.getDamage("rightArm") > 0) {
-			this.resetTextColor();
-			this.changePaintOpacity(false);
-			if(actor.getDamage("rightArm") >= tough/2) {
-				this.changePaintOpacity(true);
-				this.changeTextColor(this.crisisColor());
-				if(actor.getDamage("rightArm") >= tough) {
-					this.changeTextColor(this.deathColor());
-				}
-			}
-			this.drawText("RA", curX, y, this.standardCharacterWidth()*2);
-		}
-		curX += this.standardCharacterWidth()*3;
-		if(multipleLines) { curX = x; y += this.lineHeight(); }
-		if(actor.getDamage("leftLeg") > 0) {
-			this.resetTextColor();
-			this.changePaintOpacity(false);
-			if(actor.getDamage("leftLeg") >= tough/2) {
-				this.changePaintOpacity(true);
-				this.changeTextColor(this.crisisColor());
-				if(actor.getDamage("leftLeg") >= tough) {
-					this.changeTextColor(this.deathColor());
-				}
-			}
-			this.drawText("LL", curX, y, this.standardCharacterWidth()*2);
-		}
-		curX += this.standardCharacterWidth()*3;
-		if(actor.getDamage("rightLeg") > 0) {
-			this.resetTextColor();
-			this.changePaintOpacity(false);
-			if(actor.getDamage("rightLeg") >= tough/2) {
-				this.changePaintOpacity(true);
-				this.changeTextColor(this.crisisColor());
-				if(actor.getDamage("rightLeg") >= tough) {
-					this.changeTextColor(this.deathColor());
-				}
-			}
-			this.drawText("RL", curX, y, this.standardCharacterWidth()*2);
-		}
-		this.changePaintOpacity(true);
-		this.resetTextColor();
 	};
 	
 	Window_Base.prototype.drawActorStress = function(actor, x, y) {
@@ -5193,6 +5158,18 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			case "defensesGray":    return  15; break;
 			case "bonusesGray":     return  16; break;
 			case "knowledgeGray":   return  17; break;
+			
+			case "hp":				return 	42; break;
+			case "mp":				return	45; break;
+			case "stress":			return	43; break;
+			case "curFocus":		return	44; break;
+			
+			case "headGray":		return 	18; break;
+			case "torsoGray":		return	19; break;
+			case "leftArmGray":		return	20; break;
+			case "rightArmGray":	return	21; break;
+			case "leftLegGray":		return	22; break;
+			case "rightLegGray":	return	23; break;
 		}
 		return 0;
 	};
@@ -5411,7 +5388,29 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.drawText(this._text, this.textPadding(), 0);
 	};
 	
+	//gold
+	Window_Gold.prototype.windowWidth = function() {
+		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*($gameParty.maxGold()+"").length;
+	};
+	
+	Window_Gold.prototype.windowHeight = function() {
+		return this.fittingHeight(2);
+	};
+	
+	Window_Gold.prototype.refresh = function() {
+		var x = this.textPadding();
+		this.contents.clear();
+		this.changeTextColor(this.systemColor());
+		this.drawText(this.currencyUnit(), x, 0, this.standardCharacterWidth()*this.currencyUnit().length);
+		this.resetTextColor();
+		this.drawText(this.value(), x, this.lineHeight(), this.standardCharacterWidth()*($gameParty.maxGold()+"").length, 'right');
+	};
+	
 	//menu command
+	Window_MenuCommand.prototype.windowWidth = function() {
+		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*9;
+	};
+	
 	Window_MenuCommand.prototype.addMainCommands = function() {
 		var enabled = this.areMainCommandsEnabled();
 		if (this.needsCommand('item')) {
@@ -5437,12 +5436,24 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	//menu status
+	Window_MenuStatus.prototype.windowWidth = function() {
+		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*16;
+	};
+	
+	Window_MenuStatus.prototype.windowHeight = function() {
+		return this.fittingHeight(16);
+	};
+	
+	Window_MenuStatus.prototype.drawItem = function(index) {
+		this.drawItemStatus(index);
+	};
+	
 	Window_MenuStatus.prototype.drawItemStatus = function(index) {
 		var actor = $gameParty.members()[index];
-		var rect = this.itemRect(index);
-		var x = rect.x + 162;
+		var rect = this.itemRectForText(index);
+		var x = rect.x;
 		var y = rect.y;
-		var width = rect.width - x - this.textPadding();
+		var width = rect.width;
 		this.drawActorSimpleStatus(actor, x, y, width);
 	};
 	

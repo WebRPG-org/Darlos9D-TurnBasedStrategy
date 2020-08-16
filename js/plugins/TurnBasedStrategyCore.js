@@ -65,17 +65,18 @@ Bitmap.prototype._drawTextBody = function(text, tx, ty, maxWidth, align) {
 	} else {
 		colorIndex = 1;
 	}
+	var actualText = text+"";
 	var txAligned = tx;
 	if(align === 'right') {
-		txAligned += maxWidth - this.standardCharacterWidth() * text.length;
+		txAligned += maxWidth - this.standardCharacterWidth() * actualText.length;
 	} else if(align === 'center') {
-		txAligned += Math.floor((maxWidth / 2 - this.standardCharacterWidth() * (text.length / 2))/this.standardPixelSize()) * this.standardPixelSize();
+		txAligned += Math.floor((maxWidth / 2 - this.standardCharacterWidth() * (actualText.length / 2))/this.standardPixelSize()) * this.standardPixelSize();
 	}
-	for(let i = 0; i < text.length; i++) {
+	for(let i = 0; i < actualText.length; i++) {
 		var curX = txAligned + i * this.standardCharacterWidth();
 		if(curX < tx) { continue; }
 		if(curX + this.standardCharacterWidth() > tx + maxWidth) { break; }
-		this._drawCharacter(text[i], colorIndex, txAligned + i * this.standardCharacterWidth(), ty);
+		this._drawCharacter(actualText[i], colorIndex, txAligned + i * this.standardCharacterWidth(), ty);
 	}
 	context.globalAlpha = alpha;
 };
@@ -87,6 +88,10 @@ Bitmap.prototype._drawCharacter = function(character, colorIndex, x, y) {
     var sx = pw * (character.charCodeAt(0)-33);
     var sy = ph * colorIndex;
     this.blt(bitmap, sx, sy, pw, ph, x, y);
+};
+
+Bitmap.prototype.measureTextWidth = function(text) {
+    return text.length*this.standardCharacterWidth();
 };
 
 Bitmap.prototype.standardPixelSize = function() {
