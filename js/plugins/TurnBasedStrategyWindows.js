@@ -1114,7 +1114,7 @@ Window_ItemOption.prototype.initialize = function(x, y) {
 };
 
 Window_ItemOption.prototype.windowWidth = function() {
-	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*10;
+	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*9;
 };
 
 Window_ItemOption.prototype.setActor = function(actor) {
@@ -5591,7 +5591,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	//item list
 	Window_ItemList.prototype.initialize = function(x, y, width, height) {
-		Window_Selectable.prototype.initialize.call(this, x, y, width, height);
+		Window_Selectable.prototype.initialize.call(this, x, y, this.windowWidth(), height);
 		this._category = 'none';
 		this._data = [];
 		this._statusWindow = undefined;
@@ -5603,8 +5603,12 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this._yStartPosition = 0;
 	};
 	
+	Window_ItemList.prototype.windowWidth = function() {
+		return this.standardPaddingTotal()*2 + this.textPaddingTotal()*2 + this.standardCharacterWidth()*30;
+	};
+	
 	Window_ItemList.prototype.windowHeight = function() {
-		return this.fittingHeight(Math.floor(Game_BattlerBase.prototype.maxItems()/2));
+		return this.fittingHeight(Math.ceil(Game_BattlerBase.prototype.maxItems()/2));
 	};
 	
 	Window_ItemList.prototype.maxItems = function() {
