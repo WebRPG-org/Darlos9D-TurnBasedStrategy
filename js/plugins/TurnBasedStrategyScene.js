@@ -1359,7 +1359,7 @@
 		this._actorItemWindows = [];
 		this._actorItemNameWindows = [];
 		for(i = 0; i < $gameParty.size(); i++) {
-			var nameWindowYOffset = Math.floor(Window_ItemList.prototype.lineHeight() * 1.6);
+			var nameWindowYOffset = Window_ActorItemName.prototype.windowHeight()-Window_Base.prototype.standardPadding();
 			this._actorItemNameWindows[i] = new Window_ActorItemName(0, wy);
 			this._actorItemNameWindows[i].setActor($gameParty.members()[i]);
 			this._actorItemWindows[i] = new Window_ItemList(

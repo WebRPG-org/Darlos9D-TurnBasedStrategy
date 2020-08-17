@@ -4507,9 +4507,8 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		width = width || Graphics.boxWidth-x;
 		if (item) {
 			var iconBoxWidth = this.standardCharacterWidth()*2;
-			var iconX = this.roundToPixelGrid((iconBoxWidth - Window_Base._iconRenderWidth) / 2);
 			this.resetTextColor();
-			this.drawIcon(item.iconIndex, iconX, y);
+			this.drawIcon(item.iconIndex, x+this.standardCharacterWidth()*2-Window_Base._iconRenderWidth-this.standardPixelSize(), y+this.roundToPixelGrid((this.lineHeight()-Window_Base._iconRenderHeight)/2));
 			this.drawText(item.name, x + iconBoxWidth, y, width - iconBoxWidth);
 		}
 	};
@@ -5523,6 +5522,10 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this._descriptionWindow = undefined;
 	};
 	
+	Window_ItemCategory.prototype.windowWidth = function() {
+		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardPixelSize()*3*87;
+	};
+	
 	Window_ItemCategory.prototype.maxCols = function() {
 		return 3;
 	};
@@ -5733,11 +5736,12 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_ItemList.prototype.drawItem = function(index) {
 		var item = this._data[index];
 		var rect = this.itemRect(index);
+		var textRect = this.itemRectForText(index);
 		if (item) {
 			var numberWidth = this.numberWidth();
 			this.changePaintOpacity(this.isEnabled(item));
-			this.drawItemName(item, rect.x, rect.y, rect.width - numberWidth - this.textPadding());
-			this.drawItemNumber(item, rect.x, rect.y, rect.width - this.textPadding());
+			this.drawItemName(item, textRect.x, textRect.y, textRect.width - numberWidth);
+			this.drawItemNumber(item, textRect.x, textRect.y, textRect.width);
 			this.changePaintOpacity(1);
 		}
 		if(this._orgSelectIndex >= 0 && this._orgSelectIndex == index) {
@@ -6502,10 +6506,6 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_EquipItem.prototype.selectLast = function() {
 		var index = this._data.indexOf($gameParty.lastItem());
 		this.select(index >= 0 ? index : 0);
-	};
-	
-	Window_EquipItem.prototype.numberWidth = function() {
-		return this.textWidth('000');
 	};
 	
 	Window_EquipItem.prototype.setSlotWindow = function(slotWindow) {
