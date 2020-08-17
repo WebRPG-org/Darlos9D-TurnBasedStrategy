@@ -6810,8 +6810,22 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	//Save file list
+	Window_SavefileList.prototype.initialize = function(x, y) {
+		Window_Selectable.prototype.initialize.call(this, x, y, this.windowWidth(), this.windowHeight());
+		this.activate();
+		this._mode = null;
+	};
+	
+	Window_SavefileList.prototype.windowWidth = function() {
+		return Graphics.boxWidth;
+	};
+	
+	Window_SavefileList.prototype.windowHeight = function() {
+		return this.standardPaddingTotal() + this.itemHeight()*this.maxVisibleItems();
+	};
+	
 	Window_SavefileList.prototype.maxVisibleItems = function() {
-		return 6;
+		return 5;
 	};
 
 	Window_SavefileList.prototype.itemHeight = function() {
