@@ -1023,7 +1023,7 @@ Window_ItemStatus.prototype.initialize = function(x, y) {
 };
 
 Window_ItemStatus.prototype.windowWidth = function() {
-    return Graphics.boxWidth - Window_SkillActionInfo.prototype.windowWidth();;
+    return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*26;
 };
 
 Window_ItemStatus.prototype.windowHeight = function() {
@@ -1114,7 +1114,7 @@ Window_ItemOption.prototype.initialize = function(x, y) {
 };
 
 Window_ItemOption.prototype.windowWidth = function() {
-    return Window_SkillActionInfo.prototype.windowWidth();
+	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*10;
 };
 
 Window_ItemOption.prototype.setActor = function(actor) {
@@ -1173,7 +1173,7 @@ Window_ItemOption.prototype.makeCommandList = function() {
 			if(!DataManager.isItem(this._item) || this._item.itypeId === 1) {
 				$gameParty.members().forEach(function(member) {
 					var enabled = member.totalItemCount() < member.maxItems();
-					this.addCommand("Give " + member.displayName(), 'give', enabled);
+					this.addCommand(member.displayName(), 'give', enabled);
 				}, this);
 			}
 		}
@@ -1456,7 +1456,7 @@ Window_SkillActionInfo.prototype.initialize = function(y) {
 };
 
 Window_SkillActionInfo.prototype.windowWidth = function() {
-	return this.standardPadding()*2 + Window_Base._iconWidth*2 + this.standardCharacterWidth()*11;
+	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*10;
 };
 
 Window_SkillActionInfo.prototype.windowHeight = function() {
@@ -1571,13 +1571,21 @@ function Window_TbsEquipStatus() {
 Window_TbsEquipStatus.prototype = Object.create(Window_ItemStatusBase.prototype);
 Window_TbsEquipStatus.prototype.constructor = Window_TbsEquipStatus;
 
-Window_TbsEquipStatus.prototype.initialize = function(x, y, w, h) {
-	Window_ItemStatusBase.prototype.initialize.call(this, x, y, w, h);
+Window_TbsEquipStatus.prototype.initialize = function(x, y) {
+	Window_ItemStatusBase.prototype.initialize.call(this, x, y, this.windowWidth(), this.windowHeight());
 	this._actor = null;
 	this._tempActor = null;
 	this._statusPage = "none";
 	this._actionsItem = null;
 	this.refresh();
+};
+
+Window_TbsEquipStatus.prototype.windowWidth = function() {
+    return Window_ItemStatus.prototype.windowWidth();
+};
+
+Window_TbsEquipStatus.prototype.windowHeight = function() {
+    return Window_ItemStatus.prototype.windowHeight();
 };
 
 //-----------------------------------------------------------------------------
@@ -6062,6 +6070,10 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	//skill type
+	Window_SkillType.prototype.windowWidth = function() {
+		return Window_ItemOption.prototype.windowWidth();
+	}
+	
 	Window_SkillType.prototype.update = function() {
 		Window_Command.prototype.update.call(this);
 		if (this._skillWindow) {
@@ -6307,7 +6319,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_EquipSlot.prototype.windowWidth = function() {
-		return Window_SkillActionInfo.prototype.windowWidth();
+		return Window_ItemOption.prototype.windowWidth();
 	};
 
 	Window_EquipSlot.prototype.windowHeight = function() {
