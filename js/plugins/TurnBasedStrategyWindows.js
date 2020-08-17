@@ -5415,13 +5415,13 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	//menu command
 	Window_MenuCommand.prototype.windowWidth = function() {
-		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*9;
+		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*8;
 	};
 	
 	Window_MenuCommand.prototype.addMainCommands = function() {
 		var enabled = this.areMainCommandsEnabled();
 		if (this.needsCommand('item')) {
-			this.addCommand('Inventory', 'item', enabled);
+			this.addCommand('Items', 'item', enabled);
 		}
 		if (this.needsCommand('skill')) {
 			this.addCommand(TextManager.skill, 'skill', enabled);
@@ -6792,13 +6792,21 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	//options
+	Window_Options.prototype.windowWidth = function() {
+		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*20;
+	};
+	
 	Window_Options.prototype.updatePlacement = function() {
 		this.x = this.roundToPixelGrid((Graphics.boxWidth - this.width) / 2);
 		this.y = this.roundToPixelGrid((Graphics.boxHeight - this.height) / 2);
 	};
 	
-	Window_Options.prototype.statusWidth = function() {
-		return 4*this.standardCharacterWidth();
+	Window_Options.prototype.drawItem = function(index) {
+		var rect = this.itemRectForText(index);
+		this.resetTextColor();
+		this.changePaintOpacity(this.isCommandEnabled(index));
+		this.drawText(this.commandName(index), rect.x, rect.y, rect.width, 'left');
+		this.drawText(this.statusText(index), rect.x, rect.y, rect.width, 'right');
 	};
 	
 	//Save file list
