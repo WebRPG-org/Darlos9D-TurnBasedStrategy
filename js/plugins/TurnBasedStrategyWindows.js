@@ -1023,7 +1023,7 @@ Window_ItemStatus.prototype.initialize = function(x, y) {
 };
 
 Window_ItemStatus.prototype.windowWidth = function() {
-    return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*26;
+    return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*24;
 };
 
 Window_ItemStatus.prototype.windowHeight = function() {
