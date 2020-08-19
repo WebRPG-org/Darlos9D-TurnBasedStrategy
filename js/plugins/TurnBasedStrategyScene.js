@@ -1320,6 +1320,7 @@
 	//item
 	Scene_Item.prototype.create = function() {
 		Scene_ItemBase.prototype.create.call(this);
+		this.createTitleWindow();
 		this.createHelpWindow();
 		this._helpWindow.hide();
 		this.createCategoryWindow();
@@ -1332,8 +1333,14 @@
 		this.createActorBodyPartWindow();
 	};
 	
+	Scene_Item.prototype.createTitleWindow = function() {
+		this._titleWindow = new Window_MenuTitle();
+		this._titleWindow.setTitle("Items");
+		this.addWindow(this._titleWindow);
+	};
+	
 	Scene_Item.prototype.createCategoryWindow = function() {
-		this._categoryWindow = new Window_ItemCategory();
+		this._categoryWindow = new Window_ItemCategory(this._titleWindow.height);
 		this._categoryWindow.setHelpWindow(this._helpWindow);
 		this._categoryWindow.setHandler('ok',     this.onCategoryOk.bind(this));
 		this._categoryWindow.setHandler('cancel', this.popScene.bind(this));
@@ -1385,7 +1392,7 @@
 	};
 	
 	Scene_Item.prototype.createItemOptionsWindow = function() {
-		var wy = this._categoryWindow.height;
+		var wy = this._categoryWindow.y + this._categoryWindow.height;
 		this._itemOptionsWindow = new Window_ItemOption(0, wy);
 		this._itemOptionsWindow.setHelpWindow(this._helpWindow);
 		this._itemOptionsWindow.setHandler('use',    this.commandItemUse.bind(this));

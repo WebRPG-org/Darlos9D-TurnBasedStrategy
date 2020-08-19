@@ -110,6 +110,18 @@ Bitmap.prototype.standardCharacterWidth = function() {
 	return 6*this.standardPixelSize();
 };
 
+Bitmap.prototype.cursorSectionOffset = function() {
+	return 96;
+};
+
+Bitmap.prototype.cursorSectionSize = function() {
+	return 48;
+};
+
+Bitmap.prototype.cursorSize = function() {
+	return 6*this.standardPixelSize();
+};
+
 //touch input
 TouchInput.isPressed = function() {
     return false;
@@ -156,9 +168,9 @@ Window.prototype._refreshCursor = function() {
 
     if (w > 0 && h > 0 && this._windowskin) {
         var skin = this._windowskin;
-        var p = 96;
-		var q = 48;
-        var r = 5*bitmap.standardPixelSize();
+        var p = bitmap.cursorSectionOffset();
+		var q = bitmap.cursorSectionSize();
+        var r = bitmap.cursorSize();
         bitmap.blt(skin, p, p, r, r, ox, oy);
         bitmap.blt(skin, p+q-r, p, r, r, ox+w-r, oy);
         bitmap.blt(skin, p, p+q-r, r, r, ox, oy+h-r);

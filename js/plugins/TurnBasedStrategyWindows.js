@@ -1370,6 +1370,46 @@ Window_ActorBodyPart.prototype.makeCommandList = function() {
 };
 
 //-----------------------------------------------------------------------------
+// Window_MenuTitle
+//
+// The window for displaying which sub-menu is currently being viewed
+
+function Window_MenuTitle() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_MenuTitle.prototype = Object.create(Window_Base.prototype);
+Window_MenuTitle.prototype.constructor = Window_MenuTitle;
+
+Window_MenuTitle.prototype.initialize = function() {
+	this._title = "";
+    Window_Selectable.prototype.initialize.call(this, 0, 0, this.windowWidth(), this.windowHeight());
+    this.refresh();
+};
+
+Window_MenuTitle.prototype.windowWidth = function() {
+	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*9;
+};
+
+Window_MenuTitle.prototype.windowHeight = function() {
+	return this.fittingHeight(1);
+};
+
+Window_MenuTitle.prototype.setTitle = function(title) {
+    if (this._title !== title) {
+        this._title = title;
+        this.refresh();
+    }
+};
+
+Window_MenuTitle.prototype.refresh = function() {
+    this.contents.clear();
+    if (this._title != undefined) {
+		this.drawText(this._title, this.textPadding(), 0, this.standardCharacterWidth()*9);
+    }
+};
+
+//-----------------------------------------------------------------------------
 // Window_SkillCharacterInfo
 //
 // The window for displaying some character info on the skill screen
@@ -5354,10 +5394,17 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		});
 	};
 	
-	Window_Selectable.prototype.drawOrgSelectBrackets = function(x, y, width) {
-		this.changeTextColor(this.crisisColor());
-		this.drawText('__________________________', x, y, width);
-		this.resetTextColor();
+	Window_Selectable.prototype.drawOrgSelectBrackets = function(x, y, width, height) {
+		if (this._windowskin) {
+			var skin = this._windowskin;
+			var p = this.contents.cursorSectionOffset();
+			var q = this.contents.cursorSectionSize();
+			var r = this.contents.cursorSize();
+			this.contents.blt(skin, p, p, r, r, x, y);
+			this.contents.blt(skin, p+q-r, p, r, r, x+width-r, y);
+			this.contents.blt(skin, p, p+q-r, r, r, x, y+height-r);
+			this.contents.blt(skin, p+q-r, p+q-r, r, r, x+width-r, y+height-r);
+		}
 	};
 
 	Window_Selectable.prototype.itemWidth = function() {
@@ -5457,7 +5504,22 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_MenuStatus.prototype.drawItem = function(index) {
+		this.drawItemBackground(index);
 		this.drawItemStatus(index);
+	};
+	
+	Window_MenuStatus.prototype.drawItemBackground = function(index) {
+		if (index === this._pendingIndex && this._windowskin) {
+			var rect = this.itemRect(index);
+			var skin = this._windowskin;
+			var p = this.contents.cursorSectionOffset();
+			var q = this.contents.cursorSectionSize();
+			var r = this.contents.cursorSize();
+			this.contents.blt(skin, p, p, r, r, rect.x, rect.y);
+			this.contents.blt(skin, p+q-r, p, r, r, rect.x+rect.width-r, rect.y);
+			this.contents.blt(skin, p, p+q-r, r, r, rect.x, rect.y+rect.height-r);
+			this.contents.blt(skin, p+q-r, p+q-r, r, r, rect.x+rect.width-r, rect.y+rect.height-r);
+		}
 	};
 	
 	Window_MenuStatus.prototype.drawItemStatus = function(index) {
@@ -5529,8 +5591,8 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	//item category
-	Window_ItemCategory.prototype.initialize = function() {
-		Window_Command.prototype.initialize.call(this, 0, 0);
+	Window_ItemCategory.prototype.initialize = function(y) {
+		Window_Command.prototype.initialize.call(this, 0, y);
 		this._actorItemWindows = [];
 		this._descriptionWindow = undefined;
 	};
@@ -5775,15 +5837,15 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		var item = this._data[index];
 		var rect = this.itemRect(index);
 		var textRect = this.itemRectForText(index);
+		if(this._orgSelectIndex >= 0 && this._orgSelectIndex == index) {
+			this.drawOrgSelectBrackets(rect.x, rect.y, rect.width, rect.height);
+		}
 		if (item) {
 			var numberWidth = this.numberWidth();
 			this.changePaintOpacity(this.isEnabled(item));
 			this.drawItemName(item, textRect.x, textRect.y, textRect.width - numberWidth);
 			this.drawItemNumber(item, textRect.x, textRect.y, textRect.width);
 			this.changePaintOpacity(1);
-		}
-		if(this._orgSelectIndex >= 0 && this._orgSelectIndex == index) {
-			this.drawOrgSelectBrackets(rect.x, rect.y, rect.width);
 		}
 	};
 
@@ -6629,15 +6691,15 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_EquipItem.prototype.drawItem = function(index) {
 		var item = this._data[index];
 		var rect = this.itemRect(index);
+		if (this._orgSelectIndex >= 0 && this._orgSelectIndex == index) {
+			this.drawOrgSelectBrackets(rect.x, rect.y, rect.width, rect.height);
+		}
 		if (item) {
 			var numberWidth = this.numberWidth();
 			this.changePaintOpacity(this.isEnabled(item));
 			this.drawItemName(item, rect.x, rect.y, rect.width - numberWidth - this.textPadding());
 			this.drawItemNumber(item, rect.x, rect.y, rect.width - this.textPadding());
 			this.changePaintOpacity(1);
-		}
-		if (this._orgSelectIndex >= 0 && this._orgSelectIndex == index) {
-			this.drawOrgSelectBrackets(rect.x, rect.y, rect.width);
 		}
 	};
 	
