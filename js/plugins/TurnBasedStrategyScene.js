@@ -1335,16 +1335,15 @@
 	Scene_Item.prototype.createCategoryWindow = function() {
 		this._categoryWindow = new Window_ItemCategory();
 		this._categoryWindow.setHelpWindow(this._helpWindow);
-		this._categoryWindow.y = 0;
 		this._categoryWindow.setHandler('ok',     this.onCategoryOk.bind(this));
 		this._categoryWindow.setHandler('cancel', this.popScene.bind(this));
 		this.addWindow(this._categoryWindow);
 	};
 	
 	Scene_Item.prototype.createItemWindow = function() {
-		var wy = this._categoryWindow.height;
-		var wh = Graphics.boxHeight - wy;
-		this._itemWindow = new Window_ItemList(0, wy, Graphics.boxWidth, wh);
+		var wx = this._categoryWindow.width;
+		var wy = 0;
+		this._itemWindow = new Window_ItemList(wx, wy, false);
 		this._itemWindow.setHelpWindow(this._helpWindow);
 		this._itemWindow.setHandler('ok',     this.onItemOk.bind(this));
 		this._itemWindow.setHandler('cancel', this.onItemCancel.bind(this));
@@ -1354,25 +1353,25 @@
 	};
 	
 	Scene_Item.prototype.createActorItemWindows = function() {
-		var wy = this._categoryWindow.height;
+		var wx = this._categoryWindow.width;
+		var wy = 0;
 		var i;
 		this._actorItemWindows = [];
 		this._actorItemNameWindows = [];
 		for(i = 0; i < $gameParty.size(); i++) {
 			var nameWindowYOffset = Window_ActorItemName.prototype.windowHeight()-Window_Base.prototype.standardPadding();
-			this._actorItemNameWindows[i] = new Window_ActorItemName(0, wy);
+			this._actorItemNameWindows[i] = new Window_ActorItemName(wx, wy);
 			this._actorItemNameWindows[i].setActor($gameParty.members()[i]);
 			this._actorItemWindows[i] = new Window_ItemList(
-				0,
+				wx,
 				wy + nameWindowYOffset,
-				Graphics.boxWidth,
-				Window_ItemList.prototype.windowHeight()
+				true
 			);
 			this._actorItemWindows[i].setHandler('ok',     this.onActorItemOk.bind(this));
 			this._actorItemWindows[i].setHandler('cancel', this.onActorItemCancel.bind(this));
 			this._actorItemWindows[i].setActor($gameParty.members()[i]);
 			this._actorItemWindows[i].setNameWindowYOffset(nameWindowYOffset);
-			this._actorItemWindows[i].setYStartPosition(this._categoryWindow.height);
+			this._actorItemWindows[i].setYStartPosition(0);
 			this.addWindow(this._actorItemWindows[i]);
 			this.addWindow(this._actorItemNameWindows[i]);
 			if(i > 0) {
@@ -1380,7 +1379,7 @@
 				this._actorItemWindows[i].setPreviousWindow(this._actorItemWindows[i-1]);
 			}
 			this._actorItemWindows[i].setActorNameWindow(this._actorItemNameWindows[i]);
-			wy += Window_ItemList.prototype.windowHeight() + nameWindowYOffset;
+			wy += Window_ItemList.prototype.partyWindowHeight() + nameWindowYOffset;
 		}
 		this._categoryWindow.setActorItemWindows(this._actorItemWindows);
 	};
@@ -1407,7 +1406,7 @@
 
 	Scene_Item.prototype.createStatusWindow = function() {
 		var wx = Window_ItemOption.prototype.windowWidth();
-		var wy = this._categoryWindow.height;
+		var wy = 0;
 		this._statusWindow = new Window_ItemStatus(wx, wy);
 		this.addWindow(this._statusWindow);
 		this._statusWindow.hide();

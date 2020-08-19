@@ -1062,11 +1062,7 @@ Window_ActorItemName.prototype.initialize = function(x, y) {
 };
 
 Window_ActorItemName.prototype.windowWidth = function() {
-	if(this._tbsActor) {
-		return this.standardPadding() * 2 + this._tbsActor.battler.displayName().length * this.standardCharacterWidth() + this.textPadding() * 2;
-	} else {
-		return 300;
-	}
+	return this.standardPaddingTotal() + 9 * this.standardCharacterWidth() + this.textPaddingTotal();
 };
 
 Window_ActorItemName.prototype.windowHeight = function() {
@@ -5534,17 +5530,25 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	//item category
 	Window_ItemCategory.prototype.initialize = function() {
-		Window_HorzCommand.prototype.initialize.call(this, 0, 0);
+		Window_Command.prototype.initialize.call(this, 0, 0);
 		this._actorItemWindows = [];
 		this._descriptionWindow = undefined;
 	};
 	
 	Window_ItemCategory.prototype.windowWidth = function() {
-		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardPixelSize()*3*87;
+		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*9;
+	};
+	
+	Window_ItemCategory.prototype.windowHeight = function() {
+		return this.fittingHeight(3);
 	};
 	
 	Window_ItemCategory.prototype.maxCols = function() {
-		return 3;
+		return 1;
+	};
+	
+	Window_ItemCategory.prototype.itemTextAlign = function() {
+		return 'left';
 	};
 	
 	Window_ItemCategory.prototype.setActorItemWindows = function(itemWindows) {
@@ -5555,7 +5559,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_ItemCategory.prototype.update = function() {
-		Window_HorzCommand.prototype.update.call(this);
+		Window_Command.prototype.update.call(this);
 		if (this._itemWindow) {
 			this._itemWindow.setCategory('stash');
 		}
@@ -5599,8 +5603,8 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	//item list
-	Window_ItemList.prototype.initialize = function(x, y, width, height) {
-		Window_Selectable.prototype.initialize.call(this, x, y, this.windowWidth(), height);
+	Window_ItemList.prototype.initialize = function(x, y, isPartyItemList) {
+		Window_Selectable.prototype.initialize.call(this, x, y, this.windowWidth(), isPartyItemList ? this.partyWindowHeight() : this.windowHeight());
 		this._category = 'none';
 		this._data = [];
 		this._statusWindow = undefined;
@@ -5617,6 +5621,10 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_ItemList.prototype.windowHeight = function() {
+		return this.fittingHeight(16);
+	};
+	
+	Window_ItemList.prototype.partyWindowHeight = function() {
 		return this.fittingHeight(Math.ceil(Game_BattlerBase.prototype.maxItems()/2));
 	};
 	

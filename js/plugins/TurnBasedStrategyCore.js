@@ -171,6 +171,10 @@ Window.prototype._refreshCursor = function() {
  * @private
  */
 Window.prototype._updateCursor = function() {
-    this._windowCursorSprite.alpha = 1;
+	if(this.active) {
+		this._windowCursorSprite.alpha = this._windowCursorSprite.alpha == 1 ? 0 : 1;
+	} else {
+		this._windowCursorSprite.alpha = 1;
+	}
     this._windowCursorSprite.visible = this.isOpen();
 };
