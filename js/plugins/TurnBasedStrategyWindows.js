@@ -5674,7 +5674,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this._previousWindow = undefined;
 		this._nextWindow = undefined;
 		this._orgSelectIndex = -1;
-		this._nameWindowYOffset = Math.floor(this.lineHeight() * 1.6);
+		this._nameWindowYOffset = this.fittingHeight(1)-this.standardPadding();
 		this._yStartPosition = 0;
 	};
 	
@@ -5831,6 +5831,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 				this._itemOptionsWindow.setItemIndex(undefined);
 			}
 		}
+		this.dontMoveCursorAgain();
 	};
 	
 	Window_ItemList.prototype.drawItem = function(index) {
@@ -6001,7 +6002,18 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		}
 	};
 	
+	Window_ItemList.prototype.setDontMoveCursorAgain = function() {
+		this._dontMoveCursorAgain = true;
+	};
+	
+	Window_ItemList.prototype.dontMoveCursorAgain = function() {
+		var returnValue = this._dontMoveCursorAgain;
+		this._dontMoveCursorAgain = false;
+		return returnValue;
+	};
+	
 	Window_ItemList.prototype.cursorDown = function(wrap) {
+		if(this.dontMoveCursorAgain()) { return; }
 		var index = this.index();
 		var maxItems = this.maxItems();
 		var maxCols = this.maxCols();
@@ -6012,14 +6024,16 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			this.deactivate();
 			this.deselect();
 			this._nextWindow.activate();
-			this._nextWindow.select(((index + maxCols) % maxItems) - maxCols);
+			this._nextWindow.select((index + maxCols) % maxItems);
 			if(this._nextWindow.y + this._nextWindow.height > Graphics.boxHeight) {
 				this.moveWindowsUp();
 			}
+			this._nextWindow.setDontMoveCursorAgain();
 		}
 	};
 
 	Window_ItemList.prototype.cursorUp = function(wrap) {
+		if(this.dontMoveCursorAgain()) { return; }
 		var index = this.index();
 		var maxItems = this.maxItems();
 		var maxCols = this.maxCols();
@@ -6034,10 +6048,12 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			if(this._previousWindow.y - this._nameWindowYOffset < this._yStartPosition) {
 				this.moveWindowsDown();
 			}
+			this._previousWindow.setDontMoveCursorAgain();
 		}
 	};
 
 	Window_ItemList.prototype.cursorRight = function(wrap) {
+		if(this.dontMoveCursorAgain()) { return; }
 		var index = this.index();
 		var maxItems = this.maxItems();
 		var maxCols = this.maxCols();
@@ -6048,14 +6064,16 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			this.deactivate();
 			this.deselect();
 			this._nextWindow.activate();
-			this._nextWindow.select(-1);
+			this._nextWindow.select(0);
 			if(this._nextWindow.y + this._nextWindow.height > Graphics.boxHeight) {
 				this.moveWindowsUp();
 			}
+			this._nextWindow.setDontMoveCursorAgain();
 		}
 	};
 
 	Window_ItemList.prototype.cursorLeft = function(wrap) {
+		if(this.dontMoveCursorAgain()) { return; }
 		var index = this.index();
 		var maxItems = this.maxItems();
 		var maxCols = this.maxCols();
@@ -6070,6 +6088,37 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			if(this._previousWindow.y - this._nameWindowYOffset < this._yStartPosition) {
 				this.moveWindowsDown();
 			}
+			this._previousWindow.setDontMoveCursorAgain();
+		}
+	};
+	
+	Window_ItemList.prototype.cursorPagedown = function() {
+		if(this.dontMoveCursorAgain()) { return; }
+		if(this._nextWindow) {
+			var index = this.index();
+			this.deactivate();
+			this.deselect();
+			this._nextWindow.activate();
+			this._nextWindow.select(index);
+			if(this._nextWindow.y + this._nextWindow.height > Graphics.boxHeight) {
+				this.moveWindowsUp();
+			}
+			this._nextWindow.setDontMoveCursorAgain();
+		}
+	};
+
+	Window_ItemList.prototype.cursorPageup = function() {
+		if(this.dontMoveCursorAgain()) { return; }
+		if(this._previousWindow) {
+			var index = this.index();
+			this.deactivate();
+			this.deselect();
+			this._previousWindow.activate();
+			this._previousWindow.select(index);
+			if(this._previousWindow.y - this._nameWindowYOffset < this._yStartPosition) {
+				this.moveWindowsDown();
+			}
+			this._previousWindow.setDontMoveCursorAgain();
 		}
 	};
 	
