@@ -1383,7 +1383,7 @@ Window_MenuTitle.prototype.constructor = Window_MenuTitle;
 
 Window_MenuTitle.prototype.initialize = function() {
 	this._title = "";
-    Window_Selectable.prototype.initialize.call(this, 0, 0, this.windowWidth(), this.windowHeight());
+    Window_Base.prototype.initialize.call(this, 0, 0, this.windowWidth(), this.windowHeight());
     this.refresh();
 };
 
@@ -1406,6 +1406,46 @@ Window_MenuTitle.prototype.refresh = function() {
     this.contents.clear();
     if (this._title != undefined) {
 		this.drawText(this._title, this.textPadding(), 0, this.standardCharacterWidth()*9);
+    }
+};
+
+//-----------------------------------------------------------------------------
+// Window_ItemName
+//
+// The window for displaying an item name by itself
+
+function Window_ItemName() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_ItemName.prototype = Object.create(Window_Base.prototype);
+Window_ItemName.prototype.constructor = Window_ItemName;
+
+Window_ItemName.prototype.initialize = function(x) {
+	this._item = undefined;
+    Window_Base.prototype.initialize.call(this, x, 0, this.windowWidth(), this.windowHeight());
+    this.refresh();
+};
+
+Window_ItemName.prototype.windowWidth = function() {
+	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*12;
+};
+
+Window_ItemName.prototype.windowHeight = function() {
+	return this.fittingHeight(1);
+};
+
+Window_ItemName.prototype.setItem = function(item) {
+    if (this._item !== item) {
+        this._item = item;
+        this.refresh();
+    }
+};
+
+Window_ItemName.prototype.refresh = function() {
+    this.contents.clear();
+    if (this._item != undefined) {
+		this.drawItemName(this._item, this.textPadding(), 0, this.standardCharacterWidth()*12);
     }
 };
 
@@ -5831,6 +5871,26 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 				this._itemOptionsWindow.setItemIndex(undefined);
 			}
 		}
+		if(this._itemNameWindow && this.isOpenAndActive()) {
+			if(this.item()) {
+				if(this._actor) {
+					var item = null;
+					var actorItem = this.item();
+					if(actorItem.type === "item") {
+						item = $dataItems[actorItem.id];
+					} else if(actorItem.type === "weapon") {
+						item = $dataWeapons[actorItem.id];
+					} else if(actorItem.type === "armor") {
+						item = $dataArmors[actorItem.id];
+					}
+					this._itemNameWindow.setItem(item);
+				} else {
+					this._itemNameWindow.setItem(this.item());
+				}
+			} else {
+				this._itemNameWindow.setItem(undefined);
+			}
+		}
 		this.dontMoveCursorAgain();
 	};
 	
@@ -5881,6 +5941,13 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_ItemList.prototype.setItemOptionsWindow = function(itemOptionsWindow) {
 		if (this._itemOptionsWindow !== itemOptionsWindow) {
 			this._itemOptionsWindow = itemOptionsWindow;
+			this.update();
+		}
+	}
+	
+	Window_ItemList.prototype.setItemNameWindow = function(itemNameWindow) {
+		if (this._itemNameWindow !== itemNameWindow) {
+			this._itemNameWindow = itemNameWindow;
 			this.update();
 		}
 	}

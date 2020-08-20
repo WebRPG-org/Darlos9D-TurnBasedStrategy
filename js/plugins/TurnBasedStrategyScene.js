@@ -1326,6 +1326,7 @@
 		this.createCategoryWindow();
 		this.createItemWindow();
 		this.createActorItemWindows();
+		this.createItemNameWindow();
 		this.createItemOptionsWindow();
 		this.createStatusWindow();
 		this.createActorWindow();
@@ -1391,6 +1392,17 @@
 		this._categoryWindow.setActorItemWindows(this._actorItemWindows);
 	};
 	
+	Scene_Item.prototype.createItemNameWindow = function() {
+		var wx = this._titleWindow.width;
+		this._itemNameWindow = new Window_ItemName(wx);
+		this._itemNameWindow.hide();
+		this.addWindow(this._itemNameWindow);
+		this._itemWindow.setItemNameWindow(this._itemNameWindow);
+		this._actorItemWindows.forEach(function (itemWindow) {
+			itemWindow.setItemNameWindow(this._itemNameWindow);
+		}, this);
+	};
+	
 	Scene_Item.prototype.createItemOptionsWindow = function() {
 		var wy = this._categoryWindow.y + this._categoryWindow.height;
 		this._itemOptionsWindow = new Window_ItemOption(0, wy);
@@ -1413,7 +1425,7 @@
 
 	Scene_Item.prototype.createStatusWindow = function() {
 		var wx = Window_ItemOption.prototype.windowWidth();
-		var wy = 0;
+		var wy = this._itemNameWindow.height;
 		this._statusWindow = new Window_ItemStatus(wx, wy);
 		this.addWindow(this._statusWindow);
 		this._statusWindow.hide();
@@ -1518,6 +1530,7 @@
 		this._actorItemWindows.forEach(function (itemWindow) {
 			itemWindow.deactivate();
 		});
+		this._itemNameWindow.show();
 		this._statusWindow.show();
 		this._itemOptionsWindow.show();
 		this._itemOptionsWindow.select(0);
@@ -1538,6 +1551,7 @@
 
 	Scene_Item.prototype.onItemOk = function() {
 		this._itemWindow.deactivate();
+		this._itemNameWindow.show();
 		this._statusWindow.show();
 		this._itemOptionsWindow.show();
 		this._itemOptionsWindow.select(0);
@@ -1622,6 +1636,7 @@
 		if(!activated) {
 			this._itemWindow.activate();
 		}
+		this._itemNameWindow.hide();
 		this._statusWindow.hide();
 		this._itemOptionsWindow.deactivate();
 		this._itemOptionsWindow.hide();
