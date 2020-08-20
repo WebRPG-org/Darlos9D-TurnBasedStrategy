@@ -6122,6 +6122,11 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		}
 	};
 	
+	Window_ItemList.prototype.updateArrows = function() {
+		this.downArrowVisible = this.y >= (this.height + this._nameWindowYOffset) * 2 && this._nextWindow;
+		this.upArrowVisible = this.y - this._nameWindowYOffset == 0 && this._previousWindow;
+	};
+	
 	Window_ItemList.prototype.lastWindowUsed = function() {
 		return this._lastWindowUsed;
 	};
