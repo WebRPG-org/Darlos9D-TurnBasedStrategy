@@ -1657,9 +1657,10 @@
 		Scene_ItemBase.prototype.create.call(this);
 		this.createHelpWindow();
 		this._helpWindow.hide();
-		this.createCharacterInfoWindow();
-		this.createActionInfoWindow();
+		this.createTitleWindow();
+		this.createActorNameWindow();
 		this.createSkillTypeWindow();
+		this.createActionInfoWindow();
 		this.createDescriptionWindow();
 		this.createItemWindow();
 		this.createActorWindow();
@@ -1667,20 +1668,20 @@
 		this.refreshActor();
 	};
 	
-	Scene_Skill.prototype.createCharacterInfoWindow = function() {
-		this._characterInfoWindow = new Window_SkillCharacterInfo();
-		this.addWindow(this._characterInfoWindow);
+	Scene_Skill.prototype.createTitleWindow = function() {
+		this._titleWindow = new Window_MenuTitle();
+		this._titleWindow.setTitle("Techs");
+		this.addWindow(this._titleWindow);
 	};
-
-	Scene_Skill.prototype.createActionInfoWindow = function() {
-		var wy = this._characterInfoWindow.height;
-		this._actionInfoWindow = new Window_SkillActionInfo(wy);
-		this.addWindow(this._actionInfoWindow);
-		this._actionInfoWindow.hide();
+	
+	Scene_Skill.prototype.createActorNameWindow = function() {
+		var wx = this._titleWindow.width;
+		this._actorNameWindow = new Window_ActorName(wx);
+		this.addWindow(this._actorNameWindow);
 	};
 	
 	Scene_Skill.prototype.createSkillTypeWindow = function() {
-		var wy = this._characterInfoWindow.height;
+		var wy = this._titleWindow.height;
 		this._skillTypeWindow = new Window_SkillType(0, wy);
 		this._skillTypeWindow.setHelpWindow(this._helpWindow);
 		this._skillTypeWindow.setHandler('skill',    this.commandSkill.bind(this));
@@ -1690,20 +1691,24 @@
 		this.addWindow(this._skillTypeWindow);
 	};
 
+	Scene_Skill.prototype.createActionInfoWindow = function() {
+		var wy = this._titleWindow.height;
+		this._actionInfoWindow = new Window_SkillActionInfo(wy);
+		this.addWindow(this._actionInfoWindow);
+		this._actionInfoWindow.hide();
+	};
+
 	Scene_Skill.prototype.createDescriptionWindow = function() {
 		var wx = this._actionInfoWindow.width;
-		var wy = this._characterInfoWindow.height;
-		var ww = Graphics.boxWidth - this._actionInfoWindow.width;
-		var wh = this._actionInfoWindow.height;
-		this._descriptionWindow = new Window_SkillDescription(wx, wy, ww, wh);
+		var wy = this._actorNameWindow.height;
+		this._descriptionWindow = new Window_SkillDescription(wx, wy);
 		this._skillTypeWindow.setDescriptionWindow(this._descriptionWindow);
 		this.addWindow(this._descriptionWindow);
 	};
 
 	Scene_Skill.prototype.createItemWindow = function() {
 		var wy = this._actionInfoWindow.y + this._actionInfoWindow.height;
-		var wh = Graphics.boxHeight - wy;
-		this._itemWindow = new Window_SkillList(wy, wh);
+		this._itemWindow = new Window_SkillList(wy);
 		this._itemWindow.setHelpWindow(this._helpWindow);
 		this._itemWindow.setHandler('ok',     this.onItemOk.bind(this));
 		this._itemWindow.setHandler('cancel', this.onItemCancel.bind(this));
@@ -1716,7 +1721,7 @@
 	Scene_Skill.prototype.refreshActor = function() {
 		var actor = this.actor();
 		actor.checkLearnedSkills();
-		this._characterInfoWindow.setActor(actor);
+		this._actorNameWindow.setActor(actor);
 		this._skillTypeWindow.setActor(actor);
 		this._itemWindow.setActor(actor);
 	};

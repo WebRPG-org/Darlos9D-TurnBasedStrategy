@@ -1450,6 +1450,46 @@ Window_ItemName.prototype.refresh = function() {
 };
 
 //-----------------------------------------------------------------------------
+// Window_ActorName
+//
+// The window for displaying an actor name by itself
+
+function Window_ActorName() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_ActorName.prototype = Object.create(Window_Base.prototype);
+Window_ActorName.prototype.constructor = Window_ActorName;
+
+Window_ActorName.prototype.initialize = function(x) {
+	this._actor = undefined;
+    Window_Base.prototype.initialize.call(this, x, 0, this.windowWidth(), this.windowHeight());
+    this.refresh();
+};
+
+Window_ActorName.prototype.windowWidth = function() {
+	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*9;
+};
+
+Window_ActorName.prototype.windowHeight = function() {
+	return this.fittingHeight(1);
+};
+
+Window_ActorName.prototype.setActor = function(actor) {
+    if (this._actor !== actor) {
+        this._actor = actor;
+        this.refresh();
+    }
+};
+
+Window_ActorName.prototype.refresh = function() {
+    this.contents.clear();
+    if (this._actor != undefined) {
+		this.drawText(this._actor.displayName(), this.textPadding(), 0, this.standardCharacterWidth()*9);
+    }
+};
+
+//-----------------------------------------------------------------------------
 // Window_SkillCharacterInfo
 //
 // The window for displaying some character info on the skill screen
@@ -1495,10 +1535,18 @@ function Window_SkillDescription() {
 Window_SkillDescription.prototype = Object.create(Window_Base.prototype);
 Window_SkillDescription.prototype.constructor = Window_SkillDescription;
 
-Window_SkillDescription.prototype.initialize = function(x, y, width, height) {
-    Window_Base.prototype.initialize.call(this, x, y, width, height);
+Window_SkillDescription.prototype.initialize = function(x, y) {
+    Window_Base.prototype.initialize.call(this, x, y, this.windowWidth(), this.windowHeight());
+    this.deactivate();
     this.refresh();
-    this.activate();
+};
+
+Window_SkillDescription.prototype.windowWidth = function() {
+	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth() * 24;
+};
+
+Window_SkillDescription.prototype.windowHeight = function() {
+	return this.fittingHeight(10);
 };
 
 Window_SkillDescription.prototype.refresh = function() {
@@ -1540,7 +1588,7 @@ Window_SkillActionInfo.prototype.initialize = function(y) {
 };
 
 Window_SkillActionInfo.prototype.windowWidth = function() {
-	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*10;
+	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*14;
 };
 
 Window_SkillActionInfo.prototype.windowHeight = function() {
@@ -1585,9 +1633,8 @@ Window_SkillActionInfo.prototype.drawSkillActionInfo = function() {
 	this.drawActionInfo(this._actionInfo, undefined, undefined, undefined, this._actor);
 	
 	if(this._actionInfo.sourceEquip) {
-		this.drawText("Source:", 0, this.lineHeight() * (this.numVisibleRows() - 2));
-		var rect = this.itemRectForText(this.numVisibleRows() - 1);
-		this.drawItemName(this._actionInfo.sourceEquip, 0, rect.y, Window_Base._iconWidth*2 + this.standardCharacterWidth()*11);
+		this.drawText("Source:", this.textPadding(), this.lineHeight() * (this.numVisibleRows() - 2));
+		this.drawItemName(this._actionInfo.sourceEquip, this.textPadding(), this.lineHeight() * (this.numVisibleRows() - 1), this.standardCharacterWidth()*12);
 	}
 };
  
@@ -4566,7 +4613,10 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		var ph = Window_Base._iconRenderHeight;
 		var sx = iconIndex % 16 * Window_Base._iconWidth;
 		var sy = Math.floor(iconIndex / 16) * Window_Base._iconHeight;
+		var opacity = this.contents.paintOpacity;
+		this.contents.paintOpacity = 255;
 		this.contents.blt(bitmap, sx, sy, pw, ph, x, y);
+		this.contents.paintOpacity = opacity;
 	};
 
 	Window_Base.prototype.drawFace = function(faceName, faceIndex, x, y, width, height) {
@@ -4596,13 +4646,23 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_Base.prototype.drawItemName = function(item, x, y, width) {
-		width = width || Graphics.boxWidth-x;
-		if (item) {
-			var iconBoxWidth = this.standardCharacterWidth()*2;
-			this.resetTextColor();
-			this.drawIcon(item.iconIndex, x+this.standardCharacterWidth()*2-Window_Base._iconRenderWidth-this.standardPixelSize(), y+this.roundToPixelGrid((this.lineHeight()-Window_Base._iconRenderHeight)/2));
-			this.drawText(item.name, x + iconBoxWidth, y, width - iconBoxWidth);
+		if(item) {
+			this.drawIconAndName(item.iconIndex, item.name, x, y, width);
 		}
+	};
+	
+	Window_Base.prototype.drawActionName = function(action, x, y, width) {
+		if(action) {
+			this.drawIconAndName(action.menuIcon, action.name, x, y, width);
+		}
+	};
+	
+	Window_Base.prototype.drawIconAndName = function(iconIndex, name, x, y, width) {
+		width = width || Graphics.boxWidth-x;
+		var iconBoxWidth = this.standardCharacterWidth()*2;
+		this.resetTextColor();
+		this.drawIcon(iconIndex, x+this.standardCharacterWidth()*2-Window_Base._iconRenderWidth-this.standardPixelSize(), y+this.roundToPixelGrid((this.lineHeight()-Window_Base._iconRenderHeight)/2));
+		this.drawText(name, x + iconBoxWidth, y, width - iconBoxWidth);
 	};
 	
 	Window_Base.prototype.drawCurrencyValue = function(value, unit, x, y, width) {
@@ -6329,12 +6389,20 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	//skill list
-	Window_SkillList.prototype.initialize = function(y, height) {
-		Window_Selectable.prototype.initialize.call(this, 0, y, Graphics.boxWidth, height);
+	Window_SkillList.prototype.initialize = function(y) {
+		Window_Selectable.prototype.initialize.call(this, 0, y, this.windowWidth(), this.windowHeight());
 		this._actor = null;
 		this._stypeId = 0;
 		this._data = [];
 		this._actionInfos = [];
+	};
+	
+	Window_SkillList.prototype.windowWidth = function() {
+		return this.standardPadding()*2 + this.textPaddingTotal()*2 + this.standardCharacterWidth()*30;
+	};
+	
+	Window_SkillList.prototype.windowHeight = function() {
+		return this.fittingHeight(4);
 	};
 	
 	Window_SkillList.prototype.update = function() {
@@ -6417,7 +6485,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_SkillList.prototype.costWidth = function() {
-		return this.textWidth('00000');
+		return this.textWidth('000');
 	};
 	
 	Window_SkillList.prototype.drawItem = function(index) {
@@ -6426,26 +6494,25 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			var action = actionInfo.action;
 			var costWidth = this.costWidth();
 			var rect = this.itemRect(index);
-			rect.width -= this.textPadding();
+			var textRect = this.itemRectForText(index);
 			
 			var iconBoxWidth = Window_Base._iconWidth + 4;
 			this.resetTextColor();
 			
 			var iconIndex = this.iconIndexForAction(action);
 			this.changePaintOpacity(this.isEnabled(action));
-			this.drawIcon(iconIndex, rect.x + 2, rect.y + 2);
-			this.drawText(action.name, rect.x + iconBoxWidth, rect.y, rect.width - costWidth - iconBoxWidth);
+			this.drawActionName(action, textRect.x, rect.y, this.standardCharacterWidth()*12);
+			this.changePaintOpacity(1);
 			if((action.stressCost !== undefined && action.stressCost > 0) || (action.mpCost !== undefined && action.mpCost > 0)) {
 				var stressCost = action.stressCost == undefined ? 0 : action.stressCost;
 				var mpCost = action.mpCost == undefined ? 0 : action.mpCost;
 				this.changeTextColor(this.crisisColor());
-				this.drawText(stressCost, rect.x, rect.y, rect.width-this.standardCharacterWidth()*2, 'right');
+				this.drawText(stressCost, textRect.x, rect.y, textRect.width-this.standardCharacterWidth()*2, 'right');
 				this.changeTextColor(this.systemColor());
-				this.drawText(":", rect.x, rect.y, rect.width-this.standardCharacterWidth(), 'right');
+				this.drawText(":", textRect.x, rect.y, textRect.width-this.standardCharacterWidth(), 'right');
 				this.resetTextColor();
-				this.drawText(mpCost, rect.x, rect.y, rect.width, 'right');
+				this.drawText(mpCost, textRect.x, rect.y, textRect.width, 'right');
 			}
-			this.changePaintOpacity(1);
 		}
 	};
 	
