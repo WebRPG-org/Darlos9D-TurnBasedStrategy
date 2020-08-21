@@ -1169,6 +1169,19 @@
 		return this._itemWindow.isEnabled(action);
 	};
 	
+	Scene_ItemBase.prototype.createActorWindow = function() {
+		this._actorWindow = new Window_MenuActor();
+		this._actorWindow.x = Graphics.boxWidth - this._actorWindow.width;
+		this._actorWindow.setHandler('ok',     this.onActorOk.bind(this));
+		this._actorWindow.setHandler('cancel', this.onActorCancel.bind(this));
+		this.addWindow(this._actorWindow);
+	};
+	
+	Scene_ItemBase.prototype.showSubWindow = function(window) {
+		window.show();
+		window.activate();
+	};
+	
 	Scene_ItemBase.prototype.onActorOk = function() {
 		if (this.canUseAction()) {
 			// if(this.actionEffectTargetsBodyPart()) {
@@ -1453,7 +1466,6 @@
 	Scene_Item.prototype.determineItem = function() {
 		var actionInfo = this.actionInfo();
 		if (actionInfo && actionInfo.action && this.actionIsEnabled(actionInfo.action)) {
-			this._actorWindow.x = 0;
 			this._actorWindow.show();
 			this._actorWindow.activate();
 			this._actorWindow.selectForActionInfo(actionInfo, this.user());
