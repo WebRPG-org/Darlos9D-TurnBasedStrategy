@@ -107,7 +107,7 @@ Bitmap.prototype.standardCharacterHeight = function() {
 };
 
 Bitmap.prototype.standardCharacterWidth = function() {
-	return 6*this.standardPixelSize();
+	return 8*this.standardPixelSize();
 };
 
 Bitmap.prototype.cursorSectionOffset = function() {
@@ -119,7 +119,7 @@ Bitmap.prototype.cursorSectionSize = function() {
 };
 
 Bitmap.prototype.cursorSize = function() {
-	return 6*this.standardPixelSize();
+	return 8*this.standardPixelSize();
 };
 
 //touch input

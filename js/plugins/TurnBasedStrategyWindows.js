@@ -1062,7 +1062,7 @@ Window_ActorItemName.prototype.initialize = function(x, y) {
 };
 
 Window_ActorItemName.prototype.windowWidth = function() {
-	return this.standardPaddingTotal() + 9 * this.standardCharacterWidth() + this.textPaddingTotal();
+	return this.standardPaddingTotal() + 8 * this.standardCharacterWidth() + this.textPaddingTotal();
 };
 
 Window_ActorItemName.prototype.windowHeight = function() {
@@ -1095,7 +1095,7 @@ Window_ActorItemName.prototype.drawTargetNameText = function() {
 	if(this._actor) {
 		this.resetTextColor();
 		this.changePaintOpacity(true);
-		this.drawText(this._actor.displayName(), this.textPadding(), 0);
+		this.drawText(this._actor.displayName(), this.textPadding(), 0, this.standardCharacterWidth()*8);
 	}
 };
 
@@ -1118,7 +1118,7 @@ Window_ItemOption.prototype.initialize = function(x, y) {
 };
 
 Window_ItemOption.prototype.windowWidth = function() {
-	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*9;
+	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*6;
 };
 
 Window_ItemOption.prototype.setActor = function(actor) {
@@ -1184,7 +1184,7 @@ Window_ItemOption.prototype.makeCommandList = function() {
 		if(DataManager.isItem(this._item) && this._item.itypeId === 2) {
 			this.addCommand("Done", 'cancel');
 		} else {
-			this.addCommand("Discard", 'discard');
+			this.addCommand("Trash", 'discard');
 		}
     }
 };
@@ -1301,8 +1301,7 @@ Window_YesNoConfirm.prototype.initialize = function(x, y) {
 };
 
 Window_YesNoConfirm.prototype.windowWidth = function() {
-	var textLength = this._yesText.length > this._noText.length ? this._yesText.length : this._noText.length;
-    return this.standardPadding()*2 + this.textPadding()*2 + textLength*this.standardCharacterWidth();
+    return this.standardPadding()*2 + this.textPadding()*2 + 6*this.standardCharacterWidth();
 };
 
 Window_YesNoConfirm.prototype.setYesText = function(yesText) {
@@ -1388,7 +1387,7 @@ Window_MenuTitle.prototype.initialize = function() {
 };
 
 Window_MenuTitle.prototype.windowWidth = function() {
-	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*9;
+	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*6;
 };
 
 Window_MenuTitle.prototype.windowHeight = function() {
@@ -1405,7 +1404,7 @@ Window_MenuTitle.prototype.setTitle = function(title) {
 Window_MenuTitle.prototype.refresh = function() {
     this.contents.clear();
     if (this._title != undefined) {
-		this.drawText(this._title, this.textPadding(), 0, this.standardCharacterWidth()*9);
+		this.drawText(this._title, this.textPadding(), 0, this.standardCharacterWidth()*6);
     }
 };
 
@@ -1428,7 +1427,7 @@ Window_ItemName.prototype.initialize = function(x) {
 };
 
 Window_ItemName.prototype.windowWidth = function() {
-	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*12;
+	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*8;
 };
 
 Window_ItemName.prototype.windowHeight = function() {
@@ -1445,7 +1444,7 @@ Window_ItemName.prototype.setItem = function(item) {
 Window_ItemName.prototype.refresh = function() {
     this.contents.clear();
     if (this._item != undefined) {
-		this.drawItemName(this._item, this.textPadding(), 0, this.standardCharacterWidth()*12);
+		this.drawItemName(this._item, this.textPadding(), 0, this.standardCharacterWidth()*8);
     }
 };
 
@@ -1468,7 +1467,7 @@ Window_ActorName.prototype.initialize = function(x) {
 };
 
 Window_ActorName.prototype.windowWidth = function() {
-	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*9;
+	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*8;
 };
 
 Window_ActorName.prototype.windowHeight = function() {
@@ -1485,7 +1484,7 @@ Window_ActorName.prototype.setActor = function(actor) {
 Window_ActorName.prototype.refresh = function() {
     this.contents.clear();
     if (this._actor != undefined) {
-		this.drawText(this._actor.displayName(), this.textPadding(), 0, this.standardCharacterWidth()*9);
+		this.drawText(this._actor.displayName(), this.textPadding(), 0, this.standardCharacterWidth()*8);
     }
 };
 
@@ -4460,13 +4459,15 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	//base
 	Window_Base._iconRenderWidth  = Bitmap.prototype.standardPixelSize()*8;
 	Window_Base._iconRenderHeight = Bitmap.prototype.standardPixelSize()*8;
+	Window_Base._largeIconRenderWidth  = Bitmap.prototype.standardPixelSize()*16;
+	Window_Base._largeIconRenderHeight = Bitmap.prototype.standardPixelSize()*16;
 	
 	Window_Base.prototype.lineHeight = function() {
-		return this.standardCharacterHeight()+this.standardPixelSize()*4;
+		return this.standardCharacterHeight() + this.standardPixelSize()*8;
 	};
 	
 	Window_Base.prototype.standardPadding = function() {
-		return this.standardPixelSize()*3;
+		return this.standardPixelSize()*4;
 	};
 	
 	Window_Base.prototype.standardPaddingTotal = function() {
@@ -4474,11 +4475,12 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 
 	Window_Base.prototype.textPadding = function() {
-		return this.standardPixelSize()*2;
+		return this.standardPixelSize()*4;
 	};
 	
 	Window_Base.prototype.textPaddingEnd = function() {
-		return this.textPadding() - this.standardPixelSize();
+		return this.textPadding();
+		//return Math.max(0, this.textPadding() - this.standardPixelSize());
 	};
 
 	Window_Base.prototype.textPaddingTotal = function() {
@@ -4618,6 +4620,18 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.contents.blt(bitmap, sx, sy, pw, ph, x, y);
 		this.contents.paintOpacity = opacity;
 	};
+	
+	Window_Base.prototype.drawLargeIcon = function(iconIndex, x, y) {
+		var bitmap = ImageManager.loadSystem('IconSet');
+		var pw = Window_Base._largeIconRenderWidth;
+		var ph = Window_Base._largeIconRenderHeight;
+		var sx = iconIndex % 16 * Window_Base._iconWidth;
+		var sy = Math.floor(iconIndex / 16) * Window_Base._iconHeight;
+		var opacity = this.contents.paintOpacity;
+		this.contents.paintOpacity = 255;
+		this.contents.blt(bitmap, sx, sy, pw, ph, x, y);
+		this.contents.paintOpacity = opacity;
+	};
 
 	Window_Base.prototype.drawFace = function(faceName, faceIndex, x, y, width, height) {
 		width = width || Window_Base._faceWidth;
@@ -4645,6 +4659,11 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.contents.blt(bitmap, sx, sy, pw, ph, x - pw / 2, y - ph);
 	};
 	
+	Window_Base.prototype.drawActorClass = function(actor, x, y, width) {
+		width = width || 168;
+		this.drawText(actor.currentClass().name, x, y, width);
+	};
+	
 	Window_Base.prototype.drawItemName = function(item, x, y, width) {
 		if(item) {
 			this.drawIconAndName(item.iconIndex, item.name, x, y, width);
@@ -4659,9 +4678,9 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	Window_Base.prototype.drawIconAndName = function(iconIndex, name, x, y, width) {
 		width = width || Graphics.boxWidth-x;
-		var iconBoxWidth = this.standardCharacterWidth()*2;
+		var iconBoxWidth = this.standardCharacterWidth();
 		this.resetTextColor();
-		this.drawIcon(iconIndex, x+this.standardCharacterWidth()*2-Window_Base._iconRenderWidth-this.standardPixelSize(), y+this.roundToPixelGrid((this.lineHeight()-Window_Base._iconRenderHeight)/2));
+		this.drawIcon(iconIndex, x+this.standardCharacterWidth()-Window_Base._iconRenderWidth, y+this.roundToPixelGrid((this.lineHeight()-Window_Base._iconRenderHeight)/2));
 		this.drawText(name, x + iconBoxWidth, y, width - iconBoxWidth);
 	};
 	
@@ -4676,27 +4695,27 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_Base.prototype.drawActorSimpleStatus = function(actor, x, y, width) {
 		var lineHeight = this.lineHeight();
 		this.drawActorNickname(actor, x, y);
-		this.changePaintOpacity(false);
-		this.drawActorClass(actor, x, y+lineHeight);
-		this.changePaintOpacity(true);
-		this.drawActorSkillXP(actor, x, y+lineHeight*2);
-		this.drawActorTbsMP(actor, x+this.standardCharacterWidth()*9, y+lineHeight*2);
+		this.drawActorSimpleDamage(actor, x, y+lineHeight);
+		this.drawActorTbsMP(actor, x, y+lineHeight*2);
+		this.changeTextColor(this.systemColor());
+		this.drawActorClass(actor, x+this.standardCharacterWidth()*8, y, this.standardCharacterWidth()*8);
+		this.resetTextColor();
+		this.drawActorSkillXP(actor, x+this.standardCharacterWidth()*8, y+this.lineHeight());
+		this.drawActorPartsDamage(actor, x+this.standardCharacterWidth()*15, y+this.lineHeight()-Window_Base._iconRenderHeight/2, false);
 		//this.drawActorIcons(actor, x, y + lineHeight * 2);
 		//this.drawActorStress(actor, x, y + lineHeight);
-		this.drawActorSimpleDamage(actor, x+this.standardCharacterWidth()*9, y);
-		this.drawActorPartsDamage(actor, x+this.standardCharacterWidth()*7, y+lineHeight+(this.roundToPixelGrid((lineHeight - Window_Base._iconRenderHeight)/2)), false);
-		this.drawActorBuffs(actor, x+this.standardCharacterWidth()*7, y+lineHeight*3+(this.roundToPixelGrid((lineHeight - Window_Base._iconRenderHeight)/2)));
+		//this.drawActorBuffs(actor, x+this.standardCharacterWidth()*7, y+lineHeight*3+(this.roundToPixelGrid((lineHeight - Window_Base._iconRenderHeight)/2)));
 	};
 	
 	Window_Base.prototype.drawActorTbsMP = function(actor, x, y) {
 		if(actor.maxMP() == 0) { return; }
 		this.changeTextColor(this.systemColor());
-		this.drawIcon(
-			this.getIconIdFor("mp"), 
-			x+(this.standardCharacterWidth()*2-Window_Base._iconRenderWidth)-this.standardPixelSize(), 
-			y+this.roundToPixelGrid((this.lineHeight()-Window_Base._iconRenderHeight)/2)
-		);
-		this.drawText("/", x+this.standardCharacterWidth()*4, y, this.standardCharacterWidth());
+		//this.drawIcon(
+		//	this.getIconIdFor("mp"), 
+		//	x+(this.standardCharacterWidth()*2-Window_Base._iconRenderWidth)-this.standardPixelSize(), 
+		//	y+this.roundToPixelGrid((this.lineHeight()-Window_Base._iconRenderHeight)/2)
+		//);
+		this.drawText("En  /", x, y, this.standardCharacterWidth()*7);
 		this.resetTextColor();
 		this.drawText(actor.maxMP() - actor.mpSpent(), x+this.standardCharacterWidth()*2, y, this.standardCharacterWidth()*2, 'right');
 		this.drawText(actor.maxMP(), x+this.standardCharacterWidth()*5, y, this.standardCharacterWidth()*2, 'right');
@@ -4710,7 +4729,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.changeTextColor(this.systemColor());
 		var spText = "SP";
 		var rpText = "RP";
-		var xValueOffset = this.standardCharacterWidth()*3;
+		var xValueOffset = this.standardCharacterWidth()*2;
 		if(longNames) {
 			spText = "Skill Points";
 			rpText = "Refund Points";
@@ -4743,7 +4762,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_Base.prototype.drawActorSimpleDamage = function(actor, x, y) {
-		this.drawActorSimplePartDamage(actor, "core"    , x		, y							, "HP");
+		this.drawActorSimplePartDamage(actor, "core"    , x		, y							, "Hl");
 		//this.drawActorSimplePartDamage(actor, "head"    , x		, y							, "He");
 		//this.drawActorSimplePartDamage(actor, "torso"   , x		, y + this.lineHeight()		, "To");
 		//this.drawActorSimpleLimbDamage(actor, "leftArm" , x		, y + this.lineHeight()*2	, "Ar");
@@ -4836,15 +4855,15 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	Window_Base.prototype.drawActorSimplePartDamage = function(actor, part, x, y, label) {
 		this.changeTextColor(this.systemColor());
-		if(part==="core") {
-			this.drawIcon(
-				this.getIconIdFor("hp"), 
-				x+(this.standardCharacterWidth()*2-Window_Base._iconRenderWidth)-this.standardPixelSize(), 
-				y+this.roundToPixelGrid((this.lineHeight()-Window_Base._iconRenderHeight)/2)
-			);	
-		} else {
+		// if(part==="core") {
+			// this.drawIcon(
+				// this.getIconIdFor("hp"), 
+				// x+(this.standardCharacterWidth()*2-Window_Base._iconRenderWidth)-this.standardPixelSize(), 
+				// y+this.roundToPixelGrid((this.lineHeight()-Window_Base._iconRenderHeight)/2)
+			// );	
+		// } else {
 			this.drawText(label, x, y, this.standardCharacterWidth()*2);
-		}
+		//}
 		this.drawText("/", x+this.standardCharacterWidth()*4, y, this.standardCharacterWidth());
 		var health = actor.toughness()*(part==="core"||part==="torso"?2:1) - actor.getDamage(part);
 		this.resetTextColor();
@@ -4875,36 +4894,33 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_Base.prototype.drawActorPartsDamage = function(actor, x, y, multipleLines) {
 		if(actor.blankDummy()) { return; }
 		
-		curX = x;
-		curY = y;
+		var curX = x;
+		var curY = y;
 		var tough = actor.toughness();
 		var baseIconId = this.getIconIdFor("headGray");
 		var partCount = 6;
 		for(let i = 0; i < partCount; i++) {
 			var partName = "head";
+			curX = x;
+			curY = y;
 			var curTough = tough;
 			var iconOffset = 0;
-			if(i == 1) { partName = "torso"; curTough = tough*2; }
-			else if(i == 2) { partName = "leftArm"; }
-			else if(i == 3) { partName = "rightArm"; }
-			else if(i == 4) { partName = "leftLeg"; }
-			else if(i == 5) { partName = "rightLeg"; }
-			if(actor.getDamage(partName) > 0) {
-				if(actor.getDamage(partName) >= curTough) {
-					iconOffset = partCount*3;
-				} else if(actor.getDamage(partName) > Math.round(curTough/2)) {
-					iconOffset = partCount*2;
-				} else if(actor.getDamage(partName) == Math.round(curTough/2)) {
-					iconOffset = partCount;
-				}
-				this.drawIcon(baseIconId+i+iconOffset, curX, curY);
+			if(i == 1) { partName = "torso"; curTough = tough*2; curX = x; curY = y+Window_Base._largeIconRenderHeight; }
+			else if(i == 2) { partName = "leftArm"; curX = x+Window_Base._largeIconRenderWidth; curY = y; }
+			else if(i == 3) { partName = "rightArm"; curX = x+Window_Base._largeIconRenderWidth*2; curY = y; }
+			else if(i == 4) { partName = "leftLeg"; curX = x+Window_Base._largeIconRenderWidth; curY = y+Window_Base._largeIconRenderHeight; }
+			else if(i == 5) { partName = "rightLeg"; curX = x+Window_Base._largeIconRenderWidth*2; curY = y+Window_Base._largeIconRenderHeight; }
+			if(actor.getDamage(partName) >= curTough) {
+				iconOffset = partCount*8;
+			} else if(actor.getDamage(partName) > Math.ceil(curTough/2)) {
+				iconOffset = partCount*6;
+			} else if(actor.getDamage(partName) == Math.ceil(curTough/2)) {
+				iconOffset = partCount*4;
+			} else if(actor.getDamage(partName) > 0) {
+				iconOffset = partCount*2;
 			}
-			if(multipleLines && i % 2 == 1) {
-				curX = x;
-				curY += Window_Base._iconRenderHeight+this.standardPixelSize();
-			} else {
-				curX += Window_Base._iconRenderWidth+this.standardPixelSize();
-			}
+			var verticalOffset = Math.floor(((i*2)+iconOffset) / 16) * 16;
+			this.drawLargeIcon(baseIconId+(i*2)+iconOffset+verticalOffset, curX, curY);
 		}
 	};
 	
@@ -5316,12 +5332,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			case "stress":			return	43; break;
 			case "curFocus":		return	44; break;
 			
-			case "headGray":		return 	18; break;
-			case "torsoGray":		return	19; break;
-			case "leftArmGray":		return	20; break;
-			case "rightArmGray":	return	21; break;
-			case "leftLegGray":		return	22; break;
-			case "rightLegGray":	return	23; break;
+			case "headGray":		return 	240; break;
 		}
 		return 0;
 	};
@@ -5567,7 +5578,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	//menu command
 	Window_MenuCommand.prototype.windowWidth = function() {
-		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*8;
+		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*6;
 	};
 	
 	Window_MenuCommand.prototype.addMainCommands = function() {
@@ -5596,11 +5607,11 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	//menu status
 	Window_MenuStatus.prototype.windowWidth = function() {
-		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*16;
+		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*21;
 	};
 	
 	Window_MenuStatus.prototype.windowHeight = function() {
-		return this.fittingHeight(16);
+		return this.fittingHeight(12);
 	};
 	
 	Window_MenuStatus.prototype.drawItem = function(index) {
@@ -5698,7 +5709,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_ItemCategory.prototype.windowWidth = function() {
-		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*9;
+		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*6;
 	};
 	
 	Window_ItemCategory.prototype.windowHeight = function() {
@@ -5761,7 +5772,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_ItemCategory.prototype.makeCommandList = function() {
 		this.addCommand("Party",    'organize');
 		this.addCommand("Stash", 'stash', $gameSystem.isSaveEnabled());
-		this.addCommand("Key Items",    'keyItems');
+		this.addCommand("Key",    'keyItems');
 	};
 	
 	//item list
@@ -5779,11 +5790,11 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_ItemList.prototype.windowWidth = function() {
-		return this.standardPaddingTotal()*2 + this.textPaddingTotal()*2 + this.standardCharacterWidth()*30;
+		return this.standardPaddingTotal()*2 + this.textPaddingTotal()*2 + this.standardCharacterWidth()*22;
 	};
 	
 	Window_ItemList.prototype.windowHeight = function() {
-		return this.fittingHeight(16);
+		return this.fittingHeight(12);
 	};
 	
 	Window_ItemList.prototype.partyWindowHeight = function() {
@@ -5952,6 +5963,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			}
 		}
 		this.dontMoveCursorAgain();
+		this.updateArrows();
 	};
 	
 	Window_ItemList.prototype.drawItem = function(index) {
@@ -6250,7 +6262,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_ItemList.prototype.updateArrows = function() {
-		this.downArrowVisible = this.y >= (this.height + this._nameWindowYOffset) * 2 && this._nextWindow;
+		this.downArrowVisible = this.y >= (this.height + this._nameWindowYOffset) * 1 && this._nextWindow;
 		this.upArrowVisible = this.y - this._nameWindowYOffset == 0 && this._previousWindow;
 	};
 	
@@ -6398,7 +6410,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_SkillList.prototype.windowWidth = function() {
-		return this.standardPadding()*2 + this.textPaddingTotal()*2 + this.standardCharacterWidth()*30;
+		return this.standardPadding()*2 + this.textPaddingTotal()*2 + this.standardCharacterWidth()*22;
 	};
 	
 	Window_SkillList.prototype.windowHeight = function() {
@@ -6501,7 +6513,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			
 			var iconIndex = this.iconIndexForAction(action);
 			this.changePaintOpacity(this.isEnabled(action));
-			this.drawActionName(action, textRect.x, rect.y, this.standardCharacterWidth()*12);
+			this.drawActionName(action, textRect.x, rect.y, this.standardCharacterWidth()*6);
 			this.changePaintOpacity(1);
 			if((action.stressCost !== undefined && action.stressCost > 0) || (action.mpCost !== undefined && action.mpCost > 0)) {
 				var stressCost = action.stressCost == undefined ? 0 : action.stressCost;
@@ -7105,7 +7117,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_SavefileList.prototype.maxVisibleItems = function() {
-		return 5;
+		return 3;
 	};
 
 	Window_SavefileList.prototype.itemHeight = function() {

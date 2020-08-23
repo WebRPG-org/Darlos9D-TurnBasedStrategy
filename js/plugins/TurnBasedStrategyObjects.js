@@ -701,6 +701,10 @@
 		return this._actors[index];
 	};
 	
+	Game_Party.prototype.maxGold = function() {
+		return 999999;
+	};
+	
 	//map
 	Game_Map.prototype.initialize = function() {
 		this._interpreter = new Game_Interpreter();

@@ -1380,7 +1380,7 @@
 		this._actorItemWindows = [];
 		this._actorItemNameWindows = [];
 		for(i = 0; i < $gameParty.size(); i++) {
-			var nameWindowYOffset = Window_ActorItemName.prototype.windowHeight()-Window_Base.prototype.standardPadding();
+			var nameWindowYOffset = Window_ActorItemName.prototype.windowHeight();
 			this._actorItemNameWindows[i] = new Window_ActorItemName(wx, wy);
 			this._actorItemNameWindows[i].setActor($gameParty.members()[i]);
 			this._actorItemWindows[i] = new Window_ItemList(
@@ -1459,7 +1459,7 @@
 		this._yesNoWindow.deactivate();
 		this._yesNoWindow.deselect();
 		this._itemOptionsWindow.setYesNoWindow(this._yesNoWindow);
-		this._yesNoWindow.setYesText("Discard");
+		this._yesNoWindow.setYesText("Trash");
 		this._yesNoWindow.setNoText("Don't");
 	};
 	
