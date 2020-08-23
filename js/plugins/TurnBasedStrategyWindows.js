@@ -606,7 +606,7 @@ Window_ItemStatusBase.prototype.drawSkillRequirements = function() {
 
 Window_ItemStatusBase.prototype.drawProtection = function() {
 	this.changeTextColor(this.systemColor());
-	this.drawText("Protection", this.textPadding(), this.standardCharacterHeight(), this.standardCharacterWidth()*10);
+	//this.drawText("Protection", this.textPadding(), this.standardCharacterHeight(), this.standardCharacterWidth()*10);
 	this.resetTextColor();
 	var leftHeldProt = this.getCompleteProtection({});
 	var rightHeldProt = this.getCompleteProtection({});
@@ -686,7 +686,7 @@ Window_ItemStatusBase.prototype.drawProtection = function() {
 	var typesWidth = this.standardCharacterWidth()*2;
 	var armorSeparation = 0;// this.armorSeparation();
 	var iconNudgeX = this.roundToPixelGrid((this.standardCharacterWidth()*2-Window_Base._iconRenderWidth)/2);
-	var iconNudgeY = this.standardPadding()+this.standardCharacterHeight()*2;
+	var iconNudgeY = this.standardPadding()+this.standardCharacterHeight();
 	
 	this.drawIcon(this.getIconIdFor("solidDefense"), 	typesX  								  + iconNudgeX,	iconNudgeY);
 	this.drawIcon(this.getIconIdFor("fluidDefense"), 	typesX + typesWidth						  + iconNudgeX, iconNudgeY);
@@ -698,8 +698,8 @@ Window_ItemStatusBase.prototype.drawProtection = function() {
 	this.drawIcon(this.getIconIdFor("corrosion"), 		typesX + typesWidth * 7 + armorSeparation + iconNudgeX, iconNudgeY);
 	this.drawIcon(this.getIconIdFor("conducted"), 		typesX + typesWidth * 8 + armorSeparation + iconNudgeX, iconNudgeY);
 	
-	this.drawPhysProtection("RH", rightHeldProtTemp, rightHeldProt, typesX, typesWidth, this.standardCharacterHeight() * 3);
-	this.drawPhysProtection("LH", leftHeldProtTemp, leftHeldProt, typesX, typesWidth, this.standardCharacterHeight() * 4);
+	this.drawPhysProtection("RH", rightHeldProtTemp, rightHeldProt, typesX, typesWidth, this.standardCharacterHeight() * 2);
+	this.drawPhysProtection("LH", leftHeldProtTemp, leftHeldProt, typesX, typesWidth, this.standardCharacterHeight() * 3);
 	this.drawPhysProtection("He", headProtTemp, headProt, typesX, typesWidth, this.standardCharacterHeight() * 5);
 	this.drawPhysProtection("To", torsoProtTemp, torsoProt, typesX, typesWidth, this.standardCharacterHeight() * 6);
 	this.drawPhysProtection("RA", rightArmProtTemp, rightArmProt, typesX, typesWidth, this.standardCharacterHeight() * 7);
@@ -847,7 +847,7 @@ Window_ItemStatusBase.prototype.setTextColorForComparison = function(newValue, o
 
 Window_ItemStatusBase.prototype.drawBonuses = function() {
 	this.changeTextColor(this.systemColor());
-	this.drawText("Bonuses", this.textPadding(), this.standardCharacterHeight(), this.standardCharacterWidth()*7);
+	//this.drawText("Bonuses", this.textPadding(), this.standardCharacterHeight(), this.standardCharacterWidth()*7);
 	this.resetTextColor();
 	var maxHP = 0;
 	var maxMP = 0;
