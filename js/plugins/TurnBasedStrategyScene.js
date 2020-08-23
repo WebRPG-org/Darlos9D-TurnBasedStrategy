@@ -1044,8 +1044,17 @@
 	};
 	
 	//menu
+	Scene_Menu.prototype.create = function() {
+		Scene_MenuBase.prototype.create.call(this);
+		this.createCommandWindow();
+		this.createGoldWindow();
+		this.createStatusWindow();
+		this.createMenuTitleWindow();
+		this.createPartyTitleWindow();
+	};
+
 	Scene_Menu.prototype.createCommandWindow = function() {
-		this._commandWindow = new Window_MenuCommand(0, 0);
+		this._commandWindow = new Window_MenuCommand(0, Window_Base.prototype.bigNesTileSize());
 		this._commandWindow.setHandler('item',      this.commandItem.bind(this));
 		this._commandWindow.setHandler('skill',     this.commandPersonal.bind(this));
 		this._commandWindow.setHandler('equip',     this.commandPersonal.bind(this));
@@ -1057,6 +1066,24 @@
 		this._commandWindow.setHandler('gameEnd',   this.commandGameEnd.bind(this));
 		this._commandWindow.setHandler('cancel',    this.popScene.bind(this));
 		this.addWindow(this._commandWindow);
+	};
+	
+	Scene_Menu.prototype.createStatusWindow = function() {
+		this._statusWindow = new Window_MenuStatus(this._commandWindow.width, Window_Base.prototype.bigNesTileSize());
+		this.addWindow(this._statusWindow);
+	};
+
+	Scene_Menu.prototype.createMenuTitleWindow = function() {
+		this._menuTitleWindow = new Window_MenuTitle();
+		this._menuTitleWindow.setTitle("Menu");
+		this.addWindow(this._menuTitleWindow);
+	};
+
+	Scene_Menu.prototype.createPartyTitleWindow = function() {
+		this._partyTitleWindow = new Window_Help(1);
+		this._partyTitleWindow.setText("Party Status");
+		this._partyTitleWindow.x = this._statusWindow.x;
+		this.addWindow(this._partyTitleWindow);
 	};
 	
 	Scene_Menu.prototype.commandCamp = function() {
@@ -1333,10 +1360,10 @@
 	//item
 	Scene_Item.prototype.create = function() {
 		Scene_ItemBase.prototype.create.call(this);
-		this.createTitleWindow();
 		this.createHelpWindow();
 		this._helpWindow.hide();
 		this.createCategoryWindow();
+		this.createTitleWindow();
 		this.createItemWindow();
 		this.createActorItemWindows();
 		this.createStatusWindow();
@@ -1347,18 +1374,18 @@
 		this.createActorBodyPartWindow();
 	};
 	
-	Scene_Item.prototype.createTitleWindow = function() {
-		this._titleWindow = new Window_MenuTitle();
-		this._titleWindow.setTitle("Items");
-		this.addWindow(this._titleWindow);
-	};
-	
 	Scene_Item.prototype.createCategoryWindow = function() {
-		this._categoryWindow = new Window_ItemCategory(this._titleWindow.height);
+		this._categoryWindow = new Window_ItemCategory(Window_Base.prototype.bigNesTileSize());
 		this._categoryWindow.setHelpWindow(this._helpWindow);
 		this._categoryWindow.setHandler('ok',     this.onCategoryOk.bind(this));
 		this._categoryWindow.setHandler('cancel', this.popScene.bind(this));
 		this.addWindow(this._categoryWindow);
+	};
+	
+	Scene_Item.prototype.createTitleWindow = function() {
+		this._titleWindow = new Window_MenuTitle();
+		this._titleWindow.setTitle("Items");
+		this.addWindow(this._titleWindow);
 	};
 	
 	Scene_Item.prototype.createItemWindow = function() {
@@ -1380,7 +1407,7 @@
 		this._actorItemWindows = [];
 		this._actorItemNameWindows = [];
 		for(i = 0; i < $gameParty.size(); i++) {
-			var nameWindowYOffset = Window_ActorItemName.prototype.windowHeight() - Window_Base.prototype.standardCharacterHeight();
+			var nameWindowYOffset = Window_Base.prototype.bigNesTileSize();
 			this._actorItemNameWindows[i] = new Window_ActorItemName(wx, wy);
 			this._actorItemNameWindows[i].setActor($gameParty.members()[i]);
 			this._actorItemWindows[i] = new Window_ItemList(
@@ -1400,7 +1427,12 @@
 				this._actorItemWindows[i].setPreviousWindow(this._actorItemWindows[i-1]);
 			}
 			this._actorItemWindows[i].setActorNameWindow(this._actorItemNameWindows[i]);
-			wy += Window_ItemList.prototype.partyWindowHeight() + nameWindowYOffset;
+			var windowHeight = this._actorItemWindows[i].standardPaddingTotal() +
+				Math.max(1, Math.ceil(Game_BattlerBase.prototype.maxItems()/this._actorItemWindows[i].maxCols())) * this._actorItemWindows[i].lineHeight();
+			if(windowHeight % this._actorItemWindows[i].bigNesTileSize() != 0) {
+				windowHeight += this._actorItemWindows[i].nesTileSize();
+			}
+			wy += windowHeight + nameWindowYOffset;
 		}
 		this._categoryWindow.setActorItemWindows(this._actorItemWindows);
 	};
@@ -1449,7 +1481,7 @@
 	};
 	
 	Scene_Item.prototype.createYesNoWindow = function() {
-		var wy = this._itemOptionsWindow.y + this._itemOptionsWindow.height;
+		var wy = this._itemOptionsWindow.y + this._itemOptionsWindow.height - Window_Base.prototype.bigNesTileSize();
 		this._yesNoWindow = new Window_YesNoConfirm(0, wy);
 		this._yesNoWindow.setHandler('yes',    this.commandItemDiscardConfirm.bind(this));
 		this._yesNoWindow.setHandler('no',    this.commandItemDiscardCancel.bind(this));

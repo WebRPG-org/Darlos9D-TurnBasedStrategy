@@ -1087,19 +1087,10 @@ Window_ItemOption.prototype.initialize = function(x, y) {
     Window_Command.prototype.initialize.call(this, x, y);
     this._actor = null;
 	this._item = null;
-	this._menuHasPadding = false;
 };
 
-Window_ItemOption.prototype.windowWidth = function() {
-	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*6;
-};
-
-Window_ItemOption.prototype.windowHeight = function() {
-	var windowHeight = this.fittingHeight(this.numVisibleRows());
-	if(this.position == undefined) { return windowHeight; }
-	this._menuHasPadding = (this.x + windowHeight) % (this.standardCharacterHeight()*2) != 0;
-	windowHeight += this._menuHasPadding ? this.standardCharacterHeight() : 0;
-	return windowHeight;
+Window_ItemOption.prototype.itemWidth = function() {
+	return this.textPaddingTotal() + this.standardCharacterWidth()*6;
 };
 
 Window_ItemOption.prototype.setActor = function(actor) {
@@ -1128,20 +1119,6 @@ Window_ItemOption.prototype.setYesNoWindow = function(yesNoWindow) {
 	if(this._yesNoWindow !== yesNoWindow) {
 		this._yesNoWindow = yesNoWindow;
 	}
-};
-
-Window_ItemOption.prototype.numVisibleRows = function() {
-	var rows = 1;
-	if (this._item) {
-		if(this._actor) {
-			rows += 2;
-		} else {
-			if(!DataManager.isItem(this._item) || this._item.itypeId === 1) {
-				rows += $gameParty.size();
-			}
-		}
-	}
-    return rows;
 };
 
 Window_ItemOption.prototype.makeCommandList = function() {
@@ -1233,10 +1210,13 @@ Window_ItemOption.prototype.selectLast = function() {
 };
 
 Window_ItemOption.prototype.refresh = function() {
+	this.clearCommandList();
+    this.makeCommandList();
 	this.move(this.x, this.y, this.width, this.windowHeight());
-	Window_Command.prototype.refresh.call(this);
+    this.createContents();
+    Window_Selectable.prototype.refresh.call(this);
 	if(this._yesNoWindow) {
-		this._yesNoWindow.y = this.y + this.height - (this._menuHasPadding ? this.standardCharacterHeight() : 0);
+		this._yesNoWindow.y = this.y + this.height - this.bigNesTileSize();
 	}
 };
 
@@ -1281,8 +1261,8 @@ Window_YesNoConfirm.prototype.initialize = function(x, y) {
     Window_Command.prototype.initialize.call(this, x, y);
 };
 
-Window_YesNoConfirm.prototype.windowWidth = function() {
-    return this.standardPadding()*2 + this.textPadding()*2 + 6*this.standardCharacterWidth();
+Window_YesNoConfirm.prototype.itemWidth = function() {
+    return this.textPaddingTotal() + 6*this.standardCharacterWidth();
 };
 
 Window_YesNoConfirm.prototype.setYesText = function(yesText) {
@@ -1311,7 +1291,6 @@ Window_YesNoConfirm.prototype.makeCommandList = function() {
 };
 
 Window_YesNoConfirm.prototype.refresh = function() {
-	this.move(this.x, this.y, this.windowWidth(), this.height);
 	Window_Command.prototype.refresh.call(this);
 };
 
@@ -4690,15 +4669,15 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_Base.prototype.drawActorSimpleStatus = function(actor, x, y, width) {
-		var lineHeight = this.lineHeight();
+		var lineHeight = this.standardCharacterHeight();
 		this.drawActorNickname(actor, x, y);
 		this.drawActorSimpleDamage(actor, x, y+lineHeight);
 		this.drawActorTbsMP(actor, x, y+lineHeight*2);
 		this.changeTextColor(this.systemColor());
 		this.drawActorClass(actor, x+this.standardCharacterWidth()*8, y, this.standardCharacterWidth()*8);
 		this.resetTextColor();
-		this.drawActorSkillXP(actor, x+this.standardCharacterWidth()*8, y+this.lineHeight());
-		this.drawActorPartsDamage(actor, x+this.standardCharacterWidth()*15, y+this.lineHeight()-Window_Base._iconRenderHeight/2, false);
+		this.drawActorSkillXP(actor, x+this.standardCharacterWidth()*8, y+lineHeight);
+		this.drawActorPartsDamage(actor, x+this.standardCharacterWidth()*16, y+this.nesTileSize()/2, false);
 		//this.drawActorIcons(actor, x, y + lineHeight * 2);
 		//this.drawActorStress(actor, x, y + lineHeight);
 		//this.drawActorBuffs(actor, x+this.standardCharacterWidth()*7, y+lineHeight*3+(this.roundToPixelGrid((lineHeight - Window_Base._iconRenderHeight)/2)));
@@ -4722,7 +4701,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		var lineOneX = x;
 		var lineTwoX = x;
 		var lineOneY = y;
-		var lineTwoY = y + this.lineHeight();
+		var lineTwoY = y + this.standardCharacterHeight();
 		this.changeTextColor(this.systemColor());
 		var spText = "SP";
 		var rpText = "RP";
@@ -5623,7 +5602,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_Gold.prototype.windowHeight = function() {
-		return this.fittingHeight(2)+this.standardCharacterHeight();
+		return this.standardPaddingTotal() + this.nesTileSize() + this.standardCharacterHeight()*2;
 	};
 	
 	Window_Gold.prototype.refresh = function() {
@@ -5632,16 +5611,16 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.changeTextColor(this.systemColor());
 		this.drawText(this.currencyUnit(), x, 0, this.standardCharacterWidth()*this.currencyUnit().length);
 		this.resetTextColor();
-		this.drawText(this.value(), x, this.lineHeight(), this.standardCharacterWidth()*($gameParty.maxGold()+"").length, 'right');
+		this.drawText(this.value(), x, this.standardCharacterHeight(), this.standardCharacterWidth()*($gameParty.maxGold()+"").length, 'right');
 	};
 	
 	//menu command
-	Window_MenuCommand.prototype.windowWidth = function() {
-		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*6;
+	Window_MenuCommand.prototype.itemWidth = function() {
+		return this.textPaddingTotal() + this.standardCharacterWidth()*6;
 	};
 	
-	Window_MenuCommand.prototype.windowHeight = function() {
-		return this.fittingHeight(9) + this.standardCharacterHeight();
+	Window_MenuCommand.prototype.windowWidth = function() {
+		return Window_Command.prototype.windowWidth.call(this);
 	};
 	
 	Window_MenuCommand.prototype.addMainCommands = function() {
@@ -5669,20 +5648,20 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	//menu status
-	Window_MenuStatus.prototype.windowWidth = function() {
-		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*22;
-	};
-	
-	Window_MenuStatus.prototype.windowHeight = function() {
-		return this.fittingHeight(12) + this.standardCharacterHeight();
-	};
-	
 	Window_MenuStatus.prototype.itemWidth = function() {
-		return this.textPaddingTotal() + this.standardCharacterWidth()*21;
+		return this.textPaddingTotal() + this.standardCharacterWidth()*22;
 	};
 	
 	Window_MenuStatus.prototype.itemHeight = function() {
-		return this.lineHeight()*3;
+		return this.standardCharacterHeight()*4 + this.nesTileSize();
+	};
+	
+	Window_MenuStatus.prototype.windowWidth = function() {
+		return Window_Command.prototype.windowWidth.call(this);
+	};
+
+	Window_MenuStatus.prototype.windowHeight = function() {
+		return Window_Command.prototype.windowHeight.call(this);
 	};
 	
 	Window_MenuStatus.prototype.drawItem = function(index) {
@@ -5779,12 +5758,12 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this._descriptionWindow = undefined;
 	};
 	
-	Window_ItemCategory.prototype.windowWidth = function() {
-		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*6;
+	Window_ItemCategory.prototype.itemWidth = function() {
+		return this.textPaddingTotal() + this.standardCharacterWidth()*6;
 	};
 	
-	Window_ItemCategory.prototype.windowHeight = function() {
-		return this.fittingHeight(3);
+	Window_ItemCategory.prototype.windowWidth = function() {
+		return Window_Command.prototype.windowWidth.call(this);
 	};
 	
 	Window_ItemCategory.prototype.maxCols = function() {
@@ -5847,8 +5826,8 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	//item list
-	Window_ItemList.prototype.initialize = function(x, y, isPartyItemList) {
-		Window_Selectable.prototype.initialize.call(this, x, y, this.windowWidth(), isPartyItemList ? this.partyWindowHeight() : this.windowHeight());
+	Window_ItemList.prototype.initialize = function(x, y) {
+		Window_Selectable.prototype.initialize.call(this, x, y, this.windowWidth(), this.windowHeight());
 		this._category = 'none';
 		this._data = [];
 		this._statusWindow = undefined;
@@ -5860,20 +5839,12 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this._yStartPosition = 0;
 	};
 	
-	Window_ItemList.prototype.windowWidth = function() {
-		return this.standardPaddingTotal()*2 + this.textPaddingTotal()*2 + this.standardCharacterWidth()*22;
+	Window_ItemList.prototype.maxPageRows = function() {
+		return this._actor ? this.maxRows() : 12;
 	};
 	
-	Window_ItemList.prototype.windowHeight = function() {
-		return this.fittingHeight(12) + this.standardCharacterHeight();
-	};
-	
-	Window_ItemList.prototype.itemHeight = function() {
-		return this.lineHeight();
-	};
-	
-	Window_ItemList.prototype.partyWindowHeight = function() {
-		return this.fittingHeight(Math.ceil(Game_BattlerBase.prototype.maxItems()/2)) + this.standardCharacterHeight();
+	Window_ItemList.prototype.itemWidth = function() {
+		return this.standardPaddingTotal() + this.standardCharacterWidth()*11;
 	};
 	
 	Window_ItemList.prototype.maxItems = function() {
@@ -5954,6 +5925,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	Window_ItemList.prototype.refresh = function() {
 		this.makeItemList();
+		this.move(this.x, this.y, this.width, this.windowHeight());
 		this.createContents();
 		this.drawAllItems();
 		if(this.index() >= this.maxItems()) {
@@ -6041,28 +6013,10 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.updateArrows();
 	};
 	
-	Window_ItemList.prototype.updateCursor = function() {
-		var actorWindowOffset = this._actor == undefined ? 0 : this.standardCharacterHeight();
-		if (this._cursorAll) {
-			var allRowsHeight = this.maxRows() * this.itemHeight();
-			this.setCursorRect(0, actorWindowOffset, this.contents.width, allRowsHeight);
-			this.setTopRow(0);
-		} else if (this.isCursorVisible()) {
-			var rect = this.itemRect(this.index());
-			this.setCursorRect(rect.x, rect.y+actorWindowOffset, rect.width, rect.height);
-		} else {
-			this.setCursorRect(0, actorWindowOffset, 0, 0);
-		}
-	};
-	
 	Window_ItemList.prototype.drawItem = function(index) {
 		var item = this._data[index];
 		var rect = this.itemRect(index);
 		var textRect = this.itemRectForText(index);
-		if(this._actor != undefined) {
-			rect.y += this.standardCharacterHeight();
-			textRect.y += this.standardCharacterHeight();
-		}
 		if(this._orgSelectIndex >= 0 && this._orgSelectIndex == index) {
 			this.drawOrgSelectBrackets(rect.x, rect.y, rect.width, rect.height);
 		}
