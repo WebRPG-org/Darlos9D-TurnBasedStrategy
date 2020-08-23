@@ -1115,10 +1115,19 @@ Window_ItemOption.prototype.initialize = function(x, y) {
     Window_Command.prototype.initialize.call(this, x, y);
     this._actor = null;
 	this._item = null;
+	this._menuHasPadding = false;
 };
 
 Window_ItemOption.prototype.windowWidth = function() {
 	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*6;
+};
+
+Window_ItemOption.prototype.windowHeight = function() {
+	var windowHeight = this.fittingHeight(this.numVisibleRows());
+	if(this.position == undefined) { return windowHeight; }
+	this._menuHasPadding = (this.x + windowHeight) % (this.standardCharacterHeight()*2) != 0;
+	windowHeight += this._menuHasPadding ? this.standardCharacterHeight() : 0;
+	return windowHeight;
 };
 
 Window_ItemOption.prototype.setActor = function(actor) {
@@ -1255,7 +1264,7 @@ Window_ItemOption.prototype.refresh = function() {
 	this.move(this.x, this.y, this.width, this.windowHeight());
 	Window_Command.prototype.refresh.call(this);
 	if(this._yesNoWindow) {
-		this._yesNoWindow.y = this.y + this.height;
+		this._yesNoWindow.y = this.y + this.height - (this._menuHasPadding ? this.standardCharacterHeight() : 0);
 	}
 };
 
@@ -5564,7 +5573,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_Gold.prototype.windowHeight = function() {
-		return this.fittingHeight(2);
+		return this.fittingHeight(2)+this.standardCharacterHeight();
 	};
 	
 	Window_Gold.prototype.refresh = function() {
@@ -5579,6 +5588,10 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	//menu command
 	Window_MenuCommand.prototype.windowWidth = function() {
 		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*6;
+	};
+	
+	Window_MenuCommand.prototype.windowHeight = function() {
+		return this.fittingHeight(9) + this.standardCharacterHeight();
 	};
 	
 	Window_MenuCommand.prototype.addMainCommands = function() {
@@ -5607,11 +5620,19 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	//menu status
 	Window_MenuStatus.prototype.windowWidth = function() {
-		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*21;
+		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*22;
 	};
 	
 	Window_MenuStatus.prototype.windowHeight = function() {
-		return this.fittingHeight(12);
+		return this.fittingHeight(12) + this.standardCharacterHeight();
+	};
+	
+	Window_MenuStatus.prototype.itemWidth = function() {
+		return this.textPaddingTotal() + this.standardCharacterWidth()*21;
+	};
+	
+	Window_MenuStatus.prototype.itemHeight = function() {
+		return this.lineHeight()*3;
 	};
 	
 	Window_MenuStatus.prototype.drawItem = function(index) {
@@ -5794,11 +5815,15 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_ItemList.prototype.windowHeight = function() {
-		return this.fittingHeight(12);
+		return this.fittingHeight(12) + this.standardCharacterHeight();
+	};
+	
+	Window_ItemList.prototype.itemHeight = function() {
+		return this.lineHeight();
 	};
 	
 	Window_ItemList.prototype.partyWindowHeight = function() {
-		return this.fittingHeight(Math.ceil(Game_BattlerBase.prototype.maxItems()/2));
+		return this.fittingHeight(Math.ceil(Game_BattlerBase.prototype.maxItems()/2)) + this.standardCharacterHeight();
 	};
 	
 	Window_ItemList.prototype.maxItems = function() {
@@ -5966,10 +5991,28 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.updateArrows();
 	};
 	
+	Window_ItemList.prototype.updateCursor = function() {
+		var actorWindowOffset = this._actor == undefined ? 0 : this.standardCharacterHeight();
+		if (this._cursorAll) {
+			var allRowsHeight = this.maxRows() * this.itemHeight();
+			this.setCursorRect(0, actorWindowOffset, this.contents.width, allRowsHeight);
+			this.setTopRow(0);
+		} else if (this.isCursorVisible()) {
+			var rect = this.itemRect(this.index());
+			this.setCursorRect(rect.x, rect.y+actorWindowOffset, rect.width, rect.height);
+		} else {
+			this.setCursorRect(0, actorWindowOffset, 0, 0);
+		}
+	};
+	
 	Window_ItemList.prototype.drawItem = function(index) {
 		var item = this._data[index];
 		var rect = this.itemRect(index);
 		var textRect = this.itemRectForText(index);
+		if(this._actor != undefined) {
+			rect.y += this.standardCharacterHeight();
+			textRect.y += this.standardCharacterHeight();
+		}
 		if(this._orgSelectIndex >= 0 && this._orgSelectIndex == index) {
 			this.drawOrgSelectBrackets(rect.x, rect.y, rect.width, rect.height);
 		}
