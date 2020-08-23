@@ -1339,9 +1339,9 @@
 		this.createCategoryWindow();
 		this.createItemWindow();
 		this.createActorItemWindows();
+		this.createStatusWindow();
 		this.createItemNameWindow();
 		this.createItemOptionsWindow();
-		this.createStatusWindow();
 		this.createActorWindow();
 		this.createYesNoWindow();
 		this.createActorBodyPartWindow();
@@ -1404,6 +1404,18 @@
 		}
 		this._categoryWindow.setActorItemWindows(this._actorItemWindows);
 	};
+
+	Scene_Item.prototype.createStatusWindow = function() {
+		var wx = Window_ItemOption.prototype.windowWidth();
+		var wy = this._titleWindow.height-Window_Base.prototype.standardCharacterHeight();
+		this._statusWindow = new Window_ItemStatus(wx, wy);
+		this.addWindow(this._statusWindow);
+		this._statusWindow.hide();
+		this._itemWindow.setStatusWindow(this._statusWindow);
+		this._actorItemWindows.forEach(function (itemWindow) {
+			itemWindow.setStatusWindow(this._statusWindow);
+		}, this);
+	};
 	
 	Scene_Item.prototype.createItemNameWindow = function() {
 		var wx = this._titleWindow.width;
@@ -1434,18 +1446,6 @@
 			itemWindow.setItemOptionsWindow(this._itemOptionsWindow);
 		}, this);
 		this.addWindow(this._itemOptionsWindow);
-	};
-
-	Scene_Item.prototype.createStatusWindow = function() {
-		var wx = Window_ItemOption.prototype.windowWidth();
-		var wy = this._itemNameWindow.height;
-		this._statusWindow = new Window_ItemStatus(wx, wy);
-		this.addWindow(this._statusWindow);
-		this._statusWindow.hide();
-		this._itemWindow.setStatusWindow(this._statusWindow);
-		this._actorItemWindows.forEach(function (itemWindow) {
-			itemWindow.setStatusWindow(this._statusWindow);
-		}, this);
 	};
 	
 	Scene_Item.prototype.createYesNoWindow = function() {
