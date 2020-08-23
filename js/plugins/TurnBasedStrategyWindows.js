@@ -592,11 +592,11 @@ Window_ItemStatusBase.prototype.drawSkillRequirements = function() {
 		var item = new Game_Item(this._actionsItem);
 		var actions = item.actions();
 		this.changeTextColor(this.systemColor());
-		var lineOffset = this.standardCharacterHeight();
-		this.drawText("Action", this.textPadding(), lineOffset);
-		this.drawText("SkillRequired", this.textPadding() + this.nameOffset(), lineOffset);
+		this.drawText("Action", this.textPadding(), this.standardCharacterHeight());
+		this.drawText("SkillRequired", this.textPadding() + this.nameOffset(), this.standardCharacterHeight());
 		this.resetTextColor();
 		if(!actions) { return; }
+		var lineOffset = 1;
 		var i;
 		for(i = 0; i < actions.length; i++) {
 			lineOffset += this.drawActionSkillRequirements(actions[i], i, lineOffset, true, this._actor);
@@ -605,8 +605,9 @@ Window_ItemStatusBase.prototype.drawSkillRequirements = function() {
 };
 
 Window_ItemStatusBase.prototype.drawProtection = function() {
-	this.resetTextColor();
+	this.changeTextColor(this.systemColor());
 	this.drawText("Protection", this.textPadding(), this.standardCharacterHeight(), this.standardCharacterWidth()*10);
+	this.resetTextColor();
 	var leftHeldProt = this.getCompleteProtection({});
 	var rightHeldProt = this.getCompleteProtection({});
 	var headProt = this.getCompleteProtection({});
@@ -845,8 +846,9 @@ Window_ItemStatusBase.prototype.setTextColorForComparison = function(newValue, o
 };
 
 Window_ItemStatusBase.prototype.drawBonuses = function() {
-	this.resetTextColor();
+	this.changeTextColor(this.systemColor());
 	this.drawText("Bonuses", this.textPadding(), this.standardCharacterHeight(), this.standardCharacterWidth()*7);
+	this.resetTextColor();
 	var maxHP = 0;
 	var maxMP = 0;
 	var strengthBonus = 0;
@@ -4976,15 +4978,15 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			this.changeTextColor(this.systemColor());
 			this.drawText(this.getShortDisplayNameForUniqueSkill(reqs[i].skill), nameOffset, lineHeight, skillNameWidth);
 			if(actor) {
+				this.drawText("/", skillsPosition + characterWidth, lineHeight, characterWidth);
 				this.resetTextColor();
 				if(reqs[i].level > actor.totalSkill(reqs[i].skill)) {
 					this.changeTextColor(this.deathColor());
 					reqsMet = false;
 				}
 				this.drawText(actor.totalSkill(reqs[i].skill), skillsPosition, lineHeight, characterWidth);
-				this.resetTextColor();
-				this.drawText("/", skillsPosition + characterWidth, lineHeight, characterWidth);
 			}
+			this.resetTextColor();
 			this.drawText(reqs[i].level, skillsPosition + characterWidth * 2, lineHeight, characterWidth);
 		}
 		this.resetTextColor();
