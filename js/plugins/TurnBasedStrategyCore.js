@@ -98,16 +98,24 @@ Bitmap.prototype.standardPixelSize = function() {
 	return 3;
 };
 
+Bitmap.prototype.nesTileSize = function() {
+	return this.standardPixelSize()*8;
+};
+
+Bitmap.prototype.bigNesTileSize = function() {
+	return this.nesTileSize()*2;
+};
+
 Bitmap.prototype.standardFontSize = function() {
     return 28;
 };
 
 Bitmap.prototype.standardCharacterHeight = function() {
-	return 8*this.standardPixelSize();
+	return this.nesTileSize();
 };
 
 Bitmap.prototype.standardCharacterWidth = function() {
-	return 8*this.standardPixelSize();
+	return this.nesTileSize();
 };
 
 Bitmap.prototype.cursorSectionOffset = function() {
@@ -119,7 +127,7 @@ Bitmap.prototype.cursorSectionSize = function() {
 };
 
 Bitmap.prototype.cursorSize = function() {
-	return 8*this.standardPixelSize();
+	return this.nesTileSize();
 };
 
 //touch input

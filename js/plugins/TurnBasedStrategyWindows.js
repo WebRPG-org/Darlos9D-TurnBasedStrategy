@@ -903,8 +903,8 @@ Window_ItemStatusBase.prototype.drawBonuses = function() {
 	}
 	
 	this.changeTextColor(this.systemColor());
-	this.drawText("Max Health", this.textPadding(), this.standardCharacterHeight()*2, this.standardCharacterWidth()*10);
-	this.drawText("Max Energy", this.textPadding(), this.standardCharacterHeight()*3, this.standardCharacterWidth()*10);
+	this.drawText("Maximum Health", this.textPadding(), this.standardCharacterHeight()*2, this.standardCharacterWidth()*14);
+	this.drawText("Maximum Energy", this.textPadding(), this.standardCharacterHeight()*3, this.standardCharacterWidth()*14);
 	this.drawText("Strength Bonus", this.textPadding(), this.standardCharacterHeight()*4, this.standardCharacterWidth()*14);
 	this.drawText("Magic Bonus", this.textPadding(), this.standardCharacterHeight()*5, this.standardCharacterWidth()*11);
 	this.drawText("Stress Recovery", this.textPadding(), this.standardCharacterHeight()*6, this.standardCharacterWidth()*15);
@@ -4472,6 +4472,14 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		return Math.round(value / this.standardPixelSize()) * this.standardPixelSize();
 	};
 	
+	Window_Base.prototype.roundToNesTileGrid = function(value) {
+		return Math.round(value / this.nesTileSize()) * this.nesTileSize();
+	};
+	
+	Window_Base.prototype.roundToBigNesTileGrid = function(value) {
+		return Math.round(value / this.bigNesTileSize()) * this.bigNesTileSize();
+	};
+	
 	Window_Base.prototype.contentsWidth = function() {
 		return this.width - this.standardPaddingTotal();
 	};
@@ -4490,6 +4498,14 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	Window_Base.prototype.standardPixelSize = function() {
 		return Bitmap.prototype.standardPixelSize();
+	};
+	
+	Window_Base.prototype.nesTileSize = function() {
+		return Bitmap.prototype.nesTileSize();
+	};
+	
+	Window_Base.prototype.bigNesTileSize = function() {
+		return Bitmap.prototype.bigNesTileSize();
 	};
 	
 	Window_Base.prototype.standardFontSize = function() {
@@ -5325,7 +5341,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		var descWords = description.split(" ");
 		var i;
 		var descLine = "";
-		var descLineNum = 0;
+		var descLineNum = 1;
 		for(i = 0; i < descWords.length ; i++) {
 			if(descLine.length + descWords[i].length + (descLine.length > 0 ? 1 : 0) > lineWidth) {
 				this.drawText(descLine, this.textPadding(), this.standardCharacterHeight() * descLineNum);
@@ -5350,8 +5366,10 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	//selectable
-	Window_Selectable.prototype.initialize = function(x, y, width, height) {
-		Window_Base.prototype.initialize.call(this, x, y, width, height);
+	Window_Selectable.prototype.initialize = function(x, y) {
+		this._needsXRounding = false;
+		this._needsYRounding = false;
+		Window_Base.prototype.initialize.call(this, x, y, this.windowWidth(), this.windowHeight());
 		this._index = -1;
 		this._cursorFixed = false;
 		this._cursorAll = false;
@@ -5363,6 +5381,40 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this._scrollY = 0;
 		this._skipDisabled = false;
 		this.deactivate();
+	};
+	
+	Window_Selectable.prototype.roundRight = function() {
+		return false;
+	};
+	
+	Window_Selectable.prototype.roundDown = function() {
+		return true;
+	};
+	
+	Window_Selectable.prototype.maxPageRows = function() {
+		return this.maxRows();
+	};
+	
+	Window_Selectable.prototype.windowWidth = function() {
+		var windowWidth = this.standardPaddingTotal() +
+			this.itemWidth() * this.maxCols();
+		this._needsXRounding = false;
+		if(windowWidth % this.bigNesTileSize() != 0) {
+			windowWidth += this.nesTileSize();
+			this._needsXRounding = true;
+		}
+		return windowWidth;
+	};
+	
+	Window_Selectable.prototype.windowHeight = function() {
+		var windowHeight = this.standardPaddingTotal() +
+			this.itemHeight() * this.maxPageRows();
+		this._needsYRounding = false;
+		if(windowHeight % this.bigNesTileSize() != 0) {
+			windowHeight += this.nesTileSize();
+			this._needsYRounding = true;
+		}
+		return windowHeight;
 	};
 	
 	Window_Selectable.prototype.checkIfCursorNeedsReposition = function() {
@@ -5500,7 +5552,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 
 	Window_Selectable.prototype.itemWidth = function() {
-		return Math.floor((this.width - this.padding * 2) / this.maxCols());
+		return this.standardCharacterWidth()*8 + this.textPaddingTotal();
 	};
 
 	Window_Selectable.prototype.itemHeight = function() {
@@ -5514,6 +5566,12 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		rect.height = this.itemHeight();
 		rect.x = index % maxCols * rect.width - this._scrollX;
 		rect.y = Math.floor(index / maxCols) * rect.height - this._scrollY;
+		if(this._needsXRounding && this.roundRight()) {
+			rect.x += this.nesTileSize();
+		}
+		if(this._needsYRounding && this.roundDown()) {
+			rect.y += this.nesTileSize();
+		}
 		return rect;
 	};
 
@@ -5526,15 +5584,35 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	
 	//command
 	Window_Command.prototype.windowWidth = function() {
-		return 240;
+		return Window_Selectable.prototype.windowWidth.call(this);
 	};
 	
 	Window_Command.prototype.windowHeight = function() {
-		return this.fittingHeight(this.numVisibleRows());
+		return Window_Selectable.prototype.windowHeight.call(this);
 	};
 	
 	//help
+	Window_Help.prototype.initialize = function(numLines) {
+		this._numLines = numLines;
+		this._text = 'NO HELP TEXT SET';
+		Window_Base.prototype.initialize.call(this, 0, 0, this.windowWidth(), this.windowHeight());
+	};
+	
+	Window_Help.prototype.windowWidth = function() {
+		var windowWidth = this.standardPaddingTotal() + this.textPaddingTotal() + this._text.length*this.standardCharacterWidth();
+		if(windowWidth % this.bigNesTileSize() != 0) {
+			windowWidth += this.nesTileSize();
+		}
+		return windowWidth;
+	};
+	
+	Window_Help.prototype.windowHeight = function() {
+		return this.fittingHeight(this._numLines);
+	};
+	
 	Window_Help.prototype.refresh = function() {
+		this.move(this.x, this.y, this.windowWidth(), this.windowHeight());
+		this.createContents();
 		this.contents.clear();
 		this.drawText(this._text, this.textPadding(), 0);
 	};
@@ -7099,13 +7177,21 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	//options
+	Window_Options.prototype.itemWidth = function() {
+		return this.textPaddingTotal() + this.standardCharacterWidth()*21;
+	};
+	
 	Window_Options.prototype.windowWidth = function() {
-		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*20;
+		return Window_Command.prototype.windowWidth.call(this);
+	};
+
+	Window_Options.prototype.windowHeight = function() {
+		return Window_Command.prototype.windowHeight.call(this);
 	};
 	
 	Window_Options.prototype.updatePlacement = function() {
-		this.x = this.roundToPixelGrid((Graphics.boxWidth - this.width) / 2);
-		this.y = this.roundToPixelGrid((Graphics.boxHeight - this.height) / 2);
+		this.x = this.roundToBigNesTileGrid((Graphics.boxWidth - this.width) / 2);
+		this.y = this.roundToBigNesTileGrid((Graphics.boxHeight - this.height) / 2);
 	};
 	
 	Window_Options.prototype.drawItem = function(index) {
@@ -7123,16 +7209,12 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this._mode = null;
 	};
 	
-	Window_SavefileList.prototype.windowWidth = function() {
-		return Graphics.boxWidth;
-	};
-	
-	Window_SavefileList.prototype.windowHeight = function() {
-		return this.standardPaddingTotal() + this.itemHeight()*this.maxVisibleItems();
-	};
-	
-	Window_SavefileList.prototype.maxVisibleItems = function() {
+	Window_SavefileList.prototype.maxPageRows = function() {
 		return 3;
+	};
+	
+	Window_SavefileList.prototype.itemWidth = function() {
+		return Graphics.boxWidth - this.standardPaddingTotal();
 	};
 
 	Window_SavefileList.prototype.itemHeight = function() {
@@ -7640,15 +7722,19 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	//title command
-	Window_TitleCommand.prototype.windowWidth = function() {
+	Window_TitleCommand.prototype.itemWidth = function() {
 		var textWidth = TextManager.newGame.length > TextManager.continue_.length ? TextManager.newGame.length : TextManager.continue_.length;
 		textWidth = textWidth > TextManager.options.length ? textWidth : TextManager.options.length;
-		return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*textWidth;
+		return this.textPaddingTotal() + this.standardCharacterWidth()*textWidth;
+	};
+	
+	Window_TitleCommand.prototype.windowWidth = function() {
+		return Window_Command.prototype.windowWidth.call(this);
 	};
 	
 	Window_TitleCommand.prototype.updatePlacement = function() {
-		this.x = this.roundToPixelGrid((Graphics.boxWidth - this.width) / 2);
-		this.y = this.roundToPixelGrid(Graphics.boxHeight - this.height - 96);
+		this.x = this.roundToBigNesTileGrid((Graphics.boxWidth - this.width) / 2);
+		this.y = this.roundToBigNesTileGrid(Graphics.boxHeight - this.height - 96);
 	};
 	
 	//game end

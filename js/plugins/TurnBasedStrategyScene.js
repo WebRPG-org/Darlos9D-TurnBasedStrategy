@@ -2131,6 +2131,33 @@
 		this._statusAttributeDescriptionWindow.hide();
 	};
 	
+	// file
+	Scene_File.prototype.create = function() {
+		Scene_MenuBase.prototype.create.call(this);
+		DataManager.loadAllSavefileImages();
+		this.createListWindow();
+		this.createHelpWindow();
+	};
+
+	Scene_File.prototype.createListWindow = function() {
+		var x = 0;
+		var y = Window_Base.prototype.bigNesTileSize();
+		this._listWindow = new Window_SavefileList(x, y);
+		this._listWindow.setHandler('ok',     this.onSavefileOk.bind(this));
+		this._listWindow.setHandler('cancel', this.popScene.bind(this));
+		this._listWindow.select(this.firstSavefileIndex());
+		this._listWindow.setTopRow(this.firstSavefileIndex() - 2);
+		this._listWindow.setMode(this.mode());
+		this._listWindow.refresh();
+		this.addWindow(this._listWindow);
+	};
+	
+	Scene_File.prototype.createHelpWindow = function() {
+		this._helpWindow = new Window_Help(1);
+		this._helpWindow.setText(this.helpWindowText());
+		this.addWindow(this._helpWindow);
+	};
+	
 	// name
 	Scene_Name.prototype.onInputOk = function() {
 		this._actor.setName(this._editWindow.name());
