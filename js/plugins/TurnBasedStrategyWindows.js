@@ -1503,11 +1503,11 @@ Window_SkillDescription.prototype.initialize = function(x, y) {
 };
 
 Window_SkillDescription.prototype.windowWidth = function() {
-	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth() * 24;
+	return Window_ItemStatus.prototype.windowWidth();
 };
 
 Window_SkillDescription.prototype.windowHeight = function() {
-	return this.fittingHeight(10);
+	return Window_ItemStatus.prototype.windowHeight();
 };
 
 Window_SkillDescription.prototype.refresh = function() {
@@ -1539,25 +1539,25 @@ function Window_SkillActionInfo() {
     this.initialize.apply(this, arguments);
 }
 
-Window_SkillActionInfo.prototype = Object.create(Window_Selectable.prototype);
+Window_SkillActionInfo.prototype = Object.create(Window_Base.prototype);
 Window_SkillActionInfo.prototype.constructor = Window_SkillActionInfo;
 
 Window_SkillActionInfo.prototype.initialize = function(y) {
-    Window_Selectable.prototype.initialize.call(this, 0, y, this.windowWidth(), this.windowHeight());
+    Window_Base.prototype.initialize.call(this, 0, y, this.windowWidth(), this.windowHeight());
     this.refresh();
     this.activate();
 };
 
 Window_SkillActionInfo.prototype.windowWidth = function() {
-	return this.standardPaddingTotal() + this.textPaddingTotal() + this.standardCharacterWidth()*14;
+	return Window_ItemStatus.prototype.windowWidth() - this.standardCharacterWidth()*8;
 };
 
 Window_SkillActionInfo.prototype.windowHeight = function() {
-	return this.fittingHeight(this.numVisibleRows());
+	return Window_ItemStatus.prototype.windowHeight();
 };
 
 Window_SkillActionInfo.prototype.numVisibleRows = function() {
-	return 10;
+	return Window_ItemStatus.prototype.numVisibleRows();
 };
 
 Window_SkillActionInfo.prototype.refresh = function() {
@@ -1585,17 +1585,17 @@ Window_SkillActionInfo.prototype.drawSkillActionInfo = function() {
 	if(!this._actionInfo) { return; }
 	
 	this.changeTextColor(this.systemColor());
-	this.drawText("Pwr", this.textPadding(), 0, this.standardCharacterWidth()*3);
-	this.drawText("Rng", this.standardCharacterWidth()*4 + this.textPadding(), 0, this.standardCharacterWidth()*3);
-	this.drawText("AE", this.standardCharacterWidth()*8 + this.textPadding(), 0, this.standardCharacterWidth()*2);
-	this.drawText("Ac", this.standardCharacterWidth()*11 + this.textPadding(), 0, this.standardCharacterWidth()*2);
+	this.drawText("Pwr", this.textPadding(), this.standardCharacterHeight(), this.standardCharacterWidth()*3);
+	this.drawText("Rng", this.standardCharacterWidth()*4 + this.textPadding(), this.standardCharacterHeight(), this.standardCharacterWidth()*3);
+	this.drawText("AE", this.standardCharacterWidth()*8 + this.textPadding(), this.standardCharacterHeight(), this.standardCharacterWidth()*2);
+	this.drawText("Ac", this.standardCharacterWidth()*11 + this.textPadding(), this.standardCharacterHeight(), this.standardCharacterWidth()*2);
 	this.resetTextColor();
 	
-	this.drawActionInfo(this._actionInfo, undefined, undefined, undefined, this._actor);
+	this.drawActionInfo(this._actionInfo, undefined, 1, undefined, this._actor);
 	
 	if(this._actionInfo.sourceEquip) {
-		this.drawText("Source:", this.textPadding(), this.lineHeight() * (this.numVisibleRows() - 2));
-		this.drawItemName(this._actionInfo.sourceEquip, this.textPadding(), this.lineHeight() * (this.numVisibleRows() - 1), this.standardCharacterWidth()*12);
+		this.drawText("Source:", this.textPadding(), this.standardCharacterHeight() * (this.numVisibleRows() - 2));
+		this.drawItemName(this._actionInfo.sourceEquip, this.textPadding(), this.standardCharacterHeight() * (this.numVisibleRows() - 1), this.standardCharacterWidth()*12);
 	}
 };
  
@@ -6024,9 +6024,16 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		}
 		if (item) {
 			var numberWidth = this.numberWidth();
+			if (this.needsNumber()) {
+				this.changeTextColor(this.systemColor());
+				this.drawText(':', textRect.x, textRect.y, textRect.width - this.textWidth('00'), 'right');
+				this.resetTextColor();
+			}
 			this.changePaintOpacity(this.isEnabled(item));
 			this.drawItemName(item, textRect.x, textRect.y, textRect.width - numberWidth);
-			this.drawItemNumber(item, textRect.x, textRect.y, textRect.width);
+			if (this.needsNumber()) {
+				this.drawText($gameParty.numItems(item), textRect.x, textRect.y, textRect.width, 'right');
+			}
 			this.changePaintOpacity(1);
 		}
 	};
@@ -6404,8 +6411,12 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	//skill type
+	Window_SkillType.prototype.itemWidth = function() {
+		return this.textPaddingTotal() + this.standardCharacterWidth()*6;
+	};
+	
 	Window_SkillType.prototype.windowWidth = function() {
-		return Window_ItemOption.prototype.windowWidth();
+		return Window_Command.prototype.windowWidth.call(this);
 	}
 	
 	Window_SkillType.prototype.update = function() {
@@ -6458,12 +6469,16 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this._actionInfos = [];
 	};
 	
-	Window_SkillList.prototype.windowWidth = function() {
-		return this.standardPadding()*2 + this.textPaddingTotal()*2 + this.standardCharacterWidth()*22;
+	Window_SkillList.prototype.maxPageRows = function() {
+		return 4;
 	};
 	
-	Window_SkillList.prototype.windowHeight = function() {
-		return this.fittingHeight(4);
+	Window_SkillList.prototype.itemWidth = function() {
+		return this.textPaddingTotal() + this.standardCharacterWidth()*12;
+	};
+	
+	Window_SkillList.prototype.itemHeight = function() {
+		return this.lineHeight();
 	};
 	
 	Window_SkillList.prototype.update = function() {
@@ -6553,27 +6568,28 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		var actionInfo = this._actionInfos[index];
 		if (actionInfo && actionInfo.action) {
 			var action = actionInfo.action;
-			var costWidth = this.costWidth();
 			var rect = this.itemRect(index);
 			var textRect = this.itemRectForText(index);
 			
 			var iconBoxWidth = Window_Base._iconWidth + 4;
 			this.resetTextColor();
+			var drawCosts = (action.stressCost !== undefined && action.stressCost > 0) || (action.mpCost !== undefined && action.mpCost > 0);
 			
 			var iconIndex = this.iconIndexForAction(action);
+			if(drawCosts) {
+				this.changeTextColor(this.systemColor());
+				this.drawText(": :", textRect.x, rect.y, textRect.width-this.standardCharacterWidth(), 'right');
+				this.resetTextColor();
+			}
 			this.changePaintOpacity(this.isEnabled(action));
-			this.drawActionName(action, textRect.x, rect.y, this.standardCharacterWidth()*6);
-			this.changePaintOpacity(1);
-			if((action.stressCost !== undefined && action.stressCost > 0) || (action.mpCost !== undefined && action.mpCost > 0)) {
+			this.drawActionName(action, textRect.x, rect.y, this.standardCharacterWidth()*8);
+			if(drawCosts) {
 				var stressCost = action.stressCost == undefined ? 0 : action.stressCost;
 				var mpCost = action.mpCost == undefined ? 0 : action.mpCost;
-				this.changeTextColor(this.crisisColor());
 				this.drawText(stressCost, textRect.x, rect.y, textRect.width-this.standardCharacterWidth()*2, 'right');
-				this.changeTextColor(this.systemColor());
-				this.drawText(":", textRect.x, rect.y, textRect.width-this.standardCharacterWidth(), 'right');
-				this.resetTextColor();
 				this.drawText(mpCost, textRect.x, rect.y, textRect.width, 'right');
 			}
+			this.changePaintOpacity(1);
 		}
 	};
 	

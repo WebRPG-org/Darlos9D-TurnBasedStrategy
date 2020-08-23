@@ -1701,15 +1701,41 @@
 		Scene_ItemBase.prototype.create.call(this);
 		this.createHelpWindow();
 		this._helpWindow.hide();
-		this.createTitleWindow();
-		this.createActorNameWindow();
 		this.createSkillTypeWindow();
 		this.createActionInfoWindow();
 		this.createDescriptionWindow();
+		this.createTitleWindow();
+		this.createActorNameWindow();
 		this.createItemWindow();
 		this.createActorWindow();
 		this.createActorBodyPartWindow();
 		this.refreshActor();
+	};
+	
+	Scene_Skill.prototype.createSkillTypeWindow = function() {
+		var wy = Window_Base.prototype.bigNesTileSize();
+		this._skillTypeWindow = new Window_SkillType(0, wy);
+		this._skillTypeWindow.setHelpWindow(this._helpWindow);
+		this._skillTypeWindow.setHandler('skill',    this.commandSkill.bind(this));
+		this._skillTypeWindow.setHandler('cancel',   this.popScene.bind(this));
+		this._skillTypeWindow.setHandler('pagedown', this.nextActor.bind(this));
+		this._skillTypeWindow.setHandler('pageup',   this.previousActor.bind(this));
+		this.addWindow(this._skillTypeWindow);
+	};
+
+	Scene_Skill.prototype.createActionInfoWindow = function() {
+		var wy = Window_Base.prototype.bigNesTileSize();
+		this._actionInfoWindow = new Window_SkillActionInfo(wy);
+		this.addWindow(this._actionInfoWindow);
+		this._actionInfoWindow.hide();
+	};
+
+	Scene_Skill.prototype.createDescriptionWindow = function() {
+		var wx = this._actionInfoWindow.width - Window_Base.prototype.bigNesTileSize();
+		var wy = Window_Base.prototype.bigNesTileSize();
+		this._descriptionWindow = new Window_SkillDescription(wx, wy);
+		this._skillTypeWindow.setDescriptionWindow(this._descriptionWindow);
+		this.addWindow(this._descriptionWindow);
 	};
 	
 	Scene_Skill.prototype.createTitleWindow = function() {
@@ -1722,32 +1748,6 @@
 		var wx = this._titleWindow.width;
 		this._actorNameWindow = new Window_ActorName(wx);
 		this.addWindow(this._actorNameWindow);
-	};
-	
-	Scene_Skill.prototype.createSkillTypeWindow = function() {
-		var wy = this._titleWindow.height;
-		this._skillTypeWindow = new Window_SkillType(0, wy);
-		this._skillTypeWindow.setHelpWindow(this._helpWindow);
-		this._skillTypeWindow.setHandler('skill',    this.commandSkill.bind(this));
-		this._skillTypeWindow.setHandler('cancel',   this.popScene.bind(this));
-		this._skillTypeWindow.setHandler('pagedown', this.nextActor.bind(this));
-		this._skillTypeWindow.setHandler('pageup',   this.previousActor.bind(this));
-		this.addWindow(this._skillTypeWindow);
-	};
-
-	Scene_Skill.prototype.createActionInfoWindow = function() {
-		var wy = this._titleWindow.height;
-		this._actionInfoWindow = new Window_SkillActionInfo(wy);
-		this.addWindow(this._actionInfoWindow);
-		this._actionInfoWindow.hide();
-	};
-
-	Scene_Skill.prototype.createDescriptionWindow = function() {
-		var wx = this._actionInfoWindow.width;
-		var wy = this._actorNameWindow.height;
-		this._descriptionWindow = new Window_SkillDescription(wx, wy);
-		this._skillTypeWindow.setDescriptionWindow(this._descriptionWindow);
-		this.addWindow(this._descriptionWindow);
 	};
 
 	Scene_Skill.prototype.createItemWindow = function() {
