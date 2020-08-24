@@ -6681,11 +6681,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	Window_EquipSlot.prototype.maxPageRows = function() {
-		return this.numVisibleRows();
-	};
-
-	Window_EquipSlot.prototype.numVisibleRows = function() {
-		return Window_ItemStatus.prototype.numVisibleRows();
+		return 5;
 	};
 
 	Window_EquipSlot.prototype.setSlotsType = function(slotsType) {
