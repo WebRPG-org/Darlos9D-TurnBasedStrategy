@@ -1788,23 +1788,19 @@
 	//equip
 	Scene_Equip.prototype.create = function() {
 		Scene_MenuBase.prototype.create.call(this);
-		this.createCharacterInfoWindow();
 		this.createHelpWindow();
 		this._helpWindow.hide();
 		this.createSlotWindow();
 		this.createCommandWindow();
 		this.createStatusWindow();
+		this.createMenuTitleWindow();
+		this.createActorNameWindow();
 		this.createItemWindow();
 		this.refreshActor();
 	};
-	
-	Scene_Equip.prototype.createCharacterInfoWindow = function() {
-		this._characterInfoWindow = new Window_EquipCharacterInfo();
-		this.addWindow(this._characterInfoWindow);
-	};
 
 	Scene_Equip.prototype.createSlotWindow = function() {
-		var wy = this._characterInfoWindow.height;
+		var wy = Window_Base.prototype.bigNesTileSize();
 		this._slotWindow = new Window_EquipSlot(wy);
 		this._slotWindow.setHelpWindow(this._helpWindow);
 		this._slotWindow.setHandler('ok',       this.onSlotOk.bind(this));
@@ -1816,9 +1812,8 @@
 	
 	Scene_Equip.prototype.createCommandWindow = function() {
 		var wx = this._slotWindow.width;
-		var wy = this._characterInfoWindow.height;
-		var ww = Graphics.boxWidth - this._slotWindow.width;
-		this._commandWindow = new Window_EquipCommand(wx, wy, ww);
+		var wy = Window_Base.prototype.bigNesTileSize();
+		this._commandWindow = new Window_EquipCommand(wx, wy);
 		this._commandWindow.setHelpWindow(this._helpWindow);
 		this._commandWindow.setSlotWindow(this._slotWindow);
 		this._commandWindow.setHandler('equipWeapons',    this.commandEquip.bind(this, "weapons"));
@@ -1832,7 +1827,7 @@
 	
 	Scene_Equip.prototype.createStatusWindow = function() {
 		var wx = this._slotWindow.width;
-		var wy = this._characterInfoWindow.height;
+		var wy = Window_Base.prototype.bigNesTileSize();
 		var ww = Graphics.boxWidth - this._slotWindow.width;
 		var wh = this._slotWindow.height;
 		this._statusWindow = new Window_TbsEquipStatus(wx, wy, ww, wh);
@@ -1840,13 +1835,22 @@
 		this._statusWindow.hide();
 		this._slotWindow.setStatusWindow(this._statusWindow);
 	};
+	
+	Scene_Equip.prototype.createMenuTitleWindow = function() {
+		this._menuTitleWindow = new Window_MenuTitle();
+		this._menuTitleWindow.setTitle("Equip");
+		this.addWindow(this._menuTitleWindow);
+	};
+	
+	Scene_Equip.prototype.createActorNameWindow = function() {
+		this._actorNameWindow = new Window_ActorName(this._menuTitleWindow.width);
+		this.addWindow(this._actorNameWindow);
+	};
 
 	Scene_Equip.prototype.createItemWindow = function() {
 		var wx = 0;
 		var wy = this._statusWindow.y + this._statusWindow.height;
-		var ww = Graphics.boxWidth;
-		var wh = Graphics.boxHeight - wy;
-		this._itemWindow = new Window_EquipItem(wx, wy, ww, wh);
+		this._itemWindow = new Window_EquipItem(wx, wy);
 		this._itemWindow.setHelpWindow(this._helpWindow);
 		this._itemWindow.setStatusWindow(this._statusWindow);
 		this._itemWindow.setSlotWindow(this._slotWindow);
@@ -1861,7 +1865,7 @@
 
 	Scene_Equip.prototype.refreshActor = function() {
 		var actor = this.actor();
-		this._characterInfoWindow.setActor(actor);
+		this._actorNameWindow.setActor(actor);
 		this._statusWindow.setActor(actor);
 		this._slotWindow.setActor(actor);
 		this._itemWindow.setActor(actor);

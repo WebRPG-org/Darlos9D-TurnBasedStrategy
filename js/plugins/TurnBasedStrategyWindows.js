@@ -6613,11 +6613,16 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	//equip command
-	Window_EquipCommand.prototype.initialize = function(x, y, width) {
-		this._windowWidth = width;
-		Window_HorzCommand.prototype.initialize.call(this, x, y);
+	Window_EquipCommand.prototype = Object.create(Window_Command.prototype);
+
+	Window_EquipCommand.prototype.initialize = function(x, y) {
+		Window_Command.prototype.initialize.call(this, x, y);
 		this._itemWindow = undefined;
 	};
+	
+	Window_EquipCommand.prototype.itemWidth = function() {
+		return this.textPaddingTotal() + this.standardCharacterWidth()*8;
+	}
 	
 	Window_EquipCommand.prototype.setItemWindow = function(itemWindow) {
 		if(this._itemWindow != itemWindow) {
@@ -6655,14 +6660,10 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		}
 	};
 	
-	Window_EquipCommand.prototype.maxCols = function() {
-		return 3;
-	};
-	
 	Window_EquipCommand.prototype.makeCommandList = function() {
 		this.addCommand("Held",   'equipWeapons');
 		this.addCommand("Worn", 'equipAccessories');
-		this.addCommand("Org.",    'organizeItems');
+		this.addCommand("Organize",    'organizeItems');
 	};
 	
 	//equip slot
@@ -6675,16 +6676,16 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.refresh();
 	};
 	
-	Window_EquipSlot.prototype.windowWidth = function() {
-		return Window_ItemOption.prototype.windowWidth();
+	Window_EquipSlot.prototype.itemWidth = function() {
+		return this.textPaddingTotal() + this.standardCharacterWidth()*8;
 	};
-
-	Window_EquipSlot.prototype.windowHeight = function() {
-		return this.fittingHeight(this.numVisibleRows());
+	
+	Window_EquipSlot.prototype.maxPageRows = function() {
+		return this.numVisibleRows();
 	};
 
 	Window_EquipSlot.prototype.numVisibleRows = function() {
-		return 10;
+		return Window_ItemStatus.prototype.numVisibleRows();
 	};
 
 	Window_EquipSlot.prototype.setSlotsType = function(slotsType) {
@@ -6788,12 +6789,12 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 				var slotName = this.slotName(index);
 				this.resetTextColor();
 				this.changePaintOpacity(false);
-				this.drawText(slotName, 0, rect.y, 138, this.lineHeight());
+				this.drawText(slotName, rect.x, rect.y, this.standardCharacterWidth()*8);
 				this.changePaintOpacity(true);
 			}
 			else
 			{
-				this.drawItemName(this._actor.equips()[index + this.slotsOffset()], 0, rect.y, this.windowWidth() - this.lineHeight());
+				this.drawItemName(this._actor.equips()[index + this.slotsOffset()], rect.x, rect.y, this.standardCharacterWidth()*8);
 			}
 		}
 	};
@@ -6830,8 +6831,8 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	//equip item
-	Window_EquipItem.prototype.initialize = function(x, y, width, height) {
-		Window_Selectable.prototype.initialize.call(this, x, y, width, height);
+	Window_EquipItem.prototype.initialize = function(x, y) {
+		Window_Selectable.prototype.initialize.call(this, x, y);
 		this._category = 'none';
 		this._data = [];
 		this._actor = null;
@@ -6843,12 +6844,20 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.makeItemList();
 	};
 	
+	Window_EquipItem.prototype.itemWidth = function() {
+		return this.textPaddingTotal() + this.standardCharacterWidth()*11;
+	};
+	
 	Window_EquipItem.prototype.setCategory = function(category) {
 		if (this._category !== category) {
 			this._category = category;
 			this.refresh();
 			this.resetScroll();
 		}
+	};
+	
+	Window_EquipItem.prototype.maxPageRows = function() {
+		return 4;
 	};
 	
 	Window_EquipItem.prototype.maxCols = function() {
@@ -6956,22 +6965,23 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_EquipItem.prototype.drawItem = function(index) {
 		var item = this._data[index];
 		var rect = this.itemRect(index);
+		var textRect = this.itemRectForText(index);
 		if (this._orgSelectIndex >= 0 && this._orgSelectIndex == index) {
 			this.drawOrgSelectBrackets(rect.x, rect.y, rect.width, rect.height);
 		}
 		if (item) {
 			var numberWidth = this.numberWidth();
+			if (this.needsNumber() && this._actor) {
+				this.changeTextColor(this.systemColor());
+				this.drawText(':', textRect.x, textRect.y, textRect.width - this.textWidth('00'), 'right');
+				this.resetTextColor();
+			}
 			this.changePaintOpacity(this.isEnabled(item));
-			this.drawItemName(item, rect.x, rect.y, rect.width - numberWidth - this.textPadding());
-			this.drawItemNumber(item, rect.x, rect.y, rect.width - this.textPadding());
+			this.drawItemName(item, textRect.x, textRect.y, textRect.width - numberWidth - this.textPadding());
+			if (this.needsNumber() && this._actor) {
+				this.drawText(this._actor.numItems(item), textRect.x, textRect.y, textRect.width, 'right');
+			}
 			this.changePaintOpacity(1);
-		}
-	};
-	
-	Window_EquipItem.prototype.drawItemNumber = function(item, x, y, width) {
-		if (this.needsNumber() && this._actor) {
-			this.drawText(':', x, y, width - this.textWidth('00'), 'right');
-			this.drawText(this._actor.numItems(item), x, y, width, 'right');
 		}
 	};
 	
