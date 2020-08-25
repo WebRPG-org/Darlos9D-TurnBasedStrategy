@@ -1946,9 +1946,10 @@
 	//status
 	Scene_Status.prototype.create = function() {
 		Scene_MenuBase.prototype.create.call(this);
-		this._statusWindow = new Window_Status();
+		var generalXOffset = Window_Base.prototype.nesTileSize()*14;
+		var generalYOffset = Window_Base.prototype.bigNesTileSize()*4;
 		
-		this._statusCommandWindow = new Window_StatusCommand(this._statusWindow.height);
+		this._statusCommandWindow = new Window_StatusCommand(generalYOffset);
 		this._statusCommandWindow.setHandler('skills',		this.onSkillCommand.bind(this));
 		this._statusCommandWindow.setHandler('attributes',	this.onAttributesCommand.bind(this));
 		this._statusCommandWindow.setHandler('cancel',   	this.popScene.bind(this));
@@ -1957,8 +1958,7 @@
 		this._statusCommandWindow.show();
 		this._statusCommandWindow.activate();
 		
-		this._statusSkillsWindow = new Window_StatusSkills(this._statusWindow.height);
-		this._statusSkillsWindow.setStatusWindow(this._statusWindow);
+		this._statusSkillsWindow = new Window_StatusSkills(generalYOffset - Window_Base.prototype.bigNesTileSize());
 		this._statusSkillsWindow.setHandler('ok',   	this.onSkillOk.bind(this));
 		this._statusSkillsWindow.setHandler('cancel',   this.onSkillCancel.bind(this));
 		this._statusSkillsWindow.setHandler('pagedown', this.nextActor.bind(this));
@@ -1966,10 +1966,30 @@
 		this._statusSkillsWindow.hide();
 		this._statusSkillsWindow.deactivate();
 		
+		this._statusAttributesListWindow = new Window_StatusAttributesList(
+			generalYOffset
+		);
+		this._statusAttributesListWindow.setHandler('ok',	this.onAttributesOk.bind(this));
+		this._statusAttributesListWindow.setHandler('cancel',	this.onAttributesCancel.bind(this));
+		this._statusAttributesListWindow.setHandler('pagedown', this.nextActor.bind(this));
+		this._statusAttributesListWindow.setHandler('pageup',   this.previousActor.bind(this));
+		this._statusAttributesListWindow.hide();
+		this._statusAttributesListWindow.deactivate();
+		
+		this._statusAttributeDescriptionWindow = new Window_StatusAttributeDescription(
+			this._statusAttributesListWindow.width,
+			generalYOffset
+		);
+		this._statusAttributesListWindow.setAttributeDescriptionWindow(this._statusAttributeDescriptionWindow);
+		this._statusAttributeDescriptionWindow.hide();
+		this._statusAttributeDescriptionWindow.deactivate();
+		
+		this._statusWindow = new Window_Status();
+		this._statusSkillsWindow.setStatusWindow(this._statusWindow);
+		
 		this._statusSkillOptionWindow = new Window_StatusSkillOption(
-			Graphics.boxWidth-Window_StatusSkillOption.prototype.windowWidth(),
-			this._statusSkillsWindow.y -
-				(Window_StatusSkillOption.prototype.standardPadding()*2+Window_StatusSkillOption.prototype.lineHeight()*2)
+			generalXOffset,
+			Window_Base.prototype.bigNesTileSize()
 		);
 		this._statusSkillsWindow.setSkillOptionWindow(this._statusSkillOptionWindow);
 		this._statusSkillOptionWindow.setHandler('upgrade',		this.onSkillOption.bind(this, 'upgrade'));
@@ -1980,8 +2000,7 @@
 		
 		this._statusSkillConfirmWindow = new Window_YesNoConfirm(
 			this._statusSkillOptionWindow.x,
-			this._statusSkillOptionWindow.y -
-				(Window_StatusSkillOption.prototype.standardPadding()*2+Window_StatusSkillOption.prototype.lineHeight()*2)
+			this._statusSkillOptionWindow.y + this._statusSkillOptionWindow.height
 		);
 		this._statusSkillConfirmWindow.setHandler('yes',    this.onConfirmYes.bind(this));
 		this._statusSkillConfirmWindow.setHandler('no',    this.onConfirmCancel.bind(this));
@@ -1997,35 +2016,14 @@
 		this._statusSkillLearnedWindow.hide();
 		this._statusSkillLearnedWindow.deactivate();
 		
-		this._statusAttributesListWindow = new Window_StatusAttributesList(
-			this._statusWindow.height,
-			Graphics.boxHeight - this._statusWindow.height
-		);
-		this._statusAttributesListWindow.setHandler('ok',	this.onAttributesOk.bind(this));
-		this._statusAttributesListWindow.setHandler('cancel',	this.onAttributesCancel.bind(this));
-		this._statusAttributesListWindow.setHandler('pagedown', this.nextActor.bind(this));
-		this._statusAttributesListWindow.setHandler('pageup',   this.previousActor.bind(this));
-		this._statusAttributesListWindow.hide();
-		this._statusAttributesListWindow.deactivate();
-		
-		this._statusAttributeDescriptionWindow = new Window_StatusAttributeDescription(
-			this._statusAttributesListWindow.width,
-			this._statusWindow.height,
-			Graphics.boxWidth - this._statusAttributesListWindow.width,
-			Graphics.boxHeight - this._statusWindow.height
-		);
-		this._statusAttributesListWindow.setAttributeDescriptionWindow(this._statusAttributeDescriptionWindow);
-		this._statusAttributeDescriptionWindow.hide();
-		this._statusAttributeDescriptionWindow.deactivate();
-		
-		this.addWindow(this._statusWindow);
 		this.addWindow(this._statusCommandWindow);
 		this.addWindow(this._statusSkillsWindow);
-		this.addWindow(this._statusSkillOptionWindow);
-		this.addWindow(this._statusSkillConfirmWindow);
 		this.addWindow(this._statusSkillLearnedWindow);
 		this.addWindow(this._statusAttributesListWindow);
 		this.addWindow(this._statusAttributeDescriptionWindow);
+		this.addWindow(this._statusWindow);
+		this.addWindow(this._statusSkillOptionWindow);
+		this.addWindow(this._statusSkillConfirmWindow);
 		this.refreshActor();
 		this._statusSkillsWindow.select(2);
 	};
