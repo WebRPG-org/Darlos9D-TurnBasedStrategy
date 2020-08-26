@@ -5567,6 +5567,19 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		return rect;
 	};
 	
+	Window_Selectable.prototype.updateCursor = function() {
+		if (this._cursorAll) {
+			var allRowsHeight = this.maxRows() * this.itemHeight();
+			this.setCursorRect(0, this.nesTileSize(), this.contents.width, allRowsHeight);
+			this.setTopRow(0);
+		} else if (this.isCursorVisible()) {
+			var rect = this.itemRect(this.index());
+			this.setCursorRect(rect.x, rect.y, rect.width, rect.height);
+		} else {
+			this.setCursorRect(0, 0, 0, 0);
+		}
+	};
+	
 	//command
 	Window_Command.prototype.windowWidth = function() {
 		return Window_Selectable.prototype.windowWidth.call(this);
@@ -6864,10 +6877,6 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		return 2;
 	};
 
-	Window_EquipItem.prototype.spacing = function() {
-		return 48;
-	};
-
 	Window_EquipItem.prototype.maxItems = function() {
 		return this._data ? this._data.length : 1;
 	};
@@ -6977,7 +6986,7 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 				this.resetTextColor();
 			}
 			this.changePaintOpacity(this.isEnabled(item));
-			this.drawItemName(item, textRect.x, textRect.y, textRect.width - numberWidth - this.textPadding());
+			this.drawItemName(item, textRect.x, textRect.y, textRect.width - numberWidth);
 			if (this.needsNumber() && this._actor) {
 				this.drawText(this._actor.numItems(item), textRect.x, textRect.y, textRect.width, 'right');
 			}
