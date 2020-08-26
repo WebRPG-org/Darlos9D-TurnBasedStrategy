@@ -5570,7 +5570,9 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	Window_Selectable.prototype.updateCursor = function() {
 		if (this._cursorAll) {
 			var allRowsHeight = this.maxRows() * this.itemHeight();
-			this.setCursorRect(0, this.nesTileSize(), this.contents.width, allRowsHeight);
+			var cx = this._needsXRounding && this.roundRight() ? this.nesTileSize() : 0;
+			var cy = this._needsYRounding && this.roundDown() ? this.nesTileSize() : 0;
+			this.setCursorRect(cx, cy, this.contents.width, allRowsHeight);
 			this.setTopRow(0);
 		} else if (this.isCursorVisible()) {
 			var rect = this.itemRect(this.index());
