@@ -51,11 +51,11 @@ Window_ConcurrentWindow.prototype.windowWidth = function() {
 		var textRowLength = this.getTextRowLength(textRow);
 		textLength = textRowLength > textLength ? textRowLength : textLength;
 	}, this);
-	return textLength*this.standardCharacterWidth() + this.standardPadding()*2 + this.textPadding()*2;
+	return this.roundToBigNesTileGrid(textLength*this.standardCharacterWidth() + this.standardPaddingTotal() + this.textPaddingTotal());
 };
 
 Window_ConcurrentWindow.prototype.windowHeight = function() {
-	return this.fittingHeight(this._text.length);
+	return this.roundToBigNesTileGrid(this.standardPaddingTotal() + this.nesTileSize() + this.standardCharacterHeight()*this._text.length);
 };
 
 Window_ConcurrentWindow.prototype.setupAndShow = function(
@@ -91,6 +91,8 @@ Window_ConcurrentWindow.prototype.setupAndShow = function(
 	
 	this.x = type === "infoLog" ? Math.floor(x) : Math.floor(x - this.windowWidth() / 2);
 	this.y = type === "infoLog" ? Math.floor(y) : Math.floor(y - this.windowHeight() / 2);
+	this.x = this.roundToBigNesTileGrid(this.x);
+	this.y = this.roundToBigNesTileGrid(this.y);
 	if(absolute) {
 		this._absoluteX = this.x;
 		this._absoluteY = this.y;
@@ -112,8 +114,8 @@ Window_ConcurrentWindow.prototype.setupAndShow = function(
 
 Window_ConcurrentWindow.prototype.reposition = function(x, y) {
 	if(this._type !== "suffix") { return; }
-	this.x = x;
-	this.y = y;
+	this.x = this.roundToBigNesTileGrid(x);
+	this.y = this.roundToBigNesTileGrid(y);
 	this._absoluteX = this.x;
 	this._absoluteY = this.y;
 	this.absoluteReposition();
@@ -138,20 +140,20 @@ Window_ConcurrentWindow.prototype.drawCurrentText = function() {
 					segmentText = segmentText.slice(0, this._curTextLength - (charactersDrawn + segmentPosition));
 					limitReached = true;
 				}
-				this.drawText(segmentText, this.textPadding()+segmentPosition*this.standardCharacterWidth(), this.lineHeight()*i, segmentText.length*this.standardCharacterWidth());
+				this.drawText(segmentText, this.textPadding()+segmentPosition*this.standardCharacterWidth(), this.standardCharacterHeight()*i, segmentText.length*this.standardCharacterWidth());
 				segmentPosition += segmentText.length;
 				if(limitReached) { break; }
 			} else if(textRowSegment.type === "icon") {
-				if(charactersDrawn + segmentPosition + 3 > this._curTextLength) {
+				if(charactersDrawn + segmentPosition + 1 > this._curTextLength) {
 					limitReached = true;
 					break;
 				}
 				this.drawIcon(
 					textRowSegment.value,
-					this.textPadding() + segmentPosition * this.standardCharacterWidth() + Math.floor((this.standardCharacterWidth() * 3 - Window_Base._iconWidth) / 2),
-					this.lineHeight()*i
+					this.textPadding() + segmentPosition*this.standardCharacterWidth(),
+					this.standardCharacterWidth()*i + this.roundToPixelGrid((this.lineHeight() - Window_Base._iconRenderHeight) / 2)
 				);
-				segmentPosition += 3;
+				segmentPosition += 1;
 			}
 		}
 		if(limitReached) { break; }
@@ -159,170 +161,17 @@ Window_ConcurrentWindow.prototype.drawCurrentText = function() {
 	}
 };
 
-Window_ConcurrentWindow.prototype.getTextRowLength = function(textRow) {
-	var rowLength = 0;
-	var index = 0;
-	while(index < textRow.length) {
-		var content = this.getTextPositionContent(textRow, index);
-		rowLength += content.icon > -1 ? 3 : 0;
-		rowLength += content.text.length;
-		index += content.controlLength;
-	}
-	return rowLength;
-};
-
-Window_ConcurrentWindow.prototype.getTextPositionContent = function(textRow, index) {
-	var content = {};
-	content.icon = -1;
-	content.text = textRow[index];
-	content.controlLength = 1;
-	
-	if(textRow[index] !== "\\") {
-		return content;
-	}
-	
-	if(
-		textRow[index+1] === "V"
-	) {
-		var controlNumber = this.getTextControlNumber(textRow, index+2);
-		if(controlNumber > 0) {
-			content.text = $gameVariables.value(controlNumber)+"";
-			content.controlLength = (controlNumber+"").length + 2;
-			return content;
-		}
-	}
-	
-	if(
-		textRow[index+1] === "I"
-	) {
-		var controlNumber = this.getTextControlNumber(textRow, index+2);
-		if(controlNumber > 0) {
-			content.icon = controlNumber;
-			content.controlLength = (controlNumber+"").length + 2;
-			return content;
-		}
-	}
-	
-	if(
-		textRow[index+1] === "P"
-	) {
-		var controlNumber = this.getTextControlNumber(textRow, index+2);
-		if(controlNumber > 0) {
-			content.text = this.partyMemberName(controlNumber);
-			content.controlLength = (controlNumber+"").length + 2;
-			return content;
-		}
-	}
-	
-	if(
-		textRow[index+1] === "W"
-	) {
-		var controlNumber = this.getTextControlNumber(textRow, index+2);
-		if(controlNumber > 0) {
-			var weapon = $dataWeapons[controlNumber];
-			content.icon = weapon.iconIndex;
-			content.text = weapon.name;
-			content.controlLength = (controlNumber+"").length + 2;
-			return content;
-		}
-	}
-	
-	if(
-		textRow[index+1] === "A"
-	) {
-		var controlNumber = this.getTextControlNumber(textRow, index+2);
-		if(controlNumber > 0) {
-			var armor = $dataArmors[controlNumber];
-			content.icon = armor.iconIndex;
-			content.text = armor.name;
-			content.controlLength = (controlNumber+"").length + 2;
-			return content;
-		}
-	}
-	
-	if(
-		textRow[index+1] === "T"
-	) {
-		var controlNumber = this.getTextControlNumber(textRow, index+2);
-		if(controlNumber > 0) {
-			var item = $dataItems[controlNumber];
-			content.icon = item.iconIndex;
-			content.text = item.name;
-			content.controlLength = (controlNumber+"").length + 2;
-			return content;
-		}
-	}
-	
-	return content;
-};
-
-Window_ConcurrentWindow.prototype.getTextControlNumber = function(textRow, index) {
-	if(
-		textRow[index] && textRow[index] >= '0' && textRow[index] <= '9'
-	) {
-		var parseIndex = index;
-		var numberSegment = textRow[parseIndex];
-		var endOfControlFound = false;
-		for(let j = parseIndex+1; j < textRow.length; j++) {
-			if(textRow[j] >= '0' &&textRow[j] <= '9') {
-				numberSegment += textRow[j];
-				continue;
-			}
-			return parseInt(numberSegment);
-		}
-		return parseInt(numberSegment);
-	}
-	return -1;
-};
-
-Window_ConcurrentWindow.prototype.getTextRowSegments = function(textRow) {
-	var textRowSegments = [];
-	var stringSegment = "";
-	var index = 0;
-	while(index < textRow.length) {
-		var content = this.getTextPositionContent(textRow, index);
-		
-		if(content.icon > -1) {
-			if(stringSegment.length > 0) {
-				var stringSegmentObject = {};
-				stringSegmentObject.type = "string";
-				stringSegmentObject.value = stringSegment;
-				textRowSegments.push(stringSegmentObject);
-				stringSegment = "";
-			}
-			
-			var iconSegmentObject = {};
-			iconSegmentObject.type = "icon";
-			iconSegmentObject.value = content.icon;
-			textRowSegments.push(iconSegmentObject); 
-		}
-		
-		if(content.text.length > 0) {
-			stringSegment += content.text;
-		}
-		
-		index += content.controlLength;
-	}
-	if(stringSegment.length > 0) {
-		var stringSegmentObject = {};
-		stringSegmentObject.type = "string";
-		stringSegmentObject.value = stringSegment;
-		textRowSegments.push(stringSegmentObject);
-	}
-	return textRowSegments;
-};
-
 Window_ConcurrentWindow.prototype.absoluteReposition = function() {
 	if(!this._absolute) { return; }
-	this.x = $gameMap.mapToCanvasX(this._absoluteX);
-	this.y = $gameMap.mapToCanvasY(this._absoluteY);
+	this.x = this.roundToBigNesTileGrid($gameMap.mapToCanvasX(this._absoluteX));
+	this.y = this.roundToBigNesTileGrid($gameMap.mapToCanvasY(this._absoluteY));
 	if(this._type === "suffix") {
-		this.x -= 23;
-		this.y -= 30;
+		this.x -= this.nesTileSize();
+		this.y -= this.nesTileSize();
 	}
 	if(this._stayOnScreen) {
-		this.x = Math.max(0, Math.min(Graphics.boxWidth-this.windowWidth(), this.x));
-		this.y = Math.max(0, Math.min(Graphics.boxHeight-this.windowHeight(), this.y));
+		this.x = this.roundToBigNesTileGrid(Math.max(0, Math.min(Graphics.boxWidth-this.windowWidth(), this.x)));
+		this.y = this.roundToBigNesTileGrid(Math.max(0, Math.min(Graphics.boxHeight-this.windowHeight(), this.y)));
 	}
 };
 
@@ -4484,6 +4333,159 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		}
 	};
 	
+	Window_Base.prototype.getTextRowLength = function(textRow) {
+		var rowLength = 0;
+		var index = 0;
+		while(index < textRow.length) {
+			var content = this.getTextPositionContent(textRow, index);
+			rowLength += content.icon > -1 ? 3 : 0;
+			rowLength += content.text.length;
+			index += content.controlLength;
+		}
+		return rowLength;
+	};
+
+	Window_Base.prototype.getTextPositionContent = function(textRow, index) {
+		var content = {};
+		content.icon = -1;
+		content.text = textRow[index];
+		content.controlLength = 1;
+		
+		if(textRow[index] !== "\\") {
+			return content;
+		}
+		
+		if(
+			textRow[index+1] === "V"
+		) {
+			var controlNumber = this.getTextControlNumber(textRow, index+2);
+			if(controlNumber > 0) {
+				content.text = $gameVariables.value(controlNumber)+"";
+				content.controlLength = (controlNumber+"").length + 2;
+				return content;
+			}
+		}
+		
+		if(
+			textRow[index+1] === "I"
+		) {
+			var controlNumber = this.getTextControlNumber(textRow, index+2);
+			if(controlNumber > 0) {
+				content.icon = controlNumber;
+				content.controlLength = (controlNumber+"").length + 2;
+				return content;
+			}
+		}
+		
+		if(
+			textRow[index+1] === "P"
+		) {
+			var controlNumber = this.getTextControlNumber(textRow, index+2);
+			if(controlNumber > 0) {
+				content.text = this.partyMemberName(controlNumber);
+				content.controlLength = (controlNumber+"").length + 2;
+				return content;
+			}
+		}
+		
+		if(
+			textRow[index+1] === "W"
+		) {
+			var controlNumber = this.getTextControlNumber(textRow, index+2);
+			if(controlNumber > 0) {
+				var weapon = $dataWeapons[controlNumber];
+				content.icon = weapon.iconIndex;
+				content.text = weapon.name;
+				content.controlLength = (controlNumber+"").length + 2;
+				return content;
+			}
+		}
+		
+		if(
+			textRow[index+1] === "A"
+		) {
+			var controlNumber = this.getTextControlNumber(textRow, index+2);
+			if(controlNumber > 0) {
+				var armor = $dataArmors[controlNumber];
+				content.icon = armor.iconIndex;
+				content.text = armor.name;
+				content.controlLength = (controlNumber+"").length + 2;
+				return content;
+			}
+		}
+		
+		if(
+			textRow[index+1] === "T"
+		) {
+			var controlNumber = this.getTextControlNumber(textRow, index+2);
+			if(controlNumber > 0) {
+				var item = $dataItems[controlNumber];
+				content.icon = item.iconIndex;
+				content.text = item.name;
+				content.controlLength = (controlNumber+"").length + 2;
+				return content;
+			}
+		}
+		
+		return content;
+	};
+
+	Window_Base.prototype.getTextControlNumber = function(textRow, index) {
+		if(
+			textRow[index] && textRow[index] >= '0' && textRow[index] <= '9'
+		) {
+			var parseIndex = index;
+			var numberSegment = textRow[parseIndex];
+			var endOfControlFound = false;
+			for(let j = parseIndex+1; j < textRow.length; j++) {
+				if(textRow[j] >= '0' &&textRow[j] <= '9') {
+					numberSegment += textRow[j];
+					continue;
+				}
+				return parseInt(numberSegment);
+			}
+			return parseInt(numberSegment);
+		}
+		return -1;
+	};
+
+	Window_Base.prototype.getTextRowSegments = function(textRow) {
+		var textRowSegments = [];
+		var stringSegment = "";
+		var index = 0;
+		while(index < textRow.length) {
+			var content = this.getTextPositionContent(textRow, index);
+			
+			if(content.icon > -1) {
+				if(stringSegment.length > 0) {
+					var stringSegmentObject = {};
+					stringSegmentObject.type = "string";
+					stringSegmentObject.value = stringSegment;
+					textRowSegments.push(stringSegmentObject);
+					stringSegment = "";
+				}
+				
+				var iconSegmentObject = {};
+				iconSegmentObject.type = "icon";
+				iconSegmentObject.value = content.icon;
+				textRowSegments.push(iconSegmentObject); 
+			}
+			
+			if(content.text.length > 0) {
+				stringSegment += content.text;
+			}
+			
+			index += content.controlLength;
+		}
+		if(stringSegment.length > 0) {
+			var stringSegmentObject = {};
+			stringSegmentObject.type = "string";
+			stringSegmentObject.value = stringSegment;
+			textRowSegments.push(stringSegmentObject);
+		}
+		return textRowSegments;
+	};
+	
 	Window_Base.prototype.drawIcon = function(iconIndex, x, y) {
 		var bitmap = ImageManager.loadSystem('IconSet');
 		var pw = Window_Base._iconRenderWidth;
@@ -7267,6 +7269,480 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		var y2 = bottom - lineHeight;
 		if (y2 >= lineHeight) {
 			this.drawPlaytime(info, rect.x, y2, rect.width);
+		}
+	};
+	
+	// name edit
+	function Window_NameEdit() {
+		this.initialize.apply(this, arguments);
+	}
+
+	Window_NameEdit.prototype = Object.create(Window_Base.prototype);
+	Window_NameEdit.prototype.constructor = Window_NameEdit;
+
+	Window_NameEdit.prototype.initialize = function(actor, maxLength) {
+		var width = this.windowWidth();
+		var height = this.windowHeight();
+		var x = (Graphics.boxWidth - width) / 2;
+		var y = (Graphics.boxHeight - (height + this.fittingHeight(9) + 8)) / 2;
+		Window_Base.prototype.initialize.call(this, x, y, width, height);
+		this._actor = actor;
+		this._name = actor.name().slice(0, this._maxLength);
+		this._index = this._name.length;
+		this._maxLength = maxLength;
+		this._defaultName = this._name;
+		this.deactivate();
+		this.refresh();
+		ImageManager.loadFace(actor.faceName());
+	};
+
+	Window_NameEdit.prototype.windowWidth = function() {
+		return 480;
+	};
+
+	Window_NameEdit.prototype.windowHeight = function() {
+		return this.fittingHeight(4);
+	};
+
+	Window_NameEdit.prototype.name = function() {
+		return this._name;
+	};
+
+	Window_NameEdit.prototype.restoreDefault = function() {
+		this._name = this._defaultName;
+		this._index = this._name.length;
+		this.refresh();
+		return this._name.length > 0;
+	};
+
+	Window_NameEdit.prototype.add = function(ch) {
+		if (this._index < this._maxLength) {
+			this._name += ch;
+			this._index++;
+			this.refresh();
+			return true;
+		} else {
+			return false;
+		}
+	};
+
+	Window_NameEdit.prototype.back = function() {
+		if (this._index > 0) {
+			this._index--;
+			this._name = this._name.slice(0, this._index);
+			this.refresh();
+			return true;
+		} else {
+			return false;
+		}
+	};
+
+	Window_NameEdit.prototype.faceWidth = function() {
+		return 144;
+	};
+
+	Window_NameEdit.prototype.charWidth = function() {
+		var text = $gameSystem.isJapanese() ? '\uff21' : 'A';
+		return this.textWidth(text);
+	};
+
+	Window_NameEdit.prototype.left = function() {
+		var nameCenter = (this.contentsWidth() + this.faceWidth()) / 2;
+		var nameWidth = (this._maxLength + 1) * this.charWidth();
+		return Math.min(nameCenter - nameWidth / 2, this.contentsWidth() - nameWidth);
+	};
+
+	Window_NameEdit.prototype.itemRect = function(index) {
+		return {
+			x: this.left() + index * this.charWidth(),
+			y: 54,
+			width: this.charWidth(),
+			height: this.lineHeight()
+		};
+	};
+
+	Window_NameEdit.prototype.underlineRect = function(index) {
+		var rect = this.itemRect(index);
+		rect.x++;
+		rect.y += rect.height - 4;
+		rect.width -= 2;
+		rect.height = 2;
+		return rect;
+	};
+
+	Window_NameEdit.prototype.underlineColor = function() {
+		return this.normalColor();
+	};
+
+	Window_NameEdit.prototype.drawUnderline = function(index) {
+		var rect = this.underlineRect(index);
+		var color = this.underlineColor();
+		this.contents.paintOpacity = 48;
+		this.contents.fillRect(rect.x, rect.y, rect.width, rect.height, color);
+		this.contents.paintOpacity = 255;
+	};
+
+	Window_NameEdit.prototype.drawChar = function(index) {
+		var rect = this.itemRect(index);
+		this.resetTextColor();
+		this.drawText(this._name[index] || '', rect.x, rect.y);
+	};
+
+	Window_NameEdit.prototype.refresh = function() {
+		this.contents.clear();
+		this.drawActorFace(this._actor, 0, 0);
+		for (var i = 0; i < this._maxLength; i++) {
+			this.drawUnderline(i);
+		}
+		for (var j = 0; j < this._name.length; j++) {
+			this.drawChar(j);
+		}
+		var rect = this.itemRect(this._index);
+		this.setCursorRect(rect.x, rect.y, rect.width, rect.height);
+	};
+
+	//name input
+	function Window_NameInput() {
+		this.initialize.apply(this, arguments);
+	}
+
+	Window_NameInput.prototype = Object.create(Window_Selectable.prototype);
+	Window_NameInput.prototype.constructor = Window_NameInput;
+	Window_NameInput.LATIN1 =
+			[ 'A','B','C','D','E',  'a','b','c','d','e',
+			  'F','G','H','I','J',  'f','g','h','i','j',
+			  'K','L','M','N','O',  'k','l','m','n','o',
+			  'P','Q','R','S','T',  'p','q','r','s','t',
+			  'U','V','W','X','Y',  'u','v','w','x','y',
+			  'Z','[',']','^','_',  'z','{','}','|','~',
+			  '0','1','2','3','4',  '!','#','$','%','&',
+			  '5','6','7','8','9',  '(',')','*','+','-',
+			  '/','=','@','<','>',  ':',';',' ','Page','OK' ];
+	Window_NameInput.LATIN2 =
+			[ 'Á','É','Í','Ó','Ú',  'á','é','í','ó','ú',
+			  'À','È','Ì','Ò','Ù',  'à','è','ì','ò','ù',
+			  'Â','Ê','Î','Ô','Û',  'â','ê','î','ô','û',
+			  'Ä','Ë','Ï','Ö','Ü',  'ä','ë','ï','ö','ü',
+			  'Ā','Ē','Ī','Ō','Ū',  'ā','ē','ī','ō','ū',
+			  'Ã','Å','Æ','Ç','Ð',  'ã','å','æ','ç','ð',
+			  'Ñ','Õ','Ø','Š','Ŵ',  'ñ','õ','ø','š','ŵ',
+			  'Ý','Ŷ','Ÿ','Ž','Þ',  'ý','ÿ','ŷ','ž','þ',
+			  'Ĳ','Œ','ĳ','œ','ß',  '«','»',' ','Page','OK' ];
+	Window_NameInput.RUSSIA =
+			[ 'А','Б','В','Г','Д',  'а','б','в','г','д',
+			  'Е','Ё','Ж','З','И',  'е','ё','ж','з','и',
+			  'Й','К','Л','М','Н',  'й','к','л','м','н',
+			  'О','П','Р','С','Т',  'о','п','р','с','т',
+			  'У','Ф','Х','Ц','Ч',  'у','ф','х','ц','ч',
+			  'Ш','Щ','Ъ','Ы','Ь',  'ш','щ','ъ','ы','ь',
+			  'Э','Ю','Я','^','_',  'э','ю','я','%','&',
+			  '0','1','2','3','4',  '(',')','*','+','-',
+			  '5','6','7','8','9',  ':',';',' ','','OK' ];
+	Window_NameInput.JAPAN1 =
+			[ 'あ','い','う','え','お',  'が','ぎ','ぐ','げ','ご',
+			  'か','き','く','け','こ',  'ざ','じ','ず','ぜ','ぞ',
+			  'さ','し','す','せ','そ',  'だ','ぢ','づ','で','ど',
+			  'た','ち','つ','て','と',  'ば','び','ぶ','べ','ぼ',
+			  'な','に','ぬ','ね','の',  'ぱ','ぴ','ぷ','ぺ','ぽ',
+			  'は','ひ','ふ','へ','ほ',  'ぁ','ぃ','ぅ','ぇ','ぉ',
+			  'ま','み','む','め','も',  'っ','ゃ','ゅ','ょ','ゎ',
+			  'や','ゆ','よ','わ','ん',  'ー','～','・','＝','☆',
+			  'ら','り','る','れ','ろ',  'ゔ','を','　','カナ','決定' ];
+	Window_NameInput.JAPAN2 =
+			[ 'ア','イ','ウ','エ','オ',  'ガ','ギ','グ','ゲ','ゴ',
+			  'カ','キ','ク','ケ','コ',  'ザ','ジ','ズ','ゼ','ゾ',
+			  'サ','シ','ス','セ','ソ',  'ダ','ヂ','ヅ','デ','ド',
+			  'タ','チ','ツ','テ','ト',  'バ','ビ','ブ','ベ','ボ',
+			  'ナ','ニ','ヌ','ネ','ノ',  'パ','ピ','プ','ペ','ポ',
+			  'ハ','ヒ','フ','ヘ','ホ',  'ァ','ィ','ゥ','ェ','ォ',
+			  'マ','ミ','ム','メ','モ',  'ッ','ャ','ュ','ョ','ヮ',
+			  'ヤ','ユ','ヨ','ワ','ン',  'ー','～','・','＝','☆',
+			  'ラ','リ','ル','レ','ロ',  'ヴ','ヲ','　','英数','決定' ];
+	Window_NameInput.JAPAN3 =
+			[ 'Ａ','Ｂ','Ｃ','Ｄ','Ｅ',  'ａ','ｂ','ｃ','ｄ','ｅ',
+			  'Ｆ','Ｇ','Ｈ','Ｉ','Ｊ',  'ｆ','ｇ','ｈ','ｉ','ｊ',
+			  'Ｋ','Ｌ','Ｍ','Ｎ','Ｏ',  'ｋ','ｌ','ｍ','ｎ','ｏ',
+			  'Ｐ','Ｑ','Ｒ','Ｓ','Ｔ',  'ｐ','ｑ','ｒ','ｓ','ｔ',
+			  'Ｕ','Ｖ','Ｗ','Ｘ','Ｙ',  'ｕ','ｖ','ｗ','ｘ','ｙ',
+			  'Ｚ','［','］','＾','＿',  'ｚ','｛','｝','｜','～',
+			  '０','１','２','３','４',  '！','＃','＄','％','＆',
+			  '５','６','７','８','９',  '（','）','＊','＋','－',
+			  '／','＝','＠','＜','＞',  '：','；','　','かな','決定' ];
+
+	Window_NameInput.prototype.initialize = function(editWindow) {
+		var x = editWindow.x;
+		var y = editWindow.y + editWindow.height + 8;
+		var width = editWindow.width;
+		var height = this.windowHeight();
+		Window_Selectable.prototype.initialize.call(this, x, y, width, height);
+		this._editWindow = editWindow;
+		this._page = 0;
+		this._index = 0;
+		this.refresh();
+		this.updateCursor();
+		this.activate();
+	};
+
+	Window_NameInput.prototype.windowHeight = function() {
+		return this.fittingHeight(9);
+	};
+
+	Window_NameInput.prototype.table = function() {
+		if ($gameSystem.isJapanese()) {
+			return [Window_NameInput.JAPAN1,
+					Window_NameInput.JAPAN2,
+					Window_NameInput.JAPAN3];
+		} else if ($gameSystem.isRussian()) {
+			return [Window_NameInput.RUSSIA];
+		} else {
+			return [Window_NameInput.LATIN1,
+					Window_NameInput.LATIN2];
+		}
+	};
+
+	Window_NameInput.prototype.maxCols = function() {
+		return 10;
+	};
+
+	Window_NameInput.prototype.maxItems = function() {
+		return 90;
+	};
+
+	Window_NameInput.prototype.character = function() {
+		return this._index < 88 ? this.table()[this._page][this._index] : '';
+	};
+
+	Window_NameInput.prototype.isPageChange = function() {
+		return this._index === 88;
+	};
+
+	Window_NameInput.prototype.isOk = function() {
+		return this._index === 89;
+	};
+
+	Window_NameInput.prototype.itemRect = function(index) {
+		return {
+			x: index % 10 * 42 + Math.floor(index % 10 / 5) * 24,
+			y: Math.floor(index / 10) * this.lineHeight(),
+			width: 42,
+			height: this.lineHeight()
+		};
+	};
+
+	Window_NameInput.prototype.refresh = function() {
+		var table = this.table();
+		this.contents.clear();
+		this.resetTextColor();
+		for (var i = 0; i < 90; i++) {
+			var rect = this.itemRect(i);
+			rect.x += 3;
+			rect.width -= 6;
+			this.drawText(table[this._page][i], rect.x, rect.y, rect.width, 'center');
+		}
+	};
+
+	Window_NameInput.prototype.updateCursor = function() {
+		var rect = this.itemRect(this._index);
+		this.setCursorRect(rect.x, rect.y, rect.width, rect.height);
+	};
+
+	Window_NameInput.prototype.isCursorMovable = function() {
+		return this.active;
+	};
+
+	Window_NameInput.prototype.cursorDown = function(wrap) {
+		if (this._index < 80 || wrap) {
+			this._index = (this._index + 10) % 90;
+		}
+	};
+
+	Window_NameInput.prototype.cursorUp = function(wrap) {
+		if (this._index >= 10 || wrap) {
+			this._index = (this._index + 80) % 90;
+		}
+	};
+
+	Window_NameInput.prototype.cursorRight = function(wrap) {
+		if (this._index % 10 < 9) {
+			this._index++;
+		} else if (wrap) {
+			this._index -= 9;
+		}
+	};
+
+	Window_NameInput.prototype.cursorLeft = function(wrap) {
+		if (this._index % 10 > 0) {
+			this._index--;
+		} else if (wrap) {
+			this._index += 9;
+		}
+	};
+
+	Window_NameInput.prototype.cursorPagedown = function() {
+		this._page = (this._page + 1) % this.table().length;
+		this.refresh();
+	};
+
+	Window_NameInput.prototype.cursorPageup = function() {
+		this._page = (this._page + this.table().length - 1) % this.table().length;
+		this.refresh();
+	};
+
+	Window_NameInput.prototype.processCursorMove = function() {
+		var lastPage = this._page;
+		Window_Selectable.prototype.processCursorMove.call(this);
+		this.updateCursor();
+		if (this._page !== lastPage) {
+			SoundManager.playCursor();
+		}
+	};
+
+	Window_NameInput.prototype.processHandling = function() {
+		if (this.isOpen() && this.active) {
+			if (Input.isTriggered('shift')) {
+				this.processJump();
+			}
+			if (Input.isRepeated('cancel')) {
+				this.processBack();
+			}
+			if (Input.isRepeated('ok')) {
+				this.processOk();
+			}
+		}
+	};
+
+	Window_NameInput.prototype.isCancelEnabled = function() {
+		return true;
+	};
+
+	Window_NameInput.prototype.processCancel = function() {
+		this.processBack();
+	};
+
+	Window_NameInput.prototype.processJump = function() {
+		if (this._index !== 89) {
+			this._index = 89;
+			SoundManager.playCursor();
+		}
+	};
+
+	Window_NameInput.prototype.processBack = function() {
+		if (this._editWindow.back()) {
+			SoundManager.playCancel();
+		}
+	};
+
+	Window_NameInput.prototype.processOk = function() {
+		if (this.character()) {
+			this.onNameAdd();
+		} else if (this.isPageChange()) {
+			SoundManager.playOk();
+			this.cursorPagedown();
+		} else if (this.isOk()) {
+			this.onNameOk();
+		}
+	};
+
+	Window_NameInput.prototype.onNameAdd = function() {
+		if (this._editWindow.add(this.character())) {
+			SoundManager.playOk();
+		} else {
+			SoundManager.playBuzzer();
+		}
+	};
+
+	Window_NameInput.prototype.onNameOk = function() {
+		if (this._editWindow.name() === '') {
+			if (this._editWindow.restoreDefault()) {
+				SoundManager.playOk();
+			} else {
+				SoundManager.playBuzzer();
+			}
+		} else {
+			SoundManager.playOk();
+			this.callOkHandler();
+		}
+	};
+
+	// choice list
+	Window_ChoiceList.prototype.start = function() {
+		this.updatePlacement();
+		this.updateBackground();
+		this.refresh();
+		this.selectDefault();
+		this.open();
+		this.activate();
+	};
+	
+	Window_ChoiceList.prototype.updatePlacement = function() {
+		var positionType = $gameMessage.choicePositionType();
+		this.width = this.windowWidth();
+		this.height = this.windowHeight();
+		switch (positionType) {
+		case 0:
+			this.x = 0;
+			break;
+		case 1:
+			this.x = this.roundToBigNesTileGrid((Graphics.boxWidth - this.width) / 2);
+			break;
+		case 2:
+			this.x = Graphics.boxWidth - this.width;
+			break;
+		}
+		this.y = this.roundToBigNesTileGrid((Graphics.boxHeight - this.height) / 2);
+	};
+
+	Window_ChoiceList.prototype.windowWidth = function() {
+		return Window_Command.prototype.windowWidth.call(this);
+	};
+	
+	Window_ChoiceList.prototype.itemWidth = function() {
+		return this.maxChoiceWidth();
+	};
+	
+	Window_ChoiceList.prototype.maxItems = function() {
+		return $gameMessage.choices().length;
+	};
+	
+	Window_ChoiceList.prototype.numVisibleRows = function() {
+		return this.maxItems();
+	};
+
+	Window_ChoiceList.prototype.maxChoiceWidth = function() {
+		var maxLength = 0;
+		var choices = $gameMessage.choices();
+		for (var i = 0; i < choices.length; i++) {
+			var choiceLength = this.getTextRowLength(choices[i]);
+			if (maxLength < choiceLength) {
+				maxLength = choiceLength;
+			}
+		}
+		return maxLength*this.standardCharacterWidth() + this.textPaddingTotal();
+	};
+
+	Window_ChoiceList.prototype.contentsHeight = function() {
+		return Window_Base.prototype.contentsHeight.call(this);
+	};
+	
+	Window_ChoiceList.prototype.drawItem = function(index) {
+		var rect = this.itemRectForText(index);
+		var textRow = this.commandName(index);
+		var textRowSegments = this.getTextRowSegments(textRow);
+		var segmentPosition = 0;
+		for(var j = 0; j < textRowSegments.length; j++) {
+			var textRowSegment = textRowSegments[j];
+			if(textRowSegment.type === "string") {
+				var segmentText = textRowSegment.value;
+				this.drawText(segmentText, rect.x+segmentPosition*this.standardCharacterWidth(), rect.y, rect.width);
+				segmentPosition += segmentText.length;
+			} else if(textRowSegment.type === "icon") {
+				this.drawIcon(
+					textRowSegment.value,
+					rect.x + segmentPosition*this.standardCharacterWidth(),
+					rect.y + (this.lineHeight() - Window_Base._iconRenderHeight) / 2 + yOffset
+				);
+				segmentPosition += 1;
+			}
 		}
 	};
 	
