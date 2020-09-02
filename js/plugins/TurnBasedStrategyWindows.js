@@ -7403,6 +7403,18 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 			this.callCancelHandler();
 		}
 	};
+	
+	Window_NameInput.prototype.refresh = function() {
+		var table = this.table();
+		this.contents.clear();
+		this.resetTextColor();
+		for (var i = 0; i < 90; i++) {
+			var rect = this.itemRect(i);
+			rect.x += this.textPadding();
+			rect.width -= this.textPaddingTotal();
+			this.drawText(table[this._page][i], rect.x, rect.y, rect.width);
+		}
+	};
 
 	// choice list
 	Window_ChoiceList.prototype.start = function() {
