@@ -7273,205 +7273,92 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	// name edit
-	function Window_NameEdit() {
-		this.initialize.apply(this, arguments);
-	}
-
-	Window_NameEdit.prototype = Object.create(Window_Base.prototype);
-	Window_NameEdit.prototype.constructor = Window_NameEdit;
-
 	Window_NameEdit.prototype.initialize = function(actor, maxLength) {
+		this._maxLength = maxLength;
+		this._needsYRounding = false;
 		var width = this.windowWidth();
 		var height = this.windowHeight();
-		var x = (Graphics.boxWidth - width) / 2;
-		var y = (Graphics.boxHeight - (height + this.fittingHeight(9) + 8)) / 2;
+		var x = 0;
+		var y = 0;
 		Window_Base.prototype.initialize.call(this, x, y, width, height);
 		this._actor = actor;
 		this._name = actor.name().slice(0, this._maxLength);
 		this._index = this._name.length;
-		this._maxLength = maxLength;
 		this._defaultName = this._name;
 		this.deactivate();
 		this.refresh();
-		ImageManager.loadFace(actor.faceName());
 	};
 
 	Window_NameEdit.prototype.windowWidth = function() {
-		return 480;
+		var width = this.promptTextWidth() + this.standardPaddingTotal() + this.textPaddingTotal() + this._maxLength*this.standardCharacterWidth();
+		return this.roundToBigNesTileGrid(width);
 	};
 
 	Window_NameEdit.prototype.windowHeight = function() {
-		return this.fittingHeight(4);
+		var height = this.fittingHeight(1);
+		var roundedHeight = this.roundToBigNesTileGrid(height);
+		this._needsYRounding = height != roundedHeight;
+		return roundedHeight;
 	};
-
-	Window_NameEdit.prototype.name = function() {
-		return this._name;
+	
+	Window_NameEdit.prototype.promptText = function() {
+		return "Enter name: ";
+	}
+	
+	Window_NameEdit.prototype.promptTextWidth = function() {
+		return this.promptText().length * this.standardCharacterWidth();
 	};
-
-	Window_NameEdit.prototype.restoreDefault = function() {
-		this._name = this._defaultName;
-		this._index = this._name.length;
-		this.refresh();
-		return this._name.length > 0;
-	};
-
-	Window_NameEdit.prototype.add = function(ch) {
-		if (this._index < this._maxLength) {
-			this._name += ch;
-			this._index++;
-			this.refresh();
-			return true;
-		} else {
-			return false;
-		}
-	};
-
-	Window_NameEdit.prototype.back = function() {
-		if (this._index > 0) {
-			this._index--;
-			this._name = this._name.slice(0, this._index);
-			this.refresh();
-			return true;
-		} else {
-			return false;
-		}
-	};
-
-	Window_NameEdit.prototype.faceWidth = function() {
-		return 144;
-	};
-
-	Window_NameEdit.prototype.charWidth = function() {
-		var text = $gameSystem.isJapanese() ? '\uff21' : 'A';
-		return this.textWidth(text);
-	};
-
-	Window_NameEdit.prototype.left = function() {
-		var nameCenter = (this.contentsWidth() + this.faceWidth()) / 2;
-		var nameWidth = (this._maxLength + 1) * this.charWidth();
-		return Math.min(nameCenter - nameWidth / 2, this.contentsWidth() - nameWidth);
-	};
-
+	
 	Window_NameEdit.prototype.itemRect = function(index) {
 		return {
-			x: this.left() + index * this.charWidth(),
-			y: 54,
-			width: this.charWidth(),
+			x: this.promptTextWidth() + index * this.standardCharacterWidth(),
+			y: this._needsYRounding ? this.nesTileSize() : 0,
+			width: this.standardCharacterWidth() + this.textPaddingTotal(),
 			height: this.lineHeight()
 		};
 	};
-
-	Window_NameEdit.prototype.underlineRect = function(index) {
+	
+	Window_NameEdit.prototype.itemRectForText = function(index) {
 		var rect = this.itemRect(index);
-		rect.x++;
-		rect.y += rect.height - 4;
-		rect.width -= 2;
-		rect.height = 2;
+		rect.x += this.textPadding();
+		rect.width -= this.textPaddingTotal();
 		return rect;
 	};
 
-	Window_NameEdit.prototype.underlineColor = function() {
-		return this.normalColor();
-	};
-
 	Window_NameEdit.prototype.drawUnderline = function(index) {
-		var rect = this.underlineRect(index);
-		var color = this.underlineColor();
-		this.contents.paintOpacity = 48;
-		this.contents.fillRect(rect.x, rect.y, rect.width, rect.height, color);
-		this.contents.paintOpacity = 255;
+		var rect = this.itemRectForText(index);
+		this.resetTextColor();
+		this.changePaintOpacity(false);
+		this.drawText('_', rect.x, rect.y);
+		this.changePaintOpacity(true);
 	};
 
 	Window_NameEdit.prototype.drawChar = function(index) {
-		var rect = this.itemRect(index);
+		var rect = this.itemRectForText(index);
 		this.resetTextColor();
 		this.drawText(this._name[index] || '', rect.x, rect.y);
 	};
-
+	
 	Window_NameEdit.prototype.refresh = function() {
 		this.contents.clear();
-		this.drawActorFace(this._actor, 0, 0);
-		for (var i = 0; i < this._maxLength; i++) {
+		this.resetTextColor();
+		this.drawText(this.promptText(), this.textPadding(), this._needsYRounding ? this.nesTileSize() : 0, this.promptTextWidth());
+		for (var i = this._name.length; i < this._maxLength; i++) {
 			this.drawUnderline(i);
 		}
 		for (var j = 0; j < this._name.length; j++) {
 			this.drawChar(j);
 		}
 		var rect = this.itemRect(this._index);
-		this.setCursorRect(rect.x, rect.y, rect.width, rect.height);
+		if(this._name.length < this._maxLength) {
+			this.setCursorRect(rect.x, rect.y, rect.width, rect.height);
+		}
 	};
-
-	//name input
-	function Window_NameInput() {
-		this.initialize.apply(this, arguments);
-	}
-
-	Window_NameInput.prototype = Object.create(Window_Selectable.prototype);
-	Window_NameInput.prototype.constructor = Window_NameInput;
-	Window_NameInput.LATIN1 =
-			[ 'A','B','C','D','E',  'a','b','c','d','e',
-			  'F','G','H','I','J',  'f','g','h','i','j',
-			  'K','L','M','N','O',  'k','l','m','n','o',
-			  'P','Q','R','S','T',  'p','q','r','s','t',
-			  'U','V','W','X','Y',  'u','v','w','x','y',
-			  'Z','[',']','^','_',  'z','{','}','|','~',
-			  '0','1','2','3','4',  '!','#','$','%','&',
-			  '5','6','7','8','9',  '(',')','*','+','-',
-			  '/','=','@','<','>',  ':',';',' ','Page','OK' ];
-	Window_NameInput.LATIN2 =
-			[ 'Á','É','Í','Ó','Ú',  'á','é','í','ó','ú',
-			  'À','È','Ì','Ò','Ù',  'à','è','ì','ò','ù',
-			  'Â','Ê','Î','Ô','Û',  'â','ê','î','ô','û',
-			  'Ä','Ë','Ï','Ö','Ü',  'ä','ë','ï','ö','ü',
-			  'Ā','Ē','Ī','Ō','Ū',  'ā','ē','ī','ō','ū',
-			  'Ã','Å','Æ','Ç','Ð',  'ã','å','æ','ç','ð',
-			  'Ñ','Õ','Ø','Š','Ŵ',  'ñ','õ','ø','š','ŵ',
-			  'Ý','Ŷ','Ÿ','Ž','Þ',  'ý','ÿ','ŷ','ž','þ',
-			  'Ĳ','Œ','ĳ','œ','ß',  '«','»',' ','Page','OK' ];
-	Window_NameInput.RUSSIA =
-			[ 'А','Б','В','Г','Д',  'а','б','в','г','д',
-			  'Е','Ё','Ж','З','И',  'е','ё','ж','з','и',
-			  'Й','К','Л','М','Н',  'й','к','л','м','н',
-			  'О','П','Р','С','Т',  'о','п','р','с','т',
-			  'У','Ф','Х','Ц','Ч',  'у','ф','х','ц','ч',
-			  'Ш','Щ','Ъ','Ы','Ь',  'ш','щ','ъ','ы','ь',
-			  'Э','Ю','Я','^','_',  'э','ю','я','%','&',
-			  '0','1','2','3','4',  '(',')','*','+','-',
-			  '5','6','7','8','9',  ':',';',' ','','OK' ];
-	Window_NameInput.JAPAN1 =
-			[ 'あ','い','う','え','お',  'が','ぎ','ぐ','げ','ご',
-			  'か','き','く','け','こ',  'ざ','じ','ず','ぜ','ぞ',
-			  'さ','し','す','せ','そ',  'だ','ぢ','づ','で','ど',
-			  'た','ち','つ','て','と',  'ば','び','ぶ','べ','ぼ',
-			  'な','に','ぬ','ね','の',  'ぱ','ぴ','ぷ','ぺ','ぽ',
-			  'は','ひ','ふ','へ','ほ',  'ぁ','ぃ','ぅ','ぇ','ぉ',
-			  'ま','み','む','め','も',  'っ','ゃ','ゅ','ょ','ゎ',
-			  'や','ゆ','よ','わ','ん',  'ー','～','・','＝','☆',
-			  'ら','り','る','れ','ろ',  'ゔ','を','　','カナ','決定' ];
-	Window_NameInput.JAPAN2 =
-			[ 'ア','イ','ウ','エ','オ',  'ガ','ギ','グ','ゲ','ゴ',
-			  'カ','キ','ク','ケ','コ',  'ザ','ジ','ズ','ゼ','ゾ',
-			  'サ','シ','ス','セ','ソ',  'ダ','ヂ','ヅ','デ','ド',
-			  'タ','チ','ツ','テ','ト',  'バ','ビ','ブ','ベ','ボ',
-			  'ナ','ニ','ヌ','ネ','ノ',  'パ','ピ','プ','ペ','ポ',
-			  'ハ','ヒ','フ','ヘ','ホ',  'ァ','ィ','ゥ','ェ','ォ',
-			  'マ','ミ','ム','メ','モ',  'ッ','ャ','ュ','ョ','ヮ',
-			  'ヤ','ユ','ヨ','ワ','ン',  'ー','～','・','＝','☆',
-			  'ラ','リ','ル','レ','ロ',  'ヴ','ヲ','　','英数','決定' ];
-	Window_NameInput.JAPAN3 =
-			[ 'Ａ','Ｂ','Ｃ','Ｄ','Ｅ',  'ａ','ｂ','ｃ','ｄ','ｅ',
-			  'Ｆ','Ｇ','Ｈ','Ｉ','Ｊ',  'ｆ','ｇ','ｈ','ｉ','ｊ',
-			  'Ｋ','Ｌ','Ｍ','Ｎ','Ｏ',  'ｋ','ｌ','ｍ','ｎ','ｏ',
-			  'Ｐ','Ｑ','Ｒ','Ｓ','Ｔ',  'ｐ','ｑ','ｒ','ｓ','ｔ',
-			  'Ｕ','Ｖ','Ｗ','Ｘ','Ｙ',  'ｕ','ｖ','ｗ','ｘ','ｙ',
-			  'Ｚ','［','］','＾','＿',  'ｚ','｛','｝','｜','～',
-			  '０','１','２','３','４',  '！','＃','＄','％','＆',
-			  '５','６','７','８','９',  '（','）','＊','＋','－',
-			  '／','＝','＠','＜','＞',  '：','；','　','かな','決定' ];
-
+	
+	// name input
 	Window_NameInput.prototype.initialize = function(editWindow) {
 		var x = editWindow.x;
-		var y = editWindow.y + editWindow.height + 8;
+		var y = editWindow.y + editWindow.height;
 		var width = editWindow.width;
 		var height = this.windowHeight();
 		Window_Selectable.prototype.initialize.call(this, x, y, width, height);
@@ -7482,185 +7369,38 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 		this.updateCursor();
 		this.activate();
 	};
+	
+	Window_NameInput.prototype.itemWidth = function() {
+		return this.textPaddingTotal() + this.standardCharacterWidth();
+	};
+
+	Window_NameInput.prototype.windowWidth = function() {
+		var width = Window_Selectable.prototype.windowWidth.call(this);
+		width += this.itemWidth();
+		return this.roundToBigNesTileGrid(width);
+	};
 
 	Window_NameInput.prototype.windowHeight = function() {
-		return this.fittingHeight(9);
+		return Window_Selectable.prototype.windowHeight.call(this);
 	};
-
-	Window_NameInput.prototype.table = function() {
-		if ($gameSystem.isJapanese()) {
-			return [Window_NameInput.JAPAN1,
-					Window_NameInput.JAPAN2,
-					Window_NameInput.JAPAN3];
-		} else if ($gameSystem.isRussian()) {
-			return [Window_NameInput.RUSSIA];
-		} else {
-			return [Window_NameInput.LATIN1,
-					Window_NameInput.LATIN2];
-		}
-	};
-
-	Window_NameInput.prototype.maxCols = function() {
-		return 10;
-	};
-
-	Window_NameInput.prototype.maxItems = function() {
-		return 90;
-	};
-
-	Window_NameInput.prototype.character = function() {
-		return this._index < 88 ? this.table()[this._page][this._index] : '';
-	};
-
-	Window_NameInput.prototype.isPageChange = function() {
-		return this._index === 88;
-	};
-
-	Window_NameInput.prototype.isOk = function() {
-		return this._index === 89;
-	};
-
+	
 	Window_NameInput.prototype.itemRect = function(index) {
-		return {
-			x: index % 10 * 42 + Math.floor(index % 10 / 5) * 24,
-			y: Math.floor(index / 10) * this.lineHeight(),
-			width: 42,
-			height: this.lineHeight()
-		};
-	};
-
-	Window_NameInput.prototype.refresh = function() {
-		var table = this.table();
-		this.contents.clear();
-		this.resetTextColor();
-		for (var i = 0; i < 90; i++) {
-			var rect = this.itemRect(i);
-			rect.x += 3;
-			rect.width -= 6;
-			this.drawText(table[this._page][i], rect.x, rect.y, rect.width, 'center');
+		var rect = new Rectangle();
+		var maxCols = this.maxCols();
+		rect.width = this.itemWidth();
+		rect.height = this.itemHeight();
+		rect.x = index % maxCols * rect.width + (index % maxCols >= 5 ? rect.width : 0);
+		rect.y = Math.floor(index / maxCols) * rect.height;
+		if(this._needsYRounding && this.roundDown()) {
+			rect.y += this.nesTileSize();
 		}
+		return rect;
 	};
-
-	Window_NameInput.prototype.updateCursor = function() {
-		var rect = this.itemRect(this._index);
-		this.setCursorRect(rect.x, rect.y, rect.width, rect.height);
-	};
-
-	Window_NameInput.prototype.isCursorMovable = function() {
-		return this.active;
-	};
-
-	Window_NameInput.prototype.cursorDown = function(wrap) {
-		if (this._index < 80 || wrap) {
-			this._index = (this._index + 10) % 90;
-		}
-	};
-
-	Window_NameInput.prototype.cursorUp = function(wrap) {
-		if (this._index >= 10 || wrap) {
-			this._index = (this._index + 80) % 90;
-		}
-	};
-
-	Window_NameInput.prototype.cursorRight = function(wrap) {
-		if (this._index % 10 < 9) {
-			this._index++;
-		} else if (wrap) {
-			this._index -= 9;
-		}
-	};
-
-	Window_NameInput.prototype.cursorLeft = function(wrap) {
-		if (this._index % 10 > 0) {
-			this._index--;
-		} else if (wrap) {
-			this._index += 9;
-		}
-	};
-
-	Window_NameInput.prototype.cursorPagedown = function() {
-		this._page = (this._page + 1) % this.table().length;
-		this.refresh();
-	};
-
-	Window_NameInput.prototype.cursorPageup = function() {
-		this._page = (this._page + this.table().length - 1) % this.table().length;
-		this.refresh();
-	};
-
-	Window_NameInput.prototype.processCursorMove = function() {
-		var lastPage = this._page;
-		Window_Selectable.prototype.processCursorMove.call(this);
-		this.updateCursor();
-		if (this._page !== lastPage) {
-			SoundManager.playCursor();
-		}
-	};
-
-	Window_NameInput.prototype.processHandling = function() {
-		if (this.isOpen() && this.active) {
-			if (Input.isTriggered('shift')) {
-				this.processJump();
-			}
-			if (Input.isRepeated('cancel')) {
-				this.processBack();
-			}
-			if (Input.isRepeated('ok')) {
-				this.processOk();
-			}
-		}
-	};
-
-	Window_NameInput.prototype.isCancelEnabled = function() {
-		return true;
-	};
-
-	Window_NameInput.prototype.processCancel = function() {
-		this.processBack();
-	};
-
-	Window_NameInput.prototype.processJump = function() {
-		if (this._index !== 89) {
-			this._index = 89;
-			SoundManager.playCursor();
-		}
-	};
-
+	
 	Window_NameInput.prototype.processBack = function() {
-		if (this._editWindow.back()) {
-			SoundManager.playCancel();
-		}
-	};
-
-	Window_NameInput.prototype.processOk = function() {
-		if (this.character()) {
-			this.onNameAdd();
-		} else if (this.isPageChange()) {
-			SoundManager.playOk();
-			this.cursorPagedown();
-		} else if (this.isOk()) {
-			this.onNameOk();
-		}
-	};
-
-	Window_NameInput.prototype.onNameAdd = function() {
-		if (this._editWindow.add(this.character())) {
-			SoundManager.playOk();
-		} else {
-			SoundManager.playBuzzer();
-		}
-	};
-
-	Window_NameInput.prototype.onNameOk = function() {
-		if (this._editWindow.name() === '') {
-			if (this._editWindow.restoreDefault()) {
-				SoundManager.playOk();
-			} else {
-				SoundManager.playBuzzer();
-			}
-		} else {
-			SoundManager.playOk();
-			this.callOkHandler();
+		SoundManager.playCancel();
+		if (!this._editWindow.back()) {
+			this.callCancelHandler();
 		}
 	};
 

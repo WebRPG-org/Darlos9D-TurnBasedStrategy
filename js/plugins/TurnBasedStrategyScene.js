@@ -1095,6 +1095,14 @@
 		SoundManager.playUseSkill();
 	};
 	
+	// name
+	Scene_Name.prototype.createInputWindow = function() {
+		this._inputWindow = new Window_NameInput(this._editWindow);
+		this._inputWindow.setHandler('ok', this.onInputOk.bind(this));
+		this._inputWindow.setHandler('cancel', this.popScene.bind(this));
+		this.addWindow(this._inputWindow);
+	};
+	
 	//battle
 	Scene_Battle.prototype.initialize = function() {
 		Scene_Base.prototype.initialize.call(this);
