@@ -14,6 +14,46 @@
  *
  */
 
+//Audio
+AudioManager.playSe = function(se) {
+    if (se.name) {
+		this.stopSe();
+        this._seBuffers = this._seBuffers.filter(function(audio) {
+            return audio.isPlaying();
+        });
+        var buffer = this.createBuffer('se', se.name);
+        this.updateSeParameters(buffer, se);
+        buffer.play(false);
+        this._seBuffers.push(buffer);
+    }
+};
+
+AudioManager.stopSe = function() {
+    this._seBuffers.forEach(function(buffer) {
+        buffer.stop();
+    });
+    this._staticBuffers.forEach(function(buffer) {
+        buffer.stop();
+    });
+    this._seBuffers = [];
+};
+
+AudioManager.playStaticSe = function(se) {
+    if (se.name) {
+		this.stopSe();
+        this.loadStaticSe(se);
+        for (var i = 0; i < this._staticBuffers.length; i++) {
+            var buffer = this._staticBuffers[i];
+            if (buffer._reservedSeName === se.name) {
+                buffer.stop();
+                this.updateSeParameters(buffer, se);
+                buffer.play(false);
+                break;
+            }
+        }
+    }
+};
+
 //Sound
 SoundManager.getTbsBattleStartSound = function() {
 	var tbsBattleStartSound = {};

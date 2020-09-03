@@ -40,7 +40,7 @@ Window_ConcurrentWindow.prototype.initialize = function() {
 	this._duration = -1;
 	this._closeable = false;
 	this._textLengthIncrease = 2;
-	this._soundTime = 6;
+	this._soundTime = 4;
 	this._soundTimer = 0;
 	this.hide();
 };
