@@ -7966,6 +7966,13 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 	
 	//title command
+	Window_TitleCommand.prototype.initialize = function() {
+		Window_Command.prototype.initialize.call(this, 0, 0);
+		this.updatePlacement();
+		this.hide();
+		this.selectLast();
+	};
+	
 	Window_TitleCommand.prototype.itemWidth = function() {
 		var textWidth = TextManager.newGame.length > TextManager.continue_.length ? TextManager.newGame.length : TextManager.continue_.length;
 		textWidth = textWidth > TextManager.options.length ? textWidth : TextManager.options.length;

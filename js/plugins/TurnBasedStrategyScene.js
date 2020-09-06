@@ -39,12 +39,32 @@
 	};
 	
 	//title
-	Scene_Title.prototype.createCommandWindow = function() {
-		this._commandWindow = new Window_TitleCommand();
-		this._commandWindow.setHandler('newGame',  this.commandNewGame.bind(this));
-		this._commandWindow.setHandler('continue', this.commandContinue.bind(this));
-		this._commandWindow.setHandler('options',  this.commandOptions.bind(this));
-		this.addWindow(this._commandWindow);
+	Scene_Title.prototype.update = function() {
+		if (!this.isBusy()) {
+			this._commandWindow.show();
+		}
+		Scene_Base.prototype.update.call(this);
+	};
+	
+	Scene_Title.prototype.isBusy = function() {
+		return Scene_Base.prototype.isBusy.call(this);
+	};
+	
+	Scene_Title.prototype.commandNewGame = function() {
+		DataManager.setupNewGame();
+		this._commandWindow.hide();
+		this.fadeOutAll();
+		SceneManager.goto(Scene_Map);
+	};
+
+	Scene_Title.prototype.commandContinue = function() {
+		this._commandWindow.hide();
+		SceneManager.push(Scene_Load);
+	};
+
+	Scene_Title.prototype.commandOptions = function() {
+		this._commandWindow.hide();
+		SceneManager.push(Scene_Options);
 	};
 	
 	//map
@@ -2172,6 +2192,9 @@
 		this._statusAttributesListWindow.deactivate();
 		this._statusAttributeDescriptionWindow.hide();
 	};
+	
+	// options
+	
 	
 	// file
 	Scene_File.prototype.create = function() {
