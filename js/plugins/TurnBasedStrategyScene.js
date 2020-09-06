@@ -118,17 +118,17 @@
 	
 	Scene_Map.prototype.updateMessageWindows = function() {
 		if($gameMap.shouldCloseGoldWindow()) {
-			this._goldWindow.close();
+			this._goldWindow.hide();
 		}
 		if($gameMap.shouldOpenGoldWindow()) {
-			this._goldWindow.open();
+			this._goldWindow.show();
 		}
-		if(this._goldWindow.isOpen()) {
+		if(this._goldWindow.visible) {
 			this._goldWindow.refresh();
 		}
 		
 		if($gameMap.shouldCloseItemInfoWindow()) {
-			this._itemInfoWindow.close();
+			this._itemInfoWindow.hide();
 		}
 		var itemWindowInfo = $gameMap.shouldOpenItemInfoWindow();
 		if(itemWindowInfo !== undefined) {
@@ -144,9 +144,9 @@
 				this._itemInfoWindow.setActionsItem($dataArmors[itemWindowInfo.itemId]);
 			this._itemInfoWindow.showProtection();
 			}
-			this._itemInfoWindow.open();
+			this._itemInfoWindow.show();
 		}
-		if(this._itemInfoWindow.isOpen()) {
+		if(this._itemInfoWindow.visible) {
 			if (Input.isTriggered('pagedown')) {
 				SoundManager.playCursor();
 				this._itemInfoWindow.nextStatusPage();
@@ -162,15 +162,15 @@
 		var closeablesRemaining = false;
 		var highestInfoY = undefined;
 		this._infoWindows.forEach(function (curWindow) {
-			if(curWindow.isClosed() || curWindow.isClosing()) {
-				if(curWindow.isClosing() && (highestInfoY == undefined || curWindow.y < highestInfoY)) {
+			if(!curWindow.visible) {
+				if(highestInfoY == undefined || curWindow.y < highestInfoY) {
 					highestInfoY = curWindow.y;
 				}
 				return;
 			}
-			if(curWindow.isCloseable()) {
-				if(needToClose && curWindow.isOpen()) {
-					curWindow.close();
+			if(curWindow.isHideable()) {
+				if(needToClose && curWindow.visible) {
+					curWindow.hide();
 				} else {
 					closeablesRemaining = true;
 				}
@@ -185,21 +185,21 @@
 		});
 		if(highestInfoY !== undefined && highestInfoY > 0) {
 			this._infoWindows.forEach(function (curWindow) {
-				if(curWindow.isClosed()) { return; }
+				if(!curWindow.visible) { return; }
 				curWindow.y -= highestInfoY + curWindow.standardPadding()*(2/3);
 			});
 		}
 		this._messageWindows.forEach(function (curWindow) {
-			if(curWindow.isClosed() || curWindow.isClosing()) {
+			if(!curWindow.visible) {
 				return;
 			}
 			if(needToClearMessages) {
-				curWindow.close();
+				curWindow.hide();
 				return;
 			}
-			if(curWindow.isCloseable()) {
-				if(needToClose && curWindow.isOpen()) {
-					curWindow.close();
+			if(curWindow.isHideable()) {
+				if(needToClose && curWindow.visible) {
+					curWindow.hide();
 				} else {
 					closeablesRemaining = true;
 				}
@@ -230,7 +230,7 @@
 		if(message.type === "infoLog") {
 			windowToUse = this._infoWindows[0];
 			for(i = 0; i < this._infoWindows.length; i++) {
-				if(this._infoWindows[i].isOpen() || this._infoWindows[i].isOpening() || this._infoWindows[i].isClosing()) {
+				if(this._infoWindows[i].visible) {
 					windowToUse = this._infoWindows[i+1];
 					indexToUse = i+1;
 				}
@@ -238,7 +238,7 @@
 		} else if(message.type === "suffix") {
 			windowToUse = this._suffixWindows[0];
 			for(i = 0; i < this._suffixWindows.length; i++) {
-				if(this._suffixWindows[i].isOpen() || this._suffixWindows[i].isOpening() || this._suffixWindows[i].isClosing()) {
+				if(this._suffixWindows[i].visible) {
 					windowToUse = this._suffixWindows[i+1];
 					indexToUse = i+1;
 				}
@@ -246,7 +246,7 @@
 		} else {
 			windowToUse = this._messageWindows[0];
 			for(i = 0; i < this._messageWindows.length; i++) {
-				if(this._messageWindows[i].isOpen() || this._messageWindows[i].isOpening() || this._messageWindows[i].isClosing()) {
+				if(this._messageWindows[i].visible) {
 					windowToUse = this._messageWindows[i+1];
 					indexToUse = i+1;
 				}
@@ -287,7 +287,7 @@
 			var j;
 			for(j = 0; j < this._infoWindows.length; j++) {
 				if(indexToUse != j && this._infoWindows[j].isInfoLog() 
-					&& (this._infoWindows[j].isOpen() || this._infoWindows[j].isOpening()))
+					&& (this._infoWindows[j].visible))
 				{
 					windowToUse.y += this._infoWindows[j].height - this._infoWindows[j].standardPadding()*(2/3);
 				}
@@ -302,73 +302,69 @@
 			if(this._tbsSurpriseRoundWindowTimer > 0) {
 				this._tbsSurpriseRoundWindowTimer--;
 				if(this._tbsSurpriseRoundWindowTimer <= 0) {
-					this._tbsSurpriseRoundWindow.close();
+					this._tbsSurpriseRoundWindow.hide();
 				}
 			}
 			if(this._tbsNextRoundWindowTimer > 0) {
 				this._tbsNextRoundWindowTimer--;
 				if(this._tbsNextRoundWindowTimer <= 0) {
-					this._tbsNextRoundWindow.close();
+					this._tbsNextRoundWindow.hide();
 				}
 			}
 			if($gameMap.tbsTurnMode() != "setup" && $gameMap.checkTbsSurpriseRoundJustStarted()) {
 				this._tbsSurpriseRoundWindow.show();
-				this._tbsSurpriseRoundWindow.open();
 				this._tbsSurpriseRoundWindowTimer = this._tbsNextRoundWindowTime;
 			}
 			if($gameMap.checkTbsRoundJustStarted()) {
 				this._tbsNextRoundWindow.show();
-				this._tbsNextRoundWindow.open();
 				this._tbsNextRoundWindowTimer = this._tbsNextRoundWindowTime;
 			}
 			var force = $gameMap.currentForce();
 			if(!force || !force.isParty || $gameMap.tbsTurnMode() === "actionBattleScene") {
-				this._tbsActorWindow.close();
+				this._tbsActorWindow.hide();
 				this._tbsActorWindow.deactivate();
 				this._tbsActorWindow.shouldOpenActionTypeWindow(false);
 				this._tbsActorWindow.shouldPassTurn(false);
 				this._tbsActorWindow.shouldActivateSurvey(false);
-				this._tbsActionTypeWindow.close();
+				this._tbsActionTypeWindow.hide();
 				this._tbsActionTypeWindow.deactivate();
 				this._tbsActionTypeWindow.shouldOpenActorWindow(false);
 				this._tbsActionTypeWindow.shouldOpenActionWindow(false);
 				this._tbsActionTypeWindow.shouldActivateManualMove(false);
-				this._tbsActionWindow.close();
+				this._tbsActionWindow.hide();
 				this._tbsActionWindow.deactivate();
 				this._tbsActionWindow.shouldOpenActionTypeWindow(false);
 				this._tbsActionWindow.shouldOpenTargetWindow(false);
 				this._tbsActionWindow.shouldActivateManualTarget(false);
-				this._tbsTargetWindow.close();
+				this._tbsTargetWindow.hide();
 				this._tbsTargetWindow.deactivate();
 				this._tbsTargetWindow.shouldOpenActionWindow(false);
 				this._tbsTargetWindow.shouldOpenTargetPartWindow(false);
 				this._tbsTargetWindow.shouldActivateManualTarget(false);
-				this._tbsTargetPartWindow.close();
+				this._tbsTargetPartWindow.hide();
 				this._tbsTargetPartWindow.deactivate();
 				this._tbsTargetPartWindow.shouldOpenTargetWindow(false);
 				this._tbsTargetPartWindow.shouldActivateManualTarget(false);
 				if($gameMap.tbsTurnMode() === "actionBattleScene") {
-					this._tbsBreadcrumbWindowOne.close();
+					this._tbsBreadcrumbWindowOne.hide();
 					this._tbsBreadcrumbWindowOne.setBreadcrumbInfo(undefined);
-					this._tbsBreadcrumbWindowTwo.close();
+					this._tbsBreadcrumbWindowTwo.hide();
 					this._tbsBreadcrumbWindowTwo.setBreadcrumbInfo(undefined);
-					this._tbsBreadcrumbWindowThree.close();
+					this._tbsBreadcrumbWindowThree.hide();
 					this._tbsBreadcrumbWindowThree.setBreadcrumbInfo(undefined);
-					this._tbsBreadcrumbWindowFour.close();
+					this._tbsBreadcrumbWindowFour.hide();
 					this._tbsBreadcrumbWindowFour.setBreadcrumbInfo(undefined);
 					if(!$gameMap.isAnyTbsActionTargets(true)) {
 						this._tbsNoTargetWindow.show();
-						this._tbsNoTargetWindow.open();
 					}
 				} else {
-					this._tbsNoTargetWindow.close();
+					this._tbsNoTargetWindow.hide();
 				}
 				this.updateBreadcrumbs();
 				return;
 			}
 			if($gameMap.checkTbsTurnJustStarted()) {
 				this._tbsActorWindow.show();
-				this._tbsActorWindow.open();
 				this._tbsActorWindow.activate();
 				this._tbsActorWindow.setActors(force.actors);
 				this._tbsActorWindow.selectFirstEnabledItem();
@@ -376,22 +372,22 @@
 				this._tbsActorWindow.shouldOpenActionTypeWindow(false);
 				this._tbsActorWindow.shouldPassTurn(false);
 				this._tbsActorWindow.shouldActivateSurvey(false);
-				this._tbsActionTypeWindow.close();
+				this._tbsActionTypeWindow.hide();
 				this._tbsActionTypeWindow.deactivate();
 				this._tbsActionTypeWindow.shouldOpenActorWindow(false);
 				this._tbsActionTypeWindow.shouldOpenActionWindow(false);
 				this._tbsActionTypeWindow.shouldActivateManualMove(false);
-				this._tbsActionWindow.close();
+				this._tbsActionWindow.hide();
 				this._tbsActionWindow.deactivate();
 				this._tbsActionWindow.shouldOpenActionTypeWindow(false);
 				this._tbsActionWindow.shouldOpenTargetWindow(false);
 				this._tbsActionWindow.shouldActivateManualTarget(false);
-				this._tbsTargetWindow.close();
+				this._tbsTargetWindow.hide();
 				this._tbsTargetWindow.deactivate();
 				this._tbsTargetWindow.shouldOpenActionWindow(false);
 				this._tbsTargetWindow.shouldOpenTargetPartWindow(false);
 				this._tbsTargetWindow.shouldActivateManualTarget(false);
-				this._tbsTargetPartWindow.close();
+				this._tbsTargetPartWindow.hide();
 				this._tbsTargetPartWindow.deactivate();
 				this._tbsTargetPartWindow.shouldOpenTargetWindow(false);
 				this._tbsTargetPartWindow.shouldActivateManualTarget(false);
@@ -400,28 +396,27 @@
 			if($gameMap.checkTbsCancelMoveJustEnded()) {
 				this._tbsActorWindow.refresh();
 				this._tbsActorWindow.show();
-				this._tbsActorWindow.open();
 				this._tbsActorWindow.activate();
 				this._tbsActorWindow.shouldOpenActionTypeWindow(false);
 				this._tbsActorWindow.shouldPassTurn(false);
 				this._tbsActorWindow.shouldActivateSurvey(false);
 				this._tbsActorWindow.shouldActivateManualMove(false);
-				this._tbsActionTypeWindow.close();
+				this._tbsActionTypeWindow.hide();
 				this._tbsActionTypeWindow.deactivate();
 				this._tbsActionTypeWindow.shouldOpenActorWindow(false);
 				this._tbsActionTypeWindow.shouldOpenActionWindow(false);
 				this._tbsActionTypeWindow.shouldActivateManualMove(false);
-				this._tbsActionWindow.close();
+				this._tbsActionWindow.hide();
 				this._tbsActionWindow.deactivate();
 				this._tbsActionWindow.shouldOpenActionTypeWindow(false);
 				this._tbsActionWindow.shouldOpenTargetWindow(false);
 				this._tbsActionWindow.shouldActivateManualTarget(false);
-				this._tbsTargetWindow.close();
+				this._tbsTargetWindow.hide();
 				this._tbsTargetWindow.deactivate();
 				this._tbsTargetWindow.shouldOpenActionWindow(false);
 				this._tbsTargetWindow.shouldOpenTargetPartWindow(false);
 				this._tbsTargetWindow.shouldActivateManualTarget(false);
-				this._tbsTargetPartWindow.close();
+				this._tbsTargetPartWindow.hide();
 				this._tbsTargetPartWindow.deactivate();
 				this._tbsTargetPartWindow.shouldOpenTargetWindow(false);
 				this._tbsTargetPartWindow.shouldActivateManualTarget(false);
@@ -437,14 +432,13 @@
 					if($gameMap.tbsTurnMode() === "manualMove") {
 						this._tbsActionTypeWindow.refresh();
 						this._tbsActionTypeWindow.show();
-						this._tbsActionTypeWindow.open();
 						this._tbsActionTypeWindow.activate();
 						this._tbsActionTypeWindow.select(0);
 						this._tbsTargetWindow.setActionIndex(-1);
 						$gameMap.setTbsTurnMode("selectActorActionType");
 						$gameMap.setBreadcrumbStage("actor");
 					} else if($gameMap.tbsTurnMode() === "manualTarget") {
-						this._tbsTargetNameWindow.close();
+						this._tbsTargetNameWindow.hide();
 						var selectedTarget = $gameMap.getTbsActorAtPosition($gamePlayer.x, $gamePlayer.y);
 						var actionInfo = $gameMap.getTbsSelectedActionInfo();
 						//if(selectedTarget && (actionInfo.canTargetBodyPart || (actionInfo.canTargetDownedBodyPart && selectedTarget.battler.isDown()))) {
@@ -457,7 +451,7 @@
 						//	$gameMap.setBreadcrumbStage("target");
 						//} else {
 							this._tbsActorStatusWindow.setTbsActor(undefined);
-							this._tbsActorStatusWindow.close();
+							this._tbsActorStatusWindow.hide();
 							$gameMap.setTbsTurnMode("executeAction");
 						//}
 					}
@@ -466,10 +460,9 @@
 				SoundManager.playCancel();
 				if ($gameMap.tbsTurnMode() === "survey") {
 					this._tbsActorWindow.show();
-					this._tbsActorWindow.open();
 					this._tbsActorWindow.activate();
 					this._tbsActorWindow.refreshWindowContents();
-					this._tbsTargetNameWindow.close();
+					this._tbsTargetNameWindow.hide();
 					$gameMap.setTbsTurnMode("selectActorActionType");
 					$gameMap.setBreadcrumbStage("selectingActor");
 				} else if($gameMap.tbsTurnMode() === "manualMove") {
@@ -477,19 +470,17 @@
 				} else if($gameMap.tbsTurnMode() === "manualTarget") {
 					if(this._tbsTargetWindow.hasAlliesOrEnemies() && !this._tbsActionWindow.isOnlyTargetSelf()) {
 						this._tbsTargetWindow.show();
-						this._tbsTargetWindow.open();
 						this._tbsTargetWindow.activate();
 					} else {
 						this._tbsActionWindow.refreshWindowContents(true);
 						this._tbsActionWindow.show();
-						this._tbsActionWindow.open();
 						this._tbsActionWindow.activate();
 						this._tbsActorStatusWindow.setTbsActor(undefined);
-						this._tbsActorStatusWindow.close();
+						this._tbsActorStatusWindow.hide();
 						$gameMap.setBreadcrumbStage("actor");
 					}
 					$gameMap.setTbsTurnMode("selectActionTarget");
-					this._tbsTargetNameWindow.close();
+					this._tbsTargetNameWindow.hide();
 				}
 			}
 			if($gameMap.tbsTurnMode() === "survey" || $gameMap.tbsTurnMode() === "manualTarget") {
@@ -497,14 +488,12 @@
 				if(tbsActor) {
 					this._tbsActorStatusWindow.setTbsActor(tbsActor);
 					this._tbsActorStatusWindow.show();
-					this._tbsActorStatusWindow.open();
 					this._tbsTargetNameWindow.setTargetActor(tbsActor);
 					this._tbsTargetNameWindow.show();
-					this._tbsTargetNameWindow.open();
 				} else {
 					this._tbsActorStatusWindow.setTbsActor(undefined);
-					this._tbsActorStatusWindow.close();
-					this._tbsTargetNameWindow.close();
+					this._tbsActorStatusWindow.hide();
+					this._tbsTargetNameWindow.hide();
 				}
 				if($gameMap.tbsTurnMode() === "manualTarget") {
 					if($gamePlayer.isMoving()) {
@@ -517,49 +506,48 @@
 			if($gameMap.tbsTurnMode() === "selectActionTarget" && $gameMap.getShouldOpenActionWindow()) {
 				this._tbsActionWindow.refreshWindowContents();
 				this._tbsActionWindow.show();
-				this._tbsActionWindow.open();
 				this._tbsActionWindow.activate();
 				$gameMap.clearShouldOpenActionWindow();
 			}
 			this.updateBreadcrumbs();
 		} else {
-			this._tbsActorWindow.close();
+			this._tbsActorWindow.hide();
 			this._tbsActorWindow.deactivate();
 			this._tbsActorWindow.shouldOpenActionTypeWindow(false);
 			this._tbsActorWindow.shouldPassTurn(false);
 			this._tbsActorWindow.shouldActivateSurvey(false);
-			this._tbsActionTypeWindow.close();
+			this._tbsActionTypeWindow.hide();
 			this._tbsActionTypeWindow.deactivate();
 			this._tbsActionTypeWindow.shouldOpenActorWindow(false);
 			this._tbsActionTypeWindow.shouldOpenActionWindow(false);
 			this._tbsActionTypeWindow.shouldActivateManualMove(false);
-			this._tbsActionWindow.close();
+			this._tbsActionWindow.hide();
 			this._tbsActionWindow.deactivate();
 			this._tbsActionWindow.shouldOpenActionTypeWindow(false);
 			this._tbsActionWindow.shouldOpenTargetWindow(false);
 			this._tbsActionWindow.shouldActivateManualTarget(false);
-			this._tbsTargetWindow.close();
+			this._tbsTargetWindow.hide();
 			this._tbsTargetWindow.deactivate();
 			this._tbsTargetWindow.shouldOpenActionWindow(false);
 			this._tbsTargetWindow.shouldOpenTargetPartWindow(false);
 			this._tbsTargetWindow.shouldActivateManualTarget(false);
-			this._tbsTargetPartWindow.close();
+			this._tbsTargetPartWindow.hide();
 			this._tbsTargetPartWindow.deactivate();
 			this._tbsTargetPartWindow.shouldOpenTargetWindow(false);
 			this._tbsTargetPartWindow.shouldActivateManualTarget(false);
-			this._tbsBreadcrumbWindowOne.close();
+			this._tbsBreadcrumbWindowOne.hide();
 			this._tbsBreadcrumbWindowOne.setBreadcrumbInfo(undefined);
-			this._tbsBreadcrumbWindowTwo.close();
+			this._tbsBreadcrumbWindowTwo.hide();
 			this._tbsBreadcrumbWindowTwo.setBreadcrumbInfo(undefined);
-			this._tbsBreadcrumbWindowThree.close();
+			this._tbsBreadcrumbWindowThree.hide();
 			this._tbsBreadcrumbWindowThree.setBreadcrumbInfo(undefined);
-			this._tbsBreadcrumbWindowFour.close();
+			this._tbsBreadcrumbWindowFour.hide();
 			this._tbsBreadcrumbWindowFour.setBreadcrumbInfo(undefined);
 			$gameMap.setBreadcrumbStage("none");
 			this._tbsBattleJustStarted = true;
-			this._tbsNoTargetWindow.close();
-			this._tbsSurpriseRoundWindow.close();
-			this._tbsNextRoundWindow.close();
+			this._tbsNoTargetWindow.hide();
+			this._tbsSurpriseRoundWindow.hide();
+			this._tbsNextRoundWindow.hide();
 		}
 	};
 	
@@ -578,19 +566,19 @@
 			}
 		}
 		if(breadcrumbsDifferent) {
-			if((!this._tbsBreadcrumbWindowOne.isClosed() && this._tbsBreadcrumbWindowOne.visible)
-				|| (!this._tbsBreadcrumbWindowTwo.isClosed() && this._tbsBreadcrumbWindowTwo.visible)
-				|| (!this._tbsBreadcrumbWindowThree.isClosed() && this._tbsBreadcrumbWindowThree.visible)
-				|| (!this._tbsBreadcrumbWindowFour.isClosed() && this._tbsBreadcrumbWindowFour.visible)) {
+			if((this._tbsBreadcrumbWindowOne.visible)
+				|| (this._tbsBreadcrumbWindowTwo.visible)
+				|| (this._tbsBreadcrumbWindowThree.visible)
+				|| (this._tbsBreadcrumbWindowFour.visible)) {
 				SoundManager.playWindowOpenCloseSound();
 			}
-			this._tbsBreadcrumbWindowOne.close();
+			this._tbsBreadcrumbWindowOne.hide();
 			this._tbsBreadcrumbWindowOne.setBreadcrumbInfo(undefined);
-			this._tbsBreadcrumbWindowTwo.close();
+			this._tbsBreadcrumbWindowTwo.hide();
 			this._tbsBreadcrumbWindowTwo.setBreadcrumbInfo(undefined);
-			this._tbsBreadcrumbWindowThree.close();
+			this._tbsBreadcrumbWindowThree.hide();
 			this._tbsBreadcrumbWindowThree.setBreadcrumbInfo(undefined);
-			this._tbsBreadcrumbWindowFour.close();
+			this._tbsBreadcrumbWindowFour.hide();
 			this._tbsBreadcrumbWindowFour.setBreadcrumbInfo(undefined);
 			var windowNum = 5 - breadcrumbs.length;
 			breadcrumbs.forEach(function (breadcrumb) {
@@ -614,18 +602,18 @@
 	Scene_Map.prototype.isOkWhileControllingCursor = function() {
 		return ($gameMap.tbsTurnMode() === "survey" || $gameMap.tbsTurnMode() === "manualMove" || $gameMap.tbsTurnMode() === "manualTarget")
 			&& Input.isTriggered('ok') && !$gameMap.tbsCursorIsFocusing() && !$gamePlayer.isMoving() && !$gameTemp.isDestinationValid()
-			&& (!this._tbsActionTypeWindow.visible || this._tbsActionTypeWindow.isClosed())
-			&& (!this._tbsActionWindow.visible || this._tbsActionWindow.isClosed())
-			&& (!this._tbsTargetWindow.visible || this._tbsTargetWindow.isClosed());
+			&& (!this._tbsActionTypeWindow.visible)
+			&& (!this._tbsActionWindow.visible)
+			&& (!this._tbsTargetWindow.visible);
 	};
 	
 	Scene_Map.prototype.isCancellingWhileControllingCursor = function() {
 		return ($gameMap.tbsTurnMode() === "survey" || $gameMap.tbsTurnMode() === "manualMove" || $gameMap.tbsTurnMode() === "manualTarget")
 			&& (Input.isTriggered('cancel') || TouchInput.isCancelled())
 			&& !$gameMap.tbsCursorIsFocusing() && !$gamePlayer.isMoving() && !$gameTemp.isDestinationValid()
-			&& (!this._tbsActionTypeWindow.visible || this._tbsActionTypeWindow.isClosed())
-			&& (!this._tbsActionWindow.visible || this._tbsActionWindow.isClosed())
-			&& (!this._tbsTargetWindow.visible || this._tbsTargetWindow.isClosed());
+			&& (!this._tbsActionTypeWindow.visible)
+			&& (!this._tbsActionWindow.visible)
+			&& (!this._tbsTargetWindow.visible);
 	};
 	
 	Scene_Map.prototype.createAllWindows = function() {
@@ -700,7 +688,7 @@
 	Scene_Map.prototype.createGoldWindow = function() {
 		this._goldWindow = new Window_Gold(0, 0);
 		this._goldWindow.y = Graphics.boxHeight - this._goldWindow.height;
-		this._goldWindow.openness = 0;
+		this._goldWindow.hide();
 		this.addWindow(this._goldWindow);
 	};
 	
@@ -708,7 +696,7 @@
 		var wx = Graphics.boxWidth-Window_ItemStatus.prototype.windowWidth();
 		var wy = 0; //Window_EquipCharacterInfo.prototype.windowHeight();
 		this._itemInfoWindow = new Window_ItemStatus(wx, wy);
-		this._itemInfoWindow.openness = 0;
+		this._itemInfoWindow.hide();
 		this.addWindow(this._itemInfoWindow);
 	};
 
@@ -719,7 +707,6 @@
 		this._tbsActorStatusWindow = new Window_TbsActorStatus(wx, -Window_TbsActorStatus.prototype.standardPadding()*(2/3));
 		this.addWindow(this._tbsActorStatusWindow);
 		this._tbsActorStatusWindow.hide();
-		this._tbsActorStatusWindow.close();
 	};
 
 	Scene_Map.prototype.createTbsActorWindow = function() {
@@ -729,7 +716,6 @@
 		this._tbsActorWindow.setHandler('cancel',     this.onActorCancel.bind(this));
 		this.addWindow(this._tbsActorWindow);
 		this._tbsActorWindow.hide();
-		this._tbsActorWindow.close();
 		this._tbsActorWindow.deactivate();
 		this._tbsActorWindow.setActorStatusWindow(this._tbsActorStatusWindow);
 	};
@@ -742,7 +728,6 @@
 		this._tbsActionTypeWindow.setHandler('cancel',     this.commandActionTypeCancel.bind(this));
 		this.addWindow(this._tbsActionTypeWindow);
 		this._tbsActionTypeWindow.hide();
-		this._tbsActionTypeWindow.close();
 		this._tbsActionTypeWindow.deactivate();
 		this._tbsActorWindow.setActionTypeWindow(this._tbsActionTypeWindow);
 		this._tbsActionTypeWindow.setActorWindow(this._tbsActorWindow);
@@ -752,7 +737,6 @@
 		this._tbsSmallActorStatusWindow = new Window_TbsSmallActorStatus();
 		this.addWindow(this._tbsSmallActorStatusWindow);
 		this._tbsSmallActorStatusWindow.hide();
-		this._tbsSmallActorStatusWindow.close();
 	};
 
 	Scene_Map.prototype.createTbsActionInfoWindow = function() {
@@ -760,7 +744,6 @@
 		this._tbsActionInfoWindow = new Window_TbsActionInfo(wx, -Window_TbsActionInfo.prototype.standardPadding()*(2/3));
 		this.addWindow(this._tbsActionInfoWindow);
 		this._tbsActionInfoWindow.hide();
-		this._tbsActionInfoWindow.close();
 	};
 	
 	Scene_Map.prototype.createTbsActionLevelWindow = function() {
@@ -776,7 +759,6 @@
 		this._tbsActionWindow.setHandler('cancel',     this.onActionCancel.bind(this));
 		this.addWindow(this._tbsActionWindow);
 		this._tbsActionWindow.hide();
-		this._tbsActionWindow.close();
 		this._tbsActionWindow.deactivate();
 		this._tbsActionTypeWindow.setActionWindow(this._tbsActionWindow);
 		this._tbsActionWindow.setActionTypeWindow(this._tbsActionTypeWindow);
@@ -794,7 +776,6 @@
 		this._tbsTargetWindow.setHandler('pageup',     this.onTargetSwitchGroups.bind(this));
 		this.addWindow(this._tbsTargetWindow);
 		this._tbsTargetWindow.hide();
-		this._tbsTargetWindow.close();
 		this._tbsTargetWindow.deactivate();
 		this._tbsTargetWindow.setActionWindow(this._tbsActionWindow);
 		this._tbsActionWindow.setTargetWindow(this._tbsTargetWindow);
@@ -806,7 +787,6 @@
 			-Window_TbsActorStatus.prototype.standardPadding()*(2/3));
 		this.addWindow(this._tbsTargetNameWindow);
 		this._tbsTargetNameWindow.hide();
-		this._tbsTargetNameWindow.close();
 		this._tbsTargetNameWindow.deactivate();
 	};
 
@@ -816,7 +796,6 @@
 		this._tbsTargetPartWindow.setHandler('cancel',     this.onTargetPartCancel.bind(this));
 		this.addWindow(this._tbsTargetPartWindow);
 		this._tbsTargetPartWindow.hide();
-		this._tbsTargetPartWindow.close();
 		this._tbsTargetPartWindow.deactivate();
 		this._tbsTargetPartWindow.setTargetWindow(this._tbsTargetWindow);
 		this._tbsTargetWindow.setTargetPartWindow(this._tbsTargetPartWindow);
@@ -836,16 +815,12 @@
 		this.addWindow(this._tbsBreadcrumbWindowThree);
 		this.addWindow(this._tbsBreadcrumbWindowFour);
 		this._tbsBreadcrumbWindowOne.hide();
-		this._tbsBreadcrumbWindowOne.close();
 		this._tbsBreadcrumbWindowOne.deactivate();
 		this._tbsBreadcrumbWindowTwo.hide();
-		this._tbsBreadcrumbWindowTwo.close();
 		this._tbsBreadcrumbWindowTwo.deactivate();
 		this._tbsBreadcrumbWindowThree.hide();
-		this._tbsBreadcrumbWindowThree.close();
 		this._tbsBreadcrumbWindowThree.deactivate();
 		this._tbsBreadcrumbWindowFour.hide();
-		this._tbsBreadcrumbWindowFour.close();
 		this._tbsBreadcrumbWindowFour.deactivate();
 		this._tbsBreadcrumbWindowOne.addOtherBreadcrumbWindow(this._tbsBreadcrumbWindowTwo);
 		this._tbsBreadcrumbWindowOne.addOtherBreadcrumbWindow(this._tbsBreadcrumbWindowThree);
@@ -865,7 +840,6 @@
 		this._tbsNoTargetWindow = new Window_TbsNoTarget();
 		this.addWindow(this._tbsNoTargetWindow);
 		this._tbsNoTargetWindow.hide();
-		this._tbsNoTargetWindow.close();
 		this._tbsNoTargetWindow.deactivate();
 	};
 	
@@ -873,7 +847,6 @@
 		this._tbsSurpriseRoundWindow = new Window_TbsSurpriseRound();
 		this.addWindow(this._tbsSurpriseRoundWindow);
 		this._tbsSurpriseRoundWindow.hide();
-		this._tbsSurpriseRoundWindow.close();
 		this._tbsSurpriseRoundWindow.deactivate();
 	};
 	
@@ -881,7 +854,6 @@
 		this._tbsNextRoundWindow = new Window_TbsNextRound();
 		this.addWindow(this._tbsNextRoundWindow);
 		this._tbsNextRoundWindow.hide();
-		this._tbsNextRoundWindow.close();
 		this._tbsNextRoundWindow.deactivate();
 	};
 	

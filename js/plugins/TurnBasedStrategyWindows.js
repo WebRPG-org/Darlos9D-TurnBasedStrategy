@@ -109,7 +109,6 @@ Window_ConcurrentWindow.prototype.setupAndShow = function(
 	} else {
 		this.show();
 	}
-	this.open();
 };
 
 Window_ConcurrentWindow.prototype.reposition = function(x, y) {
@@ -179,10 +178,10 @@ Window_ConcurrentWindow.prototype.update = function() {
     Window_Base.prototype.update.call(this);
 	this.absoluteReposition();
 	if(this._type === "suffix") { return; }
-	if(this._waitOn && this.isOpen() && this.isCloseable() && this.isTriggered()) {
-		this.close();
+	if(this._waitOn && this.visible && this.isHideable() && this.isTriggered()) {
+		this.hide();
 	}
-	if(this.isOpen() && !this.isClosing()) {
+	if(this.visible) {
 		if(this._curTextLength < this._textLength) {
 			this._curTextLength += this._textLengthIncrease;
 			this.drawCurrentText();
@@ -220,11 +219,11 @@ Window_ConcurrentWindow.prototype.countDown = function() {
 	this._duration--;
 	if(this._duration <= 0) {
 		this._duration = -1;
-		this.close();
+		this.hide();
 	}
 };
 
-Window_ConcurrentWindow.prototype.isCloseable = function() {
+Window_ConcurrentWindow.prototype.isHideable = function() {
 	return this.hasDrawnAllText() && (!this.isCountingDown() || this._closeable);
 };
 
@@ -240,21 +239,9 @@ Window_ConcurrentWindow.prototype.isSuffix = function() {
 	return this._type === "suffix";
 };
 
-Window_ConcurrentWindow.prototype.updateClose = function() {
-    if (this._closing) {
-        this.openness -= this.openCloseSpeed();
-        if (this.isClosed()) {
-			this._waitOn = false;
-            this._closing = false;
-        }
-    }
-};
-
 Window_ConcurrentWindow.prototype.hide = function() {
     this.visible = false;
-	if(this._type !== "suffix") {
-		this.close();
-	}
+	this._waitOn = false;
 };
 
 //-----------------------------------------------------------------------------
@@ -7416,12 +7403,20 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 	};
 
 	// choice list
+	Window_ChoiceList.prototype.initialize = function(messageWindow) {
+		this._messageWindow = messageWindow;
+		Window_Command.prototype.initialize.call(this, 0, 0);
+		this.hide();
+		this.deactivate();
+		this._background = 0;
+	};
+	
 	Window_ChoiceList.prototype.start = function() {
 		this.updatePlacement();
 		this.updateBackground();
 		this.refresh();
 		this.selectDefault();
-		this.open();
+		this.show();
 		this.activate();
 	};
 	
@@ -7495,6 +7490,18 @@ Window_StatusAttributeDescription.prototype.drawAttributeDescription = function(
 				segmentPosition += 1;
 			}
 		}
+	};
+	
+	Window_ChoiceList.prototype.callOkHandler = function() {
+		$gameMessage.onChoice(this.index());
+		this._messageWindow.terminateMessage();
+		this.hide();
+	};
+
+	Window_ChoiceList.prototype.callCancelHandler = function() {
+		$gameMessage.onChoice($gameMessage.choiceCancelType());
+		this._messageWindow.terminateMessage();
+		this.hide();
 	};
 	
 	//BattleLog
