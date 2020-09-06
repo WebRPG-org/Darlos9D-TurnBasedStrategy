@@ -42,6 +42,7 @@ Window_ConcurrentWindow.prototype.initialize = function() {
 	this._textLengthIncrease = 2;
 	this._soundTime = 4;
 	this._soundTimer = 0;
+	this._needsYRounding = false;
 	this.hide();
 };
 
@@ -55,7 +56,10 @@ Window_ConcurrentWindow.prototype.windowWidth = function() {
 };
 
 Window_ConcurrentWindow.prototype.windowHeight = function() {
-	return this.roundToBigNesTileGrid(this.standardPaddingTotal() + this.nesTileSize() + this.standardCharacterHeight()*this._text.length);
+	var windowHeight = this.standardPaddingTotal() + this.nesTileSize() + this.standardCharacterHeight()*this._text.length;
+	var roundedHeight = this.roundToBigNesTileGrid(windowHeight);
+	this._needsYRounding = windowHeight != roundedHeight;
+	return roundedHeight;
 };
 
 Window_ConcurrentWindow.prototype.setupAndShow = function(
@@ -89,10 +93,8 @@ Window_ConcurrentWindow.prototype.setupAndShow = function(
 	this._absolute = absolute;
 	this._stayOnScreen = stayOnScreen;
 	
-	this.x = type === "infoLog" ? Math.floor(x) : Math.floor(x - this.windowWidth() / 2);
-	this.y = type === "infoLog" ? Math.floor(y) : Math.floor(y - this.windowHeight() / 2);
-	this.x = this.roundToBigNesTileGrid(this.x);
-	this.y = this.roundToBigNesTileGrid(this.y);
+	this.x = this.roundToBigNesTileGrid(x);
+	this.y = this.roundToBigNesTileGrid(y);
 	if(absolute) {
 		this._absoluteX = this.x;
 		this._absoluteY = this.y;
@@ -126,6 +128,7 @@ Window_ConcurrentWindow.prototype.drawCurrentText = function() {
 	this.resetTextColor();
 	this.changePaintOpacity(true);
 	var charactersDrawn = 0;
+	var yOffset = this._needsYRounding ? this.nesTileSize() : 0;
 	var i;
 	for(i = 0; i < this._text.length; i++) {
 		var limitReached = false;
@@ -139,7 +142,7 @@ Window_ConcurrentWindow.prototype.drawCurrentText = function() {
 					segmentText = segmentText.slice(0, this._curTextLength - (charactersDrawn + segmentPosition));
 					limitReached = true;
 				}
-				this.drawText(segmentText, this.textPadding()+segmentPosition*this.standardCharacterWidth(), this.standardCharacterHeight()*i, segmentText.length*this.standardCharacterWidth());
+				this.drawText(segmentText, this.textPadding()+segmentPosition*this.standardCharacterWidth(), this.standardCharacterHeight()*i + yOffset, segmentText.length*this.standardCharacterWidth());
 				segmentPosition += segmentText.length;
 				if(limitReached) { break; }
 			} else if(textRowSegment.type === "icon") {
@@ -150,7 +153,7 @@ Window_ConcurrentWindow.prototype.drawCurrentText = function() {
 				this.drawIcon(
 					textRowSegment.value,
 					this.textPadding() + segmentPosition*this.standardCharacterWidth(),
-					this.standardCharacterWidth()*i + this.roundToPixelGrid((this.lineHeight() - Window_Base._iconRenderHeight) / 2)
+					this.standardCharacterHeight()*i + this.roundToPixelGrid((this.lineHeight() - Window_Base._iconRenderHeight) / 2) + yOffset
 				);
 				segmentPosition += 1;
 			}
