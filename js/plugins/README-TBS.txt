@@ -604,3 +604,8 @@ $gameSystem.openItemInfoWindow(itemType, itemId);
 $gameSystem.closeItemInfoWindow();
 
 Opens/closes an item info window like the one seen in the inventory and equipment menus. The first one will open the window in the upper right during the map scene, displaying the info of the given item. itemType is a string that can be "item", "weapon", or "armor". The second one will close it.
+
+==============================
+OTHER CHANGES
+==============================
+- Actor name entry can now be cancelled out of. Identify whether or not this happened by using a conditional branch to check the actor's name after the fact. If cancelled, the name will be empty.

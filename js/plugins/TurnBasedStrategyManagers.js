@@ -574,12 +574,8 @@ BattleManager.updateAction = function() {
     if (this._tbsTargets.length > 0) {
 		if(this._curWindowTarget !== this._tbsTargets[0]) {
 			if(this._targetsOnLeft) {
-				this._leftActorStatusWindow.close();
-				this._leftActorStatusWindow.setShouldReOpen(true);
 				this.refreshLeftActorStatusWindow();
 			} else {
-				this._rightActorStatusWindow.close();
-				this._rightActorStatusWindow.setShouldReOpen(true);
 				this.refreshRightActorStatusWindow();
 			}
 			this._curSwitchTargetTime = this._switchTargetTime;

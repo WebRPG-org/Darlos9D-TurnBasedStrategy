@@ -1474,23 +1474,6 @@ Window_TbsActorStatus.prototype.refresh = function() {
     }
 };
 
-Window_TbsActorStatus.prototype.setShouldReOpen = function(should) {
-	this._shouldReOpen = should;
-};
-
-Window_TbsActorStatus.prototype.updateClose = function() {
-    if (this._closing) {
-        this.openness -= this.openCloseSpeed();
-        if (this.isClosed()) {
-			this._closing = false;
-			if(this._shouldReOpen) {
-				this.open();
-			}
-			this._shouldReOpen = false;
-        }
-    }
-};
-
 //-----------------------------------------------------------------------------
 // Window_TbsSmallActorStatus
 //
@@ -1505,6 +1488,7 @@ Window_TbsSmallActorStatus.prototype.constructor = Window_TbsSmallActorStatus;
 
 Window_TbsSmallActorStatus.prototype.initialize = function() {
     Window_Base.prototype.initialize.call(this, 0, 0, this.windowWidth(), this.windowHeight());
+	this.hide();
     this._tbsActor = null;
 };
 
@@ -1566,6 +1550,8 @@ Window_TbsActor.prototype.initialize = function(x, y) {
     this._actors = [];
     Window_Selectable.prototype.initialize.call(this, x, y, this.windowWidth(), this.windowHeight());
     this.refreshWindowContents();
+	this.hide();
+	this.deactivate();
 	this._skipDisabled = true;
 };
 
@@ -1679,22 +1665,6 @@ Window_TbsActor.prototype.isOnPass = function() {
     return this._actors && this._actors.length > 0 && this.index() === this.maxItems() - 1;
 };
 
-Window_TbsActor.prototype.shouldOpenActionTypeWindow = function(should) {
-	this._shouldOpenActionTypeWindow = should;
-};
-
-Window_TbsActor.prototype.shouldPassTurn = function(should) {
-	this._shouldPassTurn = should;
-};
-
-Window_TbsActor.prototype.shouldActivateSurvey = function(should) {
-	this._shouldActivateSurvey = should;
-};
-
-Window_TbsActor.prototype.shouldActivateManualMove = function(should) {
-	this._shouldActivateManualMove = should;
-};
-
 Window_TbsActor.prototype.refreshWindowContents = function(dontSelectFirst) {
 	this.move(this.x, this.y, this.windowWidth(), this.windowHeight());
 	this.createContents();
@@ -1702,56 +1672,6 @@ Window_TbsActor.prototype.refreshWindowContents = function(dontSelectFirst) {
 		this.selectFirstEnabledItem();
 	}
 	this.refresh();
-};
-
-Window_TbsActor.prototype.open = function() {
-    if (!this.isOpen()) {
-        this._opening = true;
-    }
-    this._closing = false;
-	if(this._actorStatusWindow) {
-		this._actorStatusWindow.show();
-		this._actorStatusWindow.open();
-	}
-	this.update();
-};
-
-Window_TbsActor.prototype.close = function() {
-    if (!this.isClosed()) {
-        this._closing = true;
-    }
-    this._opening = false;
-	if(this._actorStatusWindow && !this._actorStatusWindow.isOpening() && !this._shouldActivateSurvey) {
-		this._actorStatusWindow.close();
-	}
-};
-
-Window_TbsActor.prototype.updateClose = function() {
-    if (this._closing) {
-        this.openness -= this.openCloseSpeed();
-        if (this.isClosed()) {
-			this._closing = false;
-			if(this._shouldOpenActionTypeWindow) {
-				this._actionTypeWindow.refresh();
-				this._actionTypeWindow.show();
-				this._actionTypeWindow.open();
-				this._actionTypeWindow.activate();
-			}
-			if(this._shouldPassTurn) {
-				$gameMap.setTbsTurnMode("passTurn");
-			}
-			if(this._shouldActivateSurvey) {
-				$gameMap.setTbsTurnMode("survey");
-			}
-			if(this._shouldActivateManualMove) {
-				$gameMap.setTbsTurnMode("manualMove");
-			}
-			this._shouldActivateSurvey = false;
-			this._shouldPassTurn = false;
-			this._shouldOpenActionTypeWindow = false;
-			this._shouldActivateManualMove = false;
-        }
-    }
 };
 
 //-----------------------------------------------------------------------------
