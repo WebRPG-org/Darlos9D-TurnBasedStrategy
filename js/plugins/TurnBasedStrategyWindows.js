@@ -1688,6 +1688,8 @@ Window_TbsActionType.prototype.constructor = Window_TbsActionType;
 
 Window_TbsActionType.prototype.initialize = function(x, y) {
     Window_Command.prototype.initialize.call(this, x, y);
+	this.hide();
+	this.deactivate();
     this._tbsActor = null;
 	this._skipDisabled = true;
 };
@@ -1800,60 +1802,6 @@ Window_TbsActionType.prototype.selectLast = function() {
 	}
 };
 
-Window_TbsActionType.prototype.shouldOpenActorWindow = function(should) {
-	this._shouldOpenActorWindow = should;
-};
-
-Window_TbsActionType.prototype.shouldOpenActionWindow = function(should) {
-	this._shouldOpenActionWindow = should;
-};
-
-Window_TbsActionType.prototype.shouldActivateManualMove = function(should) {
-	this._shouldActivateManualMove = should;
-};
-
-Window_TbsActionType.prototype.open = function() {
-	Window_Command.prototype.open.call(this);
-	this.update();
-};
-
-Window_TbsActionType.prototype.updateOpen = function() {
-    if (this._opening) {
-        this.openness += this.openCloseSpeed();
-        if (this.isOpen()) {
-            this._opening = false;
-			this.refresh();
-        }
-    }
-};
-
-Window_TbsActionType.prototype.updateClose = function() {
-    if (this._closing) {
-        this.openness -= this.openCloseSpeed();
-        if (this.isClosed()) {
-			this._closing = false;
-			if(this._shouldOpenActorWindow) {
-				this._actorWindow.refreshWindowContents(true);
-				this._actorWindow.show();
-				this._actorWindow.open();
-				this._actorWindow.activate();
-			}
-			if(this._shouldOpenActionWindow) {
-				this._actionWindow.refreshWindowContents();
-				this._actionWindow.show();
-				this._actionWindow.open();
-				this._actionWindow.activate();
-			}
-			if(this._shouldActivateManualMove) {
-				$gameMap.setTbsTurnMode("manualMove");
-			}
-			this._shouldOpenActorWindow = false;
-			this._shouldOpenActionWindow = false;
-			this._shouldActivateManualMove = false;
-        }
-    }
-};
-
 //-----------------------------------------------------------------------------
 // Window_TbsActionInfo
 //
@@ -1868,6 +1816,7 @@ Window_TbsActionInfo.prototype.constructor = Window_TbsActionInfo;
 
 Window_TbsActionInfo.prototype.initialize = function(x, y) {
     Window_Selectable.prototype.initialize.call(this, x, y, this.windowWidth(), this.windowHeight());
+	this.hide();
     this.refresh();
     this.activate();
 };
@@ -1939,6 +1888,8 @@ Window_TbsAction.prototype.constructor = Window_TbsAction;
 Window_TbsAction.prototype.initialize = function(x, y) {
 	this._actionInfoGroups = [];
     Window_Selectable.prototype.initialize.call(this, x, y, this.windowWidth(), this.windowHeight());
+	this.hide();
+	this.deactivate();
 	this._stypeId = 0;
 	this._actionTextColor = [];
 	this._previousIndex = 0;
@@ -2323,81 +2274,6 @@ Window_TbsAction.prototype.isCurrentItemEnabled = function() {
 	return this.isActionGroupEnabled(this._actionInfoGroups[this.index()]);
 };
 
-Window_TbsAction.prototype.shouldOpenActionTypeWindow = function(should) {
-	this._shouldOpenActionTypeWindow = should;
-};
-
-Window_TbsAction.prototype.shouldOpenTargetWindow = function(should) {
-	this._shouldOpenTargetWindow = should;
-};
-
-Window_TbsAction.prototype.shouldActivateManualTarget = function(should) {
-	this._shouldActivateManualTarget = should;
-};
-
-Window_TbsAction.prototype.open = function() {
-    if (!this.isOpen()) {
-        this._opening = true;
-    }
-    this._closing = false;
-	if(this._actionInfoWindow) {
-		this._actionInfoWindow.show();
-		this._actionInfoWindow.open();
-	}
-	if(this._actionLevelWindow) {
-		this._actionLevelWindow.select(0);
-	}
-	if(this._smallActorStatusWindow) {
-		this._smallActorStatusWindow.show();
-		this._smallActorStatusWindow.open();
-		this._smallActorStatusWindow.x = Graphics.boxWidth -
-			(Window_TbsActionInfo.prototype.windowWidth() - this.standardPadding()*(2/3)) -
-			(this._smallActorStatusWindow.windowWidth() - this.standardPadding()*(2/3));
-		this._smallActorStatusWindow.y = -this.standardPadding()*(2/3);
-	}
-	this.updateActionLevelWindow(true);
-};
-
-Window_TbsAction.prototype.close = function() {
-    if (!this.isClosed()) {
-        this._closing = true;
-    }
-    this._opening = false;
-	if(this._actionInfoWindow) {
-		this._actionInfoWindow.close();
-	}
-	if(this._smallActorStatusWindow) {
-		this._smallActorStatusWindow.close();
-	}
-};
-
-Window_TbsAction.prototype.updateClose = function() {
-    if (this._closing) {
-        this.openness -= this.openCloseSpeed();
-        if (this.isClosed()) {
-			this._closing = false;
-			if(this._shouldOpenActionTypeWindow) {
-				this._actionTypeWindow.refresh();
-				this._actionTypeWindow.show();
-				this._actionTypeWindow.open();
-				this._actionTypeWindow.activate();
-			}
-			if(this._shouldOpenTargetWindow) {
-				this._targetWindow.refreshWindowContents();
-				this._targetWindow.show();
-				this._targetWindow.open();
-				this._targetWindow.activate();
-			}
-			if(this._shouldActivateManualTarget) {
-				$gameMap.setTbsTurnMode("manualTarget");
-			}
-			this._shouldOpenActionTypeWindow = false;
-			this._shouldOpenTargetWindow = false;
-			this._shouldActivateManualTarget = false;
-        }
-    }
-};
-
 Window_TbsAction.prototype.refreshWindowContents = function(dontSelectFirst) {
 	this.refresh(dontSelectFirst);
 };
@@ -2438,6 +2314,7 @@ Window_TbsActionLevel.prototype.constructor = Window_TbsAction;
 Window_TbsActionLevel.prototype.initialize = function() {
 	this._levels = [];
     Window_Selectable.prototype.initialize.call(this, 0, 0, this.windowWidth(), this.windowHeight());
+	this.hide();
 };
 
 Window_TbsActionLevel.prototype.windowWidth = function() {
@@ -2514,6 +2391,8 @@ Window_TbsTarget.prototype.initialize = function(x, y) {
 	this._allies = [];
 	this._enemies = [];
 	this._actionIndex = -1;
+	this.hide();
+	this.deactivate();
     this.refresh();
 	this._skipDisabled = true;
 };
@@ -2681,7 +2560,7 @@ Window_TbsTarget.prototype.setTargetPartWindow = function(targetPartWindow) {
 
 Window_TbsTarget.prototype.update = function() {
     Window_Selectable.prototype.update.call(this);
-	if (!$gameMap.currentForce() || !$gameMap.currentForce().isParty || !this.isOpenAndActive()) { return; }
+	if (!$gameMap.currentForce() || !$gameMap.currentForce().isParty || !this.active) { return; }
 	if (this._actors && this._actors.length > 0 && this.index() >= 0) {
 		if(this._actorStatusWindow) {
 			this._actorStatusWindow.setTbsActor(this.actor());
@@ -2733,87 +2612,30 @@ Window_TbsTarget.prototype.isCurrentItemEnabled = function() {
     return this.isEnabled(this.index());
 };
 
-Window_TbsTarget.prototype.shouldOpenActionWindow = function(should) {
-	this._shouldOpenActionWindow = should;
+Window_TbsTarget.prototype.show = function() {
+	this.visible = true;
+	this._allies.forEach(function (actor) {
+		if(!actor.suffixWindow) { return; }
+		actor.suffixWindow.reposition(actor.chara.x, actor.chara.y);
+		actor.suffixWindow.show();
+	}, this);
+	this._enemies.forEach(function (actor) {
+		if(!actor.suffixWindow) { return; }
+		actor.suffixWindow.reposition(actor.chara.x, actor.chara.y);
+		actor.suffixWindow.show();
+	}, this);
 };
 
-Window_TbsTarget.prototype.shouldOpenTargetPartWindow = function(should) {
-	this._shouldOpenTargetPartWindow = should;
-};
-
-Window_TbsTarget.prototype.shouldActivateManualTarget = function(should) {
-	this._shouldActivateManualTarget = should;
-};
-
-Window_TbsTarget.prototype.open = function() {
-    if (!this.isOpen()) {
-		if(!this.isOpening()) {
-			this._allies.forEach(function (actor) {
-				if(!actor.suffixWindow) { return; }
-				actor.suffixWindow.reposition(actor.chara.x, actor.chara.y);
-				actor.suffixWindow.show();
-			}, this);
-			this._enemies.forEach(function (actor) {
-				if(!actor.suffixWindow) { return; }
-				actor.suffixWindow.reposition(actor.chara.x, actor.chara.y);
-				actor.suffixWindow.show();
-			}, this);
-		}
-        this._opening = true;
-    }
-    this._closing = false;
-	if(this._actorStatusWindow) {
-		this._actorStatusWindow.show();
-		this._actorStatusWindow.open();
-	}
-	this.update();
-};
-
-Window_TbsTarget.prototype.close = function() {
-    if (!this.isClosed()) {
-		if(!this.isClosing()) {
-			this._allies.forEach(function (actor) {
-				if(!actor.suffixWindow) { return; }
-				actor.suffixWindow.hide();
-			}, this);
-			this._enemies.forEach(function (actor) {
-				if(!actor.suffixWindow) { return; }
-				actor.suffixWindow.hide();
-			}, this);
-		}
-        this._closing = true;
-    }
-    this._opening = false;
-	if(this._actorStatusWindow && !this._actorStatusWindow.isOpening() && !this._shouldOpenTargetPartWindow && !this._shouldActivateManualTarget) {
-		this._actorStatusWindow.close();
-	}
-};
-
-Window_TbsTarget.prototype.updateClose = function() {
-    if (this._closing) {
-        this.openness -= this.openCloseSpeed();
-        if (this.isClosed()) {
-			this._closing = false;
-			if(this._shouldOpenActionWindow) {
-				this._actionWindow.refreshWindowContents(true);
-				this._actionWindow.show();
-				this._actionWindow.open();
-				this._actionWindow.activate();
-			}
-			if(this._shouldOpenTargetPartWindow) {
-				this._targetPartWindow.refreshWindowContents();
-				this._targetPartWindow.show();
-				this._targetPartWindow.open();
-				this._targetPartWindow.activate();
-			}
-			if(this._shouldActivateManualTarget) {
-				$gameMap.setTbsTurnMode("manualTarget");
-			}
-			this._shouldOpenActionWindow = false;
-			this._shouldOpenTargetPartWindow = false;
-			this._shouldActivateManualTarget = false;
-        }
-    }
+Window_TbsTarget.prototype.hide = function() {
+	this.visible = false;
+	this._allies.forEach(function (actor) {
+		if(!actor.suffixWindow) { return; }
+		actor.suffixWindow.hide();
+	}, this);
+	this._enemies.forEach(function (actor) {
+		if(!actor.suffixWindow) { return; }
+		actor.suffixWindow.hide();
+	}, this);
 };
 
 //-----------------------------------------------------------------------------

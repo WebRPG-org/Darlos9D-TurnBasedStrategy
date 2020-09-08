@@ -326,21 +326,14 @@
 				this._tbsActorStatusWindow.hide();
 				this._tbsActionTypeWindow.hide();
 				this._tbsActionTypeWindow.deactivate();
-				this._tbsActionTypeWindow.shouldOpenActorWindow(false);
-				this._tbsActionTypeWindow.shouldOpenActionWindow(false);
 				this._tbsActionWindow.hide();
 				this._tbsActionWindow.deactivate();
-				this._tbsActionWindow.shouldOpenTargetWindow(false);
-				this._tbsActionWindow.shouldActivateManualTarget(false);
+				this._tbsActionInfoWindow.hide();
+				this._tbsSmallActorStatusWindow.hide();
 				this._tbsTargetWindow.hide();
 				this._tbsTargetWindow.deactivate();
-				this._tbsTargetWindow.shouldOpenActionWindow(false);
-				this._tbsTargetWindow.shouldOpenTargetPartWindow(false);
-				this._tbsTargetWindow.shouldActivateManualTarget(false);
 				this._tbsTargetPartWindow.hide();
 				this._tbsTargetPartWindow.deactivate();
-				this._tbsTargetPartWindow.shouldOpenTargetWindow(false);
-				this._tbsTargetPartWindow.shouldActivateManualTarget(false);
 				if($gameMap.tbsTurnMode() === "actionBattleScene") {
 					this._tbsBreadcrumbWindowOne.hide();
 					this._tbsBreadcrumbWindowOne.setBreadcrumbInfo(undefined);
@@ -368,21 +361,14 @@
 				this._tbsActorStatusWindow.show();
 				this._tbsActionTypeWindow.hide();
 				this._tbsActionTypeWindow.deactivate();
-				this._tbsActionTypeWindow.shouldOpenActorWindow(false);
-				this._tbsActionTypeWindow.shouldOpenActionWindow(false);
 				this._tbsActionWindow.hide();
 				this._tbsActionWindow.deactivate();
-				this._tbsActionWindow.shouldOpenTargetWindow(false);
-				this._tbsActionWindow.shouldActivateManualTarget(false);
+				this._tbsActionInfoWindow.hide();
+				this._tbsSmallActorStatusWindow.hide();
 				this._tbsTargetWindow.hide();
 				this._tbsTargetWindow.deactivate();
-				this._tbsTargetWindow.shouldOpenActionWindow(false);
-				this._tbsTargetWindow.shouldOpenTargetPartWindow(false);
-				this._tbsTargetWindow.shouldActivateManualTarget(false);
 				this._tbsTargetPartWindow.hide();
 				this._tbsTargetPartWindow.deactivate();
-				this._tbsTargetPartWindow.shouldOpenTargetWindow(false);
-				this._tbsTargetPartWindow.shouldActivateManualTarget(false);
 				$gameMap.setBreadcrumbStage("selectingActor");
 			}
 			if($gameMap.checkTbsCancelMoveJustEnded()) {
@@ -392,21 +378,14 @@
 				this._tbsActorStatusWindow.show();
 				this._tbsActionTypeWindow.hide();
 				this._tbsActionTypeWindow.deactivate();
-				this._tbsActionTypeWindow.shouldOpenActorWindow(false);
-				this._tbsActionTypeWindow.shouldOpenActionWindow(false);
 				this._tbsActionWindow.hide();
 				this._tbsActionWindow.deactivate();
-				this._tbsActionWindow.shouldOpenTargetWindow(false);
-				this._tbsActionWindow.shouldActivateManualTarget(false);
+				this._tbsActionInfoWindow.hide();
+				this._tbsSmallActorStatusWindow.hide();
 				this._tbsTargetWindow.hide();
 				this._tbsTargetWindow.deactivate();
-				this._tbsTargetWindow.shouldOpenActionWindow(false);
-				this._tbsTargetWindow.shouldOpenTargetPartWindow(false);
-				this._tbsTargetWindow.shouldActivateManualTarget(false);
 				this._tbsTargetPartWindow.hide();
 				this._tbsTargetPartWindow.deactivate();
-				this._tbsTargetPartWindow.shouldOpenTargetWindow(false);
-				this._tbsTargetPartWindow.shouldActivateManualTarget(false);
 				$gameMap.setBreadcrumbStage("selectingActor");
 			}
 			if(this.isOkWhileControllingCursor()) {
@@ -459,6 +438,7 @@
 					if(this._tbsTargetWindow.hasAlliesOrEnemies() && !this._tbsActionWindow.isOnlyTargetSelf()) {
 						this._tbsTargetWindow.show();
 						this._tbsTargetWindow.activate();
+						this._tbsActorStatusWindow.show();
 					} else {
 						this._tbsActionWindow.refreshWindowContents(true);
 						this._tbsActionWindow.show();
@@ -504,21 +484,14 @@
 			this._tbsActorStatusWindow.hide();
 			this._tbsActionTypeWindow.hide();
 			this._tbsActionTypeWindow.deactivate();
-			this._tbsActionTypeWindow.shouldOpenActorWindow(false);
-			this._tbsActionTypeWindow.shouldOpenActionWindow(false);
 			this._tbsActionWindow.hide();
 			this._tbsActionWindow.deactivate();
-			this._tbsActionWindow.shouldOpenTargetWindow(false);
-			this._tbsActionWindow.shouldActivateManualTarget(false);
+			this._tbsActionInfoWindow.hide();
+			this._tbsSmallActorStatusWindow.hide();
 			this._tbsTargetWindow.hide();
 			this._tbsTargetWindow.deactivate();
-			this._tbsTargetWindow.shouldOpenActionWindow(false);
-			this._tbsTargetWindow.shouldOpenTargetPartWindow(false);
-			this._tbsTargetWindow.shouldActivateManualTarget(false);
 			this._tbsTargetPartWindow.hide();
 			this._tbsTargetPartWindow.deactivate();
-			this._tbsTargetPartWindow.shouldOpenTargetWindow(false);
-			this._tbsTargetPartWindow.shouldActivateManualTarget(false);
 			this._tbsBreadcrumbWindowOne.hide();
 			this._tbsBreadcrumbWindowOne.setBreadcrumbInfo(undefined);
 			this._tbsBreadcrumbWindowTwo.hide();
@@ -709,8 +682,6 @@
 		this._tbsActionTypeWindow.setHandler('move',     this.commandMove.bind(this));
 		this._tbsActionTypeWindow.setHandler('cancel',     this.commandActionTypeCancel.bind(this));
 		this.addWindow(this._tbsActionTypeWindow);
-		this._tbsActionTypeWindow.hide();
-		this._tbsActionTypeWindow.deactivate();
 		this._tbsActorWindow.setActionTypeWindow(this._tbsActionTypeWindow);
 		this._tbsActionTypeWindow.setActorWindow(this._tbsActorWindow);
 	};
@@ -724,13 +695,11 @@
 		var wx = Graphics.boxWidth - Window_TbsActionInfo.prototype.windowWidth() + Window_TbsActionInfo.prototype.standardPadding()*(2/3);
 		this._tbsActionInfoWindow = new Window_TbsActionInfo(wx, -Window_TbsActionInfo.prototype.standardPadding()*(2/3));
 		this.addWindow(this._tbsActionInfoWindow);
-		this._tbsActionInfoWindow.hide();
 	};
 	
 	Scene_Map.prototype.createTbsActionLevelWindow = function() {
 		this._tbsActionLevelWindow = new Window_TbsActionLevel();
 		this.addWindow(this._tbsActionLevelWindow);
-		this._tbsActionLevelWindow.hide();
 	};
 
 	Scene_Map.prototype.createTbsActionWindow = function() {
@@ -739,8 +708,6 @@
 		this._tbsActionWindow.setHandler('ok',     this.onActionOk.bind(this));
 		this._tbsActionWindow.setHandler('cancel',     this.onActionCancel.bind(this));
 		this.addWindow(this._tbsActionWindow);
-		this._tbsActionWindow.hide();
-		this._tbsActionWindow.deactivate();
 		this._tbsActionTypeWindow.setActionWindow(this._tbsActionWindow);
 		this._tbsActionWindow.setActionTypeWindow(this._tbsActionTypeWindow);
 		this._tbsActionWindow.setActionInfoWindow(this._tbsActionInfoWindow);
@@ -756,8 +723,6 @@
 		this._tbsTargetWindow.setHandler('pagedown',     this.onTargetSwitchGroups.bind(this));
 		this._tbsTargetWindow.setHandler('pageup',     this.onTargetSwitchGroups.bind(this));
 		this.addWindow(this._tbsTargetWindow);
-		this._tbsTargetWindow.hide();
-		this._tbsTargetWindow.deactivate();
 		this._tbsTargetWindow.setActionWindow(this._tbsActionWindow);
 		this._tbsActionWindow.setTargetWindow(this._tbsTargetWindow);
 		this._tbsTargetWindow.setActorStatusWindow(this._tbsActorStatusWindow);
@@ -860,7 +825,9 @@
 	
 	Scene_Map.prototype.commandActionTypeCancel = function() {
 		if(this._tbsActionTypeWindow.isMoveEnabled()) {
-			this._tbsActionTypeWindow.shouldOpenActorWindow(true);
+			this._tbsActorWindow.refreshWindowContents(true);
+			this._tbsActorWindow.show();
+			this._tbsActorWindow.activate();
 			$gameMap.setBreadcrumbStage("selectingActor");
 		} else {
 			$gameMap.setTbsTurnMode("manualMove");
@@ -874,7 +841,9 @@
 	
 	Scene_Map.prototype.commandAction = function() {
 		if(!$gameMap.isWaitingOnQueuedActions()) {
-			this._tbsActionTypeWindow.shouldOpenActionWindow(true);
+			this._tbsActionWindow.refreshWindowContents(true);
+			this._tbsActionWindow.show();
+			this._tbsActionWindow.activate();
 		}
 		this._tbsActionTypeWindow.hide();
 		this._tbsActionTypeWindow.deactivate();
@@ -889,12 +858,17 @@
 	
 	Scene_Map.prototype.onActionOk = function() {
 		if(this._tbsTargetWindow.hasAlliesOrEnemies() && !this._tbsActionWindow.isOnlyTargetSelf()) {
-			this._tbsActionWindow.shouldOpenTargetWindow(true);
+			this._tbsTargetWindow.refreshWindowContents();
+			this._tbsTargetWindow.show();
+			this._tbsTargetWindow.activate();
+			this._tbsActorStatusWindow.show();
 		} else {
-			this._tbsActionWindow.shouldActivateManualTarget(true);
+			$gameMap.setTbsTurnMode("manualTarget");
 		}
 		this._tbsActionWindow.hide();
 		this._tbsActionWindow.deactivate();
+		this._tbsActionInfoWindow.hide();
+		this._tbsSmallActorStatusWindow.hide();
 		$gameMap.setBreadcrumbStage("action");
 	};
 	
@@ -904,12 +878,14 @@
 		this._tbsActionTypeWindow.activate();
 		this._tbsActionWindow.hide();
 		this._tbsActionWindow.deactivate();
+		this._tbsActionInfoWindow.hide();
+		this._tbsSmallActorStatusWindow.hide();
 		$gameMap.setTbsTurnMode("selectActorActionType");
 	};
 	
 	Scene_Map.prototype.onTargetOk = function() {
 		if(this._tbsTargetWindow.isOnManualTarget()) {
-			this._tbsTargetWindow.shouldActivateManualTarget(true);
+			$gameMap.setTbsTurnMode("manualTarget");
 		} else {
 			var actionInfo = $gameMap.getTbsSelectedActionInfo();
 			var selectedTarget = $gameMap.getTbsActorAtPosition($gameMap.getTbsActionTargetLocationX(), $gameMap.getTbsActionTargetLocationY());
@@ -922,14 +898,26 @@
 				$gameMap.setTbsTurnMode("executeAction");
 			//}
 		}
-		this._tbsTargetWindow.close();
+		this._tbsTargetWindow.hide();
 		this._tbsTargetWindow.deactivate();
+		this._tbsActorStatusWindow.hide();
 	};
 	
 	Scene_Map.prototype.onTargetCancel = function() {
-		this._tbsTargetWindow.shouldOpenActionWindow(true);
-		this._tbsTargetWindow.close();
+		this._tbsActionWindow.refreshWindowContents();
+		this._tbsActionWindow.show();
+		this._tbsActionWindow.activate();
+		this._tbsActionInfoWindow.show();
+		this._tbsActionLevelWindow.select(0);
+		this._smallActorStatusWindow.show();
+		this._smallActorStatusWindow.x = Graphics.boxWidth -
+			(Window_TbsActionInfo.prototype.windowWidth() - Window_Base.prototype.standardPadding()*(2/3)) -
+			(this._tbsSmallActorStatusWindow.windowWidth() - Window_Base.prototype.standardPadding()*(2/3));
+		this._tbsSmallActorStatusWindow.y = -Window_Base.prototype.standardPadding()*(2/3);
+		this._tbsActionWindow.updateActionLevelWindow(true);
+		this._tbsTargetWindow.hide();
 		this._tbsTargetWindow.deactivate();
+		this._tbsActorStatusWindow.hide();
 		$gameMap.setTbsActionTargetLocation(-1, -1);
 		$gameMap.setBreadcrumbStage("actor");
 	};
@@ -939,19 +927,22 @@
 	};
 	
 	Scene_Map.prototype.onTargetPartOk = function() {
-		this._tbsTargetPartWindow.close();
+		this._tbsTargetPartWindow.hide();
 		this._tbsTargetPartWindow.deactivate();
 		$gameMap.setTbsTurnMode("executeAction");
 	};
 	
 	Scene_Map.prototype.onTargetPartCancel = function() {
 		if(this._tbsTargetPartFromManualTarget) {
-			this._tbsTargetPartWindow.shouldActivateManualTarget(true);
+			$gameMap.setTbsTurnMode("manualTarget");
 		} else {
-			this._tbsTargetPartWindow.shouldOpenTargetWindow(true);
+			this._tbsTargetWindow.refreshWindowContents();
+			this._tbsTargetWindow.show();
+			this._tbsTargetWindow.activate();
+			this._tbsActorStatusWindow.show();
 			$gameMap.setTbsTurnMode("selectActionTarget");
 		}
-		this._tbsTargetPartWindow.close();
+		this._tbsTargetPartWindow.hide();
 		this._tbsTargetPartWindow.deactivate();
 		$gameMap.setBreadcrumbStage("action");
 	};
